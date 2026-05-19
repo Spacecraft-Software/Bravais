@@ -45,6 +45,8 @@
       # Languages
       jdk
       php
+      python3                    # Python runtime
+      python3Packages.pip        # Python package installer
       nodejs                     # JavaScript runtime (Node 24 LTS — provides node/npm/npx)
 
       # Nix Ecosystem
