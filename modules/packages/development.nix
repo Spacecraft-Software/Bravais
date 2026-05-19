@@ -55,6 +55,10 @@
       emacsPackages.guix
     ];
 
+    # nix-ld: dynamic linker shim for unpatched binaries (npm packages, Python
+    # wheels with native extensions, VS Code server, pre-built toolchains, etc.)
+    programs.nix-ld.enable = true;
+
     # Git configuration
     programs.git = {
       enable = true;
