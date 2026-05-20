@@ -1,26 +1,50 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Bash → Brush wrapper (all users, including root)
+# Steelbore Bravais — Bash → Brush wrapper (system-wide, all users, including root)
 #
-# Installs a high-priority `bash` shim into the system PATH so that any
-# invocation of `bash` (interactive or scripted) is transparently redirected
-# to Brush — the Rust, Bash-compatible shell.
+# Three-part strategy:
 #
-# NixOS activation scripts and PAM tooling that reference bash via its full
-# Nix store path (e.g. /nix/store/...-bash-.../bin/bash) are unaffected and
-# continue to use the real bash.  Only PATH-based lookups hit this wrapper.
+#   1. PATH wrapper  — a high-priority `bash` shim in the system PATH so that
+#      any PATH-based invocation of `bash` dispatches to Brush.
+#
+#   2. /bin/bash override — an activation script that re-links /bin/bash to
+#      Brush after NixOS sets up the standard symlink, making `#!/bin/bash`
+#      shebangs and any caller that hardcodes /bin/bash use Brush as well.
+#
+#   3. bash-real shim — a `bash-real` command in the system PATH that always
+#      invokes the genuine GNU Bash, giving a safe escape hatch when real Bash
+#      behaviour is required.
 { pkgs, lib, ... }:
 
 let
-  # Wrapper: a minimal shell script that exec-replaces itself with brush,
-  # forwarding all arguments unchanged.  The shebang uses the Nix store path
-  # for brush so the script is fully self-contained and path-independent.
-  bashWrapper = pkgs.writeShellScriptBin "bash" ''
+  # 1. PATH wrapper: exec-replaces itself with Brush, forwarding all args.
+  #    The shebang references the real bash store path so the wrapper itself
+  #    is not subject to its own redirect.
+  bashWrapper = pkgs.writeScriptBin "bash" ''
+    #!${pkgs.bash}/bin/bash
     exec ${pkgs.brush}/bin/brush "$@"
+  '';
+
+  # 3. bash-real shim: always invokes the real GNU Bash.
+  bashReal = pkgs.writeScriptBin "bash-real" ''
+    #!${pkgs.bash}/bin/bash
+    exec ${pkgs.bash}/bin/bash "$@"
   '';
 in
 {
-  # lib.hiPrio raises the package priority so NixOS's merge logic resolves the
-  # `bash` name collision in favour of this wrapper rather than raising an
-  # error or silently preferring the real bash.
-  environment.systemPackages = [ (lib.hiPrio bashWrapper) ];
+  environment.systemPackages = [
+    # lib.hiPrio ensures the `bash` collision resolves to our wrapper.
+    (lib.hiPrio bashWrapper)
+    bashReal
+  ];
+
+  # 2. Override /bin/bash after NixOS's own `binsh` activation script runs so
+  #    that scripts using the #!/bin/bash shebang also land on Brush.
+  #    NixOS activation scripts that reference bash by its full Nix store path
+  #    (e.g. /nix/store/...-bash-x.y/bin/bash) are unaffected.
+  system.activationScripts.brushBashOverride = {
+    deps = [ "binsh" ];
+    text = ''
+      ln -sf ${pkgs.brush}/bin/brush /bin/bash
+    '';
+  };
 }

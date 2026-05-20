@@ -30,13 +30,5 @@ jobs:
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: Cache Nix store
-        uses: actions/cache@v4
-        with:
-          path: /nix/store
-          key: nix-store-${{ runner.os }}-${{ hashFiles('flake.lock') }}
-          restore-keys: |
-            nix-store-${{ runner.os }}-
-
       - name: Validate flake
         run: nix flake check --no-build
