@@ -65,6 +65,7 @@
       { appId = "io.github.shiftey.Desktop";          origin = "flathub"; }  # GitHub Desktop
 
       # ── System & Utilities ─────────────────────────────────────────────────
+      { appId = "com.daidouji.oneko";                 origin = "flathub"; }  # Desktop cat
       { appId = "com.github.tchx84.Flatseal";         origin = "flathub"; }
       { appId = "io.github.dvlv.boxbuddyrs";          origin = "flathub"; }  # BoxBuddy
       { appId = "io.github.prateekmedia.appimagepool"; origin = "flathub"; }
