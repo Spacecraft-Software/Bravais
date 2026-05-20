@@ -1,0 +1,95 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "license": "GPL-3.0-or-later",
+    "description": "Canonical hint strings keyed by error.code for Spacecraft Software CLIs. Every hint is a runnable command (paste-test passes). Substitute <tool> with the actual tool name (ferrocast, caliper, etc.).",
+    "see_also": "references/tips-thinking.md"
+  },
+
+  "NOT_FOUND": {
+    "default": "<tool> <noun> list --json",
+    "with_filter_hint": "<tool> <noun> list --json --filter <attempted-name-prefix>",
+    "context": "Resource the agent asked for does not exist. Hint points to the listing command for that resource type."
+  },
+
+  "INVALID_ARGUMENT": {
+    "default": "<tool> schema <noun> <verb>",
+    "with_field_hint": "<tool> schema <noun> <verb> --fields parameters",
+    "context": "Argument did not parse or violated a constraint. Hint points to the schema sub-command so the agent can read the canonical parameter spec."
+  },
+
+  "USAGE_ERROR": {
+    "default": "<tool> <noun> <verb> --help",
+    "context": "Command-level usage error (missing required arg, conflicting flags, etc.). Hint points to --help. Prefer INVALID_ARGUMENT with schema hint when the issue is a specific argument."
+  },
+
+  "PERMISSION_DENIED": {
+    "auth_required": "<tool> auth login",
+    "auth_with_scope": "<tool> auth login --scope <required-scope>",
+    "filesystem": "<tool> diagnose path -- <attempted-path>",
+    "context": "Lacks credentials or filesystem permission. Hint depends on subtype."
+  },
+
+  "CONFLICT": {
+    "default": "<tool> <noun> get <id> --json",
+    "with_force": "<tool> <noun> <verb> <id> --force",
+    "context": "Resource already exists or is in conflicting state. Default hint inspects the existing resource; --force hint is for legitimate override cases. Prefer the inspect hint to avoid destructive recovery."
+  },
+
+  "RATE_LIMITED": {
+    "default": "sleep <retry_after_seconds> && <tool> <last-command>",
+    "context": "Hit a rate limit. Include retry_after_seconds in the error envelope; hint chains sleep + retry."
+  },
+
+  "INTERNAL_ERROR": {
+    "default": "<tool> diagnose --verbose --json",
+    "with_subsystem": "<tool> diagnose <subsystem> --json",
+    "context": "Tool itself failed. Hint points to the diagnostics command. NEVER leave hint empty even for internal errors."
+  },
+
+  "MISSING_DEPENDENCY": {
+    "with_nix": "nix-shell -p <package-name>",
+    "with_check": "<tool> describe --fields dependencies --json",
+    "context": "Required external tool not in PATH. Per Spacecraft Software standard, prefer Nix package manager. Use --with-check hint when agent should query the dependency list first."
+  },
+
+  "TIMEOUT": {
+    "default": "<tool> <last-command> --timeout <larger-value>",
+    "context": "Operation exceeded its time budget. Hint suggests increasing the timeout. Caller may instead want to retry with smaller scope."
+  },
+
+  "NETWORK_ERROR": {
+    "default": "<tool> diagnose network --json",
+    "context": "Network operation failed. Diagnostics command checks connectivity, DNS, proxy."
+  },
+
+  "VALIDATION_FAILED": {
+    "default": "<tool> validate <subject> --json",
+    "context": "Input data failed schema validation (distinct from INVALID_ARGUMENT which is parse-time). Hint runs the validator standalone for full error report."
+  },
+
+  "QUOTA_EXCEEDED": {
+    "default": "<tool> quota show --json",
+    "context": "User or org quota exceeded. Hint shows current quota state."
+  },
+
+  "DEPRECATED": {
+    "default": "<tool> schema <noun> <verb> --fields replaced_by",
+    "context": "Used a deprecated command or flag. The schema output's replaced_by field tells the agent the new form."
+  },
+
+  "UNSUPPORTED_OPERATION": {
+    "default": "<tool> describe --json",
+    "context": "Operation not supported in this configuration / version / platform. Hint shows the capability manifest so the agent learns what IS supported."
+  },
+
+  "DRY_RUN_REQUIRED": {
+    "default": "<tool> <last-command> --dry-run --json",
+    "context": "Destructive operation attempted without --dry-run preview in agent mode. Hint runs the dry-run; agent reviews plan before retrying with --yes."
+  },
+
+  "CONFIRMATION_REQUIRED": {
+    "default": "<tool> <last-command> --yes",
+    "context": "Destructive operation in non-TTY mode without --yes / --force. Hint adds the consent flag. The agent harness logs the consent."
+  }
+}
