@@ -1,0 +1,46 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install C toolchain prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ make pkg-config curl ca-certificates
+
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile default --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          "$HOME/.cargo/bin/rustup" component add rustfmt clippy
+
+      - name: Install Brush shell
+        run: |
+          "$HOME/.cargo/bin/cargo" install --locked brush
+
+      - name: Route bash calls to Brush
+        run: |
+          sudo tee /usr/local/bin/bash > /dev/null <<'EOF'
+          #!/usr/bin/env sh
+          if [ -x "$HOME/.cargo/bin/brush" ]; then
+            exec "$HOME/.cargo/bin/brush" "$@"
+          fi
+          exec /usr/bin/bash "$@"
+          EOF
+          sudo chmod +x /usr/local/bin/bash
+          /usr/local/bin/bash --version || true
