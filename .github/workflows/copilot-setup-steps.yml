@@ -29,16 +29,12 @@ jobs:
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           "$HOME/.cargo/bin/rustup" component add rustfmt clippy
 
-      - name: Install Brush shell
-        run: |
-          "$HOME/.cargo/bin/cargo" install --locked brush
-
       - name: Route bash calls to Brush
         run: |
           sudo tee /usr/local/bin/bash > /dev/null <<'EOF'
           #!/usr/bin/env sh
-          if [ -x "$HOME/.cargo/bin/brush" ]; then
-            exec "$HOME/.cargo/bin/brush" "$@"
+          if command -v brush >/dev/null 2>&1; then
+            exec "$(command -v brush)" "$@"
           fi
           exec /usr/bin/bash "$@"
           EOF
