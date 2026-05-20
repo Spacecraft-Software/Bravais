@@ -22,10 +22,15 @@
       forgejo-cli                # Rust — Forgejo CLI
       forgejo-runner             # Go — CI runner
 
+      # C/C++ Toolchain
+      gcc                        # C — GNU Compiler Collection
+
       # Rust Toolchain
       rustup
       cargo
       cargo-update
+      rustfmt                    # Rust — Rust code formatter
+      clippy                     # Rust — Rust linter
 
       # Build & Task Tools (Rust preferred)
       just                       # Rust — Command runner
