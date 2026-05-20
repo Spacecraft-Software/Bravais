@@ -22,8 +22,14 @@
       forgejo-cli                # Rust — Forgejo CLI
       forgejo-runner             # Go — CI runner
 
+      # C/C++ Toolchain
+      gcc                        # C — GNU Compiler Collection
+
       # Rust Toolchain
-      rustup
+      # rustup is the toolchain manager; install it via:
+      #   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+      # Then add components:
+      #   rustup component add rustfmt clippy
       cargo
       cargo-update
 
