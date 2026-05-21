@@ -49,6 +49,7 @@
       awscli                     # Python — AWS CLI
 
       # Languages
+      guile                      # Scheme — GNU extension language
       jdk
       php
       python3                    # Python runtime
