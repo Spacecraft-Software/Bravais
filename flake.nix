@@ -47,6 +47,10 @@
     # constraint #7, not as an overlay.
     kimi-cli.url = "github:MoonshotAI/kimi-cli";
     kimi-cli.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # Antigravity 2 — UnbreakableMJ's app (tracks main)
+    antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
+    antigravity-nix.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -59,6 +63,7 @@
       nix-flatpak,
       gitway,
       kimi-cli,
+      antigravity-nix,
       ...
     }:
     let
@@ -113,7 +118,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway kimi-cli unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix unstablePkgs; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -136,7 +141,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix unstablePkgs; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];

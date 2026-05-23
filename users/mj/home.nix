@@ -7,6 +7,7 @@
   steelborePalette,
   gitway,
   kimi-cli,
+  antigravity-nix,
   unstablePkgs,
   ...
 }:
@@ -139,7 +140,6 @@ in
     code-cursor-fhs    # Cursor editor (FHS variant)
     kiro-fhs           # Kiro editor (FHS variant)
     vscode-fhs         # VSCode (FHS variant)
-    antigravity-fhs    # Antigravity (FHS variant)
     zed-editor-fhs     # Zed editor (FHS variant)
 
     # AI CLIs (kept here when they're unstable-only or freshness-tracked)
@@ -147,7 +147,8 @@ in
   ]) ++ [
     # AI CLIs from upstream flakes (no nixpkgs entry). Threaded via
     # specialArgs per CLAUDE.md constraint #7 — same idiom as gitway.
-    kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default  # Moonshot's Kimi Code agent
+    kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default        # Moonshot's Kimi Code agent
+    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.default  # Antigravity 2
   ];
 
   # Programs
