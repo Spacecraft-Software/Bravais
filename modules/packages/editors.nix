@@ -21,6 +21,8 @@
       neovim
       vim
       mg                         # Micro Emacs
+      zile                       # Lightweight Emacs clone
+      zee                        # Rust — Minimal terminal editor
       mc                         # Midnight Commander
 
       # GUI Editors (Rust preferred)

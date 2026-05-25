@@ -115,10 +115,8 @@ in
     EDITOR = "${pkgs.msedit}/bin/edit";
     VISUAL = "${pkgs.msedit}/bin/edit";
     STEELBORE_THEME = "true";
-    # Move bw's app-data out from under the literal-space "Bitwarden CLI"
-    # default into a scriptable XDG-compliant path. bw populates data.json
-    # itself; we only set the directory.
-    BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
+    # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
+    # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
 
 
@@ -127,6 +125,14 @@ in
   # an offline rebuild still succeeds.
   home.activation.tldrUpdate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
+  '';
+
+  # Remove any *.backup directories HM leaves in ~/.agents/skills/ when it
+  # backs up non-managed files before placing its own symlinks.
+  home.activation.cleanSkillBackups = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for f in "${config.home.homeDirectory}/.agents/skills/"*.backup; do
+      [ -e "$f" ] && $DRY_RUN_CMD rm -rf -- "$f"
+    done
   '';
 
   # User packages. Stable (pkgs) for system-coupled tooling; unstable
