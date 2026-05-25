@@ -36,6 +36,7 @@ let
   # would be shadowed. Acceptable per current design — no such bundle
   # is in active use here.
   aiSkillNames = [
+    "guile-guidelines"
     "rust-guidelines"
     "spacecraft-agentic-cli"
     "spacecraft-brand-guidelines"
@@ -120,6 +121,7 @@ in
     BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
 
+
   # Refresh the tealdeer (tldr) cache on every home-manager activation.
   # `tldr --update` pulls the latest pages bundle. Failure is non-fatal so
   # an offline rebuild still succeeds.
@@ -161,7 +163,7 @@ in
       enable = true;
       settings = {
         user.name = "UnbreakableMJ";
-        user.email = "34196588+UnbreakableMJ@users.noreply.github.com";
+        user.email = "Mohamed.Hammad@SpacecraftSoftware.org";
         user.signingkey = "~/.ssh/id_ed25519.pub";
         gpg.program = "${pkgs.sequoia-chameleon-gnupg}/bin/gpg-sq";
         gpg.format = "ssh";
@@ -181,6 +183,7 @@ in
       enable = true;
       bashrcExtra = ''
         export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
+        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"
       '';
     };
 
@@ -531,6 +534,9 @@ in
           git pull --ff-only
           print $"(date now | format date '%Y-%m-%d %H:%M:%S') skills synced"
         }
+
+        # User-local bins — appended so Nix store paths take precedence
+        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin"])
       '';
     };
 
