@@ -16,50 +16,12 @@ let
   # Foot requires hex colors without the '#' prefix
   h = c: builtins.substring 1 (builtins.stringLength c - 1) c;
 
-  # User-authored AI skills — single source of truth at /spacecraft-software/construct/
-  # (separate GitHub repo: github:Spacecraft-Software/Construct).
-  #
-  # Layout: ~/.agents/ is the canonical agent-config hub managed by HM.
-  # ~/.agents/skills/<skill> is a per-skill mkOutOfStoreSymlink to
-  # /spacecraft-software/construct/<skill> — edits in the construct repo show up
-  # live, no rebuild needed. Every other AI tool dir gets a single
-  # <tool>/skills symlink → ~/.agents/skills, so all tools share one
-  # canonical skill location.
-  #
-  # .gemini intentionally NOT in the alias list — Gemini reads
-  # ~/.agents/ directly (per upstream config), so a .gemini/skills
-  # alias would be redundant.
-  #
-  # Trade-off vs the previous per-skill cross product: <tool>/skills is
-  # now a directory-level symlink, so any tool-specific bundled
-  # namespace (e.g. older Codex builds shipped a .codex/skills/.system/)
-  # would be shadowed. Acceptable per current design — no such bundle
-  # is in active use here.
-  aiSkillNames = [
-    "guile-guidelines"
-    "rust-guidelines"
-    "spacecraft-agentic-cli"
-    "spacecraft-brand-guidelines"
-    "spacecraft-cli-preference"
-    "spacecraft-cli-shell"
-    "spacecraft-cli-standard"
-    "spacecraft-document-format"
-    "spacecraft-missing-pkg"
-    "spacecraft-standard"
-    "spacecraft-theme-factory"
-  ];
-
-  # ~/.agents/skills/<skill> — the canonical hub. HM creates ~/.agents/
-  # and ~/.agents/skills/ as parents of these entries automatically.
-  agentsSkillLinks = builtins.listToAttrs (map (skill: {
-    name = ".agents/skills/${skill}";
-    value.source = config.lib.file.mkOutOfStoreSymlink
-      "/spacecraft-software/construct/${skill}";
-  }) aiSkillNames);
-
-  # <tool>/skills → ~/.agents/skills — single directory-level link per
-  # tool. mkOutOfStoreSymlink so the link target is the live home dir
-  # (not a frozen store path).
+  # AI skills hub — ~/.agents/skills/ is populated by the syncSkills
+  # activation script (see below) on every HM switch, symlinking every
+  # skill directory from /spacecraft-software/construct/ live.
+  # Every AI tool dir gets a single <tool>/skills → ~/.agents/skills link
+  # so all tools share one canonical location.
+  # .gemini is intentionally omitted — Gemini reads ~/.agents/ directly.
   aiSkillToolDirs = [
     ".agent"
     ".ai"
@@ -74,8 +36,6 @@ let
     value.source = config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/.agents/skills";
   }) aiSkillToolDirs);
-
-  aiSkillLinks = agentsSkillLinks // toolSkillsAliases;
 
   # Wallpaper daemon: upstream renamed swww → awww. On unstable both
   # exist (swww is a deprecation alias that warns); on stable 25.11
@@ -92,7 +52,7 @@ in
   home.homeDirectory = "/home/mj";
   home.stateVersion = "25.11";
 
-  home.file = aiSkillLinks // {
+  home.file = toolSkillsAliases // {
     # Steelbore project symlink
     "steelbore".source = config.lib.file.mkOutOfStoreSymlink "/spacecraft-software";
 
@@ -127,12 +87,22 @@ in
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
   '';
 
-  # Remove any *.backup directories HM leaves in ~/.agents/skills/ when it
-  # backs up non-managed files before placing its own symlinks.
-  home.activation.cleanSkillBackups = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    for f in "${config.home.homeDirectory}/.agents/skills/"*.backup; do
-      [ -e "$f" ] && $DRY_RUN_CMD rm -rf -- "$f"
-    done
+  # Wipe and re-link ~/.agents/skills/ from /spacecraft-software/construct/
+  # on every HM switch. Symlinks every skill directory (any dir that is not
+  # .git, Excluded, or .claude) so agents always see the live construct repo.
+  home.activation.syncSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    skills_dir="${config.home.homeDirectory}/.agents/skills"
+    construct_dir="/spacecraft-software/construct"
+    $DRY_RUN_CMD rm -rf -- "$skills_dir"
+    $DRY_RUN_CMD mkdir -p -- "$skills_dir"
+    if [ -d "$construct_dir" ]; then
+      for dir in "$construct_dir"/*/; do
+        [ -d "$dir" ] || continue
+        name="$(basename -- "$dir")"
+        case "$name" in .git|Excluded|.claude) continue ;; esac
+        $DRY_RUN_CMD ln -s "$dir" "$skills_dir/$name"
+      done
+    fi
   '';
 
   # User packages. Stable (pkgs) for system-coupled tooling; unstable
