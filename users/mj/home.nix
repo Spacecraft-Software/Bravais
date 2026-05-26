@@ -8,6 +8,7 @@
   gitway,
   kimi-cli,
   antigravity-nix,
+  construct,
   unstablePkgs,
   ...
 }:
@@ -15,27 +16,6 @@
 let
   # Foot requires hex colors without the '#' prefix
   h = c: builtins.substring 1 (builtins.stringLength c - 1) c;
-
-  # AI skills hub — ~/.agents/skills/ is populated by the syncSkills
-  # activation script (see below) on every HM switch, symlinking every
-  # skill directory from /spacecraft-software/construct/ live.
-  # Every AI tool dir gets a single <tool>/skills → ~/.agents/skills link
-  # so all tools share one canonical location.
-  # .gemini is intentionally omitted — Gemini reads ~/.agents/ directly.
-  aiSkillToolDirs = [
-    ".agent"
-    ".ai"
-    ".aichat"
-    ".claude"
-    ".codex"
-    ".copilot"
-    ".opencode"
-  ];
-  toolSkillsAliases = builtins.listToAttrs (map (tool: {
-    name = "${tool}/skills";
-    value.source = config.lib.file.mkOutOfStoreSymlink
-      "${config.home.homeDirectory}/.agents/skills";
-  }) aiSkillToolDirs);
 
   # Wallpaper daemon: upstream renamed swww → awww. On unstable both
   # exist (swww is a deprecation alias that warns); on stable 25.11
@@ -48,11 +28,32 @@ let
 in
 
 {
+  imports = [ construct.homeManagerModules.default ];
+
+  # Construct skill hub — installs all cross-platform skills from
+  # github:Spacecraft-Software/Construct into ~/.agents/skills/ (Nix store)
+  # and symlinks each agent harness to it. Run `skills-sync` then rebuild
+  # to pull the latest skill set.
+  # .gemini intentionally omitted — Gemini reads ~/.agents/ directly.
+  spacecraft.construct = {
+    enable = true;
+    enableGrok = true;
+    agentPaths = [
+      ".agent/skills"
+      ".ai/skills"
+      ".aichat/skills"
+      ".claude/skills"
+      ".codex/skills"
+      ".copilot/skills"
+      ".opencode/skills"
+    ];
+  };
+
   home.username = "mj";
   home.homeDirectory = "/home/mj";
   home.stateVersion = "25.11";
 
-  home.file = toolSkillsAliases // {
+  home.file = {
     # Steelbore project symlink
     "steelbore".source = config.lib.file.mkOutOfStoreSymlink "/spacecraft-software";
 
@@ -87,24 +88,6 @@ in
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
   '';
 
-  # Wipe and re-link ~/.agents/skills/ from /spacecraft-software/construct/
-  # on every HM switch. Symlinks every skill directory (any dir that is not
-  # .git, Excluded, or .claude) so agents always see the live construct repo.
-  home.activation.syncSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    skills_dir="${config.home.homeDirectory}/.agents/skills"
-    construct_dir="/spacecraft-software/construct"
-    $DRY_RUN_CMD rm -rf -- "$skills_dir"
-    $DRY_RUN_CMD mkdir -p -- "$skills_dir"
-    if [ -d "$construct_dir" ]; then
-      for dir in "$construct_dir"/*/; do
-        [ -d "$dir" ] || continue
-        name="$(basename -- "$dir")"
-        case "$name" in .git|Excluded|.claude) continue ;; esac
-        $DRY_RUN_CMD ln -s "$dir" "$skills_dir/$name"
-      done
-    fi
-  '';
-
   # User packages. Stable (pkgs) for system-coupled tooling; unstable
   # (unstablePkgs) for freshness-sensitive editors / FHS-wrapped IDEs /
   # AI CLIs / uv that iterate faster than the 6-month NixOS stable
@@ -126,7 +109,8 @@ in
     # AI CLIs from upstream flakes (no nixpkgs entry). Threaded via
     # specialArgs per CLAUDE.md constraint #7 — same idiom as gitway.
     kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default        # Moonshot's Kimi Code agent
-    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.default  # Antigravity 2
+    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide  # Antigravity IDE
+    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-cli  # Antigravity CLI (agy)
   ];
 
   # Programs
@@ -504,11 +488,11 @@ in
         }
 
 
-        # Pull latest AI skills from /spacecraft-software/construct (decoupled from rebuild)
+        # Update the Construct skill flake input — run rebuild afterwards to apply
         def skills-sync [] {
-          cd /spacecraft-software/construct
-          git pull --ff-only
-          print $"(date now | format date '%Y-%m-%d %H:%M:%S') skills synced"
+          cd /spacecraft-software/bravais
+          nix --extra-experimental-features "nix-command flakes" flake update construct
+          print $"(date now | format date '%Y-%m-%d %H:%M:%S') construct flake updated — rebuild to apply"
         }
 
         # User-local bins — appended so Nix store paths take precedence

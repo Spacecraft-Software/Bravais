@@ -485,8 +485,8 @@ brush
 - `services.displayManager.gdm.wayland = true`
 - `services.desktopManager.gnome.enable = true`
 
-**Extensions (14):**
-caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, tiling-shell, smart-tiling
+**Extensions (18):**
+  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, tiling-shell, smart-tiling, ollama-indicator, simple-tiling, warp-toggle, resource-monitor
 
 **Utilities:** gnome-tweaks, dconf-editor, gnome-extension-manager, gnome-browser-connector
 
