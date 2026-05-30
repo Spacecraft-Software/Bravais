@@ -191,6 +191,7 @@
     * **rsvim** 🦀 `[TUI 🎛️]` *(Vim implementation built from scratch in Rust)*
     * **amp** 🦀 `[TUI 🎛️]` *(Vi/Vim-inspired terminal text editor)*
     * **msedit** 🦀 `[TUI 🎛️]` *(Minimalist terminal text editor)*
+    * **Vim** ⚠️ `[TUI 🎛️]` *(The classic Vi IMproved text editor — Flatpak)*
 * **GUI**
     * **Zed** 🦀 `[GUI 🖱️]` *(High-performance, multiplayer code editor)*
     * **Lapce** 🦀 `[GUI 🖱️]` *(Lightning-fast, native IDE)*
