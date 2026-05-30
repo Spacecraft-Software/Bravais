@@ -63,6 +63,7 @@
       { appId = "com.visualstudio.code";              origin = "flathub"; }
       { appId = "dev.zed.Zed";                        origin = "flathub"; }
       { appId = "io.github.shiftey.Desktop";          origin = "flathub"; }  # GitHub Desktop
+      { appId = "org.vim.Vim";                        origin = "flathub"; }
 
       # ── System & Utilities ─────────────────────────────────────────────────
       { appId = "com.daidouji.oneko";                 origin = "flathub"; }  # Desktop cat
