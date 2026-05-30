@@ -130,6 +130,8 @@ in
         gpg.ssh.program = "${gitway.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/gitway-keygen";
         commit.gpgsign = true;
         init.defaultBranch = "main";
+        "credential.https://github.com".helper = ["" "!${pkgs.gh}/bin/gh auth git-credential"];
+        "credential.https://gist.github.com".helper = ["" "!${pkgs.gh}/bin/gh auth git-credential"];
       };
     };
 
