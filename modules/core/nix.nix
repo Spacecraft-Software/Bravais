@@ -29,6 +29,15 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # nix-ld — run unpatched dynamic binaries on NixOS by providing a
+  # loader and common libraries that FHS binaries expect at build time.
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    zlib
+    openssl
+    stdenv.cc.cc.lib
+  ];
+
   # Overlays
   # The claude-code overlay was dropped — claude-code now comes from
   # nixpkgs-unstable via specialArgs (see flake.nix mkBravais and
