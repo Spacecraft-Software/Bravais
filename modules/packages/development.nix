@@ -15,7 +15,7 @@
       delta                      # Rust — Syntax-highlighting pager
       jujutsu                    # Rust — Git-compatible VCS (jj)
       gh                         # Go — GitHub CLI
-      github-desktop
+      # github-desktop → Flatpak: io.github.shiftey.Desktop (already declared)
 
       # Forgejo (self-hosted Git)
       forgejo                    # Go — Git server
@@ -60,8 +60,8 @@
       nixfmt                     # Rust — Nix formatter
       cachix
       nix
-      guix
-      emacsPackages.guix
+      # guix
+      # emacsPackages.guix
     ];
 
     # Git configuration

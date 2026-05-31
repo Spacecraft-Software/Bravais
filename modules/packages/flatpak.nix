@@ -98,6 +98,22 @@
       { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
       { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
 
+      # ── Browsers ───────────────────────────────────────────────────────────
+      { appId = "com.brave.Browser";                  origin = "flathub"; }
+      { appId = "io.gitlab.librewolf-community.librewolf"; origin = "flathub"; }
+
+      # ── Multimedia ─────────────────────────────────────────────────────────
+      { appId = "org.videolan.VLC";                   origin = "flathub"; }
+
+      # ── Office ─────────────────────────────────────────────────────────────
+      { appId = "org.libreoffice.LibreOffice";        origin = "flathub"; }
+      { appId = "org.onlyoffice.desktopeditors";      origin = "flathub"; }
+
+      # ── Knowledge & Communication ──────────────────────────────────────────
+      { appId = "com.affine.AFFiNE";                  origin = "flathub"; }
+      { appId = "io.appflowy.AppFlowy";               origin = "flathub"; }
+      { appId = "de.tutao.tutanota";                  origin = "flathub"; }
+
       # ── Productivity ───────────────────────────────────────────────────────
       { appId = "io.github.Qalculate";                origin = "flathub"; }
       { appId = "org.kde.yakuake";                    origin = "flathub"; }

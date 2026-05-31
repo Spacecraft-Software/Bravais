@@ -13,8 +13,8 @@
 
     environment.systemPackages = with pkgs; [
       google-chrome
-      brave
-      librewolf
+      # brave → Flatpak: com.brave.Browser (Chromium source build, too large for march configs)
+      # librewolf → Flatpak: io.gitlab.librewolf-community.librewolf (Firefox source build)
     ];
   };
 }

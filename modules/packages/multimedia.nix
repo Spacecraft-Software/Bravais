@@ -11,7 +11,7 @@
     environment.systemPackages = with pkgs; [
       # Video Players
       mpv
-      vlc
+      # vlc → Flatpak: org.videolan.VLC (large source build on march configs)
       cosmic-player              # Rust — COSMIC player
 
       # Audio Players (Rust preferred)

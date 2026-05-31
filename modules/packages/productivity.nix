@@ -10,21 +10,21 @@
   config = lib.mkIf config.steelbore.packages.productivity.enable {
     environment.systemPackages = with pkgs; [
       # Knowledge Management (Rust preferred)
-      appflowy                   # Rust — Open source Notion
-      affine                     # Rust — Knowledge base
+      # appflowy → Flatpak: io.appflowy.AppFlowy
+      # affine → Flatpak: com.affine.AFFiNE
       nb                         # CLI note-taking & knowledge base
 
-      # Office Suites
-      libreoffice-fresh
-      onlyoffice-desktopeditors
+      # Office Suites — moved to Flatpak (libreoffice-fresh, onlyoffice-desktopeditors)
+      # libreoffice-fresh → Flatpak: org.libreoffice.LibreOffice
+      # onlyoffice-desktopeditors → Flatpak: org.onlyoffice.desktopeditors
 
       # Utilities
-      qalculate-gtk
+      # qalculate-gtk
 
       # Communication (Rust preferred)
-fractal                    # Rust — Matrix GUI
+      fractal                    # Rust — Matrix GUI
       newsflash                  # Rust — RSS reader
-      tutanota-desktop
+      # tutanota-desktop → Flatpak: de.tutao.tutanota
       onedriver                  # Go — OneDrive
     ];
   };
