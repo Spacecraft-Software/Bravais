@@ -17,7 +17,7 @@ Bravais is a flake-based NixOS configuration implementing the Spacecraft Softwar
 - Opt-in modularity via `lib.mkEnableOption` in the `spacecraft.*` namespace
 - Steelbore Color Palette applied universally to all visual surfaces
 - Self-sufficient flake configuration (no external dependencies beyond nixpkgs, home-manager, nix-flatpak, and gitway)
-- Dual-channel support (stable nixos-25.11 / unstable rolling) with four x86-64 microarchitecture profiles (v1-v4)
+- Dual-channel support (stable nixos-26.05 / unstable rolling) with four x86-64 microarchitecture profiles (v1-v4)
 - 14+ terminal emulators, all themed with the Steelbore palette
 - Declarative Flatpak management via nix-flatpak
 - Podman (not Docker) with runc as default runtime and Youki (Rust) available
@@ -139,7 +139,7 @@ Bravais supports two nixpkgs channels, selectable per build:
 
 | Channel    | nixpkgs Branch    | Home Manager Branch | Stability |
 |------------|-------------------|---------------------|-----------|
-| `stable`   | `nixos-25.11`     | `release-25.11`     | Tested    |
+| `stable`   | `nixos-26.05`     | `release-26.05`     | Tested    |
 | `unstable` | `nixos-unstable`  | Latest              | Rolling   |
 
 ### 2.5 Microarchitecture Profiles
@@ -167,8 +167,8 @@ Ten `nixosConfigurations` are generated (5 stable + 5 unstable):
 
 | Input                    | URL                                                    | Follows        |
 |--------------------------|--------------------------------------------------------|----------------|
-| `nixpkgs`                | `github:nixos/nixpkgs/nixos-25.11`                    | --             |
-| `home-manager`           | `github:nix-community/home-manager/release-25.11`     | `nixpkgs`      |
+| `nixpkgs`                | `github:nixos/nixpkgs/nixos-26.05`                    | --             |
+| `home-manager`           | `github:nix-community/home-manager/release-26.05`     | `nixpkgs`      |
 | `nixpkgs-unstable`       | `github:nixos/nixpkgs/nixos-unstable`                 | --             |
 | `home-manager-unstable`  | `github:nix-community/home-manager`                   | `nixpkgs-unstable` |
 | `nix-flatpak`            | `github:gmodena/nix-flatpak`                          | --             |
@@ -326,7 +326,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **DNS-over-TLS (DoT):** Enforced (`DNSOverTLS=true` — refuses plaintext)
 - **DNSSEC:** Enforced (`DNSSEC=true` — drops responses that fail validation)
 - **Routing:** Global `~.` Domains entry forces every query through the global DNS list, ignoring link-specific DNS pushed by DHCP
-- **Channel portability:** Schema differs between stable 25.11 (legacy `services.resolved.{dnssec,dnsovertls,...}` flags) and unstable (renamed to `services.resolved.settings.Resolve.*`); module uses an `options.services.resolved ? settings` check to pick the right form per channel and evaluates clean on all 10 mkBravais variants
+- **Channel portability:** Schema differs between stable 26.05 (legacy `services.resolved.{dnssec,dnsovertls,...}` flags) and unstable (renamed to `services.resolved.settings.Resolve.*`); module uses an `options.services.resolved ? settings` check to pick the right form per channel and evaluates clean on all 10 mkBravais variants
 
 ---
 
@@ -872,7 +872,7 @@ runtime = "runc"
 
 - **Username:** mj
 - **Home:** `/home/mj`
-- **State version:** 25.11
+- **State version:** 26.05
 - **Symlink:** `~/steelbore` -> `/spacecraft-software` (out-of-store symlink; `/steelbore/` legacy symlink farm still resolves)
 
 ### 13.2 Keyboard Layout

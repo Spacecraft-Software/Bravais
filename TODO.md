@@ -8,9 +8,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Establish git repository structure
 - [✓] Create `flake.nix` entry point with all inputs
-- [✓] Configure stable nixpkgs (`nixos-25.11`)
+- [✓] Configure stable nixpkgs (`nixos-26.05`)
 - [✓] Configure unstable nixpkgs channel (`nixos-unstable`)
-- [✓] Configure home-manager input (stable `release-25.11`, follows nixpkgs)
+- [✓] Configure home-manager input (stable `release-26.05`, follows nixpkgs)
 - [✓] Configure home-manager-unstable input (follows nixpkgs-unstable)
 - [✓] Configure nix-flatpak input
 - [✓] Configure gitway input (`github:Spacecraft-Software/Gitway`, tracks `main`; threaded via `specialArgs` / `extraSpecialArgs`)
@@ -284,7 +284,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ### User (`users/mj/`)
 
 - [✓] **`default.nix`**: Define user account
-- [✓] **`home.nix`**: Set username, home directory, stateVersion 25.11
+- [✓] **`home.nix`**: Set username, home directory, stateVersion 26.05
 - [✓] **`home.nix`**: Create `~/steelbore` symlink to `/spacecraft-software`
 - [✓] **`home.nix`**: Configure keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`home.nix`**: Set session variables (`EDITOR`, `VISUAL` to msedit, `SPACECRAFT_THEME`)

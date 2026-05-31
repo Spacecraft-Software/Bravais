@@ -51,7 +51,7 @@ in
 
   home.username = "mj";
   home.homeDirectory = "/home/mj";
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 
   home.file = {
     # Steelbore project symlink

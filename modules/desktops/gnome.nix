@@ -16,7 +16,7 @@
     # Enable GNOME
     services.xserver.enable = true;
     services.displayManager.gdm.enable = lib.mkDefault false; # Use greetd instead
-    services.displayManager.gdm.wayland = true;
+    # services.displayManager.gdm.wayland removed in GNOME 50 (always Wayland)
     services.desktopManager.gnome.enable = true;
 
     # GNOME packages

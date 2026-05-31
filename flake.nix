@@ -3,12 +3,12 @@
   description = "Bravais — A Steelbore OS NixOS Distribution";
 
   inputs = {
-    # Core (Stable — 25.11)
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    # Core (Stable — 26.05)
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
 
     # Home Manager (Stable)
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -100,7 +100,7 @@
       # Usage:  nixos-rebuild switch --flake .#bravais-v3
       #         nixos-rebuild switch --flake .#bravais-unstable-v3
       #
-      #   channel — "stable" (25.11) or "unstable" (rolling)
+      #   channel — "stable" (26.05) or "unstable" (rolling)
       #   v1 — baseline x86-64 (SSE2)        broadest compatibility
       #   v2 — SSE4.2 / POPCNT / CX16        ~2008+ CPUs
       #   v3 — AVX2 / BMI1/2 / FMA / MOVBE   ~2013+ CPUs (CachyOS default)
@@ -157,7 +157,7 @@
     in
     {
       nixosConfigurations = {
-        # ── Stable (nixos-25.11) ────────────────────────────────────────────
+        # ── Stable (nixos-26.05) ────────────────────────────────────────────
         # Default — AVX-512 (same as bravais-v4)
         bravais    = mkBravais { marchLevel = "v4"; };
 
