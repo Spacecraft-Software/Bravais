@@ -519,7 +519,7 @@ in
         };
         font = {
           normal = {
-            family = "JetBrains Mono";
+            family = "Inconsolata";
             style = "Regular";
           };
           size = 10.0;
@@ -742,7 +742,7 @@ in
       $redOxide:    ${steelborePalette.redOxide};
 
       * {
-          font-family: "Share Tech Mono", "JetBrains Mono", monospace;
+          font-family: "Share Tech Mono", "Inconsolata", monospace;
           font-size: 13px;
           font-weight: bold;
       }
@@ -1001,7 +1001,7 @@ in
 
     "ironbar/style.css".text = ''
       * {
-          font-family: "Share Tech Mono", "JetBrains Mono", monospace;
+          font-family: "Share Tech Mono", "Inconsolata", monospace;
           font-size: 14px;
           transition: none;
       }
@@ -1045,7 +1045,7 @@ in
       local wezterm = require 'wezterm'
       local config = {}
 
-      config.font = wezterm.font 'JetBrains Mono'
+      config.font = wezterm.font 'Inconsolata'
       config.font_size = 12.0
       config.window_background_opacity = 0.95
       config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
@@ -1110,19 +1110,19 @@ in
       size = 14
 
       [fonts.regular]
-      family = "JetBrains Mono"
+      family = "Inconsolata"
       weight = 400
 
       [fonts.bold]
-      family = "JetBrains Mono"
+      family = "Inconsolata"
       weight = 700
 
       [fonts.italic]
-      family = "JetBrains Mono"
+      family = "Inconsolata"
       weight = 400
 
       [fonts.bold-italic]
-      family = "JetBrains Mono"
+      family = "Inconsolata"
       weight = 700
 
       [colors]
@@ -1163,7 +1163,7 @@ in
     "ghostty/config".text = ''
       # Steelbore Ghostty User Configuration
 
-      font-family = JetBrains Mono
+      font-family = Inconsolata
       font-size = 12
 
       background-opacity = 0.95
@@ -1205,7 +1205,7 @@ in
       # Steelbore Foot User Configuration
 
       [main]
-      font=JetBrains Mono:size=12
+      font=Inconsolata:size=12
       shell=${pkgs.nushell}/bin/nu
       term=xterm-256color
 
@@ -1241,7 +1241,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
-      FontName=JetBrains Mono 12
+      FontName=Inconsolata 12
       MiscDefaultGeometry=160x48
       RunCustomCommand=TRUE
       CustomCommand=${pkgs.nushell}/bin/nu
@@ -1430,7 +1430,7 @@ in
 
       [Appearance]
       ColorScheme=Steelbore
-      Font=JetBrains Mono,12,-1,5,50,0,0,0,0,0
+      Font=Inconsolata,12,-1,5,50,0,0,0,0,0
 
       [General]
       Command=${pkgs.nushell}/bin/nu
@@ -1458,7 +1458,7 @@ in
       theme = "spacecraft-software"
 
       [font]
-      family = "JetBrains Mono"
+      family = "Inconsolata"
       size = 13
 
       [buffer.timestamp]
@@ -1670,7 +1670,7 @@ in
   # XTerm Xresources (loaded by xrdb on X session start)
   xresources.properties = {
     "XTerm*termName"               = "xterm-256color";
-    "XTerm*faceName"               = "JetBrains Mono";
+    "XTerm*faceName"               = "Inconsolata";
     "XTerm*faceSize"               = 12;
     "XTerm*loginShell"             = true;
     "XTerm*scrollBar"              = false;
@@ -1716,15 +1716,15 @@ in
       icon-theme          = "Papirus-Dark";
       cursor-theme        = "Bibata-Modern-Classic";
       cursor-size         = 24;
-      font-name           = "Orbitron 11";
-      document-font-name  = "Orbitron 11";
-      monospace-font-name = "JetBrains Mono 11";
+      font-name           = "Noto Sans 11";
+      document-font-name  = "Noto Sans 11";
+      monospace-font-name = "Inconsolata 11";
     };
 
     # ── Ptyxis ──────────────────────────────────────────────────────────────
     "org/gnome/Ptyxis" = {
       default-profile-uuid = "steelbore";
-      font-name = "JetBrains Mono 12";
+      font-name = "Inconsolata 12";
       use-system-font = false;
     };
     "org/gnome/Ptyxis/Profiles/steelbore" = {
@@ -1759,7 +1759,7 @@ in
     "org/gnome/Console" = {
       theme = "night";
       use-system-font = false;
-      custom-font = "JetBrains Mono 12";
+      custom-font = "Inconsolata 12";
     };
   };
 
@@ -1797,7 +1797,7 @@ in
       size = 24;
     };
     font = {
-      name = "Orbitron";
+      name = "Noto Sans";
       size = 11;
     };
   };

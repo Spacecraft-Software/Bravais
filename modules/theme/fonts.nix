@@ -4,11 +4,11 @@
 
 {
   fonts.packages = with pkgs; [
-    # UI Headers
-    orbitron
+    # UI / General
+    noto-fonts
 
     # Code / Terminal
-    jetbrains-mono
+    inconsolata
 
     # Nerd Fonts (icons)
     nerd-fonts.jetbrains-mono
@@ -31,8 +31,8 @@
   ];
 
   fonts.fontconfig.defaultFonts = {
-    monospace = [ "JetBrains Mono" "CaskaydiaMono Nerd Font" "Share Tech Mono" ];
-    sansSerif = [ "Orbitron" ];
-    serif = [ "Orbitron" ];
+    monospace = [ "Inconsolata" "CaskaydiaMono Nerd Font" "Share Tech Mono" ];
+    sansSerif = [ "Noto Sans" ];
+    serif = [ "Noto Sans" ];
   };
 }
