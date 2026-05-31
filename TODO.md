@@ -278,7 +278,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Enable all spacecraft desktop modules (gnome, cosmic, plasma, niri, leftwm)
 - [✓] **`default.nix`**: Enable all spacecraft hardware modules (fingerprint, intel)
 - [✓] **`default.nix`**: Enable all spacecraft package modules (12 modules including flatpak)
-- [✓] **`default.nix`**: Set `stateVersion = "25.11"`
+- [✓] **`default.nix`**: Set `stateVersion = "26.05"`
 - [✓] **`hardware.nix`**: Import from `modulesPath`, configure root (ext4) and boot (vfat) filesystems
 
 ### User (`users/mj/`)
