@@ -45,7 +45,7 @@
 
       # Cloud CLIs
       google-cloud-sdk           # Python — Google Cloud SDK
-      azure-cli                  # Python — Azure CLI
+      # azure-cli                  # Python — Azure CLI — massive dependency tree, slow to fetch from cache
       awscli                     # Python — AWS CLI
 
       # Languages
