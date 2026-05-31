@@ -15,6 +15,7 @@
 
       # AI Coding Assistants (Other)
       opencode                   # Go — Coding agent
+      # kilocode-cli              # Coding agent (Kilo Code) — not in nixpkgs
       codex
       github-copilot-cli
       gpt-cli

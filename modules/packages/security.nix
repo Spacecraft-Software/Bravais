@@ -40,6 +40,7 @@
 
       # Secure Boot
       sbctl                      # Rust — Secure Boot manager
+      hydra-check                # Nix/Hydra build status checker
     ];
   };
 }
