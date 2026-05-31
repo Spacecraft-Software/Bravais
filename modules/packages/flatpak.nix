@@ -100,7 +100,7 @@
 
       # ── Browsers ───────────────────────────────────────────────────────────
       { appId = "com.brave.Browser";                  origin = "flathub"; }
-      { appId = "io.gitlab.librewolf-community.librewolf"; origin = "flathub"; }
+      { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
 
       # ── Multimedia ─────────────────────────────────────────────────────────
       { appId = "org.videolan.VLC";                   origin = "flathub"; }
@@ -110,9 +110,9 @@
       { appId = "org.onlyoffice.desktopeditors";      origin = "flathub"; }
 
       # ── Knowledge & Communication ──────────────────────────────────────────
-      { appId = "com.affine.AFFiNE";                  origin = "flathub"; }
+      # com.affine.AFFiNE — not on Flathub; use web app or check affine.pro for alternative install
       { appId = "io.appflowy.AppFlowy";               origin = "flathub"; }
-      { appId = "de.tutao.tutanota";                  origin = "flathub"; }
+      { appId = "com.tutanota.Tutanota";               origin = "flathub"; }
 
       # ── Productivity ───────────────────────────────────────────────────────
       { appId = "io.github.Qalculate";                origin = "flathub"; }

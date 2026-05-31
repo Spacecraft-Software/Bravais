@@ -20,14 +20,14 @@
     programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
 
     environment.systemPackages = with pkgs; [
-      kdePackages.plasma-browser-integration
+      # kdePackages.plasma-browser-integration
       kdePackages.kdeconnect-kde
       kdePackages.plasma-systemmonitor
       kdePackages.filelight
       kdePackages.kcalc
       kdePackages.ark
       kdePackages.kate
-      kdePackages.xdg-desktop-portal-kde
+      # kdePackages.xdg-desktop-portal-kde
 
       # Wallet
       kdePackages.kwalletmanager  # Wallet management GUI

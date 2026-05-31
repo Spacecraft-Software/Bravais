@@ -21,7 +21,7 @@
       gpt-cli
       gorilla-cli                # Python — LLMs for your CLI (Gorilla LLM)
       llm                        # Python — Simon Willison's universal LLM CLI
-      mcp-nixos
+      # mcp-nixos
       # task-master-ai is disabled — its npm build is broken in nixpkgs (lockfile
       # omits @biomejs/biome and esbuild platform-specific optionalDependencies,
       # which `npm ci` refuses to ignore even with --omit=optional or fetcher v2).

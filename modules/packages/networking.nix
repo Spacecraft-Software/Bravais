@@ -30,7 +30,7 @@
       # GUI Applications
       sniffnet                   # Rust — Network monitor
       mullvad-vpn                # Rust — VPN client
-      rqbit                      # Rust — BitTorrent
+      # rqbit                      # Rust — BitTorrent
 
       # Download Managers
       aria2

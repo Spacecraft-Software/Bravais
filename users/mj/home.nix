@@ -742,7 +742,7 @@ in
       $redOxide:    ${steelborePalette.redOxide};
 
       * {
-          font-family: "Share Tech Mono", "Inconsolata", monospace;
+          font-family: "Inconsolata", monospace;
           font-size: 13px;
           font-weight: bold;
       }
@@ -1001,7 +1001,7 @@ in
 
     "ironbar/style.css".text = ''
       * {
-          font-family: "Share Tech Mono", "Inconsolata", monospace;
+          font-family: "Inconsolata", monospace;
           font-size: 14px;
           transition: none;
       }
