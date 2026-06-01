@@ -41,6 +41,23 @@
         "type": "github"
       }
     },
+    "doas-rs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780299408,
+        "narHash": "sha256-V2PkAd2pTHID/+rGeglyDwQ9/HkZCzWYgvHCdqyU6rY=",
+        "path": "/spacecraft-software/doas-rs",
+        "type": "path"
+      },
+      "original": {
+        "path": "/spacecraft-software/doas-rs",
+        "type": "path"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -163,6 +180,23 @@
         "type": "github"
       }
     },
+    "loran": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780299392,
+        "narHash": "sha256-q+rh5vql5bJDWjdySKkQrJmKpo155k/++Z5miQZweGs=",
+        "path": "/spacecraft-software/loran",
+        "type": "path"
+      },
+      "original": {
+        "path": "/spacecraft-software/loran",
+        "type": "path"
+      }
+    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1777402031,
@@ -260,17 +294,72 @@
         "type": "github"
       }
     },
+    "rapg": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "path": "./flakes/rapg",
+        "type": "path"
+      },
+      "original": {
+        "path": "./flakes/rapg",
+        "type": "path"
+      },
+      "parent": []
+    },
+    "reel": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780299428,
+        "narHash": "sha256-nlsqgBthci7P/O/jo3AmzWnZr25CphLEgQqDuK4VT5g=",
+        "path": "/spacecraft-software/reel",
+        "type": "path"
+      },
+      "original": {
+        "path": "/spacecraft-software/reel",
+        "type": "path"
+      }
+    },
+    "rget": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780299473,
+        "narHash": "sha256-LqETewaCIBoDt/6xgrSU2vBjnbMu4AsbTMDXTLXEM08=",
+        "path": "/spacecraft-software/rget",
+        "type": "path"
+      },
+      "original": {
+        "path": "/spacecraft-software/rget",
+        "type": "path"
+      }
+    },
     "root": {
       "inputs": {
         "antigravity-nix": "antigravity-nix",
         "construct": "construct",
+        "doas-rs": "doas-rs",
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
         "kimi-cli": "kimi-cli",
+        "loran": "loran",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-unstable": "nixpkgs-unstable"
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "rapg": "rapg",
+        "reel": "reel",
+        "rget": "rget"
       }
     },
     "systems": {

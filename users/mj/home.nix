@@ -7,6 +7,10 @@
   steelborePalette,
   gitway,
   construct,
+  loran,
+  doas-rs,
+  reel,
+  rget,
   unstablePkgs,
   ...
 }:
@@ -85,6 +89,16 @@ in
   home.activation.tldrUpdate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
   '';
+
+  # User packages — Spacecraft Software's own Rust apps via flake inputs.
+  # doas-rs runs without setuid here (HM cannot grant it); for functional
+  # privilege escalation, declare via security.wrappers at the system level.
+  home.packages = [
+    loran.packages.${pkgs.stdenv.hostPlatform.system}.default      # Agent-native reference manual
+    doas-rs.packages.${pkgs.stdenv.hostPlatform.system}.default    # Memory-safe doas
+    reel.packages.${pkgs.stdenv.hostPlatform.system}.default       # Multi-protocol transfer engine
+    rget.packages.${pkgs.stdenv.hostPlatform.system}.default       # Async parallel downloader
+  ];
 
   # Programs
   programs = {

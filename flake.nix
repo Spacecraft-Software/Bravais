@@ -63,6 +63,20 @@
     # Populate hashes in flakes/rapg/flake.nix before first build.
     rapg.url = "path:./flakes/rapg";
     rapg.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # Spacecraft Software's own Rust apps — path inputs until each flake.nix
+    # is committed/pushed, then switch to github:Spacecraft-Software/<Repo>.
+    loran.url = "path:/spacecraft-software/loran";
+    loran.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    doas-rs.url = "path:/spacecraft-software/doas-rs";
+    doas-rs.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    reel.url = "path:/spacecraft-software/reel";
+    reel.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    rget.url = "path:/spacecraft-software/rget";
+    rget.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -78,6 +92,10 @@
       antigravity-nix,
       construct,
       rapg,
+      loran,
+      doas-rs,
+      reel,
+      rget,
       ...
     }:
     let
@@ -132,7 +150,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg loran doas-rs reel rget unstablePkgs; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -155,7 +173,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg loran doas-rs reel rget unstablePkgs; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];
