@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Development Tools and Languages
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, ... }:
 
 {
   options.steelbore.packages.development = {
@@ -8,7 +8,7 @@
   };
 
   config = lib.mkIf config.steelbore.packages.development.enable {
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = (with pkgs; [
       # Git & Version Control (Rust preferred)
       git
       gitui                      # Rust — TUI for Git
@@ -60,9 +60,12 @@
       nixfmt                     # Rust — Nix formatter
       cachix
       nix
+      nix-prefetch-github        # Haskell — Prefetch GitHub sources for Nix
       # guix
       # emacsPackages.guix
-    ];
+    ]) ++ (with unstablePkgs; [
+      uv                         # Rust — Python package + project manager
+    ]);
 
     # Git configuration
     programs.git = {

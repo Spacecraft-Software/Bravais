@@ -57,6 +57,12 @@
     # ~/.agents/skills/ and symlinks every agent harness to it.
     construct.url = "github:Spacecraft-Software/Construct";
     construct.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # rapg — local-first secret manager for the AI-agent era.
+    # Wrapper flake lives at flakes/rapg/flake.nix (upstream has no flake).
+    # Populate hashes in flakes/rapg/flake.nix before first build.
+    rapg.url = "path:./flakes/rapg";
+    rapg.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -71,6 +77,7 @@
       kimi-cli,
       antigravity-nix,
       construct,
+      rapg,
       ...
     }:
     let
@@ -125,7 +132,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg unstablePkgs; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -148,7 +155,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg unstablePkgs; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];

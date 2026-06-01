@@ -6,8 +6,6 @@
   lib,
   steelborePalette,
   gitway,
-  kimi-cli,
-  antigravity-nix,
   construct,
   unstablePkgs,
   ...
@@ -87,31 +85,6 @@ in
   home.activation.tldrUpdate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
   '';
-
-  # User packages. Stable (pkgs) for system-coupled tooling; unstable
-  # (unstablePkgs) for freshness-sensitive editors / FHS-wrapped IDEs /
-  # AI CLIs / uv that iterate faster than the 6-month NixOS stable
-  # cadence. allowUnfree is set on the unstable import in flake.nix
-  # (covers vscode + cursor).
-  home.packages = (with pkgs; [
-    sequoia-chameleon-gnupg
-  ]) ++ (with unstablePkgs; [
-    uv                 # Python package + project manager
-    steam-run          # FHS environment for running Linux binaries
-    code-cursor-fhs    # Cursor editor (FHS variant)
-    kiro-fhs           # Kiro editor (FHS variant)
-    vscode-fhs         # VSCode (FHS variant)
-    zed-editor-fhs     # Zed editor (FHS variant)
-
-    # AI CLIs (kept here when they're unstable-only or freshness-tracked)
-    grok-cli           # xAI's Grok CLI agent
-  ]) ++ [
-    # AI CLIs from upstream flakes (no nixpkgs entry). Threaded via
-    # specialArgs per CLAUDE.md constraint #7 — same idiom as gitway.
-    kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default        # Moonshot's Kimi Code agent
-    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide  # Antigravity IDE
-    antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-cli  # Antigravity CLI (agy)
-  ];
 
   # Programs
   programs = {

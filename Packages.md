@@ -228,7 +228,6 @@
 * **AI Coding Agents**
     * **OpenAI Codex CLI** ⚠️ `[CLI ⌨️]` *(TypeScript - Official OpenAI local coding agent with MCP support)*
     * **MiniMax CLI** 🦀 `[CLI ⌨️]` *(Rust - Terminal-native AI coding assistant powered by MiniMax)*
-    * **grok-cli** ⚠️ `[CLI ⌨️]` *(TypeScript/Bun - Open-source conversational AI agent for xAI's Grok)*
     * **Kilo** ⚠️ `[CLI ⌨️]` *(TypeScript - Agentic engineering platform)*
     * **Kiro CLI** ⚠️ `[CLI ⌨️]` *(AI-native CLI designed to supercharge developer workflows)*
     * **Kimi-CLI** ⚠️ `[CLI ⌨️]` *(Command-line interface for Moonshot AI, specialized for long-context coding)*

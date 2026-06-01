@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — AI Coding Assistants and Tools
-{ config, lib, pkgs, unstablePkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, kimi-cli, antigravity-nix, ... }:
 
 {
   options.steelbore.packages.ai = {
@@ -21,7 +21,6 @@
       gpt-cli
       gorilla-cli                # Python — LLMs for your CLI (Gorilla LLM)
       llm                        # Python — Simon Willison's universal LLM CLI
-      # mcp-nixos
       # task-master-ai is disabled — its npm build is broken in nixpkgs (lockfile
       # omits @biomejs/biome and esbuild platform-specific optionalDependencies,
       # which `npm ci` refuses to ignore even with --omit=optional or fetcher v2).
@@ -39,11 +38,16 @@
       # Local LLM runtime
       ollama-cpu                 # Go — CPU-only Ollama (local LLM server)
     ])
-    # claude-code: always from nixpkgs-unstable via specialArgs threading.
-    ++ [ unstablePkgs.claude-code ];
+    # claude-code and mcp-nixos: always from nixpkgs-unstable via specialArgs threading.
+    ++ (with unstablePkgs; [
+      claude-code
+      mcp-nixos                  # Rust — MCP NixOS integration
+    ])
+    # AI CLIs from upstream flakes — threaded via specialArgs (CLAUDE.md constraint #7).
+    ++ [
+      kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default                         # Moonshot's Kimi Code agent
+      antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide   # Antigravity IDE
+      antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-cli   # Antigravity CLI (agy)
+    ];
   };
 }
-# grok-cli moved to users/mj/home.nix (unstable channel via HM) — it's
-# unstable-only at the moment (added to nixpkgs after 25.11 branched),
-# so HM-via-unstable is the right home rather than a stable-system
-# conditional include.

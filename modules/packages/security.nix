@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Security and Encryption Tools
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, rapg, ... }:
 
 {
   options.steelbore.packages.security = {
@@ -8,7 +8,7 @@
   };
 
   config = lib.mkIf config.steelbore.packages.security.enable {
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = (with pkgs; [
       # Encryption (Rust preferred)
       age                        # Rust — Modern encryption
       rage                       # Rust — age implementation
@@ -41,6 +41,10 @@
       # Secure Boot
       sbctl                      # Rust — Secure Boot manager
       hydra-check                # Nix/Hydra build status checker
+    ])
+    # Secret managers from upstream flakes
+    ++ [
+      rapg.packages.${pkgs.stdenv.hostPlatform.system}.default  # Go — AI-agent secret manager
     ];
   };
 }

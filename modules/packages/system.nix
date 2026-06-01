@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — System Utilities and Modern Unix Tools
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, ... }:
 
 {
   options.steelbore.packages.system = {
@@ -8,7 +8,7 @@
   };
 
   config = lib.mkIf config.steelbore.packages.system.enable {
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = (with pkgs; [
       # Modern Unix (Rust preferred)
       fd                         # Rust — find replacement
       ripgrep                    # Rust — grep replacement
@@ -81,7 +81,6 @@
       t-rec                      # Rust — Terminal recorder
 
       # Containers & Virtualization
-      # steam-run moved to users/mj/home.nix (unstable channel via HM).
       distrobox
       boxbuddy                   # Rust — Distrobox GUI
       host-spawn
@@ -110,12 +109,13 @@
 
       # ZFS
       zfs
-      # antigravity-fhs moved to users/mj/home.nix (unstable channel via HM).
 
       # Benchmarking
       phoronix-test-suite
       perf
-    ];
+    ]) ++ (with unstablePkgs; [
+      steam-run                  # FHS environment for running Linux binaries
+    ]);
 
     # Podman runtimes
     virtualisation.podman = {

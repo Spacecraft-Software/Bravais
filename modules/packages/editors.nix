@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Text Editors and IDEs
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, ... }:
 
 {
   options.steelbore.packages.editors = {
@@ -8,7 +8,7 @@
   };
 
   config = lib.mkIf config.steelbore.packages.editors.enable {
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = (with pkgs; [
       # Linting
       markdownlint-cli2           # Markdown linter
 
@@ -26,15 +26,19 @@
       mc                         # Midnight Commander
 
       # GUI Editors (Rust preferred)
-      # zed-editor-fhs moved to users/mj/home.nix (unstable channel via HM).
       lapce                      # Rust — Lightning fast
       neovide                    # Rust — Neovim GUI
       cosmic-edit                # Rust — COSMIC editor
 
       # GUI Editors (Standard)
       emacs-pgtk
-      # vscode-fhs moved to users/mj/home.nix (unstable channel via HM).
       gedit
-    ];
+    ]) ++ (with unstablePkgs; [
+      # GUI Editors (Unstable — FHS variants)
+      code-cursor-fhs            # Cursor AI editor
+      kiro-fhs                   # Kiro editor
+      vscode-fhs                 # VSCode
+      zed-editor-fhs             # Zed editor
+    ]);
   };
 }
