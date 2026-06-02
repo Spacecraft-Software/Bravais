@@ -68,8 +68,9 @@ in
 
   # Session variables
   home.sessionVariables = {
-    EDITOR = "${pkgs.msedit}/bin/edit";
-    VISUAL = "${pkgs.msedit}/bin/edit";
+    EDITOR  = "${pkgs.msedit}/bin/edit";
+    VISUAL  = "${pkgs.msedit}/bin/edit";
+    BROWSER = "flatpak run com.google.Chrome";
     STEELBORE_THEME = "true";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
@@ -563,6 +564,17 @@ in
   # SSH key loading happens lazily via the bash/brush rc snippet above on the
   # first interactive shell. A boot-time systemd user unit was tried but
   # failed silently against passphrase-protected keys without a TTY/SSH_ASKPASS.
+
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "text/html"                = "com.google.Chrome.desktop";
+      "x-scheme-handler/http"   = "com.google.Chrome.desktop";
+      "x-scheme-handler/https"  = "com.google.Chrome.desktop";
+      "x-scheme-handler/about"  = "com.google.Chrome.desktop";
+      "x-scheme-handler/unknown" = "com.google.Chrome.desktop";
+    };
+  };
 
   # XDG config files
   xdg.configFile = {
