@@ -126,7 +126,7 @@ in
       enable = true;
       bashrcExtra = ''
         export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
-        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin"
+        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin"
       '';
     };
 
@@ -483,7 +483,7 @@ in
         }
 
         # User-local bins — appended so Nix store paths take precedence
-        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin"])
+        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin" $"($env.HOME)/.opencode/bin"])
       '';
     };
 
@@ -788,7 +788,7 @@ in
       export SSH_AUTH_SOCK
 
       # User-local bins — appended so Nix store paths take precedence
-      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin"
+      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin"
       export PATH
 
       # Starship prompt
