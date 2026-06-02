@@ -63,7 +63,7 @@
       # ── Development ────────────────────────────────────────────────────────
       { appId = "com.jetbrains.RustRover";            origin = "flathub"; }
       { appId = "com.visualstudio.code";              origin = "flathub"; }
-      { appId = "dev.zed.Zed";                        origin = "flathub"; }
+      # { appId = "dev.zed.Zed";                        origin = "flathub"; }  # DISABLED — using pkgs.zed-editor instead
       { appId = "io.github.shiftey.Desktop";          origin = "flathub"; }  # GitHub Desktop
       { appId = "org.gnu.emacs";                      origin = "flathub"; }
       { appId = "org.vim.Vim";                        origin = "flathub"; }

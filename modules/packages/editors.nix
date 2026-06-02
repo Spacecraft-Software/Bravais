@@ -26,6 +26,7 @@
       mc                         # Midnight Commander
 
       # GUI Editors (Rust preferred)
+      zed-editor                 # Rust — GPU-accelerated editor
       lapce                      # Rust — Lightning fast
       neovide                    # Rust — Neovim GUI
       cosmic-edit                # Rust — COSMIC editor
@@ -38,7 +39,6 @@
       code-cursor-fhs            # Cursor AI editor
       kiro-fhs                   # Kiro editor
       # vscode-fhs → Flatpak: com.visualstudio.code
-      # zed-editor-fhs → Flatpak: dev.zed.Zed
     ]);
   };
 }
