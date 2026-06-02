@@ -46,7 +46,9 @@
 
       # ── Browsers ───────────────────────────────────────────────────────────
       { appId = "app.zen_browser.zen";               origin = "flathub"; }
+      { appId = "com.google.Chrome";                  origin = "flathub"; }
       { appId = "com.microsoft.Edge";                origin = "flathub"; }
+      { appId = "org.mozilla.firefox";               origin = "flathub"; }
       { appId = "com.opera.Opera";                   origin = "flathub"; }
 
       # ── Communication ──────────────────────────────────────────────────────
@@ -63,6 +65,7 @@
       { appId = "com.visualstudio.code";              origin = "flathub"; }
       { appId = "dev.zed.Zed";                        origin = "flathub"; }
       { appId = "io.github.shiftey.Desktop";          origin = "flathub"; }  # GitHub Desktop
+      { appId = "org.gnu.emacs";                      origin = "flathub"; }
       { appId = "org.vim.Vim";                        origin = "flathub"; }
 
       # ── System & Utilities ─────────────────────────────────────────────────
@@ -103,6 +106,7 @@
       { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
 
       # ── Multimedia ─────────────────────────────────────────────────────────
+      { appId = "org.gimp.GIMP";                      origin = "flathub"; }
       { appId = "org.videolan.VLC";                   origin = "flathub"; }
 
       # ── Office ─────────────────────────────────────────────────────────────

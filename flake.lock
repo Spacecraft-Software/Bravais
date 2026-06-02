@@ -48,8 +48,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1780299408,
-        "narHash": "sha256-V2PkAd2pTHID/+rGeglyDwQ9/HkZCzWYgvHCdqyU6rY=",
+        "lastModified": 1780301439,
+        "narHash": "sha256-nT/3inRpuKdwtR5BaM5RBYsxh/qQc3J0gTcMzfjaUXs=",
         "path": "/spacecraft-software/doas-rs",
         "type": "path"
       },
@@ -156,47 +156,6 @@
         "type": "github"
       }
     },
-    "kimi-cli": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ],
-        "pyproject-build-systems": "pyproject-build-systems",
-        "pyproject-nix": "pyproject-nix",
-        "systems": "systems_3",
-        "uv2nix": "uv2nix"
-      },
-      "locked": {
-        "lastModified": 1778572478,
-        "narHash": "sha256-rV/J/+fsiPfssRBSr0KAT0xzy/TCNJCbI0rf30gDprs=",
-        "owner": "MoonshotAI",
-        "repo": "kimi-cli",
-        "rev": "83cfb5d3db36b50cda892d9739aaf9a29d3bc22c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "MoonshotAI",
-        "repo": "kimi-cli",
-        "type": "github"
-      }
-    },
-    "loran": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780299392,
-        "narHash": "sha256-q+rh5vql5bJDWjdySKkQrJmKpo155k/++Z5miQZweGs=",
-        "path": "/spacecraft-software/loran",
-        "type": "path"
-      },
-      "original": {
-        "path": "/spacecraft-software/loran",
-        "type": "path"
-      }
-    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1777402031,
@@ -244,56 +203,6 @@
         "type": "github"
       }
     },
-    "pyproject-build-systems": {
-      "inputs": {
-        "nixpkgs": [
-          "kimi-cli",
-          "nixpkgs"
-        ],
-        "pyproject-nix": [
-          "kimi-cli",
-          "pyproject-nix"
-        ],
-        "uv2nix": [
-          "kimi-cli",
-          "uv2nix"
-        ]
-      },
-      "locked": {
-        "lastModified": 1763662255,
-        "narHash": "sha256-4bocaOyLa3AfiS8KrWjZQYu+IAta05u3gYZzZ6zXbT0=",
-        "owner": "pyproject-nix",
-        "repo": "build-system-pkgs",
-        "rev": "042904167604c681a090c07eb6967b4dd4dae88c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pyproject-nix",
-        "repo": "build-system-pkgs",
-        "type": "github"
-      }
-    },
-    "pyproject-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "kimi-cli",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1764134915,
-        "narHash": "sha256-xaKvtPx6YAnA3HQVp5LwyYG1MaN4LLehpQI8xEdBvBY=",
-        "owner": "pyproject-nix",
-        "repo": "pyproject.nix",
-        "rev": "2c8df1383b32e5443c921f61224b198a2282a657",
-        "type": "github"
-      },
-      "original": {
-        "owner": "pyproject-nix",
-        "repo": "pyproject.nix",
-        "type": "github"
-      }
-    },
     "rapg": {
       "inputs": {
         "nixpkgs": [
@@ -310,40 +219,6 @@
       },
       "parent": []
     },
-    "reel": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780299428,
-        "narHash": "sha256-nlsqgBthci7P/O/jo3AmzWnZr25CphLEgQqDuK4VT5g=",
-        "path": "/spacecraft-software/reel",
-        "type": "path"
-      },
-      "original": {
-        "path": "/spacecraft-software/reel",
-        "type": "path"
-      }
-    },
-    "rget": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780299473,
-        "narHash": "sha256-LqETewaCIBoDt/6xgrSU2vBjnbMu4AsbTMDXTLXEM08=",
-        "path": "/spacecraft-software/rget",
-        "type": "path"
-      },
-      "original": {
-        "path": "/spacecraft-software/rget",
-        "type": "path"
-      }
-    },
     "root": {
       "inputs": {
         "antigravity-nix": "antigravity-nix",
@@ -352,14 +227,11 @@
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
-        "kimi-cli": "kimi-cli",
-        "loran": "loran",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "rapg": "rapg",
-        "reel": "reel",
-        "rget": "rget"
+        "whatshell": "whatshell"
       }
     },
     "systems": {
@@ -392,44 +264,21 @@
         "type": "github"
       }
     },
-    "systems_3": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "uv2nix": {
+    "whatshell": {
       "inputs": {
         "nixpkgs": [
-          "kimi-cli",
-          "nixpkgs"
-        ],
-        "pyproject-nix": [
-          "kimi-cli",
-          "pyproject-nix"
+          "nixpkgs-unstable"
         ]
       },
       "locked": {
-        "lastModified": 1766021660,
-        "narHash": "sha256-UUfz7qWB1Rb2KjGVCimt//Jncv3TgJwffPqbzqpkmgY=",
-        "owner": "pyproject-nix",
-        "repo": "uv2nix",
-        "rev": "19fa99be3409f55ec05e823c66c9769df7a8dd17",
-        "type": "github"
+        "lastModified": 1780301502,
+        "narHash": "sha256-pix75Wbcq6ry71d1fAwmq6/VxwvUwriQV9s0MQPUZ6c=",
+        "path": "/spacecraft-software/shell",
+        "type": "path"
       },
       "original": {
-        "owner": "pyproject-nix",
-        "repo": "uv2nix",
-        "type": "github"
+        "path": "/spacecraft-software/shell",
+        "type": "path"
       }
     }
   },

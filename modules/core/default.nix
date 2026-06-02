@@ -11,6 +11,5 @@
     ./audio.nix
     ./security.nix
     ./dns.nix
-    ./brush-wrapper.nix
   ];
 }

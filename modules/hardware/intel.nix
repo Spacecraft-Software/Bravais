@@ -29,7 +29,7 @@ let
 
     # v1 — CachyOS baseline (matches CachyOS x86-64 default repo / earlier table)
     v1 = {
-      cFlags  = "-march=x86-64 -mtune=native ${cachyosCommonCFlags} -flto=auto";
+      cFlags  = "-march=x86-64 -mtune=native ${cachyosCommonCFlags}";
       ldFlags = cachyosLdFlags;
       rust    = "-C target-cpu=x86-64 -C opt-level=3 -Clink-arg=-z -Clink-arg=pack-relative-relocs";
       goamd64 = "v1";
@@ -37,7 +37,7 @@ let
 
     # v2 — ALHP-derived (SSE4.2 / POPCNT / CX16)
     v2 = {
-      cFlags  = "-march=x86-64-v2 -mtune=native -O3 -mpclmul -falign-functions=32 -flto=auto";
+      cFlags  = "-march=x86-64-v2 -mtune=native -O3 -mpclmul -falign-functions=32";
       ldFlags = alhpLdFlags;
       rust    = "-Copt-level=3 -Ctarget-cpu=x86-64-v2 -Clink-arg=-z -Clink-arg=pack-relative-relocs";
       goamd64 = "v2";
@@ -45,7 +45,7 @@ let
 
     # v3 — CachyOS-derived (AVX2 / BMI1/2 / FMA / MOVBE)
     v3 = {
-      cFlags  = "-march=x86-64-v3 -mtune=native -mpclmul ${cachyosCommonCFlags} -flto=auto";
+      cFlags  = "-march=x86-64-v3 -mtune=native -mpclmul ${cachyosCommonCFlags}";
       ldFlags = cachyosLdFlags;
       rust    = "-C target-cpu=x86-64-v3 -C opt-level=3 -Clink-arg=-z -Clink-arg=pack-relative-relocs";
       goamd64 = "v3";
@@ -53,7 +53,7 @@ let
 
     # v4 — CachyOS-derived (AVX-512F/BW/CD/DQ/VL)
     v4 = {
-      cFlags  = "-march=x86-64-v4 -mtune=native -mpclmul ${cachyosCommonCFlags} -flto=auto";
+      cFlags  = "-march=x86-64-v4 -mtune=native -mpclmul ${cachyosCommonCFlags}";
       ldFlags = cachyosLdFlags;
       rust    = "-C target-cpu=x86-64-v4 -C opt-level=3 -Clink-arg=-z -Clink-arg=pack-relative-relocs";
       goamd64 = "v4";
@@ -91,7 +91,6 @@ in
       CFLAGS    = flags.cFlags;
       CXXFLAGS  = "${flags.cFlags} -Wp,-D_GLIBCXX_ASSERTIONS";
       LDFLAGS   = flags.ldFlags;
-      LTOFLAGS  = "-flto=auto";
       RUSTFLAGS = flags.rust;
       GOAMD64   = flags.goamd64;
     };

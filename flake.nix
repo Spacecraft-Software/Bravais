@@ -41,12 +41,11 @@
     # adit.url = "github:Spacecraft-Software/Adit";
     # adit.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # Kimi Code CLI — Moonshot's terminal coding agent (Python). Upstream
-    # ships a flake with packages.${system}.default = `kimi`. Threaded the
-    # same way as gitway (specialArgs + extraSpecialArgs) per CLAUDE.md
-    # constraint #7, not as an overlay.
-    kimi-cli.url = "github:MoonshotAI/kimi-cli";
-    kimi-cli.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # Kimi Code CLI — disabled. Re-enable by uncommenting these two lines,
+    # restoring `kimi-cli` to the outputs arg list, specialArgs, and
+    # extraSpecialArgs, and un-commenting the package line in modules/packages/ai.nix.
+    # kimi-cli.url = "github:MoonshotAI/kimi-cli";
+    # kimi-cli.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Antigravity 2 — UnbreakableMJ's app (tracks main)
     antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
@@ -66,17 +65,34 @@
 
     # Spacecraft Software's own Rust apps — path inputs until each flake.nix
     # is committed/pushed, then switch to github:Spacecraft-Software/<Repo>.
-    loran.url = "path:/spacecraft-software/loran";
-    loran.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # loran — disabled until upstream compilation issues are resolved.
+    # Re-enable by uncommenting both lines, restoring `loran` to the
+    # outputs arg list, specialArgs/extraSpecialArgs in mkBravais, and
+    # home.packages in users/mj/home.nix.
+    # loran.url = "path:/spacecraft-software/loran";
+    # loran.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     doas-rs.url = "path:/spacecraft-software/doas-rs";
     doas-rs.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    reel.url = "path:/spacecraft-software/reel";
-    reel.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # reel — disabled until upstream compilation issues are resolved.
+    # Re-enable by uncommenting both lines, restoring `reel` to the
+    # outputs arg list, specialArgs/extraSpecialArgs in mkBravais, and
+    # home.packages in users/mj/home.nix.
+    # reel.url = "path:/spacecraft-software/reel";
+    # reel.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    rget.url = "path:/spacecraft-software/rget";
-    rget.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # rget — disabled until upstream compilation issues are resolved.
+    # Cargo.lock is out of sync with Cargo.toml (clap_complete missing),
+    # so rustPlatform.buildRustPackage fails in --offline mode. Re-enable
+    # by uncommenting both lines, restoring `rget` to the outputs arg list,
+    # specialArgs/extraSpecialArgs in mkBravais, and home.packages in
+    # users/mj/home.nix.
+    # rget.url = "path:/spacecraft-software/rget";
+    # rget.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    whatshell.url = "path:/spacecraft-software/shell";
+    whatshell.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -88,14 +104,11 @@
       home-manager-unstable,
       nix-flatpak,
       gitway,
-      kimi-cli,
       antigravity-nix,
       construct,
       rapg,
-      loran,
       doas-rs,
-      reel,
-      rget,
+      whatshell,
       ...
     }:
     let
@@ -150,7 +163,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg loran doas-rs reel rget unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway antigravity-nix construct rapg doas-rs whatshell unstablePkgs; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -173,7 +186,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway kimi-cli antigravity-nix construct rapg loran doas-rs reel rget unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway antigravity-nix construct rapg doas-rs whatshell unstablePkgs; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];

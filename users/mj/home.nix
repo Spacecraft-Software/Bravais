@@ -7,10 +7,8 @@
   steelborePalette,
   gitway,
   construct,
-  loran,
   doas-rs,
-  reel,
-  rget,
+  whatshell,
   unstablePkgs,
   ...
 }:
@@ -59,12 +57,7 @@ in
     # Steelbore project symlink
     "steelbore".source = config.lib.file.mkOutOfStoreSymlink "/spacecraft-software";
 
-    # Brush (Rust Bash-compatible) — share init with Bash via ~/.bashrc
-    ".brushrc".text = ''
-      # Steelbore Brush shell init — sources Home Manager's bashrc so Bash and Brush
-      # share aliases, env, and gitway-agent key auto-loading.
-      [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
-    '';
+
   };
 
   # Keyboard layout
@@ -94,10 +87,11 @@ in
   # doas-rs runs without setuid here (HM cannot grant it); for functional
   # privilege escalation, declare via security.wrappers at the system level.
   home.packages = [
-    loran.packages.${pkgs.stdenv.hostPlatform.system}.default      # Agent-native reference manual
+    # loran.packages.${pkgs.stdenv.hostPlatform.system}.default    # DISABLED: pending upstream fixes. Re-enable after `cargo check` + `nix flake update loran`.
     doas-rs.packages.${pkgs.stdenv.hostPlatform.system}.default    # Memory-safe doas
-    reel.packages.${pkgs.stdenv.hostPlatform.system}.default       # Multi-protocol transfer engine
-    rget.packages.${pkgs.stdenv.hostPlatform.system}.default       # Async parallel downloader
+    # reel.packages.${pkgs.stdenv.hostPlatform.system}.default     # DISABLED: pending upstream fixes. Re-enable after `cargo check` + `nix flake update reel`.
+    # rget.packages.${pkgs.stdenv.hostPlatform.system}.default     # DISABLED: stale Cargo.lock (clap_complete). Re-enable after `cargo check` + `nix flake update rget`.
+    whatshell.packages.${pkgs.stdenv.hostPlatform.system}.default  # Identify the running shell
   ];
 
   # Programs
@@ -132,7 +126,7 @@ in
       enable = true;
       bashrcExtra = ''
         export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
-        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"
+        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin"
       '';
     };
 
@@ -366,6 +360,10 @@ in
         # spawned inside a DE) inherit the PAM-set value.
         $env.SSH_AUTH_SOCK = $"/run/user/(id -u)/gitway-agent.sock"
 
+        # Set SHELL to bash so tools that read $SHELL (e.g. Claude Code's Bash tool)
+        # spawn a bash-compatible shell rather than Nushell.
+        $env.SHELL = "${pkgs.bash}/bin/bash"
+
         # Override Nushell's default PROMPT_MULTILINE_INDICATOR (which ships
         # with ANSI color codes baked in). systemd's `import-environment`
         # refuses to inherit variables whose value contains control chars
@@ -485,7 +483,7 @@ in
         }
 
         # User-local bins — appended so Nix store paths take precedence
-        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin"])
+        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin"])
       '';
     };
 
@@ -506,7 +504,7 @@ in
         };
         font = {
           normal = {
-            family = "Inconsolata";
+            family = "Inconsolata Nerd Font";
             style = "Regular";
           };
           size = 10.0;
@@ -729,7 +727,7 @@ in
       $redOxide:    ${steelborePalette.redOxide};
 
       * {
-          font-family: "Inconsolata", monospace;
+          font-family: "Inconsolata Nerd Font", monospace;
           font-size: 13px;
           font-weight: bold;
       }
@@ -788,6 +786,10 @@ in
       # pam_gnome_keyring otherwise sets it to /run/user/$UID/keyring/ssh.
       let SSH_AUTH_SOCK = "/run/user/$(id -u)/gitway-agent.sock"
       export SSH_AUTH_SOCK
+
+      # User-local bins — appended so Nix store paths take precedence
+      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin"
+      export PATH
 
       # Starship prompt
       eval $(${pkgs.starship}/bin/starship init ion)
@@ -988,7 +990,7 @@ in
 
     "ironbar/style.css".text = ''
       * {
-          font-family: "Inconsolata", monospace;
+          font-family: "Inconsolata Nerd Font", monospace;
           font-size: 14px;
           transition: none;
       }
@@ -1032,7 +1034,7 @@ in
       local wezterm = require 'wezterm'
       local config = {}
 
-      config.font = wezterm.font 'Inconsolata'
+      config.font = wezterm.font 'Inconsolata Nerd Font'
       config.font_size = 12.0
       config.window_background_opacity = 0.95
       config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
@@ -1097,19 +1099,19 @@ in
       size = 14
 
       [fonts.regular]
-      family = "Inconsolata"
+      family = "Inconsolata Nerd Font"
       weight = 400
 
       [fonts.bold]
-      family = "Inconsolata"
+      family = "Inconsolata Nerd Font"
       weight = 700
 
       [fonts.italic]
-      family = "Inconsolata"
+      family = "Inconsolata Nerd Font"
       weight = 400
 
       [fonts.bold-italic]
-      family = "Inconsolata"
+      family = "Inconsolata Nerd Font"
       weight = 700
 
       [colors]
@@ -1150,7 +1152,7 @@ in
     "ghostty/config".text = ''
       # Steelbore Ghostty User Configuration
 
-      font-family = Inconsolata
+      font-family = Inconsolata Nerd Font
       font-size = 12
 
       background-opacity = 0.95
@@ -1192,7 +1194,7 @@ in
       # Steelbore Foot User Configuration
 
       [main]
-      font=Inconsolata:size=12
+      font=Inconsolata Nerd Font:size=12
       shell=${pkgs.nushell}/bin/nu
       term=xterm-256color
 
@@ -1228,7 +1230,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
-      FontName=Inconsolata 12
+      FontName=Inconsolata Nerd Font 12
       MiscDefaultGeometry=160x48
       RunCustomCommand=TRUE
       CustomCommand=${pkgs.nushell}/bin/nu
@@ -1417,7 +1419,7 @@ in
 
       [Appearance]
       ColorScheme=Steelbore
-      Font=Inconsolata,12,-1,5,50,0,0,0,0,0
+      Font=Inconsolata Nerd Font,12,-1,5,50,0,0,0,0,0
 
       [General]
       Command=${pkgs.nushell}/bin/nu
@@ -1445,7 +1447,7 @@ in
       theme = "spacecraft-software"
 
       [font]
-      family = "Inconsolata"
+      family = "Inconsolata Nerd Font"
       size = 13
 
       [buffer.timestamp]
@@ -1657,7 +1659,7 @@ in
   # XTerm Xresources (loaded by xrdb on X session start)
   xresources.properties = {
     "XTerm*termName"               = "xterm-256color";
-    "XTerm*faceName"               = "Inconsolata";
+    "XTerm*faceName"               = "Inconsolata Nerd Font";
     "XTerm*faceSize"               = 12;
     "XTerm*loginShell"             = true;
     "XTerm*scrollBar"              = false;
@@ -1703,15 +1705,15 @@ in
       icon-theme          = "Papirus-Dark";
       cursor-theme        = "Bibata-Modern-Classic";
       cursor-size         = 24;
-      font-name           = "Noto Sans 11";
-      document-font-name  = "Noto Sans 11";
-      monospace-font-name = "Inconsolata 11";
+      font-name           = "CommitMono Nerd Font 11";
+      document-font-name  = "CommitMono Nerd Font 11";
+      monospace-font-name = "Inconsolata Nerd Font 11";
     };
 
     # ── Ptyxis ──────────────────────────────────────────────────────────────
     "org/gnome/Ptyxis" = {
       default-profile-uuid = "steelbore";
-      font-name = "Inconsolata 12";
+      font-name = "Inconsolata Nerd Font 12";
       use-system-font = false;
     };
     "org/gnome/Ptyxis/Profiles/steelbore" = {
@@ -1746,7 +1748,7 @@ in
     "org/gnome/Console" = {
       theme = "night";
       use-system-font = false;
-      custom-font = "Inconsolata 12";
+      custom-font = "Inconsolata Nerd Font 12";
     };
   };
 
@@ -1784,7 +1786,7 @@ in
       size = 24;
     };
     font = {
-      name = "Noto Sans";
+      name = "CommitMono Nerd Font";
       size = 11;
     };
   };

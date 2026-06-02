@@ -56,9 +56,9 @@ in
       decorations = "full"
 
       [font]
-      normal = { family = "JetBrains Mono", style = "Regular" }
-      bold = { family = "JetBrains Mono", style = "Bold" }
-      italic = { family = "JetBrains Mono", style = "Italic" }
+      normal = { family = "Inconsolata Nerd Font", style = "Regular" }
+      bold = { family = "Inconsolata Nerd Font", style = "Bold" }
+      italic = { family = "Inconsolata Nerd Font", style = "Italic" }
       size = 10.0
 
       [colors.primary]
@@ -118,7 +118,7 @@ in
       local config = {}
 
       -- Font configuration
-      config.font = wezterm.font 'JetBrains Mono'
+      config.font = wezterm.font 'Inconsolata Nerd Font'
       config.font_size = 12.0
 
       -- Window configuration
@@ -198,25 +198,29 @@ in
       [window]
       opacity = 0.95
       decorations = "enabled"
+      confirm-before-quit = false
 
       [fonts]
       size = 14
 
       [fonts.regular]
-      family = "JetBrains Mono"
+      family = "Inconsolata Nerd Font"
       weight = 400
 
       [fonts.bold]
-      family = "JetBrains Mono"
+      family = "Inconsolata Nerd Font"
       weight = 700
 
       [fonts.italic]
-      family = "JetBrains Mono"
+      family = "Inconsolata Nerd Font"
       weight = 400
 
       [fonts.bold-italic]
-      family = "JetBrains Mono"
+      family = "Inconsolata Nerd Font"
       weight = 700
+
+      [[fonts.extras]]
+      family = "Symbols Nerd Font Mono"
 
       [colors]
       background = '${steelborePalette.voidNavy}'
@@ -258,7 +262,7 @@ in
     environment.etc."ghostty/config".text = ''
       # Steelbore Ghostty Configuration
 
-      font-family = JetBrains Mono
+      font-family = Inconsolata Nerd Font
       font-size = 12
 
       background-opacity = 0.95
@@ -323,7 +327,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."waveterm/config.json".text = builtins.toJSON {
       term = {
-        fontfamily = "JetBrains Mono";
+        fontfamily = "Inconsolata Nerd Font";
         fontsize = 12;
         theme = "custom";
       };
@@ -519,7 +523,7 @@ in
 
       [Appearance]
       ColorScheme=Steelbore
-      Font=JetBrains Mono,12,-1,5,50,0,0,0,0,0
+      Font=Inconsolata Nerd Font,12,-1,5,50,0,0,0,0,0
 
       [General]
       Command=${pkgs.nushell}/bin/nu
@@ -569,7 +573,7 @@ in
       # Steelbore Foot Configuration
 
       [main]
-      font=JetBrains Mono:size=12
+      font=Inconsolata Nerd Font:size=12
       shell=${pkgs.nushell}/bin/nu
       term=xterm-256color
 
@@ -608,7 +612,7 @@ in
       ! Steelbore XTerm Configuration
 
       XTerm*termName:              xterm-256color
-      XTerm*faceName:              JetBrains Mono
+      XTerm*faceName:              Inconsolata Nerd Font
       XTerm*faceSize:              12
       XTerm*loginShell:            true
       XTerm*scrollBar:             false
@@ -647,7 +651,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."xdg/xfce4/terminal/terminalrc".text = ''
       [Configuration]
-      FontName=JetBrains Mono 12
+      FontName=Inconsolata Nerd Font 12
       MiscDefaultGeometry=160x48
       RunCustomCommand=TRUE
       CustomCommand=${pkgs.nushell}/bin/nu

@@ -4,19 +4,22 @@
 
 {
   fonts.packages = with pkgs; [
-    # UI / General
-    noto-fonts
+    # UI / General — CommitMono (Nerd Font patched)
+    nerd-fonts.commit-mono
 
-    # Code / Terminal
-    inconsolata
+    # Code / Terminal — Inconsolata (Nerd Font patched)
+    nerd-fonts.inconsolata
 
-    # Nerd Fonts (icons)
+    # Nerd Fonts (icons fallback)
     nerd-fonts.caskaydia-mono
+
+    # Symbol-only Nerd Font — required by Rio for icon glyph fallback
+    nerd-fonts.symbols-only
   ];
 
   fonts.fontconfig.defaultFonts = {
-    monospace = [ "Inconsolata" "CaskaydiaMono Nerd Font" ];
-    sansSerif = [ "Noto Sans" ];
-    serif = [ "Noto Sans" ];
+    monospace = [ "Inconsolata Nerd Font" "CaskaydiaMono Nerd Font" ];
+    sansSerif = [ "CommitMono Nerd Font" ];
+    serif = [ "CommitMono Nerd Font" ];
   };
 }
