@@ -41,23 +41,6 @@
         "type": "github"
       }
     },
-    "doas-rs": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780301439,
-        "narHash": "sha256-nT/3inRpuKdwtR5BaM5RBYsxh/qQc3J0gTcMzfjaUXs=",
-        "path": "/spacecraft-software/doas-rs",
-        "type": "path"
-      },
-      "original": {
-        "path": "/spacecraft-software/doas-rs",
-        "type": "path"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -223,15 +206,13 @@
       "inputs": {
         "antigravity-nix": "antigravity-nix",
         "construct": "construct",
-        "doas-rs": "doas-rs",
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "rapg": "rapg",
-        "whatshell": "whatshell"
+        "rapg": "rapg"
       }
     },
     "systems": {
@@ -262,23 +243,6 @@
         "owner": "nix-systems",
         "repo": "default",
         "type": "github"
-      }
-    },
-    "whatshell": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780301502,
-        "narHash": "sha256-pix75Wbcq6ry71d1fAwmq6/VxwvUwriQV9s0MQPUZ6c=",
-        "path": "/spacecraft-software/shell",
-        "type": "path"
-      },
-      "original": {
-        "path": "/spacecraft-software/shell",
-        "type": "path"
       }
     }
   },

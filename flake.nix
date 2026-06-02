@@ -59,37 +59,6 @@
     rapg.url = "path:./flakes/rapg";
     rapg.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # Spacecraft Software's own Rust apps — path inputs until each flake.nix
-    # is committed/pushed, then switch to github:Spacecraft-Software/<Repo>.
-    # loran — disabled until upstream compilation issues are resolved.
-    # Re-enable by uncommenting both lines, restoring `loran` to the
-    # outputs arg list, specialArgs/extraSpecialArgs in mkBravais, and
-    # home.packages in users/mj/home.nix.
-    # loran.url = "path:/spacecraft-software/loran";
-    # loran.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
-    doas-rs.url = "path:/spacecraft-software/doas-rs";
-    doas-rs.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
-    # reel — disabled until upstream compilation issues are resolved.
-    # Re-enable by uncommenting both lines, restoring `reel` to the
-    # outputs arg list, specialArgs/extraSpecialArgs in mkBravais, and
-    # home.packages in users/mj/home.nix.
-    # reel.url = "path:/spacecraft-software/reel";
-    # reel.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
-    # rget — disabled until upstream compilation issues are resolved.
-    # Cargo.lock is out of sync with Cargo.toml (clap_complete missing),
-    # so rustPlatform.buildRustPackage fails in --offline mode. Re-enable
-    # by uncommenting both lines, restoring `rget` to the outputs arg list,
-    # specialArgs/extraSpecialArgs in mkBravais, and home.packages in
-    # users/mj/home.nix.
-    # rget.url = "path:/spacecraft-software/rget";
-    # rget.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
-    whatshell.url = "path:/spacecraft-software/shell";
-    whatshell.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
     # Antigravity — Google's AI-native IDE. Upstream now ships separate
     # packages (google-antigravity-ide, google-antigravity-cli,
     # google-antigravity-ide-with-cli). editors.nix installs the IDE-only
@@ -109,8 +78,6 @@
       gitway,
       construct,
       rapg,
-      doas-rs,
-      whatshell,
       antigravity-nix,
       ...
     }:
@@ -166,7 +133,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs antigravity-nix; };
+          specialArgs = { inherit steelborePalette gitway construct rapg unstablePkgs antigravity-nix; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -189,7 +156,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs antigravity-nix; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg unstablePkgs antigravity-nix; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];
