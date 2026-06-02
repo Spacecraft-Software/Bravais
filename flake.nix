@@ -90,8 +90,10 @@
     whatshell.url = "path:/spacecraft-software/shell";
     whatshell.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # Antigravity — Google's AI-native IDE (IDE package only; agy CLI installed
-    # separately via the upstream install script).
+    # Antigravity — Google's AI-native IDE. Upstream now ships separate
+    # packages (google-antigravity-ide, google-antigravity-cli,
+    # google-antigravity-ide-with-cli). editors.nix installs the IDE-only
+    # package; the `agy` CLI stays out-of-band (upstream install script).
     antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
     antigravity-nix.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Text Editors and IDEs
-{ config, lib, pkgs, unstablePkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, antigravity-nix, ... }:
 
 {
   options.steelbore.packages.editors = {
@@ -39,6 +39,11 @@
       code-cursor-fhs            # Cursor AI editor
       kiro-fhs                   # Kiro editor
       # vscode-fhs → Flatpak: com.visualstudio.code
-    ]);
+    ]) ++ [
+      # Antigravity IDE only — the `agy` CLI is installed out-of-band via the
+      # upstream install script and must NOT come from Nix. Use the IDE-only
+      # package (not -with-cli) so the two stay separate.
+      antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide
+    ];
   };
 }
