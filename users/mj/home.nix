@@ -70,7 +70,7 @@ in
   home.sessionVariables = {
     EDITOR  = "${pkgs.msedit}/bin/edit";
     VISUAL  = "${pkgs.msedit}/bin/edit";
-    BROWSER = "flatpak run com.google.Chrome";
+    BROWSER = "flatpak run com.google.Chrome";  # default browser — see xdg.mimeApps below to change
     STEELBORE_THEME = "true";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
@@ -565,6 +565,32 @@ in
   # first interactive shell. A boot-time systemd user unit was tried but
   # failed silently against passphrase-protected keys without a TTY/SSH_ASKPASS.
 
+  # Default web browser.
+  #
+  # To change the default browser, edit BOTH of the following to point at the
+  # new app's `.desktop` id (find it under any of these dirs:
+  #   ~/.local/share/applications, /run/current-system/sw/share/applications,
+  #   ~/.local/share/flatpak/exports/share/applications — Flatpak ids look like
+  #   `com.google.Chrome.desktop`, `org.mozilla.firefox.desktop`):
+  #
+  #   1. `xdg.mimeApps.defaultApplications` below — writes ~/.config/mimeapps.list,
+  #      the declarative source of truth consulted by xdg-open, Niri, and the
+  #      desktop portals. HM owns this file (conflicts backed up to
+  #      mimeapps.list.backup), so do NOT hand-edit it — change it here.
+  #   2. `BROWSER` in `home.sessionVariables` (top of this file) — for CLI tools
+  #      that open URLs via $BROWSER. Verified to reach all four shells
+  #      (Nushell, Ion, Brush, Bash): the greetd session sources
+  #      hm-session-vars.sh at login, and every WM-spawned shell inherits it.
+  #
+  # After editing, `nixos-rebuild switch` makes both live. To set them
+  # immediately in an already-running session without a rebuild (optional —
+  # the rebuild re-asserts the same values, so this only avoids a relogin):
+  #   xdg-settings set default-web-browser com.google.Chrome.desktop
+  #   xdg-mime default com.google.Chrome.desktop x-scheme-handler/http
+  #   xdg-mime default com.google.Chrome.desktop x-scheme-handler/https
+  #   xdg-mime default com.google.Chrome.desktop text/html
+  # Verify with: xdg-settings get default-web-browser
+  #              xdg-mime query default x-scheme-handler/https
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
