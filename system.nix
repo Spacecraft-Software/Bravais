@@ -101,7 +101,6 @@
 
       # ZFS
       zfs
-      antigravity                # Rust
 
       # Benchmarking
       phoronix-test-suite

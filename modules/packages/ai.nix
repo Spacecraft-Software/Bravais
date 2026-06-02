@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — AI Coding Assistants and Tools
-{ config, lib, pkgs, unstablePkgs, antigravity-nix, ... }:
+{ config, lib, pkgs, unstablePkgs, ... }:
 
 {
   options.steelbore.packages.ai = {
@@ -49,12 +49,6 @@
       # claude-code
       # mcp-nixos DISABLED — pulls fastmcp whose tests hang in Nix sandbox
     ])
-    # AI CLIs from upstream flakes — threaded via specialArgs (CLAUDE.md constraint #7).
-    # antigravity-nix remains wired. kimi-cli is fully removed from flake.nix;
-    # to re-enable it restore the input + outputs args + specialArgs there first.
-    ++ [
-      # kimi-cli.packages.${pkgs.stdenv.hostPlatform.system}.default                         # Moonshot's Kimi Code agent (kimi-cli input removed from flake.nix)
-      # antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide   # Antigravity IDE
-    ];
+    ;
   };
 }

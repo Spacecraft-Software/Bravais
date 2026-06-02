@@ -204,19 +204,19 @@ in
       size = 14
 
       [fonts.regular]
-      family = "Inconsolata Nerd Font"
+      family = "Inconsolata Nerd Font Mono"
       weight = 400
 
       [fonts.bold]
-      family = "Inconsolata Nerd Font"
+      family = "Inconsolata Nerd Font Mono"
       weight = 700
 
       [fonts.italic]
-      family = "Inconsolata Nerd Font"
+      family = "Inconsolata Nerd Font Mono"
       weight = 400
 
       [fonts.bold-italic]
-      family = "Inconsolata Nerd Font"
+      family = "Inconsolata Nerd Font Mono"
       weight = 700
 
       [[fonts.extras]]

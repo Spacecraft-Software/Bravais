@@ -47,10 +47,6 @@
     # kimi-cli.url = "github:MoonshotAI/kimi-cli";
     # kimi-cli.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # Antigravity 2 — UnbreakableMJ's app (tracks main)
-    antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
-    antigravity-nix.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
     # Construct — Spacecraft Software agent skill catalogue (tracks main).
     # Provides homeManagerModules.default which installs skills into
     # ~/.agents/skills/ and symlinks every agent harness to it.
@@ -104,7 +100,6 @@
       home-manager-unstable,
       nix-flatpak,
       gitway,
-      antigravity-nix,
       construct,
       rapg,
       doas-rs,
@@ -163,7 +158,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway antigravity-nix construct rapg doas-rs whatshell unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -186,7 +181,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway antigravity-nix construct rapg doas-rs whatshell unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];
