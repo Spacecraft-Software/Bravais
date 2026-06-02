@@ -1086,6 +1086,7 @@ in
       return config
     '';
 
+
     # ═══════════════════════════════════════════════════════════════════════════
     # RIO — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
@@ -1113,6 +1114,9 @@ in
       [fonts.bold-italic]
       family = "Inconsolata Nerd Font Mono"
       weight = 700
+
+      [[fonts.extras]]
+      family = "Symbols Nerd Font"
 
       [[fonts.extras]]
       family = "Symbols Nerd Font Mono"

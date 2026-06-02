@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Text Editors and IDEs
-{ config, lib, pkgs, unstablePkgs, ... }:
+{ config, lib, pkgs, unstablePkgs, antigravity-nix, ... }:
 
 {
   options.steelbore.packages.editors = {
@@ -39,6 +39,10 @@
       kiro-fhs                   # Kiro editor
       # vscode-fhs → Flatpak: com.visualstudio.code
       # zed-editor-fhs → Flatpak: dev.zed.Zed
-    ]);
+    ]) ++ [
+      # Antigravity IDE — Google's AI-native IDE (IDE only; agy CLI is installed
+      # manually via the upstream install script, not from this flake).
+      antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-ide
+    ];
   };
 }

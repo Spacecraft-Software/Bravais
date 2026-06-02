@@ -89,6 +89,11 @@
 
     whatshell.url = "path:/spacecraft-software/shell";
     whatshell.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # Antigravity — Google's AI-native IDE (IDE package only; agy CLI installed
+    # separately via the upstream install script).
+    antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
+    antigravity-nix.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -104,6 +109,7 @@
       rapg,
       doas-rs,
       whatshell,
+      antigravity-nix,
       ...
     }:
     let
@@ -158,7 +164,7 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs; };
+          specialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs antigravity-nix; };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -181,7 +187,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs; };
+              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg doas-rs whatshell unstablePkgs antigravity-nix; };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];
