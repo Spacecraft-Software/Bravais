@@ -18,7 +18,7 @@
       # github-copilot-cli           # DISABLED — re-enable by uncommenting
       gpt-cli
       gorilla-cli                # Python — LLMs for your CLI (Gorilla LLM)
-      llm                        # Python — Simon Willison's universal LLM CLI
+      # llm                      # Python — Simon Willison's universal LLM CLI
       # task-master wrapper DISABLED — re-enable by uncommenting the
       # writeShellApplication block below. Rationale (preserved):
       # task-master-ai npm build is broken in nixpkgs (lockfile omits

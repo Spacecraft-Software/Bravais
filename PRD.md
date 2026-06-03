@@ -346,19 +346,21 @@ When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
 #### CachyOS Common C Flags (v1, v3, v4):
 ```
--O3 -pipe -fno-plt -fexceptions
+-O3 -pipe -fno-plt -fexceptions -flto=auto
 -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security
 -fstack-clash-protection -fcf-protection
 ```
 
 #### CachyOS Linker Flags (v1, v3, v4):
 ```
+-fuse-ld=gold
 -Wl,-O1 -Wl,--sort-common -Wl,--as-needed
 -Wl,-z,relro -Wl,-z,now -Wl,-z,pack-relative-relocs
 ```
 
 #### ALHP Linker Flags (v2 only):
 ```
+-fuse-ld=gold
 -Wl,-O1 -Wl,--sort-common -Wl,--as-needed
 -Wl,-z,relro -Wl,-z,now
 ```
@@ -374,6 +376,7 @@ When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
 **CXXFLAGS** = `${CFLAGS} -Wp,-D_GLIBCXX_ASSERTIONS` for all levels.
 **LTOFLAGS** = `-flto=auto` for all levels.
+**LDFLAGS** include `-fuse-ld=gold` on all levels (required on NixOS so GCC can locate the LTO plugin in `/nix/store`).
 
 **Additional config:** `boot.kernelModules = [ "kvm-intel" ]`, Intel microcode updates enabled.
 

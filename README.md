@@ -130,8 +130,9 @@ All levels use `-mtune=native` and include `pack-relative-relocs` in `RUSTFLAGS`
 | `bravais-v3` | AVX2 / BMI1/2 / FMA | CachyOS | `x86-64-v3` | `v3` |
 | `bravais-v4` | AVX-512F/BW/CD/DQ/VL | CachyOS | `x86-64-v4` | `v4` |
 
-All profiles share: `-O3 -flto=auto -mpclmul` (v2+) and full security hardening
+All profiles share: `-O3 -flto=auto -fuse-ld=gold -mpclmul` (v2+) and full security hardening
 (`-D_FORTIFY_SOURCE=3`, `-fstack-clash-protection`, `-fcf-protection`, `-Clink-arg=pack-relative-relocs`).
+`-fuse-ld=gold` is required on NixOS so GCC can resolve the LTO plugin path in `/nix/store`.
 
 ## Flake Inputs
 
