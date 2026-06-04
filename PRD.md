@@ -636,7 +636,7 @@ All terminals are themed with the Steelbore palette. Both system-level and user-
 | WezTerm        | Rust     | Primary    |
 | Rio            | Rust     | Primary    |
 | Ghostty        | Zig      | Primary    |
-| Ptyxis         | C (VTE)  | GNOME — Flatpak only (`app.devsuite.Ptyxis`); nixpkgs pkg commented out |
+| Ptyxis         | C (VTE)  | GNOME — nixpkgs (host install for distrobox integration) |
 | WaveTerm       | Go       | AI-native  |
 | Warp           | Rust     | AI-powered |
 | Termius        | Various  | SSH client |
@@ -659,6 +659,7 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 | Rio            | `/etc/rio/config.toml`                           | TOML    |
 | Ghostty        | `/etc/ghostty/config`                            | Custom  |
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/syntax_theme_dark` | Text |
+| COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/color_schemes_dark` | RON |
 | Ptyxis/VTE     | `/etc/gtk-4.0/gtk.css`                           | CSS     |
 | WaveTerm       | `/etc/waveterm/config.json`                      | JSON    |
 | Warp           | `/etc/warp/themes/spacecraft.yaml`                | YAML    |
@@ -803,7 +804,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Recording:** t-rec (Rust)
 
-**Containers & Virtualization:** steam-run (FHS environment), distrobox, boxbuddy (Rust), host-spawn, podman, runc, youki (Rust), oxker (Rust), qemu, flatpak, bubblewrap
+**Containers & Virtualization:** steam-run (FHS environment), distrobox, host-spawn, podman, runc, youki (Rust), oxker (Rust), qemu, flatpak, bubblewrap. Boxbuddy is available as the Flatpak `io.github.dvlv.boxbuddyrs`.
 
 **System Management:** topgrade (Rust), paru (Rust), doas, os-prober, kbd, numlockx, xremap (Rust), input-leap
 
@@ -827,7 +828,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
-| Terminals           | app.devsuite.Ptyxis                                  |
+| Terminals           | — (Ptyxis now installed via nixpkgs)                 |
 | Browsers            | app.zen_browser.zen, com.microsoft.Edge, com.opera.Opera |
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
 | Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
@@ -1009,9 +1010,9 @@ Managed via `programs.alacritty.enable = true` with structured Nix settings. She
 ### 13.10 dconf Settings
 
 **Ptyxis:**
-- Default profile UUID: `spacecraft`
-- Font: JetBrains Mono 12, custom command: Nushell
-- Full 16-color palette from spacecraftPalette
+- Default profile UUID: `steelbore`
+- Font: JetBrainsMono Nerd Font 12
+- Full 16-color palette from `steelborePalette`
 - Background: Void Navy, foreground: Molten Amber, opacity: 0.95
 
 **GNOME Console:**

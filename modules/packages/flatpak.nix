@@ -41,9 +41,6 @@
 
     # Declarative Flatpak packages
     services.flatpak.packages = [
-      # ── Terminals ──────────────────────────────────────────────────────────
-      { appId = "app.devsuite.Ptyxis";               origin = "flathub"; }
-
       # ── Browsers ───────────────────────────────────────────────────────────
       { appId = "app.zen_browser.zen";               origin = "flathub"; }
       { appId = "com.google.Chrome";                  origin = "flathub"; }

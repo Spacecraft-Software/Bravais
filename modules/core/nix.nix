@@ -29,6 +29,10 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # envfs — FUSE filesystem that provides /usr/bin/env so shebang scripts
+  # (#!/usr/bin/env python3, etc.) work out of the box on NixOS.
+  services.envfs.enable = true;
+
   # nix-ld — run unpatched dynamic binaries on NixOS by providing a
   # loader and common libraries that FHS binaries expect at build time.
   programs.nix-ld.enable = true;

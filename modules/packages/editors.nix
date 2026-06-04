@@ -32,7 +32,7 @@
       cosmic-edit                # Rust — COSMIC editor
 
       # GUI Editors (Standard)
-      # emacs-pgtk → Flatpak: org.gnu.emacs
+      emacs-pgtk                 # Emacs with pure GTK backend (Wayland-native)
       gedit
     ]) ++ (with unstablePkgs; [
       # GUI Editors (Unstable — FHS variants)

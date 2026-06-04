@@ -82,7 +82,6 @@
 
       # Containers & Virtualization
       distrobox
-      boxbuddy                   # Rust — Distrobox GUI
       host-spawn
       podman
       runc

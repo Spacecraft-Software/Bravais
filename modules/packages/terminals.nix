@@ -21,9 +21,8 @@ in
       ghostty                    # Zig, but memory-safe
 
       # Other terminals
-      # ptyxis                   # GNOME terminal (VTE-based) — delivered via the
-                                 #   Flathub Flatpak app.devsuite.Ptyxis (flatpak.nix)
-                                 #   instead of the nixpkgs package; dconf/theme stay.
+      ptyxis                     # GNOME terminal (VTE-based) — host install so
+                                 #   distrobox/container integration works out-of-box.
       waveterm                   # AI-native terminal
       warp-terminal              # AI-powered terminal
       termius                    # SSH client
@@ -238,10 +237,53 @@ in
 
     # ═══════════════════════════════════════════════════════════════════════════
     # COSMIC-TERM — COSMIC desktop terminal (Rust-based)
-    # Config is typically managed by cosmic-settings, but we provide defaults
+    # cosmic-config reads per-key .ron files; system defaults live in /etc/cosmic
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."cosmic/com.system76.CosmicTerm/v1/syntax_theme_dark".text = ''
       "Steelbore"
+    '';
+
+    environment.etc."cosmic/com.system76.CosmicTerm/v1/color_schemes_dark".text = ''
+      {
+          1: (
+              name: "Steelbore",
+              foreground: "${steelborePalette.moltenAmber}",
+              background: "${steelborePalette.voidNavy}",
+              cursor: "${steelborePalette.moltenAmber}",
+              bright_foreground: "${steelborePalette.moltenAmber}",
+              dim_foreground: "${steelborePalette.steelBlue}",
+              normal: (
+                  black: "${steelborePalette.voidNavy}",
+                  red: "${steelborePalette.redOxide}",
+                  green: "${steelborePalette.radiumGreen}",
+                  yellow: "${steelborePalette.moltenAmber}",
+                  blue: "${steelborePalette.steelBlue}",
+                  magenta: "${steelborePalette.steelBlue}",
+                  cyan: "${steelborePalette.liquidCool}",
+                  white: "${steelborePalette.moltenAmber}",
+              ),
+              bright: (
+                  black: "${steelborePalette.steelBlue}",
+                  red: "${steelborePalette.redOxide}",
+                  green: "${steelborePalette.radiumGreen}",
+                  yellow: "${steelborePalette.moltenAmber}",
+                  blue: "${steelborePalette.liquidCool}",
+                  magenta: "${steelborePalette.liquidCool}",
+                  cyan: "${steelborePalette.liquidCool}",
+                  white: "${steelborePalette.moltenAmber}",
+              ),
+              dim: (
+                  black: "${steelborePalette.voidNavy}",
+                  red: "${steelborePalette.redOxide}",
+                  green: "${steelborePalette.radiumGreen}",
+                  yellow: "${steelborePalette.moltenAmber}",
+                  blue: "${steelborePalette.steelBlue}",
+                  magenta: "${steelborePalette.steelBlue}",
+                  cyan: "${steelborePalette.liquidCool}",
+                  white: "${steelborePalette.moltenAmber}",
+              ),
+          ),
+      }
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════
