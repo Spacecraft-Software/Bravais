@@ -21,7 +21,9 @@ in
       ghostty                    # Zig, but memory-safe
 
       # Other terminals
-      ptyxis                     # GNOME terminal (VTE-based)
+      # ptyxis                   # GNOME terminal (VTE-based) — delivered via the
+                                 #   Flathub Flatpak app.devsuite.Ptyxis (flatpak.nix)
+                                 #   instead of the nixpkgs package; dconf/theme stay.
       waveterm                   # AI-native terminal
       warp-terminal              # AI-powered terminal
       termius                    # SSH client
@@ -56,9 +58,9 @@ in
       decorations = "full"
 
       [font]
-      normal = { family = "Inconsolata Nerd Font", style = "Regular" }
-      bold = { family = "Inconsolata Nerd Font", style = "Bold" }
-      italic = { family = "Inconsolata Nerd Font", style = "Italic" }
+      normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+      bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+      italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
       size = 10.0
 
       [colors.primary]
@@ -118,7 +120,7 @@ in
       local config = {}
 
       -- Font configuration
-      config.font = wezterm.font 'Inconsolata Nerd Font'
+      config.font = wezterm.font 'JetBrainsMono Nerd Font'
       config.font_size = 12.0
 
       -- Window configuration
@@ -195,7 +197,7 @@ in
     environment.etc."ghostty/config".text = ''
       # Steelbore Ghostty Configuration
 
-      font-family = Inconsolata Nerd Font
+      font-family = JetBrainsMono Nerd Font
       font-size = 12
 
       background-opacity = 0.95
@@ -260,7 +262,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."waveterm/config.json".text = builtins.toJSON {
       term = {
-        fontfamily = "Inconsolata Nerd Font";
+        fontfamily = "JetBrainsMono Nerd Font";
         fontsize = 12;
         theme = "custom";
       };
@@ -456,7 +458,7 @@ in
 
       [Appearance]
       ColorScheme=Steelbore
-      Font=Inconsolata Nerd Font,12,-1,5,50,0,0,0,0,0
+      Font=JetBrainsMono Nerd Font,12,-1,5,50,0,0,0,0,0
 
       [General]
       Command=${pkgs.nushell}/bin/nu
@@ -506,7 +508,7 @@ in
       # Steelbore Foot Configuration
 
       [main]
-      font=Inconsolata Nerd Font:size=12
+      font=JetBrainsMono Nerd Font:size=12
       shell=${pkgs.nushell}/bin/nu
       term=xterm-256color
 
@@ -545,7 +547,7 @@ in
       ! Steelbore XTerm Configuration
 
       XTerm*termName:              xterm-256color
-      XTerm*faceName:              Inconsolata Nerd Font
+      XTerm*faceName:              JetBrainsMono Nerd Font
       XTerm*faceSize:              12
       XTerm*loginShell:            true
       XTerm*scrollBar:             false
@@ -584,7 +586,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."xdg/xfce4/terminal/terminalrc".text = ''
       [Configuration]
-      FontName=Inconsolata Nerd Font 12
+      FontName=JetBrainsMono Nerd Font 12
       MiscDefaultGeometry=160x48
       RunCustomCommand=TRUE
       CustomCommand=${pkgs.nushell}/bin/nu

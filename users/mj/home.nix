@@ -493,7 +493,7 @@ in
         };
         font = {
           normal = {
-            family = "Inconsolata Nerd Font";
+            family = "JetBrainsMono Nerd Font";
             style = "Regular";
           };
           size = 10.0;
@@ -753,7 +753,7 @@ in
       $redOxide:    ${steelborePalette.redOxide};
 
       * {
-          font-family: "Inconsolata Nerd Font", monospace;
+          font-family: "JetBrainsMono Nerd Font", monospace;
           font-size: 13px;
           font-weight: bold;
       }
@@ -1016,7 +1016,7 @@ in
 
     "ironbar/style.css".text = ''
       * {
-          font-family: "Inconsolata Nerd Font", monospace;
+          font-family: "JetBrainsMono Nerd Font", monospace;
           font-size: 14px;
           transition: none;
       }
@@ -1060,7 +1060,7 @@ in
       local wezterm = require 'wezterm'
       local config = {}
 
-      config.font = wezterm.font 'Inconsolata Nerd Font'
+      config.font = wezterm.font 'JetBrainsMono Nerd Font'
       config.font_size = 12.0
       config.window_background_opacity = 0.95
       config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
@@ -1126,19 +1126,19 @@ in
       size = 14
 
       [fonts.regular]
-      family = "Inconsolata Nerd Font Mono"
+      family = "JetBrainsMono Nerd Font Mono"
       weight = 400
 
       [fonts.bold]
-      family = "Inconsolata Nerd Font Mono"
+      family = "JetBrainsMono Nerd Font Mono"
       weight = 700
 
       [fonts.italic]
-      family = "Inconsolata Nerd Font Mono"
+      family = "JetBrainsMono Nerd Font Mono"
       weight = 400
 
       [fonts.bold-italic]
-      family = "Inconsolata Nerd Font Mono"
+      family = "JetBrainsMono Nerd Font Mono"
       weight = 700
 
       [[fonts.extras]]
@@ -1185,7 +1185,7 @@ in
     "ghostty/config".text = ''
       # Steelbore Ghostty User Configuration
 
-      font-family = Inconsolata Nerd Font
+      font-family = JetBrainsMono Nerd Font
       font-size = 12
 
       background-opacity = 0.95
@@ -1227,7 +1227,7 @@ in
       # Steelbore Foot User Configuration
 
       [main]
-      font=Inconsolata Nerd Font:size=12
+      font=JetBrainsMono Nerd Font:size=12
       shell=${pkgs.nushell}/bin/nu
       term=xterm-256color
 
@@ -1263,7 +1263,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     "xfce4/terminal/terminalrc".text = ''
       [Configuration]
-      FontName=Inconsolata Nerd Font 12
+      FontName=JetBrainsMono Nerd Font 12
       MiscDefaultGeometry=160x48
       RunCustomCommand=TRUE
       CustomCommand=${pkgs.nushell}/bin/nu
@@ -1452,7 +1452,7 @@ in
 
       [Appearance]
       ColorScheme=Steelbore
-      Font=Inconsolata Nerd Font,12,-1,5,50,0,0,0,0,0
+      Font=JetBrainsMono Nerd Font,12,-1,5,50,0,0,0,0,0
 
       [General]
       Command=${pkgs.nushell}/bin/nu
@@ -1480,7 +1480,7 @@ in
       theme = "spacecraft-software"
 
       [font]
-      family = "Inconsolata Nerd Font"
+      family = "JetBrainsMono Nerd Font"
       size = 13
 
       [buffer.timestamp]
@@ -1692,7 +1692,7 @@ in
   # XTerm Xresources (loaded by xrdb on X session start)
   xresources.properties = {
     "XTerm*termName"               = "xterm-256color";
-    "XTerm*faceName"               = "Inconsolata Nerd Font";
+    "XTerm*faceName"               = "JetBrainsMono Nerd Font";
     "XTerm*faceSize"               = 12;
     "XTerm*loginShell"             = true;
     "XTerm*scrollBar"              = false;
@@ -1738,15 +1738,15 @@ in
       icon-theme          = "Papirus-Dark";
       cursor-theme        = "Bibata-Modern-Classic";
       cursor-size         = 24;
-      font-name           = "CommitMono Nerd Font 11";
-      document-font-name  = "CommitMono Nerd Font 11";
-      monospace-font-name = "Inconsolata Nerd Font 11";
+      font-name           = "Hack Nerd Font 11";
+      document-font-name  = "Hack Nerd Font 11";
+      monospace-font-name = "JetBrainsMono Nerd Font 11";
     };
 
     # ── Ptyxis ──────────────────────────────────────────────────────────────
     "org/gnome/Ptyxis" = {
       default-profile-uuid = "steelbore";
-      font-name = "Inconsolata Nerd Font 12";
+      font-name = "JetBrainsMono Nerd Font 12";
       use-system-font = false;
     };
     "org/gnome/Ptyxis/Profiles/steelbore" = {
@@ -1781,7 +1781,7 @@ in
     "org/gnome/Console" = {
       theme = "night";
       use-system-font = false;
-      custom-font = "Inconsolata Nerd Font 12";
+      custom-font = "JetBrainsMono Nerd Font 12";
     };
   };
 
@@ -1819,7 +1819,7 @@ in
       size = 24;
     };
     font = {
-      name = "CommitMono Nerd Font";
+      name = "Hack Nerd Font";
       size = 11;
     };
   };

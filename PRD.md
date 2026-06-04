@@ -77,6 +77,7 @@ bravais/
 |       +-- system.nix             # System utilities & containers
 |       +-- ai.nix                 # AI coding assistants
 |       +-- flatpak.nix            # Declarative Flatpak apps
+|       +-- homebrew.nix           # Linuxbrew via FHS env (escape hatch)
 +-- users/                         # User profiles
 |   +-- mj/                        # User "mj"
 |       +-- default.nix            # System-level user config
@@ -130,6 +131,7 @@ spacecraft = {
   packages.system.enable = true;
   packages.ai.enable = true;
   packages.flatpak.enable = true;
+  packages.homebrew.enable = true;
 };
 ```
 
@@ -243,18 +245,23 @@ Defined inline in `modules/core/nix.nix` via `nixpkgs.overlays`. A reference cop
 
 ### 4.3 Typography
 
-| Context       | Font             | License | Fallback           |
-|---------------|------------------|---------|--------------------|
-| UI Headers    | Orbitron         | OFL     | Share Tech Mono    |
-| Code/Terminal | JetBrains Mono   | OFL     | CaskaydiaMono NF   |
-| HUD/Status    | Share Tech Mono  | OFL     | monospace          |
+Two font roles, both defined in `modules/theme/fonts.nix` (source of truth).
+**To change a font, follow the "Changing fonts" runbook in `CLAUDE.md`** — the
+family string is repeated across ~15 terminal configs and the exact Nerd Font
+family name must be read from the package, not guessed.
 
-**Font packages installed:** `orbitron`, `jetbrains-mono`, `nerd-fonts.jetbrains-mono`, `nerd-fonts.caskaydia-mono`, Share Tech Mono (custom derivation from Google Fonts).
+| Role                | Font                  | License | Fallback             |
+|---------------------|-----------------------|---------|----------------------|
+| Main / UI (sans+serif) | Hack Nerd Font     | MIT     | —                    |
+| Terminal / code (mono) | JetBrainsMono Nerd Font | OFL | CaskaydiaMono Nerd Font |
+| Icon glyph fallback | Symbols Nerd Font Mono | MIT    | —                    |
+
+**Font packages installed:** `nerd-fonts.hack`, `nerd-fonts.jetbrains-mono`, `nerd-fonts.caskaydia-mono`, `nerd-fonts.symbols-only`.
 
 **Fontconfig defaults:**
-- Monospace: JetBrains Mono, CaskaydiaMono Nerd Font, Share Tech Mono
-- Sans-serif: Orbitron
-- Serif: Orbitron
+- Monospace: JetBrainsMono Nerd Font, CaskaydiaMono Nerd Font
+- Sans-serif: Hack Nerd Font
+- Serif: Hack Nerd Font
 
 ### 4.4 Theme Environment Variables
 
@@ -629,7 +636,7 @@ All terminals are themed with the Steelbore palette. Both system-level and user-
 | WezTerm        | Rust     | Primary    |
 | Rio            | Rust     | Primary    |
 | Ghostty        | Zig      | Primary    |
-| Ptyxis         | C (VTE)  | GNOME      |
+| Ptyxis         | C (VTE)  | GNOME — Flatpak only (`app.devsuite.Ptyxis`); nixpkgs pkg commented out |
 | WaveTerm       | Go       | AI-native  |
 | Warp           | Rust     | AI-powered |
 | Termius        | Various  | SSH client |
@@ -829,6 +836,48 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 | Gaming              | com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
 | Retro / Classic     | com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.jotd666.gods-deluxe, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle |
 | Productivity        | io.github.Qalculate, org.kde.yakuake                 |
+
+### 11.11 Homebrew (`modules/packages/homebrew.nix`)
+
+Linuxbrew as a **4th-priority escape hatch** (per the spacecraft-missing-pkg
+order Guix → Nix → Cargo → **Homebrew** → Flatpak → Snap) for software with no
+Nix/Guix/Cargo packaging. Brew expects an FHS layout, a real system compiler,
+and a `/home/linuxbrew` prefix that NixOS does not provide, so it runs inside a
+**distrobox container** (`brew`, from `quay.io/toolbx-images/ubuntu-toolbox:24.04`)
+where it behaves exactly as upstream intends: full FHS, an apt-managed userland,
+passwordless sudo inside the box, and brew-installed binaries that run normally.
+
+**Dependency:** distrobox drives the host's rootless podman, configured by the
+`system` bundle (`virtualisation.podman.enable`). The host enables both
+`packages.system` and `packages.homebrew`, so this is always satisfied — noted
+so the coupling is explicit.
+
+**Commands installed** (all `pkgs.writeShellApplication`, shellcheck-linted at
+build time):
+
+| Command         | Purpose                                                                          |
+|-----------------|----------------------------------------------------------------------------------|
+| `brew-box-init` | One-time setup: create the `brew` container, apt-install brew's Linux deps (`build-essential procps curl file git`), then run the Homebrew installer. |
+| `brew`          | Run `brew <args>` from the normal (Nushell) shell — proxies into the box and sources `brew shellenv`. Errors with a hint if `brew-box-init` hasn't run. |
+| `brew-box`      | Interactive shell inside the container (for poking around or running brew-installed tools). |
+
+**One-time bootstrap:**
+
+```sh
+brew-box-init
+# then, from any shell:
+brew install <formula>
+```
+
+Installs to the documented prefix `/home/linuxbrew/.linuxbrew` inside the box.
+`brew-box-init` is kept separate from `brew` so the first `brew` call is not a
+surprise multi-minute image-pull + install.
+
+**Why distrobox over an FHS sandbox:** a `buildFHSEnv` wrapper also works, but
+binaries installed *by* brew then link against the sandbox and only run inside
+it. The container approach removes that sharp edge — `brew-box` runs them
+natively. The image is hardcoded but trivially swappable (Fedora/Debian) in the
+module's `image` binding.
 
 ---
 

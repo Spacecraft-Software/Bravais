@@ -4,11 +4,11 @@
 
 {
   fonts.packages = with pkgs; [
-    # UI / General — CommitMono (Nerd Font patched)
-    nerd-fonts.commit-mono
+    # UI / General — Hack (Nerd Font patched)
+    nerd-fonts.hack
 
-    # Code / Terminal — Inconsolata (Nerd Font patched)
-    nerd-fonts.inconsolata
+    # Code / Terminal — JetBrains Mono (Nerd Font patched)
+    nerd-fonts.jetbrains-mono
 
     # Nerd Fonts (icons fallback)
     nerd-fonts.caskaydia-mono
@@ -18,8 +18,8 @@
   ];
 
   fonts.fontconfig.defaultFonts = {
-    monospace = [ "Inconsolata Nerd Font" "CaskaydiaMono Nerd Font" ];
-    sansSerif = [ "CommitMono Nerd Font" ];
-    serif = [ "CommitMono Nerd Font" ];
+    monospace = [ "JetBrainsMono Nerd Font" "CaskaydiaMono Nerd Font" ];
+    sansSerif = [ "Hack Nerd Font" ];
+    serif = [ "Hack Nerd Font" ];
   };
 }

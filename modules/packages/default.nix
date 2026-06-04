@@ -15,5 +15,6 @@
     ./system.nix
     ./ai.nix
     ./flatpak.nix
+    ./homebrew.nix
   ];
 }

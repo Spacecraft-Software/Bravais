@@ -57,11 +57,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] **`default.nix`**: Define `SPACECRAFT_*` environment variables (6 colors)
 - [✓] **`default.nix`**: Configure TTY console colors (16-color palette)
-- [✓] **`fonts.nix`**: Install Orbitron (UI headers)
-- [✓] **`fonts.nix`**: Install JetBrains Mono (code/terminal)
-- [✓] **`fonts.nix`**: Install Nerd Fonts variants (JetBrains Mono, CaskaydiaMono)
-- [✓] **`fonts.nix`**: Install Share Tech Mono (HUD/data)
-- [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace, sans-serif, serif)
+- [✓] **`fonts.nix`**: Install Hack Nerd Font (main / UI font — sans + serif)
+- [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
+- [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
+- [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
+- Note: to change fonts later, follow the "Changing fonts" runbook in `CLAUDE.md`
 
 ---
 
@@ -250,6 +250,15 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure Flathub remote
 - [✓] Declare Flatpak packages (42+ apps across terminals, browsers, communication, security, development, gaming, retro, productivity, incl. org.gnome.baobab disk usage analyzer)
 
+### homebrew.nix
+
+- [✓] Define `steelbore.packages.homebrew` option
+- [✓] Run Homebrew inside a `brew` distrobox container (ubuntu-toolbox image) — full FHS, no sandbox sharp edges
+- [✓] `brew-box-init` command: create container, apt-install brew Linux deps, run Homebrew installer (one-time)
+- [✓] `brew` command: proxy `brew <args>` into the box, auto-source `brew shellenv`
+- [✓] `brew-box` command: interactive shell inside the container
+- [✓] Depends on rootless podman from the `system` bundle (documented in module + PRD §11.11)
+
 ---
 
 ## Phase 7: Hardware Modules (`modules/hardware/`)
@@ -277,7 +286,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Register Nushell, Brush, Ion as valid login shells; bash excluded from `environment.shells` (`programs.bash.enable` kept — NixOS PAM/activation scripts require it; overlay replacement impossible due to nixpkgs bootstrapping cycle)
 - [✓] **`default.nix`**: Enable all spacecraft desktop modules (gnome, cosmic, plasma, niri, leftwm)
 - [✓] **`default.nix`**: Enable all spacecraft hardware modules (fingerprint, intel)
-- [✓] **`default.nix`**: Enable all spacecraft package modules (12 modules including flatpak)
+- [✓] **`default.nix`**: Enable all spacecraft package modules (13 modules including flatpak, homebrew)
 - [✓] **`default.nix`**: Set `stateVersion = "26.05"`
 - [✓] **`hardware.nix`**: Import from `modulesPath`, configure root (ext4) and boot (vfat) filesystems
 

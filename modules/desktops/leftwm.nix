@@ -73,7 +73,7 @@
           padding-right = 2
           module-margin = 1
 
-          font-0 = "Share Tech Mono:size=12;2"
+          font-0 = "Hack Nerd Font:size=12;2"
           font-1 = "JetBrainsMono Nerd Font:size=12;2"
 
           modules-left = leftwm-tags
@@ -339,7 +339,7 @@
       frame_color = "${steelborePalette.steelBlue}"
       separator_color = frame
 
-      font = "Share Tech Mono 12"
+      font = "Hack Nerd Font 12"
       line_height = 0
       markup = full
       format = "<b>%s</b>\n%b"
