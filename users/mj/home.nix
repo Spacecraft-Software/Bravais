@@ -23,6 +23,37 @@ let
   # logic in modules/desktops/niri.nix.
   wallpaperPkg = pkgs.awww or pkgs.swww;
   wallpaperBin = if pkgs ? awww then "awww" else "swww";
+
+  # ZELLIJ — Full Steelbore config, rendered to a store file so it can be
+  # installed as a *writable* copy (see home.activation.zellijConfig below).
+  # Zellij persists config.kdl at runtime (e.g. its in-app Configuration
+  # screen), so a read-only Nix-store symlink yields
+  # "Failed to write configuration file". Nix stays source of truth: the
+  # writable copy is refreshed on every activation.
+  zellijConfigFile = pkgs.writeText "zellij-config.kdl" ''
+    theme "steelbore"
+    default_shell "${pkgs.nushell}/bin/nu"
+    simplified_ui false
+    pane_frames true
+    mouse_mode true
+    copy_on_select true
+
+    themes {
+        steelbore {
+            fg "${steelborePalette.moltenAmber}"
+            bg "${steelborePalette.voidNavy}"
+            black "${steelborePalette.voidNavy}"
+            red "${steelborePalette.redOxide}"
+            green "${steelborePalette.radiumGreen}"
+            yellow "${steelborePalette.moltenAmber}"
+            blue "${steelborePalette.steelBlue}"
+            magenta "${steelborePalette.steelBlue}"
+            cyan "${steelborePalette.liquidCool}"
+            white "${steelborePalette.moltenAmber}"
+            orange "${steelborePalette.moltenAmber}"
+        }
+    }
+  '';
 in
 
 {
@@ -80,6 +111,13 @@ in
   # an offline rebuild still succeeds.
   home.activation.tldrUpdate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD ${pkgs.tealdeer}/bin/tldr --update >/dev/null 2>&1 || true
+  '';
+
+  # Install zellij's config.kdl as a writable file (see zellijConfigFile in the
+  # let-block). Must be writable so zellij can persist runtime config changes
+  # without erroring; refreshed each activation so Nix remains source of truth.
+  home.activation.zellijConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD install -Dm644 ${zellijConfigFile} "$HOME/.config/zellij/config.kdl"
   '';
 
   # Programs
@@ -772,35 +810,12 @@ in
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # ZELLIJ — Full Steelbore config
-    # User has no custom keybinds; ship a complete config that activates the
-    # Steelbore theme. zellij will write any auto-generated keybinds to its
-    # internal cache; our config.kdl wins because it's at $XDG_CONFIG_HOME.
+    # ZELLIJ — managed as a *writable* copy, NOT here.
+    # zellij rewrites config.kdl at runtime, which fails against a read-only
+    # Nix-store symlink ("Failed to write configuration file"). The config is
+    # rendered to `zellijConfigFile` (let-block) and installed writable by
+    # `home.activation.zellijConfig`. Do not re-add it to xdg.configFile.
     # ═══════════════════════════════════════════════════════════════════════════
-    "zellij/config.kdl".text = ''
-      theme "steelbore"
-      default_shell "${pkgs.nushell}/bin/nu"
-      simplified_ui false
-      pane_frames true
-      mouse_mode true
-      copy_on_select true
-
-      themes {
-          steelbore {
-              fg "${steelborePalette.moltenAmber}"
-              bg "${steelborePalette.voidNavy}"
-              black "${steelborePalette.voidNavy}"
-              red "${steelborePalette.redOxide}"
-              green "${steelborePalette.radiumGreen}"
-              yellow "${steelborePalette.moltenAmber}"
-              blue "${steelborePalette.steelBlue}"
-              magenta "${steelborePalette.steelBlue}"
-              cyan "${steelborePalette.liquidCool}"
-              white "${steelborePalette.moltenAmber}"
-              orange "${steelborePalette.moltenAmber}"
-          }
-      }
-    '';
 
     # ═══════════════════════════════════════════════════════════════════════════
     # ION — Shell init (Starship prompt)
