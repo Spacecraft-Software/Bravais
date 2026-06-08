@@ -693,6 +693,8 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 ### 11.1 Browsers (`modules/packages/browsers.nix`)
 
+- **BrowserOS** (Chromium/AppImage) — agentic browser, packaged with `appimageTools.wrapType2`
+  (pinned `fetchurl` + SRI hash) so it builds reproducibly into the Nix store
 - **Firefox** (system-managed via `programs.firefox.enable`)
 - google-chrome, brave, microsoft-edge, librewolf
 
@@ -901,6 +903,11 @@ services.flatpak.enable = true;
 ```
 
 ### 12.3 AppImage
+
+First-class support: `binfmt` auto-run for any `*.AppImage`, plus the AppImagePool GUI
+(Flatpak). Loose AppImages live in `~/Applications/` by convention. When an AppImage is
+used regularly, prefer packaging it as a Nix derivation with `appimageTools.wrapType2`
+(see BrowserOS in §11.1) over a loose binary.
 
 ```nix
 programs.appimage = {

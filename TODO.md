@@ -137,6 +137,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Define `spacecraft.packages.browsers` option
 - [✓] Enable Firefox via `programs.firefox`
 - [✓] Install browsers (Chrome, Brave, Edge, Librewolf)
+- [✓] Package BrowserOS AppImage as Nix derivation (`appimageTools.wrapType2`, pinned fetchurl)
 
 ### terminals.nix
 

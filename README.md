@@ -117,6 +117,37 @@ All terminals are themed with the Steelbore color palette and launch **nushell +
 | XTerm | C / X11 | Classic X11 fallback |
 | Termius | — | SSH client |
 
+## AppImage Support
+
+Bravais provides **first-class, kernel-level AppImage support**. The `programs.appimage`
+module (`modules/packages/system.nix`) is enabled with `binfmt = true`, registering a
+`binfmt_misc` handler that transparently routes any `*.AppImage` through `appimage-run`
+(an FHS environment supplying FUSE and the libraries AppImages expect). The result: you
+simply mark an AppImage executable and run it directly — no wrapper command required.
+
+```bash
+chmod +x ~/Applications/SomeApp.AppImage
+~/Applications/SomeApp.AppImage          # kernel routes it through appimage-run automatically
+appimage-run ~/Applications/SomeApp.AppImage   # explicit fallback if binfmt doesn't catch it
+```
+
+**Conventions:**
+
+- **Target directory.** Loose AppImages live in `~/Applications/` (e.g. `warp.appimage`,
+  `waveterm-linux-x86_64-*.AppImage`). This is the canonical drop location for manually
+  managed AppImages.
+- **GUI manager.** [`AppImagePool`](https://github.com/prateekmedia/appimagepool) is
+  provisioned via Flatpak (`io.github.prateekmedia.appimagepool`) for browsing, downloading,
+  and updating AppImages with desktop-entry integration.
+- **Preferred: package as a Nix derivation.** When you rely on an AppImage regularly, the
+  Standard-aligned move is to wrap it reproducibly with `pkgs.appimageTools.wrapType2`
+  (pinned `fetchurl` + SRI hash) inside the relevant `modules/packages/*.nix` bundle rather
+  than leaving a loose binary in `~/Applications/`. **BrowserOS** (`modules/packages/browsers.nix`)
+  is the reference example — it pins the upstream GitHub-release AppImage and builds a
+  store-resident, march-aware wrapper. The package-manager priority (Guix → Nix → Cargo →
+  Homebrew → Flatpak → Snap) still applies: reach for AppImage only when a tool isn't
+  available higher up the chain.
+
 ## x86-64 CPU Build Profiles
 
 `modules/hardware/intel.nix` exposes a `marchLevel` option. Compiler flags are sourced from
