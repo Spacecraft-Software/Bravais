@@ -826,13 +826,14 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Remote:** flathub (`https://dl.flathub.org/repo/flathub.flatpakrepo`)
 
-**Packages (42):**
+**Packages (43):**
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
 | Terminals           | — (Ptyxis now installed via nixpkgs)                 |
 | Browsers            | app.zen_browser.zen, com.microsoft.Edge, com.opera.Opera |
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
+| Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |
 | Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |

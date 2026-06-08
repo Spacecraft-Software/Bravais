@@ -249,7 +249,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `spacecraft.packages.flatpak` option
 - [✓] Configure Flathub remote
-- [✓] Declare Flatpak packages (42+ apps across terminals, browsers, communication, security, development, gaming, retro, productivity, incl. org.gnome.baobab disk usage analyzer)
+- [✓] Declare Flatpak packages (43+ apps across browsers, communication, networking, security, development, gaming, retro, productivity, incl. de.haeckerfelix.Fragments torrent client and org.gnome.baobab disk usage analyzer)
 
 ### homebrew.nix
 

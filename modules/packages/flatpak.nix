@@ -53,6 +53,9 @@
       { appId = "im.riot.Riot";                       origin = "flathub"; }  # Element
       { appId = "io.wavebox.Wavebox";                 origin = "flathub"; }
 
+      # ── Networking / Internet ──────────────────────────────────────────────
+      { appId = "de.haeckerfelix.Fragments";          origin = "flathub"; }  # Rust BitTorrent client (GTK4/libadwaita)
+
       # ── Security & Remote ──────────────────────────────────────────────────
       { appId = "com.bitwarden.desktop";              origin = "flathub"; }
       { appId = "com.rustdesk.RustDesk";              origin = "flathub"; }

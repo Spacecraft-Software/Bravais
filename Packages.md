@@ -152,6 +152,7 @@
     * **Sniffnet** 🦀 `[GUI 🖱️]` *(Application to comfortably monitor your network traffic)*
     * **Mullvad VPN** 🦀 `[GUI 🖱️]` *(Privacy-focused VPN client app)*
     * **rqbit** 🦀 `[GUI 🖱️]` *(Fast and simple BitTorrent client)*
+    * **Fragments** 🦀 `[GUI 🖱️]` *(GTK4 BitTorrent client — Flatpak)*
 
 ### **10. Terminal Environment**
 * **Emulators**
