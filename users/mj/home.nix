@@ -153,6 +153,11 @@ in
       bashrcExtra = ''
         export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
         export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin"
+
+        # Grok CLI tab-completion. grok is installed out-of-band in
+        # ~/.local/bin (not via Nix), so it may be absent on a fresh build —
+        # guard the eval so bash startup degrades gracefully when it's missing.
+        command -v grok >/dev/null && eval "$(grok completions bash)"
       '';
     };
 
