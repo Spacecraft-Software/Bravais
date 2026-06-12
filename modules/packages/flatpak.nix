@@ -79,27 +79,29 @@
       { appId = "org.gnome.baobab";                   origin = "flathub"; }  # Disk Usage Analyzer
 
       # ── Gaming ─────────────────────────────────────────────────────────────
-      { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
-      { appId = "com.usebottles.bottles";             origin = "flathub"; }
-      { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
-      { appId = "info.beyondallreason.bar";           origin = "flathub"; }
-      { appId = "net.openra.OpenRA";                  origin = "flathub"; }
-      { appId = "net.wz2100.wz2100";                  origin = "flathub"; }  # Warzone 2100
-      { appId = "org.libretro.RetroArch";             origin = "flathub"; }
-      { appId = "org.openttd.OpenTTD";                origin = "flathub"; }
+      # DISABLED — commented out to reclaim disk space; re-enable to restore
+      # { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
+      # { appId = "com.usebottles.bottles";             origin = "flathub"; }
+      # { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
+      # { appId = "info.beyondallreason.bar";           origin = "flathub"; }
+      # { appId = "net.openra.OpenRA";                  origin = "flathub"; }
+      # { appId = "net.wz2100.wz2100";                  origin = "flathub"; }  # Warzone 2100
+      # { appId = "org.libretro.RetroArch";             origin = "flathub"; }
+      # { appId = "org.openttd.OpenTTD";                origin = "flathub"; }
 
       # ── Retro / Classic Games ──────────────────────────────────────────────
-      { appId = "com.dosbox.DOSBox";                  origin = "flathub"; }
-      { appId = "com.dosbox_x.DOSBox-X";              origin = "flathub"; }
-      { appId = "com.play0ad.zeroad";                 origin = "flathub"; }  # 0 A.D.
-      { appId = "com.remnantsoftheprecursors.ROTP";   origin = "flathub"; }
-      { appId = "eu.jumplink.Learn6502";              origin = "flathub"; }
-      { appId = "io.github.dosbox-staging";           origin = "flathub"; }
-      { appId = "io.github.jotd666.gods-deluxe";      origin = "flathub"; }
-      { appId = "io.github.dman95.SASM";              origin = "flathub"; }  # Assembly IDE
-      { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
-      { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
-      { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
+      # DISABLED — commented out to reclaim disk space; re-enable to restore
+      # { appId = "com.dosbox.DOSBox";                  origin = "flathub"; }
+      # { appId = "com.dosbox_x.DOSBox-X";              origin = "flathub"; }
+      # { appId = "com.play0ad.zeroad";                 origin = "flathub"; }  # 0 A.D.
+      # { appId = "com.remnantsoftheprecursors.ROTP";   origin = "flathub"; }
+      # { appId = "eu.jumplink.Learn6502";              origin = "flathub"; }
+      # { appId = "io.github.dosbox-staging";           origin = "flathub"; }
+      # { appId = "io.github.jotd666.gods-deluxe";      origin = "flathub"; }
+      # { appId = "io.github.dman95.SASM";              origin = "flathub"; }  # Assembly IDE
+      # { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
+      # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
+      # { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
 
       # ── Browsers ───────────────────────────────────────────────────────────
       { appId = "com.brave.Browser";                  origin = "flathub"; }
