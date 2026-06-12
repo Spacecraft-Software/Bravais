@@ -42,8 +42,11 @@ bounds set out below.
    ```
 4. **Follow existing conventions.** Module namespace is `steelbore.*`. Add packages to
    the appropriate `modules/packages/*.nix` file. Prefer Rust packages.
-5. **Sign-off your commits** (`git commit -s`) under the
-   [Developer Certificate of Origin](https://developercertificate.org/).
+5. **Sign your commits with SSH** (Standard §6.3 — mandatory). Configure
+   `commit.gpgsign=true` and `gpg.format=ssh`, and register your Ed25519 SSH
+   key as a **Signing** key on GitHub (auth-only keys won't validate).
+   Commits must show **Verified** on GitHub. `git commit -s` (DCO sign-off)
+   is a different mechanism and does not satisfy this requirement.
 
 ## Commit Style
 
