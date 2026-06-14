@@ -166,7 +166,7 @@ in
       enable = true;
       bashrcExtra = ''
         export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
-        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin"
+        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin:$HOME/.mimocode/bin:$HOME/.local/lib/qwen-code/bin"
 
         # Grok CLI tab-completion. grok is installed out-of-band in
         # ~/.local/bin (not via Nix), so it may be absent on a fresh build —
@@ -529,7 +529,7 @@ in
         }
 
         # User-local bins — appended so Nix store paths take precedence
-        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin" $"($env.HOME)/.opencode/bin" $"($env.HOME)/.kilo/bin"])
+        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin" $"($env.HOME)/.opencode/bin" $"($env.HOME)/.kilo/bin" $"($env.HOME)/.mimocode/bin" $"($env.HOME)/.local/lib/qwen-code/bin"])
       '';
     };
 
@@ -848,7 +848,7 @@ in
       export SSH_AUTH_SOCK
 
       # User-local bins — appended so Nix store paths take precedence
-      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin"
+      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin:$HOME/.mimocode/bin:$HOME/.local/lib/qwen-code/bin"
       export PATH
 
       # Starship prompt
