@@ -87,9 +87,8 @@ in
   # conflict (both ship _cargo zsh completions). After rebuild run:
   #   rustup install stable && rustup default stable
   home.packages = with unstablePkgs; [
-    rustup
-    cargo-update
-    rust-analyzer
+    rustup          # manages rustc/cargo/rustfmt/clippy/rust-analyzer as components
+    cargo-update    # cargo install-update subcommand
     cargo-watch
     cargo-nextest
     cargo-audit
