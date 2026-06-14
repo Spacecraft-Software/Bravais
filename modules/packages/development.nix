@@ -25,8 +25,9 @@
       # C/C++ Toolchain
       gcc                        # C — GNU Compiler Collection
 
-      # Rust Toolchain — managed via Home Manager (unstablePkgs):
-      # rustup, rustc, cargo, cargo-update, rustfmt, clippy.
+      # Rust Toolchain — managed via Home Manager (unstablePkgs): rustup +
+      # cargo subcommands. rustc/cargo/rustfmt/clippy are managed by rustup
+      # itself (standalone nixpkgs cargo conflicts with rustup's zsh completions).
 
       # Build & Task Tools (Rust preferred)
       just                       # Rust — Command runner
