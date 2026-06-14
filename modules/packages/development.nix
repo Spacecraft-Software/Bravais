@@ -25,13 +25,8 @@
       # C/C++ Toolchain
       gcc                        # C — GNU Compiler Collection
 
-      # Rust Toolchain
-      # rustup is the toolchain manager; install it via:
-      #   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-      # Then add components:
-      #   rustup component add rustfmt clippy
-      cargo
-      cargo-update
+      # Rust Toolchain — managed via Home Manager (unstablePkgs):
+      # rustup, rustc, cargo, cargo-update, rustfmt, clippy.
 
       # Build & Task Tools (Rust preferred)
       just                       # Rust — Command runner

@@ -82,6 +82,25 @@ in
   home.homeDirectory = "/home/mj";
   home.stateVersion = "26.05";
 
+  # Rust toolchain — pinned to nixpkgs-unstable so components track latest stable.
+  # rustup manages toolchain switching; rustc/cargo/rustfmt/clippy provide the
+  # default toolchain via the Nix profile (PATH resolution favours Nix store over
+  # ~/.cargo/bin, which is appended per-shell).
+  home.packages = with unstablePkgs; [
+    rustup
+    rustc
+    cargo
+    cargo-update
+    rustfmt
+    clippy
+    rust-analyzer
+    cargo-watch
+    cargo-nextest
+    cargo-audit
+    sccache
+    cargo-expand
+  ];
+
   home.file = {
     # Steelbore project symlink
     "steelbore".source = config.lib.file.mkOutOfStoreSymlink "/spacecraft-software";
