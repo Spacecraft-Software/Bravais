@@ -42,10 +42,10 @@
     # Declarative Flatpak packages
     services.flatpak.packages = [
       # ── Browsers ───────────────────────────────────────────────────────────
-      { appId = "app.zen_browser.zen";               origin = "flathub"; }
+      # { appId = "app.zen_browser.zen";               origin = "flathub"; }
       { appId = "com.google.Chrome";                  origin = "flathub"; }
       { appId = "com.microsoft.Edge";                origin = "flathub"; }
-      { appId = "org.mozilla.firefox";               origin = "flathub"; }
+      # { appId = "org.mozilla.firefox";               origin = "flathub"; }
       { appId = "com.opera.Opera";                   origin = "flathub"; }
 
       # ── Communication ──────────────────────────────────────────────────────
@@ -105,7 +105,7 @@
 
       # ── Browsers ───────────────────────────────────────────────────────────
       { appId = "com.brave.Browser";                  origin = "flathub"; }
-      { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
+      # { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
 
       # ── Multimedia ─────────────────────────────────────────────────────────
       { appId = "org.gimp.GIMP";                      origin = "flathub"; }
