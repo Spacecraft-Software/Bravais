@@ -115,6 +115,7 @@ in
     VISUAL  = "${pkgs.msedit}/bin/edit";
     BROWSER = "flatpak run com.google.Chrome";  # default browser — see xdg.mimeApps below to change
     STEELBORE_THEME = "true";
+    NIXPKGS_ALLOW_UNFREE = "1";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
