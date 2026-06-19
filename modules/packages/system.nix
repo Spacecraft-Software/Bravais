@@ -62,6 +62,7 @@
       tealdeer                   # Rust — tldr client
       mdcat                      # Rust — Markdown renderer
       difftastic                 # Rust — Structural diff
+      texinfo                    # C — GNU Info documentation reader
 
       # Shells (Rust preferred)
       nushell                    # Rust — Modern shell
