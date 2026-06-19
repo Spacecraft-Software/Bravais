@@ -63,6 +63,7 @@
       mdcat                      # Rust — Markdown renderer
       difftastic                 # Rust — Structural diff
       texinfo                    # C — GNU Info documentation reader
+      reuse                      # Python — REUSE compliance checker (SPDX)
 
       # Shells (Rust preferred)
       nushell                    # Rust — Modern shell
