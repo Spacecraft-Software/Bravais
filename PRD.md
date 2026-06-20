@@ -826,11 +826,16 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Remote:** flathub (`https://dl.flathub.org/repo/flathub.flatpakrepo`)
 
-**Packages (43):**
+**Packages (44):**
+
+> VSCode (`com.visualstudio.code`) ships a declarative user-level flatpak override
+> at `~/.local/share/flatpak/overrides/com.visualstudio.code` (via HM `xdg.dataFile`
+> in `users/mj/home.nix`) that prepends `/app/bin:/usr/bin` to PATH so the `code`
+> entrypoint resolves inside the sandbox.
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
-| Terminals           | — (Ptyxis now installed via nixpkgs)                 |
+| Terminals           | org.gnome.Ptyxis (flatpak, alongside nixpkgs host install; themed via shared host dconf) |
 | Browsers            | app.zen_browser.zen, com.microsoft.Edge, com.opera.Opera |
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |

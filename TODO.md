@@ -249,7 +249,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `spacecraft.packages.flatpak` option
 - [✓] Configure Flathub remote
-- [✓] Declare Flatpak packages (43+ apps across browsers, communication, networking, security, development, gaming, retro, productivity, incl. de.haeckerfelix.Fragments torrent client and org.gnome.baobab disk usage analyzer)
+- [✓] Declare Flatpak packages (44+ apps across browsers, communication, networking, security, development, gaming, retro, productivity, terminals, incl. de.haeckerfelix.Fragments torrent client and org.gnome.baobab disk usage analyzer)
+- [✓] Add org.gnome.Ptyxis flatpak (alongside nixpkgs host install; both themed via shared host dconf `org/gnome/Ptyxis/Profiles/steelbore`)
+- [✓] Fix VSCode flatpak launch — declarative user override (`xdg.dataFile`) prepends `/app/bin:/usr/bin` to PATH so the `code` entrypoint resolves (was `bwrap: execvp code: No such file or directory`)
 
 ### homebrew.nix
 

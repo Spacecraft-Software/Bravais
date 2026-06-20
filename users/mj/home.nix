@@ -1366,6 +1366,26 @@ in
   # Konsole colorscheme and profile live in $XDG_DATA_HOME/konsole/
   xdg.dataFile = {
     # ═══════════════════════════════════════════════════════════════════════════
+    # FLATPAK — VSCode per-app override
+    # User-level override (wins over system/NixOS overrides). PATH MUST keep
+    # /app/bin:/usr/bin first, otherwise flatpak's `code` entrypoint isn't found
+    # and launch dies with `bwrap: execvp code: No such file or directory`. The
+    # host bin dirs follow so VSCode's integrated terminal still sees host tools
+    # (/run/current-system/sw/bin is also filesystem-exposed below). HM saves any
+    # pre-existing file as com.visualstudio.code.backup on first switch.
+    # ═══════════════════════════════════════════════════════════════════════════
+    "flatpak/overrides/com.visualstudio.code".text = ''
+      [Context]
+      sockets=session-bus;system-bus;gpg-agent;inherit-wayland-socket;
+      devices=dri;kvm;shm;
+      features=multiarch;per-app-dev-shm;
+      filesystems=home;/home/mj/steelbore;host-etc;/run/current-system/sw/bin;/steelbore;host-os;
+
+      [Environment]
+      PATH=/app/bin:/usr/bin:/run/wrappers/bin:/home/mj/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/mj/.nix-profile/bin:/nix/profile/bin:/home/mj/.local/state/nix/profile/bin:/etc/profiles/per-user/mj/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+    '';
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # KONSOLE — User profile and colorscheme
     # ═══════════════════════════════════════════════════════════════════════════
     "konsole/Steelbore.colorscheme".text = ''

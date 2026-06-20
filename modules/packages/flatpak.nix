@@ -120,6 +120,9 @@
       { appId = "io.appflowy.AppFlowy";               origin = "flathub"; }
       { appId = "com.tutanota.Tutanota";               origin = "flathub"; }
 
+      # ── Terminals ──────────────────────────────────────────────────────────
+      { appId = "org.gnome.Ptyxis";                   origin = "flathub"; }  # GNOME terminal (themed via shared host dconf — org/gnome/Ptyxis/Profiles/steelbore)
+
       # ── Productivity ───────────────────────────────────────────────────────
       { appId = "io.github.Qalculate";                origin = "flathub"; }
       { appId = "org.kde.yakuake";                    origin = "flathub"; }
