@@ -835,7 +835,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
-| Terminals           | org.gnome.Ptyxis (flatpak, alongside nixpkgs host install; themed via shared host dconf) |
+| Terminals           | app.devsuite.Ptyxis (flatpak, alongside nixpkgs host install; GSettings schema org.gnome.Ptyxis — themed via shared host dconf) |
 | Browsers            | app.zen_browser.zen, com.microsoft.Edge, com.opera.Opera |
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |

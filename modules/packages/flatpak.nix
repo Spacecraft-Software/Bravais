@@ -121,7 +121,7 @@
       { appId = "com.tutanota.Tutanota";               origin = "flathub"; }
 
       # ── Terminals ──────────────────────────────────────────────────────────
-      { appId = "org.gnome.Ptyxis";                   origin = "flathub"; }  # GNOME terminal (themed via shared host dconf — org/gnome/Ptyxis/Profiles/steelbore)
+      { appId = "app.devsuite.Ptyxis";                origin = "flathub"; }  # Ptyxis terminal (GSettings schema org.gnome.Ptyxis — themed via shared host dconf, org/gnome/Ptyxis/Profiles/steelbore)
 
       # ── Productivity ───────────────────────────────────────────────────────
       { appId = "io.github.Qalculate";                origin = "flathub"; }
