@@ -64,6 +64,8 @@
       difftastic                 # Rust — Structural diff
       texinfo                    # C — GNU Info documentation reader
       reuse                      # Python — REUSE compliance checker (SPDX)
+      hunspell                   # C — Spell checker
+      hunspellDicts.en_US        # English (US) dictionary
 
       # Shells (Rust preferred)
       nushell                    # Rust — Modern shell
