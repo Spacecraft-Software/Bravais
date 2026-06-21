@@ -675,6 +675,57 @@ in
       runtime = "runc"
     '';
 
+    # SwayOSD — on-screen-display bars for the dedicated brightness/volume
+    # keys under Niri (binds + swayosd-server startup live in
+    # modules/desktops/niri.nix). swayosd-server auto-reads both files from
+    # this directory. Themed with the Steelbore palette.
+    "swayosd/config.toml".text = ''
+      [server]
+      max_volume = 100
+      style = "/home/mj/.config/swayosd/style.css"
+    '';
+    "swayosd/style.css".text = ''
+      /* Steelbore SwayOSD theme — Void Navy / Molten Amber */
+      window#osd {
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid ${steelborePalette.steelBlue};
+        background-color: ${steelborePalette.voidNavy};
+      }
+
+      window#osd #container {
+        margin: 14px;
+      }
+
+      window#osd image,
+      window#osd label {
+        color: ${steelborePalette.moltenAmber};
+      }
+
+      window#osd progressbar {
+        min-height: 6px;
+        border-radius: 999px;
+        background: transparent;
+      }
+
+      window#osd trough {
+        min-height: 6px;
+        border-radius: 999px;
+        background-color: ${steelborePalette.steelBlue};
+      }
+
+      window#osd progress {
+        min-height: 6px;
+        border-radius: 999px;
+        background-color: ${steelborePalette.moltenAmber};
+      }
+
+      /* Muted state — desaturate the bar to the warning color. */
+      window#osd progressbar:disabled progress {
+        background-color: ${steelborePalette.redOxide};
+      }
+    '';
+
     # tealdeer (tldr) — auto-update once a week on first invocation.
     # The home-manager activation script also forces a refresh on every
     # nixos-rebuild (see home.activation.tldrUpdate).

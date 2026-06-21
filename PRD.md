@@ -556,6 +556,13 @@ Key bindings (Mod = Super):
 - **Workspaces:** `Mod+1-5` focus, `Mod+Shift+1-5` move
 - **Resize:** `Mod+R` preset, `Mod+Minus/Equal` +/-10%
 - **Screenshots:** `Print` full, `Mod+Print` window, `Mod+Shift+Print` screen
+- **Dedicated / multimedia keys** (XF86, `allow-when-locked`, hidden from the hotkey overlay):
+  - Display brightness `XF86MonBrightnessUp/Down` → `swayosd-client --brightness` (OSD)
+  - Volume `XF86AudioRaiseVolume/LowerVolume/Mute` + mic `XF86AudioMicMute` → `swayosd-client --output-volume/--input-volume` (OSD, capped at 100%)
+  - Media `XF86AudioPlay/Next/Prev/Stop` → `playerctl`
+  - Keyboard backlight `XF86KbdBrightnessUp/Down` → `brightnessctl --device=tpacpi::kbd_backlight`
+  - Radios `XF86Bluetooth` / `XF86RFKill` → `steelbore-bt-toggle` / `steelbore-airplane-toggle` (rfkill, rootless via `/dev/rfkill` uaccess ACL, dunst feedback)
+  - **OSD:** `swayosd-server` (spawned at startup) renders Steelbore-themed bars; config at `~/.config/swayosd/{config.toml,style.css}` (Void Navy / Molten Amber). Backlight is rootless via brightnessctl's udev rules (`services.udev.packages`; groups `video`/`input`). Added packages: `swayosd`, `brightnessctl`, `playerctl`.
 
 **Ironbar Configuration** (`/etc/ironbar/config.yaml`):
 - Position: top, height 32, anchor to edges

@@ -114,6 +114,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure workspaces 1-5
 - [✓] Configure startup applications (swaybg, ironbar, wired)
 - [✓] Configure input (keyboard `us,ar` with `grp:ctrl_space_toggle`, touchpad)
+- [✓] Map dedicated/multimedia keys (XF86): display + keyboard brightness, volume/mute/mic-mute, media (playerctl), Bluetooth + airplane-mode (rfkill wrappers w/ dunst feedback)
+- [✓] swayosd OSD bars for brightness/volume (swayosd-server startup; Steelbore-themed `~/.config/swayosd/style.css`); brightnessctl udev rules for rootless backlight
 
 ### LeftWM (`leftwm.nix`)
 

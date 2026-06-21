@@ -16,6 +16,29 @@
       # vs swww/swww-daemon), so we derive `wallpaperBin` to match.
       wallpaperPkg = pkgs.awww or pkgs.swww;
       wallpaperBin = if pkgs ? awww then "awww" else "swww";
+
+      # Radio toggles for the dedicated Bluetooth / airplane-mode keys.
+      # rfkill works rootless here: /dev/rfkill carries a systemd `uaccess`
+      # ACL for the active-session user. Feedback goes through dunstify
+      # (dunst is already in the package set below), since swayosd has no
+      # OSD for radio state. `-r` reuses a fixed notification id so repeated
+      # presses replace rather than stack.
+      btToggle = pkgs.writeShellScriptBin "steelbore-bt-toggle" ''
+        ${pkgs.util-linux}/bin/rfkill toggle bluetooth
+        if ${pkgs.util-linux}/bin/rfkill list bluetooth | grep -q "Soft blocked: yes"; then
+          ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-disabled "Bluetooth Off"
+        else
+          ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-active "Bluetooth On"
+        fi
+      '';
+      airplaneToggle = pkgs.writeShellScriptBin "steelbore-airplane-toggle" ''
+        ${pkgs.util-linux}/bin/rfkill toggle all
+        if ${pkgs.util-linux}/bin/rfkill list wlan | grep -q "Soft blocked: yes"; then
+          ${pkgs.dunst}/bin/dunstify -a Airplane -r 9912 -i airplane-mode "Airplane Mode On"
+        else
+          ${pkgs.dunst}/bin/dunstify -a Airplane -r 9912 -i network-wireless "Airplane Mode Off"
+        fi
+      '';
     in
     {
     # Enable Niri
@@ -46,10 +69,26 @@
       wl-clipboard-rs           # (Rust)
       grim                      # Screenshot
       slurp                     # Region selection
+
+      # Dedicated/multimedia key handling (Niri has no built-in daemon for
+      # XF86 keys, unlike GNOME/Plasma/COSMIC). See the binds block below.
+      swayosd                   # On-screen-display bars for brightness/volume
+      brightnessctl             # C — display + keyboard backlight control
+      playerctl                 # MPRIS media control (was only transitive)
     ]) ++ [
       # Wallpaper daemon — awww (renamed from swww upstream).
       wallpaperPkg
+      # Radio-toggle wrappers for the Bluetooth / airplane-mode keys.
+      btToggle
+      airplaneToggle
     ];
+
+    # brightnessctl ships udev rules that make /sys/class/backlight (group
+    # `video`) and /sys/class/leds (group `input`) group-writable, so the
+    # display + keyboard backlight are controllable rootless. User `mj` is
+    # in both groups. swayosd-server's brightness backend also relies on
+    # the backlight being `video`-writable.
+    services.udev.packages = [ pkgs.brightnessctl ];
 
     # System-wide Niri configuration
     environment.etc."niri/config.kdl".text = ''
@@ -98,6 +137,9 @@
       spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
+      // OSD daemon for the dedicated brightness/volume keys (binds below).
+      // Auto-reads ~/.config/swayosd/{config.toml,style.css} (set in home.nix).
+      spawn-at-startup "swayosd-server"
       // Load SSH key into gitway-agent once per session. With no TTY but
       // DISPLAY/WAYLAND_DISPLAY set, gitway-add uses $SSH_ASKPASS
       // (ksshaskpass) automatically. Cached for 24 h per the agent TTL.
@@ -214,6 +256,30 @@
           Print           hotkey-overlay-title="Take a Screenshot" { screenshot; }
           Mod+Print       hotkey-overlay-title="Screenshot Window" { screenshot-window; }
           Mod+Shift+Print hotkey-overlay-title="Screenshot Screen" { screenshot-screen; }
+
+          // Dedicated / multimedia keys. Kept out of the hotkey overlay
+          // (they're labelled hardware keys, not Mod-chords to discover)
+          // and marked allow-when-locked so they work over gtklock.
+          //
+          // Brightness (display) — swayosd OSD bar
+          XF86MonBrightnessUp   allow-when-locked=true { spawn "swayosd-client" "--brightness" "raise"; }
+          XF86MonBrightnessDown allow-when-locked=true { spawn "swayosd-client" "--brightness" "lower"; }
+          // Volume / mic — swayosd OSD bar (capped at 100% via config.toml)
+          XF86AudioRaiseVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "raise"; }
+          XF86AudioLowerVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "lower"; }
+          XF86AudioMute         allow-when-locked=true { spawn "swayosd-client" "--output-volume" "mute-toggle"; }
+          XF86AudioMicMute      allow-when-locked=true { spawn "swayosd-client" "--input-volume" "mute-toggle"; }
+          // Media (MPRIS) — playerctl, no OSD
+          XF86AudioPlay { spawn "playerctl" "play-pause"; }
+          XF86AudioNext { spawn "playerctl" "next"; }
+          XF86AudioPrev { spawn "playerctl" "previous"; }
+          XF86AudioStop { spawn "playerctl" "stop"; }
+          // Keyboard backlight — brightnessctl (tpacpi led, levels 0–2)
+          XF86KbdBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "+1"; }
+          XF86KbdBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "1-"; }
+          // Radios — rfkill toggles with dunst feedback (see let block)
+          XF86Bluetooth allow-when-locked=true { spawn "steelbore-bt-toggle"; }
+          XF86RFKill    allow-when-locked=true { spawn "steelbore-airplane-toggle"; }
       }
     '';
 
