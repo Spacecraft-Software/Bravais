@@ -109,7 +109,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Define `spacecraft.desktops.niri` option
 - [✓] Enable Niri compositor
 - [✓] Install companion packages (14: swaybg, xwayland-satellite, ironbar, waybar, etc.)
-- [✓] Write `/etc/niri/config.kdl` with Steelbore palette
+- [✓] Write Niri config with Steelbore palette (single source: `~/.config/niri/config.kdl` via `users/mj/home.nix`; niri prefers the user config over `/etc/niri`)
 - [✓] Write `/etc/ironbar/config.yaml` and `/etc/ironbar/style.css`
 - [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → rio (default terminal)
 - [✓] Configure workspaces 1-5

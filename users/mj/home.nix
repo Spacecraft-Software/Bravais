@@ -959,6 +959,7 @@ in
       }
 
       layout {
+          gaps 8
           focus-ring {
               // off  — uncomment to disable; presence of the block enables it
               width 2
@@ -966,12 +967,15 @@ in
               inactive-color "${steelborePalette.steelBlue}"
           }
           border { off; }
-          gaps 8
+          // Default column width
+          default-column-width { proportion 0.5; }
+          // Center focused column when it changes
+          center-focused-column "on-overflow"
       }
 
-      // Startup — see system-wide config in modules/desktops/niri.nix for
-      // the full rationale. The wallpaper daemon needs to bind its IPC
-      // socket before any client command.
+      // Startup. The wallpaper daemon needs to bind its IPC socket before
+      // any client command; the inline sleep gives it a moment before the
+      // `clear` call sets the solid Void Navy wallpaper.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
       spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
       spawn-at-startup "eww" "open" "bar"

@@ -550,7 +550,7 @@ plasma-browser-integration, kdeconnect-kde, plasma-systemmonitor, filelight, kca
 **Companion packages (14):**
 niri, swaybg, xwayland-satellite, ironbar, waybar, anyrun, onagre, wired, swaylock, swayidle, wl-clipboard, wl-clipboard-rs, grim, slurp
 
-**Niri Configuration** (`/etc/niri/config.kdl`):
+**Niri Configuration** (`~/.config/niri/config.kdl`, single source via `users/mj/home.nix` — niri reads the user config in preference to `/etc/niri`, so the config lives only at the user level; `modules/desktops/niri.nix` just enables Niri, installs packages, and ships the backlight udev rule + rfkill wrappers):
 
 Layout: gaps 8, focus-ring width 2 (active: Molten Amber, inactive: Steel Blue), borders off, default column width 50%, center-focused-column on-overflow.
 
