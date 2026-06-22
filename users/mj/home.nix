@@ -644,7 +644,32 @@ in
       "x-scheme-handler/https"  = "com.google.Chrome.desktop";
       "x-scheme-handler/about"  = "com.google.Chrome.desktop";
       "x-scheme-handler/unknown" = "com.google.Chrome.desktop";
-    };
+    }
+    # Default image viewer — oculante (Rust, GPU-accelerated, editing +
+    # RAW/PSD/EXR). All types below are declared in oculante.desktop's
+    # MimeType. genAttrs maps each → the same handler.
+    // (lib.genAttrs [
+      "image/png"
+      "image/jpeg"
+      "image/gif"
+      "image/webp"
+      "image/bmp"
+      "image/tiff"
+      "image/svg+xml"
+      "image/avif"
+      "image/heic"
+      "image/jxl"
+      "image/jp2"
+      "image/vnd.microsoft.icon"
+      "image/x-tga"
+      "image/x-exr"
+      "application/vnd.adobe.photoshop"  # PSD
+      "image/x-adobe-dng"                # RAW
+      "image/x-canon-cr2"
+      "image/x-nikon-nef"
+      "image/x-sony-arw"
+      "image/x-fuji-raf"
+    ] (_: "oculante.desktop"));
   };
 
   # XDG config files

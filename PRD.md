@@ -787,7 +787,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Audio Players (Rust):** amberol, termusic, ncspot, psst, shortwave
 
-**Image Viewers (Rust):** loupe, viu, emulsion
+**Image Viewers (Rust):** oculante (default GUI viewer — bound to image MIME types via `xdg.mimeApps` in `users/mj/home.nix`), loupe, emulsion, viu (CLI)
 
 **Audio Recognition:** mousai (Rust)
 
