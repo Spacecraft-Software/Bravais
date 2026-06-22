@@ -678,6 +678,8 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 | Ghostty        | `/etc/ghostty/config`                            | Custom  |
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/syntax_theme_dark` | Text |
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/color_schemes_dark` | RON |
+| COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/profiles` (Nushell shell) | RON |
+| COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/default_profile`   | RON |
 | Ptyxis/VTE     | `/etc/gtk-4.0/gtk.css`                           | CSS     |
 | WaveTerm       | `/etc/waveterm/config.json`                      | JSON    |
 | Warp           | `/etc/warp/themes/spacecraft.yaml`                | YAML    |

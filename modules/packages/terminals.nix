@@ -286,6 +286,28 @@ in
       }
     '';
 
+    # Default profile → launch Nushell, matching every other terminal here.
+    # cosmic-term shlex-splits profile.command for the PTY (main.rs); a single
+    # /nix/store path (no spaces) yields one program token, no args. Pins the
+    # profile to the Steelbore color scheme too. `default_profile` selects it.
+    environment.etc."cosmic/com.system76.CosmicTerm/v1/profiles".text = ''
+      {
+          0: (
+              name: "Steelbore",
+              command: "${pkgs.nushell}/bin/nu",
+              syntax_theme_dark: "Steelbore",
+              syntax_theme_light: "Steelbore",
+              tab_title: "",
+              working_directory: "",
+              drain_on_exit: false,
+          ),
+      }
+    '';
+
+    environment.etc."cosmic/com.system76.CosmicTerm/v1/default_profile".text = ''
+      Some(0)
+    '';
+
     # ═══════════════════════════════════════════════════════════════════════════
     # PTYXIS (GNOME Console) — VTE-based terminal
     # Uses dconf/gsettings, configured via GNOME module or home-manager
