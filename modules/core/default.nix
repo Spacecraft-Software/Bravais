@@ -5,6 +5,7 @@
 {
   imports = [
     ./boot.nix
+    ./memory.nix
     ./nix.nix
     ./nix-tmp.nix
     ./locale.nix
