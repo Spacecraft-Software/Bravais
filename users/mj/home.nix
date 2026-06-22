@@ -1422,19 +1422,27 @@ in
     # /app/bin:/usr/bin first, otherwise flatpak's `code` entrypoint isn't found
     # and launch dies with `bwrap: execvp code: No such file or directory`. The
     # host bin dirs follow so VSCode's integrated terminal still sees host tools
-    # (/run/current-system/sw/bin is also filesystem-exposed below). HM saves any
-    # pre-existing file as com.visualstudio.code.backup on first switch.
+    # (/run/current-system/sw/bin is also filesystem-exposed below).
+    #
+    # `force = true`: flatpak rewrites this file as a plain (read-only) file
+    # out-of-band, so HM finds a foreign file at the path on the next switch
+    # and — with a stale `.backup` already present — refuses to back it up
+    # ("would be clobbered"). force makes HM overwrite unconditionally with
+    # no backup attempt, so activation can't deadlock on this file again.
     # ═══════════════════════════════════════════════════════════════════════════
-    "flatpak/overrides/com.visualstudio.code".text = ''
-      [Context]
-      sockets=session-bus;system-bus;gpg-agent;inherit-wayland-socket;
-      devices=dri;kvm;shm;
-      features=multiarch;per-app-dev-shm;
-      filesystems=home;/home/mj/steelbore;host-etc;/run/current-system/sw/bin;/steelbore;host-os;
+    "flatpak/overrides/com.visualstudio.code" = {
+      force = true;
+      text = ''
+        [Context]
+        sockets=session-bus;system-bus;gpg-agent;inherit-wayland-socket;
+        devices=dri;kvm;shm;
+        features=multiarch;per-app-dev-shm;
+        filesystems=home;/home/mj/steelbore;host-etc;/run/current-system/sw/bin;/steelbore;host-os;
 
-      [Environment]
-      PATH=/app/bin:/usr/bin:/run/wrappers/bin:/home/mj/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/mj/.nix-profile/bin:/nix/profile/bin:/home/mj/.local/state/nix/profile/bin:/etc/profiles/per-user/mj/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
-    '';
+        [Environment]
+        PATH=/app/bin:/usr/bin:/run/wrappers/bin:/home/mj/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/mj/.nix-profile/bin:/nix/profile/bin:/home/mj/.local/state/nix/profile/bin:/etc/profiles/per-user/mj/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+      '';
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # KONSOLE — User profile and colorscheme
