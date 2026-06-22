@@ -14,8 +14,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure home-manager-unstable input (follows nixpkgs-unstable)
 - [✓] Configure nix-flatpak input
 - [✓] Configure gitway input (`github:Spacecraft-Software/Gitway`, tracks `main`; threaded via `specialArgs` / `extraSpecialArgs`)
-- [✓] Define `mkBravais` function with `marchLevel` and `channel` parameters
-- [✓] Generate 10 `nixosConfigurations` (5 stable + 5 unstable, v1-v4 each)
+- [✓] Define `mkBravais` function with `host` and `channel` parameters (march pinned per-machine)
+- [✓] Generate per-machine `nixosConfigurations` (`bravais-thinkpad`, `bravais-thinkpad-unstable`, `bravais` alias)
+- [✓] Factor shared host config into `hosts/common.nix`; one `hosts/<machine>/` dir per machine
 - [✓] Set up `spacecraftPalette` in specialArgs
 - [✓] ~~Pass `stablePkgs` to modules via specialArgs~~ (removed — claude-code now uses channel-appropriate `pkgs`)
 - [✓] Build folder hierarchy (`hosts/`, `modules/`, `lib/`, `users/`, `overlays/`)
@@ -279,9 +280,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ## Phase 8: Host & User Configuration
 
-### Host (`hosts/bravais/`)
+### Host (`hosts/common.nix` + `hosts/thinkpad/`)
 
-- [✓] **`default.nix`**: Set hostname to `bravais`
+- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `intel.marchLevel = "v3"`
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
@@ -325,12 +326,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ## Phase 10: Testing & Verification
 
 - [✓] Run `nix flake check` without errors
-- [✓] Run `nix flake show` and verify 10 configurations listed
-- [✓] Run `nixos-rebuild dry-build --flake .#bravais` successfully
-- [✓] Run `nixos-rebuild build --flake .#bravais` successfully
-- [✓] Run `nixos-rebuild switch --flake .#bravais` successfully
-- [✓] Verify march-level variant build (`nixos-rebuild build --flake .#bravais-v3`)
-- [✓] Verify unstable channel build (`nixos-rebuild build --flake .#bravais-unstable`)
+- [✓] Run `nix flake show` and verify per-machine configurations listed (`bravais-thinkpad`, `-unstable`, `bravais` alias)
+- [✓] Run `nixos-rebuild dry-build --flake .#bravais-thinkpad` successfully
+- [✓] Run `nixos-rebuild build --flake .#bravais-thinkpad` successfully
+- [✓] Run `nixos-rebuild switch --flake .#bravais-thinkpad` successfully
+- [✓] Verify unstable channel build (`nixos-rebuild build --flake .#bravais-thinkpad-unstable`)
 - [~] Verify Niri session boots with Ironbar
 - [✓] Verify COSMIC session boots with panel
 - [✓] Verify GNOME session boots on Wayland

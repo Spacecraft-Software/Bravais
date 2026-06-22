@@ -101,20 +101,27 @@
         unstable = { pkgs = nixpkgs-unstable; hm = home-manager-unstable; };
       };
 
+      # ── Machines ───────────────────────────────────────────────────────────
+      # One entry per physical machine. Each path is a host module that imports
+      # ./hosts/common.nix + its own ./hardware.nix and pins the machine's
+      # hostname + steelbore.hardware.* (including intel.marchLevel). Adding a
+      # new machine = drop a hosts/<machine>/ dir here + two output lines below.
+      hosts = {
+        thinkpad = ./hosts/thinkpad;   # Intel i7-8665U (Whiskey Lake) — x86-64-v3
+      };
+
       # ── mkBravais ────────────────────────────────────────────────────────
-      # Build a Bravais NixOS configuration for a given x86-64 march level
-      # and nixpkgs channel.
+      # Build a Bravais NixOS configuration for a given machine and channel.
+      # The x86-64 march level is pinned inside each machine's host config
+      # (steelbore.hardware.intel.marchLevel), not here.
       #
-      # Usage:  nixos-rebuild switch --flake .#bravais-v3
-      #         nixos-rebuild switch --flake .#bravais-unstable-v3
+      # Usage:  nixos-rebuild switch --flake .#bravais-thinkpad
+      #         nixos-rebuild switch --flake .#bravais-thinkpad-unstable
       #
+      #   host    — a machine path from `hosts` above
       #   channel — "stable" (26.05) or "unstable" (rolling)
-      #   v1 — baseline x86-64 (SSE2)        broadest compatibility
-      #   v2 — SSE4.2 / POPCNT / CX16        ~2008+ CPUs
-      #   v3 — AVX2 / BMI1/2 / FMA / MOVBE   ~2013+ CPUs (CachyOS default)
-      #   v4 — AVX-512F/BW/CD/DQ/VL          Ice Lake+ / Zen 4+
       mkBravais =
-        { marchLevel
+        { host
         , channel ? "stable"
         }:
         let
@@ -141,7 +148,7 @@
             gitway.nixosModules.default
 
             # Bravais modules
-            ./hosts/bravais
+            host
             ./modules/core
             ./modules/theme
             ./modules/hardware
@@ -149,10 +156,9 @@
             ./modules/login
             ./modules/packages
 
-            # Profile + Home Manager integration
+            # Home Manager integration (march level is pinned per-machine in
+            # the host config, not here).
             {
-              steelbore.hardware.intel.marchLevel = marchLevel;
-
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
@@ -165,25 +171,12 @@
     in
     {
       nixosConfigurations = {
-        # ── Stable (nixos-26.05) ────────────────────────────────────────────
-        # Default — AVX-512 (same as bravais-v4)
-        bravais    = mkBravais { marchLevel = "v4"; };
+        # ── ThinkPad (Intel i7-8665U — x86-64-v3, pinned in hosts/thinkpad) ──
+        bravais-thinkpad          = mkBravais { host = hosts.thinkpad; };
+        bravais-thinkpad-unstable = mkBravais { host = hosts.thinkpad; channel = "unstable"; };
 
-        # Explicit stable profiles
-        bravais-v1 = mkBravais { marchLevel = "v1"; };   # baseline x86-64    (SSE2)
-        bravais-v2 = mkBravais { marchLevel = "v2"; };   # x86-64-v2          (SSE4.2)
-        bravais-v3 = mkBravais { marchLevel = "v3"; };   # x86-64-v3  AVX2    (CachyOS default)
-        bravais-v4 = mkBravais { marchLevel = "v4"; };   # x86-64-v4  AVX-512 (Bravais default)
-
-        # ── Unstable (nixos-unstable) ───────────────────────────────────────
-        # Default unstable — AVX-512 (same as bravais-unstable-v4)
-        bravais-unstable    = mkBravais { marchLevel = "v4"; channel = "unstable"; };
-
-        # Explicit unstable profiles
-        bravais-unstable-v1 = mkBravais { marchLevel = "v1"; channel = "unstable"; };
-        bravais-unstable-v2 = mkBravais { marchLevel = "v2"; channel = "unstable"; };
-        bravais-unstable-v3 = mkBravais { marchLevel = "v3"; channel = "unstable"; };
-        bravais-unstable-v4 = mkBravais { marchLevel = "v4"; channel = "unstable"; };
+        # Convenience alias: bare `.#bravais` → the stable ThinkPad build.
+        bravais = mkBravais { host = hosts.thinkpad; };
       };
     };
 }

@@ -38,7 +38,7 @@ bounds set out below.
 3. **Test locally.** Validate with `nix flake check` and a dry-run rebuild:
    ```sh
    nix flake check
-   nixos-rebuild dry-build --flake .#bravais-unstable-v3 --show-trace
+   nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace
    ```
 4. **Follow existing conventions.** Module namespace is `steelbore.*`. Add packages to
    the appropriate `modules/packages/*.nix` file. Prefer Rust packages.

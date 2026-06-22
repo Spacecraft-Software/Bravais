@@ -1,5 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Host Configuration
+# Steelbore Bravais — Common Host Configuration
+#
+# Machine-agnostic host config shared by every machine under hosts/<machine>/.
+# Each machine imports this plus its own ./hardware.nix and sets the bits that
+# are genuinely per-machine: networking.hostName and the steelbore.hardware.*
+# toggles (fingerprint, intel + marchLevel). Everything below applies to all
+# Bravais machines.
 {
   config,
   pkgs,
@@ -8,12 +14,6 @@
 }:
 
 {
-  imports = [
-    ./hardware.nix
-  ];
-
-  # Hostname
-  networking.hostName = "bravais";
   networking.networkmanager.enable = true;
 
   # X11 (for LeftWM)
@@ -58,7 +58,8 @@
   # bash module being active. Bash is excluded from user shells via shell= and
   # environment.shells — no user or root has bash as their login shell.
 
-  # Steelbore module toggles
+  # Steelbore module toggles (software set shared across machines; a machine
+  # MAY override individual toggles in its own default.nix).
   steelbore = {
     # Desktop environments
     desktops.gnome.enable = true;
@@ -66,10 +67,6 @@
     desktops.plasma.enable = true;
     desktops.niri.enable = true;
     desktops.leftwm.enable = true;
-
-    # Hardware
-    hardware.fingerprint.enable = true;
-    hardware.intel.enable = true;
 
     # Package bundles
     packages.browsers.enable = true;

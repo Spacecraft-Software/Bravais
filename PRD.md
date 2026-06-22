@@ -146,20 +146,19 @@ Bravais supports two nixpkgs channels, selectable per build:
 
 ### 2.5 Microarchitecture Profiles
 
-Ten `nixosConfigurations` are generated (5 stable + 5 unstable):
+`nixosConfigurations` are generated **per physical machine** (stable + unstable each).
+The x86-64 march level is pinned in each machine's host config, not exploded into a matrix:
 
-| Configuration          | Channel  | March Level | CPU Features                      |
-|------------------------|----------|-------------|-----------------------------------|
-| `bravais` (default)    | stable   | v4          | AVX-512F/BW/CD/DQ/VL             |
-| `bravais-v1`           | stable   | v1          | Baseline x86-64 (SSE2)           |
-| `bravais-v2`           | stable   | v2          | SSE4.2 / POPCNT / CX16           |
-| `bravais-v3`           | stable   | v3          | AVX2 / BMI1/2 / FMA / MOVBE      |
-| `bravais-v4`           | stable   | v4          | AVX-512F/BW/CD/DQ/VL             |
-| `bravais-unstable`     | unstable | v4          | AVX-512F/BW/CD/DQ/VL             |
-| `bravais-unstable-v1`  | unstable | v1          | Baseline x86-64 (SSE2)           |
-| `bravais-unstable-v2`  | unstable | v2          | SSE4.2 / POPCNT / CX16           |
-| `bravais-unstable-v3`  | unstable | v3          | AVX2 / BMI1/2 / FMA / MOVBE      |
-| `bravais-unstable-v4`  | unstable | v4          | AVX-512F/BW/CD/DQ/VL             |
+| Configuration               | Machine                            | Channel  | March                          |
+|-----------------------------|------------------------------------|----------|--------------------------------|
+| `bravais-thinkpad`          | ThinkPad (i7-8665U, Whiskey Lake)  | stable   | v3 (AVX2; CPU has no AVX-512)  |
+| `bravais-thinkpad-unstable` | ThinkPad                           | unstable | v3                             |
+| `bravais` (alias)           | → `bravais-thinkpad` (stable)      | stable   | v3                             |
+
+Adding a machine = drop a `hosts/<machine>/` directory + two output lines in `flake.nix`.
+Shared host settings live in `hosts/common.nix`; each `hosts/<machine>/` imports it plus its
+own `hardware.nix` and pins `networking.hostName` + `steelbore.hardware.*` (incl.
+`intel.marchLevel`).
 
 ---
 
@@ -194,13 +193,14 @@ spacecraftPalette = {
 ### 3.3 mkBravais Function
 
 ```nix
-mkBravais = { marchLevel, channel ? "stable" }: ...
+mkBravais = { host, channel ? "stable" }: ...
 ```
 
+- `host` is a machine path from the `hosts` map in `flake.nix` (e.g. `./hosts/thinkpad`)
 - Selects nixpkgs and home-manager inputs based on `channel`
 - Passes `specialArgs = { inherit spacecraftPalette gitway; }`
-- Loads modules in order: external (home-manager, nix-flatpak), then host, core, theme, hardware, desktops, login, packages
-- Sets `spacecraft.hardware.intel.marchLevel` from the `marchLevel` parameter
+- Loads modules in order: external (home-manager, nix-flatpak), then `host`, core, theme, hardware, desktops, login, packages
+- The march level is **not** a parameter — it is pinned inside the host config via `steelbore.hardware.intel.marchLevel`
 - Configures Home Manager: `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, passes `spacecraftPalette` via `extraSpecialArgs`
 
 ### 3.4 Overlays
@@ -333,7 +333,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **DNS-over-TLS (DoT):** Enforced (`DNSOverTLS=true` — refuses plaintext)
 - **DNSSEC:** Enforced (`DNSSEC=true` — drops responses that fail validation)
 - **Routing:** Global `~.` Domains entry forces every query through the global DNS list, ignoring link-specific DNS pushed by DHCP
-- **Channel portability:** Schema differs between stable 26.05 (legacy `services.resolved.{dnssec,dnsovertls,...}` flags) and unstable (renamed to `services.resolved.settings.Resolve.*`); module uses an `options.services.resolved ? settings` check to pick the right form per channel and evaluates clean on all 10 mkBravais variants
+- **Channel portability:** Schema differs between stable 26.05 (legacy `services.resolved.{dnssec,dnsovertls,...}` flags) and unstable (renamed to `services.resolved.settings.Resolve.*`); module uses an `options.services.resolved ? settings` check to pick the right form per channel and evaluates clean on both the stable and unstable mkBravais variants
 
 ---
 
@@ -389,15 +389,26 @@ When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
 ---
 
-## 7. Host Configuration (`hosts/bravais/`)
+## 7. Host Configuration (`hosts/`)
 
-### 7.1 Host Settings (`default.nix`)
+`hosts/` is one directory per physical machine plus a shared `hosts/common.nix`. Each
+`hosts/<machine>/default.nix` imports `../common.nix` and its own `./hardware.nix`, then sets
+the per-machine bits (`networking.hostName`, `steelbore.hardware.*`). Current machines:
+`thinkpad`.
 
-- **Hostname:** `bravais`
+### 7.1 Shared Host Settings (`hosts/common.nix`)
+
 - **Networking:** NetworkManager enabled
 - **X11:** Enabled (for LeftWM), keyboard layouts `us,ara`, toggle `grp:ctrl_space_toggle`
 - **Console keymap:** `us` (ckbcomp can't resolve multi-layout XKB configs)
 - **Printing:** Enabled
+- **Desktop + package toggles:** the full `steelbore.desktops.*` / `steelbore.packages.*` set
+
+### 7.1.1 ThinkPad (`hosts/thinkpad/default.nix`)
+
+- **Hostname:** `bravais-thinkpad`
+- **Hardware toggles:** `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
+- **March level:** `steelbore.hardware.intel.marchLevel = "v3"` (i7-8665U is AVX2-max, no AVX-512)
 
 ### 7.2 User Account
 
@@ -1046,7 +1057,7 @@ Managed via `programs.alacritty.enable = true` with structured Nix settings. She
 - **Primary:** US English (`us`)
 - **Secondary:** Arabic (`ara`)
 - **Toggle:** `Ctrl+Space` (`grp:ctrl_space_toggle`)
-- **Configuration:** Set in `hosts/bravais/default.nix` (system), `users/mj/home.nix` (user), `modules/desktops/niri.nix` (Niri XKB)
+- **Configuration:** Set in `hosts/common.nix` (system), `users/mj/home.nix` (user), `modules/desktops/niri.nix` (Niri XKB)
 
 ---
 
@@ -1082,9 +1093,9 @@ nixos-rebuild build --flake .#bravais
 # Switch to new configuration
 sudo nixos-rebuild switch --flake .#bravais
 
-# Build specific profile
-sudo nixos-rebuild switch --flake .#bravais-v3
-sudo nixos-rebuild switch --flake .#bravais-unstable-v3
+# Build a specific machine / channel
+sudo nixos-rebuild switch --flake .#bravais-thinkpad
+sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable
 ```
 
 ### 16.2 Desktop Environment Verification

@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Per-machine host configurations.** `hosts/` is now one directory per physical
+  machine. Shared host settings moved to `hosts/common.nix`; `hosts/bravais/` became
+  `hosts/thinkpad/` (imports `../common.nix` + `./hardware.nix`, sets
+  `networking.hostName = "bravais-thinkpad"` and pins `steelbore.hardware.intel.marchLevel
+  = "v3"` — the i7-8665U is x86-64-v3 with no AVX-512, so the old v4 default would emit
+  illegal instructions). `mkBravais` now takes `{ host, channel }` instead of
+  `{ marchLevel, channel }`, and the 10-entry march × channel matrix is replaced by
+  `bravais-thinkpad`, `bravais-thinkpad-unstable`, and a `bravais` alias → stable ThinkPad.
+  Adding a machine = drop a `hosts/<machine>/` dir + two output lines in `flake.nix`.
 - **Project renamed: Lattice → Bravais** (full name: *Steelbore OS Bravais*).
   The crystallography theme is preserved — a Bravais lattice is a kind of
   lattice — and every identifier follows: `mkLattice` → `mkBravais`, all 10

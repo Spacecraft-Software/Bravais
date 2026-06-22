@@ -20,7 +20,7 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # Console/TTY keymap is set per-host (see hosts/bravais/default.nix)
+  # Console/TTY keymap is set in the shared host config (see hosts/common.nix)
 
   # Input method — ibus-daemon runs idle. iBus is pulled in transitively by
   # GNOME, and `org.freedesktop.IBus.Panel.Wayland.Gtk3.desktop` autostarts

@@ -18,14 +18,15 @@ The design of Bravais is guided by four primary tenets:
 
 ```
 bravais/
-├── flake.nix                      # Flake entry point (mkBravais helper, 10 nixosConfigurations)
+├── flake.nix                      # Flake entry point (mkBravais helper; per-machine configs)
 ├── flake.lock                     # Pinned dependencies
 ├── lib/                           # Custom Nix helper functions
 │   └── default.nix                # Color palette definitions
-├── hosts/                         # Machine-specific configurations
-│   └── bravais/                   # Primary host
-│       ├── default.nix            # Host traits & module toggles
-│       └── hardware.nix           # Hardware configuration
+├── hosts/                         # One directory per physical machine
+│   ├── common.nix                 # Shared host config (user, shells, toggles)
+│   └── thinkpad/                  # ThinkPad (i7-8665U) — hostname + hw + march pin
+│       ├── default.nix            # Machine traits (hostName, hardware toggles)
+│       └── hardware.nix           # Generated hardware configuration
 ├── modules/                       # NixOS modules (steelbore.* namespace)
 │   ├── core/                      # Always-enabled necessities
 │   │   ├── default.nix            # Core module entry
@@ -148,20 +149,28 @@ appimage-run ~/Applications/SomeApp.AppImage   # explicit fallback if binfmt doe
   Homebrew → Flatpak → Snap) still applies: reach for AppImage only when a tool isn't
   available higher up the chain.
 
-## x86-64 CPU Build Profiles
+## Per-machine configurations
 
-`modules/hardware/intel.nix` exposes a `marchLevel` option. Compiler flags are sourced from
-**CachyOS** (v1, v3, v4) and **ALHP** (v2 — the authoritative v2 source, as CachyOS skips v2).
-All levels use `-mtune=native` and include `pack-relative-relocs` in `RUSTFLAGS`.
+`hosts/` holds one directory per physical machine. Shared host settings live in
+`hosts/common.nix`; each `hosts/<machine>/` imports it plus its own generated
+`hardware.nix` and pins the machine-specific bits: `networking.hostName` and the
+`steelbore.hardware.*` toggles, **including the x86-64 march level**. The flake's
+`mkBravais { host, channel ? "stable" }` then builds a stable + an unstable variant per
+machine. Adding a machine = drop a `hosts/<machine>/` dir + two output lines in `flake.nix`.
 
-| Profile | ISA additions | Source | CFLAGS `-march` | `GOAMD64` |
-|---------|--------------|--------|-----------------|-----------|
-| `bravais-v1` | SSE2 baseline | CachyOS baseline | `x86-64` | `v1` |
-| `bravais-v2` | SSE4.2 / POPCNT / CX16 | ALHP | `x86-64-v2` | `v2` |
-| `bravais-v3` | AVX2 / BMI1/2 / FMA | CachyOS | `x86-64-v3` | `v3` |
-| `bravais-v4` | AVX-512F/BW/CD/DQ/VL | CachyOS | `x86-64-v4` | `v4` |
+| Configuration | Machine | Channel | March |
+|---------------|---------|---------|-------|
+| `bravais-thinkpad` | ThinkPad (i7-8665U, Whiskey Lake) | stable (26.05) | `v3` (AVX2; CPU has no AVX-512) |
+| `bravais-thinkpad-unstable` | ThinkPad | unstable (rolling) | `v3` |
+| `bravais` | alias → `bravais-thinkpad` (stable) | | |
 
-All profiles share: `-O3 -flto=auto -fuse-ld=gold -mpclmul` (v2+) and full security hardening
+The march level is the `marchLevel` option in `modules/hardware/intel.nix` (enum `v1`–`v4`).
+Compiler flags are sourced from **CachyOS** (v1, v3, v4) and **ALHP** (v2 — the authoritative
+v2 source, as CachyOS skips v2); all levels use `-mtune=native` and include
+`pack-relative-relocs` in `RUSTFLAGS`. The four levels are SSE2 baseline (`v1`),
+SSE4.2/POPCNT/CX16 (`v2`), AVX2/BMI1·2/FMA (`v3`), and AVX-512F/BW/CD/DQ/VL (`v4`).
+
+All levels share: `-O3 -flto=auto -fuse-ld=gold -mpclmul` (v2+) and full security hardening
 (`-D_FORTIFY_SOURCE=3`, `-fstack-clash-protection`, `-fcf-protection`, `-Clink-arg=pack-relative-relocs`).
 `-fuse-ld=gold` is required on NixOS so GCC can resolve the LTO plugin path in `/nix/store`.
 
@@ -191,7 +200,8 @@ Hosts toggle modules declaratively via the `steelbore.*` namespace:
     desktops.niri.enable = true;
     desktops.leftwm.enable = true;
 
-    # Hardware — marchLevel is selected per-flake-config in flake.nix (mkBravais)
+    # Hardware — set per-machine in hosts/<machine>/default.nix
+    # (fingerprint, intel.enable, and intel.marchLevel are pinned there)
     hardware.fingerprint.enable = true;
     hardware.intel.enable = true;
 
@@ -232,19 +242,14 @@ nixos-rebuild dry-build --flake .#bravais
 # Build without switching
 nixos-rebuild build --flake .#bravais
 
-# Switch to new configuration (default: stable AVX-512 / v4)
+# Switch to new configuration (default alias → stable ThinkPad)
 sudo nixos-rebuild switch --flake .#bravais
 
-# Switch to a specific stable CPU profile
-sudo nixos-rebuild switch --flake .#bravais-v3   # AVX2
-sudo nixos-rebuild switch --flake .#bravais-v2   # SSE4.2 (ALHP-derived)
-sudo nixos-rebuild switch --flake .#bravais-v1   # Baseline x86-64
-sudo nixos-rebuild switch --flake .#bravais-v4   # AVX-512 (same as .#bravais)
+# ThinkPad (stable 26.05, x86-64-v3)
+sudo nixos-rebuild switch --flake .#bravais-thinkpad
 
-# Switch to unstable channel (bleeding-edge packages)
-sudo nixos-rebuild switch --flake .#bravais-unstable       # AVX-512 / v4
-sudo nixos-rebuild switch --flake .#bravais-unstable-v3    # AVX2
-sudo nixos-rebuild switch --flake .#bravais-unstable-v1    # Baseline x86-64
+# ThinkPad on the unstable channel (bleeding-edge packages)
+sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable
 ```
 
 ## Documentation
