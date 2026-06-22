@@ -679,6 +679,34 @@ in
     # keys under Niri (binds + swayosd-server startup live in
     # modules/desktops/niri.nix). swayosd-server auto-reads both files from
     # this directory. Themed with the Steelbore palette.
+    # cosmic-term shell + profile. cosmic-config layers per-key with the USER
+    # file winning over /etc/cosmic, and cosmic-term writes a real `profiles`
+    # file here (profile 0, empty command → $SHELL) that shadows the system
+    # default in modules/packages/terminals.nix. Own it at the user level so
+    # cosmic-term deterministically launches Nushell on the Steelbore scheme.
+    # force = true overwrites the app-written file without a backup deadlock
+    # (same treatment as the VSCode flatpak override and .gtkrc-2.0).
+    "cosmic/com.system76.CosmicTerm/v1/profiles" = {
+      force = true;
+      text = ''
+        {
+            0: (
+                name: "Steelbore",
+                command: "${pkgs.nushell}/bin/nu",
+                syntax_theme_dark: "Steelbore",
+                syntax_theme_light: "Steelbore",
+                tab_title: "",
+                working_directory: "",
+                drain_on_exit: false,
+            ),
+        }
+      '';
+    };
+    "cosmic/com.system76.CosmicTerm/v1/default_profile" = {
+      force = true;
+      text = "Some(0)\n";
+    };
+
     "swayosd/config.toml".text = ''
       [server]
       max_volume = 100
@@ -948,6 +976,9 @@ in
       spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
+      // OSD daemon for the dedicated brightness/volume keys (binds below).
+      // Auto-reads ~/.config/swayosd/{config.toml,style.css}.
+      spawn-at-startup "swayosd-server"
       // Load SSH key into gitway-agent once per session. With no TTY but
       // DISPLAY/WAYLAND_DISPLAY set, gitway-add uses $SSH_ASKPASS
       // (ksshaskpass) automatically. Cached for 24 h per the agent TTL.
@@ -1072,6 +1103,31 @@ in
           // Screenshots
           Print     hotkey-overlay-title="Take a Screenshot" { screenshot; }
           Mod+Print hotkey-overlay-title="Screenshot Window" { screenshot-window; }
+
+          // Dedicated / multimedia keys. Kept out of the hotkey overlay
+          // (labelled hardware keys, not Mod-chords) and allow-when-locked
+          // so they work over gtklock. Mirrors modules/desktops/niri.nix;
+          // packages + udev rule + rfkill wrappers are system-level there.
+          //
+          // Brightness (display) — swayosd OSD bar
+          XF86MonBrightnessUp   allow-when-locked=true { spawn "swayosd-client" "--brightness" "raise"; }
+          XF86MonBrightnessDown allow-when-locked=true { spawn "swayosd-client" "--brightness" "lower"; }
+          // Volume / mic — swayosd OSD bar (capped at 100% via config.toml)
+          XF86AudioRaiseVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "raise"; }
+          XF86AudioLowerVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "lower"; }
+          XF86AudioMute         allow-when-locked=true { spawn "swayosd-client" "--output-volume" "mute-toggle"; }
+          XF86AudioMicMute      allow-when-locked=true { spawn "swayosd-client" "--input-volume" "mute-toggle"; }
+          // Media (MPRIS) — playerctl, no OSD
+          XF86AudioPlay { spawn "playerctl" "play-pause"; }
+          XF86AudioNext { spawn "playerctl" "next"; }
+          XF86AudioPrev { spawn "playerctl" "previous"; }
+          XF86AudioStop { spawn "playerctl" "stop"; }
+          // Keyboard backlight — brightnessctl (tpacpi led, levels 0–2)
+          XF86KbdBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "+1"; }
+          XF86KbdBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "1-"; }
+          // Radios — rfkill toggles with dunst feedback (wrappers in niri.nix)
+          XF86Bluetooth allow-when-locked=true { spawn "steelbore-bt-toggle"; }
+          XF86RFKill    allow-when-locked=true { spawn "steelbore-airplane-toggle"; }
       }
     '';
 
