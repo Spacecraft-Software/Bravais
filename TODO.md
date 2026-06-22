@@ -226,7 +226,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install file managers (yazi, broot, superfile, spacedrive, fclones, kondo, pipe-rename, ouch)
 - [✓] Install disk tools (gptman, parted, tparted, gparted)
 - [✓] Install monitoring (bottom, kmon, macchina, bandwhich, mission-center, htop, btop, gotop, fastfetch, i7z, hw-probe)
-- [✓] Install text processing (jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic)
+- [✓] Install text processing (jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell)
 - [✓] Install Rust shells (nushell, brush, ion, starship, atuin, pipr, moor, powershell)
 - [✓] Install multiplexers (zellij, screen)
 - [✓] Install t-rec (terminal recorder)

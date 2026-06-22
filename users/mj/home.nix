@@ -1938,6 +1938,15 @@ in
     };
   };
 
+  # Force HM to own ~/.gtkrc-2.0 (the gtk2 module writes it at this exact
+  # key). DEs in the session blank/rewrite it out-of-band, so HM finds a
+  # foreign file on the next switch and — with a stale .backup present —
+  # aborts activation ("would be clobbered by backing up"). force overwrites
+  # unconditionally with no backup attempt. Same fix as the VSCode flatpak
+  # override above. Key must match gtk2's `configLocation` exactly. The gtk2
+  # module sets force = false explicitly, so mkForce is needed to override it.
+  home.file."${config.home.homeDirectory}/.gtkrc-2.0".force = lib.mkForce true;
+
   qt = {
     enable = true;
     # `adwaita` brings in adwaita-qt(6) + qadwaitadecorations. HM marks

@@ -805,7 +805,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **System Monitoring:** bottom (Rust), kmon (Rust), macchina (Rust), bandwhich (Rust), mission-center (Rust), htop, btop, gotop, fastfetch, i7z, hw-probe
 
-**Text Processing (Rust):** jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic
+**Text Processing (Rust):** jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell (+en_US)
 
 **Shells:** nushell (Rust), brush (Rust), ion (Rust), starship (Rust), atuin (Rust), pipr (Rust), moor (Rust), powershell
 

@@ -63,6 +63,7 @@
       mdcat                      # Rust — Markdown renderer
       difftastic                 # Rust — Structural diff
       texinfo                    # C — GNU Info documentation reader
+      pandoc                     # Haskell — universal document converter
       reuse                      # Python — REUSE compliance checker (SPDX)
       hunspell                   # C — Spell checker
       hunspellDicts.en_US        # English (US) dictionary
