@@ -40,17 +40,122 @@ let
 
     themes {
         steelbore {
-            fg "${steelborePalette.moltenAmber}"
-            bg "${steelborePalette.voidNavy}"
-            black "${steelborePalette.voidNavy}"
-            red "${steelborePalette.redOxide}"
-            green "${steelborePalette.radiumGreen}"
-            yellow "${steelborePalette.moltenAmber}"
-            blue "${steelborePalette.steelBlue}"
-            magenta "${steelborePalette.steelBlue}"
-            cyan "${steelborePalette.liquidCool}"
-            white "${steelborePalette.moltenAmber}"
-            orange "${steelborePalette.moltenAmber}"
+            text_unselected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            text_selected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            ribbon_selected {
+                base "${steelborePalette.voidNavy}"
+                background "${steelborePalette.moltenAmber}"
+                emphasis_0 "${steelborePalette.redOxide}"
+                emphasis_1 "${steelborePalette.moltenAmber}"
+                emphasis_2 "${steelborePalette.steelBlue}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            ribbon_unselected {
+                base "${steelborePalette.voidNavy}"
+                background "${steelborePalette.steelBlue}"
+                emphasis_0 "${steelborePalette.redOxide}"
+                emphasis_1 "${steelborePalette.moltenAmber}"
+                emphasis_2 "${steelborePalette.steelBlue}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            table_title {
+                base "${steelborePalette.radiumGreen}"
+                background 0
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            table_cell_selected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            table_cell_unselected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            list_selected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            list_unselected {
+                base "${steelborePalette.moltenAmber}"
+                background "${steelborePalette.voidNavy}"
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.radiumGreen}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            frame_selected {
+                base "${steelborePalette.moltenAmber}"
+                background 0
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 "${steelborePalette.liquidCool}"
+                emphasis_2 "${steelborePalette.steelBlue}"
+                emphasis_3 0
+            }
+            frame_highlight {
+                base "${steelborePalette.moltenAmber}"
+                background 0
+                emphasis_0 "${steelborePalette.steelBlue}"
+                emphasis_1 0
+                emphasis_2 "${steelborePalette.moltenAmber}"
+                emphasis_3 "${steelborePalette.moltenAmber}"
+            }
+            exit_code_success {
+                base "${steelborePalette.radiumGreen}"
+                background 0
+                emphasis_0 "${steelborePalette.liquidCool}"
+                emphasis_1 "${steelborePalette.voidNavy}"
+                emphasis_2 "${steelborePalette.steelBlue}"
+                emphasis_3 "${steelborePalette.steelBlue}"
+            }
+            exit_code_error {
+                base "${steelborePalette.redOxide}"
+                background 0
+                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_1 0
+                emphasis_2 0
+                emphasis_3 0
+            }
+            multiplayer_user_colors {
+                player_1 "${steelborePalette.steelBlue}"
+                player_2 "${steelborePalette.steelBlue}"
+                player_3 0
+                player_4 "${steelborePalette.moltenAmber}"
+                player_5 "${steelborePalette.liquidCool}"
+                player_6 0
+                player_7 "${steelborePalette.redOxide}"
+                player_8 0
+                player_9 0
+                player_10 0
+            }
         }
     }
   '';
