@@ -38,6 +38,24 @@
           ${pkgs.dunst}/bin/dunstify -a Airplane -r 9912 -i network-wireless "Airplane Mode Off"
         fi
       '';
+
+      # Caffeine — toggle the swayidle idle daemon (auto lock + screen-off,
+      # configured in users/mj/home.nix). SIGSTOP pauses swayidle so its idle
+      # timers stop advancing (the machine stays awake); SIGCONT resumes
+      # normal idle behaviour. State tracked by a runtime-dir flag; dunstify
+      # reports the new state. Bound to Mod+Shift+C in the Niri config.
+      caffeineToggle = pkgs.writeShellScriptBin "steelbore-caffeine" ''
+        state="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active"
+        if [ -e "$state" ]; then
+          ${pkgs.procps}/bin/pkill -CONT -x swayidle || true
+          rm -f "$state"
+          ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
+        else
+          ${pkgs.procps}/bin/pkill -STOP -x swayidle || true
+          : > "$state"
+          ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-full "Caffeine on — staying awake"
+        fi
+      '';
     in
     {
     # Enable Niri
@@ -81,6 +99,8 @@
       # Radio-toggle wrappers for the Bluetooth / airplane-mode keys.
       btToggle
       airplaneToggle
+      # Caffeine toggle (pauses/resumes swayidle) — bound to Mod+Shift+C.
+      caffeineToggle
     ];
 
     # brightnessctl ships udev rules that make /sys/class/backlight (group

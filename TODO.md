@@ -114,6 +114,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → rio (default terminal)
 - [✓] Configure workspaces 1-5
 - [✓] Configure startup applications (swaybg, ironbar, wired)
+- [✓] Idle management: swayidle (auto gtklock + screen-off via `niri msg action power-off-monitors`, lock before-sleep) + Caffeine toggle `Mod+Shift+C` (`steelbore-caffeine` SIGSTOP/SIGCONTs swayidle)
 - [✓] Configure input (keyboard `us,ar` with `grp:ctrl_space_toggle`, touchpad)
 - [✓] Map dedicated/multimedia keys (XF86): display + keyboard brightness, volume/mute/mic-mute, media (playerctl), Bluetooth + airplane-mode (rfkill wrappers w/ dunst feedback)
 - [✓] swayosd OSD bars for brightness/volume (swayosd-server startup; Steelbore-themed `~/.config/swayosd/style.css`); brightnessctl udev rules for rootless backlight

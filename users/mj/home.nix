@@ -842,6 +842,18 @@ in
       max_volume = 100
       style = "/home/mj/.config/swayosd/style.css"
     '';
+
+    # swayidle — idle management under Niri (spawned via the Niri config's
+    # spawn-at-startup "swayidle" "-w"). Auto-locks then blanks on idle, and
+    # locks before suspend. The Caffeine toggle (Mod+Shift+C → steelbore-
+    # caffeine, defined in modules/desktops/niri.nix) SIGSTOPs swayidle to
+    # keep the machine awake on demand. niri restores monitors on input, but
+    # the explicit resume power-on is a harmless safety net.
+    "swayidle/config".text = ''
+      timeout 300 'gtklock -d'
+      timeout 360 'niri msg action power-off-monitors' resume 'niri msg action power-on-monitors'
+      before-sleep 'gtklock -d'
+    '';
     "swayosd/style.css".text = ''
       /* Steelbore SwayOSD theme — Void Navy / Molten Amber */
       window#osd {
@@ -1113,6 +1125,9 @@ in
       // OSD daemon for the dedicated brightness/volume keys (binds below).
       // Auto-reads ~/.config/swayosd/{config.toml,style.css}.
       spawn-at-startup "swayosd-server"
+      // Idle daemon — auto lock + screen-off (config: ~/.config/swayidle/config).
+      // Toggle off on demand with Mod+Shift+C (Caffeine).
+      spawn-at-startup "swayidle" "-w"
       // Load SSH key into gitway-agent once per session. With no TTY but
       // DISPLAY/WAYLAND_DISPLAY set, gitway-add uses $SSH_ASKPASS
       // (ksshaskpass) automatically. Cached for 24 h per the agent TTL.
@@ -1144,6 +1159,7 @@ in
           // Session
           Mod+Shift+E hotkey-overlay-title="Exit niri" { quit; }
           Mod+Shift+L hotkey-overlay-title="Lock the Screen: gtklock" { spawn "gtklock"; }
+          Mod+Shift+C hotkey-overlay-title="Toggle Caffeine (keep awake)" { spawn "steelbore-caffeine"; }
           // `Slash` is Niri's KDL name for the `/` key (US layout produces
           // `?` when shifted) — consistent with our use of symbolic names
           // (Minus, Equal, Return) elsewhere in the bind table.
