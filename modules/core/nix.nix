@@ -26,6 +26,14 @@
     options = "--delete-older-than 30d";
   };
 
+  # Flake-only: the flake (nixos-26.05) is the single source of truth. `<nixpkgs>`
+  # and the `nixpkgs` registry entry stay pinned to the flake's nixpkgs via
+  # nixpkgs.flake.setNixPath / setFlakeRegistry (both default true on flake
+  # systems), so `nix-shell -p` and `nix shell nixpkgs#…` track 26.05. This stops
+  # `nix-channel` and retires the stale imperative nixos-25.11 channel, which was
+  # independent of the flake and only ever fetched the wrong release.
+  nix.channel.enable = false;
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
