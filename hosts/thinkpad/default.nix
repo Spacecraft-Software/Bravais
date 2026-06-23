@@ -19,6 +19,7 @@
   networking.hostName = "bravais-thinkpad";
 
   steelbore.hardware = {
+    bluetooth.enable = true;
     fingerprint.enable = true;
     intel.enable = true;
     # i7-8665U is x86-64-v3 (AVX2/BMI2/FMA) but has NO AVX-512, so v4 would

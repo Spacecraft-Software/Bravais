@@ -53,6 +53,7 @@ bravais/
 |   |   +-- fonts.nix              # Typography (system fonts)
 |   +-- hardware/                  # Hardware-specific modules
 |   |   +-- default.nix            # Hardware module entry
+|   |   +-- bluetooth.nix          # BlueZ stack + bluetui/overskride
 |   |   +-- fingerprint.nix        # fprintd
 |   |   +-- intel.nix              # Intel CPU optimizations (v1-v4 march levels)
 |   +-- desktops/                  # Desktop environments (opt-in)
@@ -117,6 +118,7 @@ spacecraft = {
   desktops.niri.enable = true;
   desktops.leftwm.enable = true;
 
+  hardware.bluetooth.enable = true;
   hardware.fingerprint.enable = true;
   hardware.intel.enable = true;
 
@@ -387,6 +389,12 @@ When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
 **Additional config:** `boot.kernelModules = [ "kvm-intel" ]`, Intel microcode updates enabled.
 
+### 6.3 Bluetooth (`modules/hardware/bluetooth.nix`)
+
+**Option:** `spacecraft.hardware.bluetooth.enable`
+
+When enabled: `hardware.bluetooth.enable = true` (BlueZ / `bluetoothd`), `powerOnBoot = true`, and `settings.General.Experimental = true` (battery-level reporting). Ships two memory-safe (Rust), GPL-3.0 BlueZ clients — **bluetui** (TUI; Niri `Mod+B`) and **overskride** (GTK GUI + OBEX; Niri `Mod+Shift+B`). Niri has no Bluetooth applet; the existing `XF86Bluetooth` key only toggles the radio (rfkill), so these clients are what actually pair/connect devices. Audio routing to a connected sink is done via the PipeWire mixers (`wpctl` / `wiremix` / `pavucontrol`).
+
 ---
 
 ## 7. Host Configuration (`hosts/`)
@@ -407,7 +415,7 @@ the per-machine bits (`networking.hostName`, `steelbore.hardware.*`). Current ma
 ### 7.1.1 ThinkPad (`hosts/thinkpad/default.nix`)
 
 - **Hostname:** `bravais-thinkpad`
-- **Hardware toggles:** `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
+- **Hardware toggles:** `steelbore.hardware.bluetooth.enable`, `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
 - **March level:** `steelbore.hardware.intel.marchLevel = "v3"` (i7-8665U is AVX2-max, no AVX-512)
 
 ### 7.2 User Account
@@ -791,6 +799,8 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 **Image Viewers (Rust):** oculante (default GUI viewer — bound to image MIME types via `xdg.mimeApps` in `users/mj/home.nix`), loupe, emulsion, viu (CLI)
 
 **Audio Recognition:** mousai (Rust)
+
+**Audio Mixers / Output Switchers:** wiremix (Rust TUI; Niri `Mod+A`), pavucontrol (GTK GUI; Niri `Mod+Shift+A`) — PipeWire sink/stream routing, since Niri has no audio applet. CLI equivalents `wpctl`/`pactl` ship with the PipeWire stack.
 
 **Processing (Rust):** rav1e, gifski, oxipng, video-trimmer, ffmpeg
 

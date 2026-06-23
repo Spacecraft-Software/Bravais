@@ -1218,6 +1218,18 @@ in
           Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
           Mod+D hotkey-overlay-title="Run an Application: anyrun" { spawn "anyrun"; }
 
+          // Bluetooth managers (BlueZ clients; stack enabled in
+          // modules/hardware/bluetooth.nix). The XF86Bluetooth key below
+          // only toggles the radio (rfkill) — these connect/pair devices.
+          Mod+B hotkey-overlay-title="Bluetooth Manager (TUI): bluetui" { spawn "alacritty" "-e" "bluetui"; }
+          Mod+Shift+B hotkey-overlay-title="Bluetooth Manager (GUI): overskride" { spawn "overskride"; }
+
+          // Audio mixers / output switchers (PipeWire; Niri has no audio
+          // applet). The XF86Audio* keys above only adjust volume/mute via
+          // swayosd — these switch the output device and per-app routing.
+          Mod+A hotkey-overlay-title="Audio Mixer (TUI): wiremix" { spawn "alacritty" "-e" "wiremix"; }
+          Mod+Shift+A hotkey-overlay-title="Audio Mixer (GUI): pavucontrol" { spawn "pavucontrol"; }
+
           // Window management
           Mod+Q hotkey-overlay-title="Close Focused Window" { close-window; }
           Mod+F hotkey-overlay-title="Maximize Column" { maximize-column; }

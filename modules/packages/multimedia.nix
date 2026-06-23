@@ -30,6 +30,10 @@
       # Audio Recognition
       mousai                     # Rust — Song identification
 
+      # Audio Mixers / Output Switchers (PipeWire; Niri has no audio applet)
+      wiremix                    # Rust — TUI PipeWire mixer (switch sinks, move streams)
+      pavucontrol                # GTK — GUI volume / output-device control
+
       # Processing (Rust preferred)
       rav1e                      # Rust — AV1 encoder
       gifski                     # Rust — GIF encoder
