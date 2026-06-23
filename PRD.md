@@ -561,7 +561,7 @@ Input: keyboard layouts `us,ar` with `grp:ctrl_space_toggle`, touchpad with tap/
 Key bindings (Mod = Super):
 - **Session:** `Mod+Shift+E` quit, `Mod+Shift+L` lock (gtklock), `Mod+Shift+C` toggle Caffeine (pauses swayidle to keep the machine awake)
 - **Idle management:** `swayidle -w` (config `~/.config/swayidle/config`) locks via gtklock at 5 min, blanks via `niri msg action power-off-monitors` at 6 min, and locks before suspend; `steelbore-caffeine` SIGSTOP/SIGCONT-toggles it
-- **Applications:** `Mod+Return` rio (default terminal), `Mod+D` onagre, `Mod+Shift+D` anyrun
+- **Applications:** `Mod+Return` alacritty (default terminal), `Mod+D` onagre, `Mod+Shift+D` anyrun
 - **Windows:** `Mod+Q` close, `Mod+F` maximize, `Mod+Shift+F` fullscreen
 - **Focus:** `Mod+H/J/K/L` or `Mod+Arrows` (Vim + CUA)
 - **Move:** `Mod+Shift+H/J/K/L` or `Mod+Shift+Arrows`
@@ -608,7 +608,7 @@ leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, polybar, picom, feh, 
 
 Key bindings:
 - **Session:** `Mod+Shift+E` kill session
-- **Applications:** `Mod+Return` rio (default terminal), `Mod+D` rlaunch, `Mod+Shift+D` rofi
+- **Applications:** `Mod+Return` alacritty (default terminal), `Mod+D` rlaunch, `Mod+Shift+D` rofi
 - **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+Shift+F` float
 - **Focus:** `Mod+H/J/K/L` or `Mod+Arrows` (Vim + CUA)
 - **Move:** `Mod+Shift+H/J/K/L`

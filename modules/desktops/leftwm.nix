@@ -238,7 +238,9 @@
           layout_mode: Tag,
           insert_behavior: Bottom,
           scratchpad: [
-              (name: "Terminal", value: "rio", x: 50, y: 50, width: 1200, height: 800),
+              // alacritty, not rio — rio renders blank under leftwm's
+              // startx-spawned Xorg (see the Mod+Return note below).
+              (name: "Terminal", value: "alacritty", x: 50, y: 50, width: 1200, height: 800),
           ],
           window_rules: [],
           disable_current_tag_swap: false,
@@ -255,10 +257,10 @@
               (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
 
               // Applications
-              // Mod+Return launches alacritty rather than the repo-default rio:
-              // rio's wgpu backend prefers Wayland and renders nothing visible
-              // under leftwm's startx-spawned Xorg. alacritty has a stable X11
-              // backend and is the reliable choice for this X11-only WM.
+              // Mod+Return launches alacritty — the default terminal across
+              // both Niri and LeftWM. rio's wgpu backend prefers Wayland and
+              // renders nothing visible under leftwm's startx-spawned Xorg, so
+              // alacritty's stable X11 backend is doubly the right choice here.
               (command: Execute, value: "alacritty", modifier: ["modkey"], key: "Return"),
               (command: Execute, value: "rlaunch", modifier: ["modkey"], key: "d"),
               (command: Execute, value: "rofi -show drun", modifier: ["modkey", "Shift"], key: "d"),

@@ -111,7 +111,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install companion packages (14: swaybg, xwayland-satellite, ironbar, waybar, etc.)
 - [✓] Write Niri config with Steelbore palette (single source: `~/.config/niri/config.kdl` via `users/mj/home.nix`; niri prefers the user config over `/etc/niri`)
 - [✓] Write `/etc/ironbar/config.yaml` and `/etc/ironbar/style.css`
-- [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → rio (default terminal)
+- [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → alacritty (default terminal)
 - [✓] Configure workspaces 1-5
 - [✓] Configure startup applications (swaybg, ironbar, wired)
 - [✓] Idle management: swayidle (auto gtklock + screen-off via `niri msg action power-off-monitors`, lock before-sleep) + Caffeine toggle `Mod+Shift+C` (`steelbore-caffeine` SIGSTOP/SIGCONTs swayidle)
@@ -124,7 +124,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Define `spacecraft.desktops.leftwm` option
 - [✓] Enable X11 and LeftWM, configure XKB layout (`us,ar`)
 - [✓] Install companion packages (15: rlaunch, rofi, dmenu, polybar, picom, etc.)
-- [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → rio (default terminal)
+- [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → alacritty (default terminal)
 - [✓] Write theme files (`theme.ron`, `up`, `down`, `polybar.ini`, `template.liquid`, `picom.conf`)
 - [✓] Write `/etc/dunst/dunstrc` with Steelbore theme
 

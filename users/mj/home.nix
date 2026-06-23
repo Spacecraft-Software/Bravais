@@ -37,6 +37,9 @@ let
     pane_frames true
     mouse_mode true
     copy_on_select true
+    // Bound per-pane scrollback so a flood of build output can't balloon the server's
+    // memory (defense in depth alongside zram + earlyoom). Lower to 5000 if pressure persists.
+    scroll_buffer_size 10000
 
     themes {
         steelbore {
@@ -191,7 +194,7 @@ in
   # Installing standalone cargo/rustc alongside rustup causes a buildEnv
   # conflict (both ship _cargo zsh completions). After rebuild run:
   #   rustup install stable && rustup default stable
-  home.packages = with unstablePkgs; [
+  home.packages = (with unstablePkgs; [
     rustup          # manages rustc/cargo/rustfmt/clippy/rust-analyzer as components
     cargo-update    # cargo install-update subcommand
     cargo-watch
@@ -199,6 +202,19 @@ in
     cargo-audit
     sccache
     cargo-expand
+  ]) ++ [
+    # `construct` skills CLI from the Construct flake input (constraint #7:
+    # flake-input package consumed by attr-path, threaded via extraSpecialArgs).
+    construct.packages.${pkgs.stdenv.hostPlatform.system}.construct
+
+    # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
+    # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
+    # competing with — and taking down — the editor/multiplexer session.
+    # Usage: cargo-capped test -p <crate>
+    (pkgs.writeShellScriptBin "cargo-capped" ''
+      exec systemd-run --user --scope --quiet \
+        -p MemoryMax=24G -p MemorySwapMax=8G -- cargo "$@"
+    '')
   ];
 
   home.file = {
@@ -627,11 +643,44 @@ in
         }
 
 
-        # Update the Construct skill flake input — run rebuild afterwards to apply
-        def skills-sync [] {
+        # Update the Construct skill flake input — thin alias to the construct
+        # CLI (`construct skill sync`, flake-update-only). Run rebuild afterwards
+        # to apply. The binary is on PATH via home.packages.
+        def skills-sync [] { ^construct skill sync }
+
+        # Ship local Construct skill edits — commit (signed) + push, then sync.
+        # Run from / pointed at the construct clone; rebuild afterwards to apply.
+        def skills-ship [] { ^construct skill ship }
+
+        # Full system rebuild for bravais-thinkpad: load the signing key, bump
+        # the three tracked flake inputs (construct == skills-sync), free disk
+        # while keeping a week of rollback targets, build + switch, then mirror
+        # the repo into /etc/nixos. A failed switch aborts before the mirror.
+        #   --dry        nixos-rebuild dry-build only; skips GC and the /etc mirror
+        #   --no-update  skip `nix flake update`
+        #   --no-gc      skip garbage collection + journal vacuum
+        #   --trace      add --show-trace --verbose (to diagnose eval failures)
+        def rebuild [--dry, --no-update, --no-gc, --trace] {
           cd /spacecraft-software/bravais
-          nix --extra-experimental-features "nix-command flakes" flake update construct
-          print $"(date now | format date '%Y-%m-%d %H:%M:%S') construct flake updated — rebuild to apply"
+          if not $no_update {
+            gitway-add ~/.ssh/id_ed25519
+            nix flake update antigravity-nix construct gitway
+          }
+          if (not $no_gc) and (not $dry) {
+            try { sudo nix-collect-garbage --delete-older-than 7d }
+            try { sudo journalctl --vacuum-time=7d }
+          }
+          print $"(ansi blue)── disk before ──(ansi reset)"; df -h /
+          let extra = (if $trace { ["--show-trace" "--verbose"] } else { [] })
+          if $dry {
+            sudo nixos-rebuild dry-build --flake .#bravais-thinkpad ...$extra
+          } else {
+            sudo nixos-rebuild switch --flake .#bravais-thinkpad ...$extra
+            # Lean true mirror: prune stale files, but skip VCS internals,
+            # the build symlink, and agent-local context (.claude is gitignored).
+            sudo rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
+            print $"(ansi green)── disk after ──(ansi reset)"; df -h /
+          }
         }
 
         # User-local bins — appended so Nix store paths take precedence
@@ -1166,7 +1215,7 @@ in
           Mod+Shift+Slash hotkey-overlay-title="Show Important Hotkeys" { show-hotkey-overlay; }
 
           // Applications
-          Mod+Return hotkey-overlay-title="Open a Terminal: rio" { spawn "rio"; }
+          Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
           Mod+D hotkey-overlay-title="Run an Application: anyrun" { spawn "anyrun"; }
 
           // Window management
