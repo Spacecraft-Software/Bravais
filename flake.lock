@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782224803,
-        "narHash": "sha256-X2cpDkhqitDRjq1l1t1XMt91DizlzfOGc6kukbIcd3c=",
+        "lastModified": 1782308511,
+        "narHash": "sha256-J1dFbi6URTkpWy4pyKlJbCDURbXeXKTZjPGNzYMhST4=",
         "owner": "Spacecraft-Software",
         "repo": "Construct",
-        "rev": "693e810935ff30eed96cbe8ad9ae10cf824943bf",
+        "rev": "11f47e9e3585d3c82aca5bf078713e52c3f15e66",
         "type": "github"
       },
       "original": {
@@ -85,11 +85,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779723352,
-        "narHash": "sha256-QevMrJJjoDoFJMCXc2ktbFX3PcBxsSHL24aQo8ZLi38=",
+        "lastModified": 1782288237,
+        "narHash": "sha256-uUf5MU0a8U/Bg/ZgOBRC746zMn6dPkBto0M+M0/0RfE=",
         "owner": "Spacecraft-Software",
         "repo": "Gitway",
-        "rev": "55cd29e231a945c9b21853d3fcfd03e121359ac5",
+        "rev": "63e4ec0ec14a6d8a0bfa3f670bc69693dadb3aa5",
         "type": "github"
       },
       "original": {
