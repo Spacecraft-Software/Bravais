@@ -19,6 +19,11 @@
   # service), saves disk on / which sits at 88 % full on this host.
   nix.settings.auto-optimise-store = true;
 
+  # Silence the "Git tree '…' is dirty" warning that Nix prints on every
+  # flake evaluation when this repo has uncommitted changes (the normal
+  # state while iterating on the config before a rebuild).
+  nix.settings.warn-dirty = false;
+
   # Garbage collection
   nix.gc = {
     automatic = true;
