@@ -22,8 +22,12 @@
     bluetooth.enable = true;
     fingerprint.enable = true;
     intel.enable = true;
-    # i7-8665U is x86-64-v3 (AVX2/BMI2/FMA) but has NO AVX-512, so v4 would
-    # emit illegal instructions on this CPU. Pin to v3.
-    intel.marchLevel = "v3";
+  };
+
+  # i7-8665U is x86-64-v3 (AVX2/BMI2/FMA) but has NO AVX-512, so v4 would
+  # emit illegal instructions on this CPU. Pin to v3.
+  steelbore.platform.x86_64 = {
+    enable = true;
+    marchLevel = "v3";
   };
 }

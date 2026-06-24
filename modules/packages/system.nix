@@ -129,24 +129,10 @@
         steam-run # FHS environment for running Linux binaries
       ]);
 
-    # Podman runtimes
-    virtualisation.podman = {
-      enable = true;
-      dockerCompat = true; # docker → podman drop-in alias
-      extraPackages = [
-        pkgs.youki
-        pkgs.runc
-      ];
-    };
-
-    # Flatpak is owned solely by modules/packages/flatpak.nix (service,
-    # remotes, declarative packages), gated behind steelbore.packages.flatpak.
-    # Do not re-enable services.flatpak here — that decoupled the toggle.
-
-    # AppImage support (auto-run via binfmt)
-    programs.appimage = {
-      enable = true;
-      binfmt = true;
-    };
+    # Non-package concerns live in their own modules (this module installs
+    # packages only):
+    #   Podman   → modules/services/podman.nix   (steelbore.services.podman)
+    #   AppImage → modules/compat/appimage.nix    (steelbore.compat.appimage)
+    #   Flatpak  → modules/packages/flatpak.nix   (steelbore.packages.flatpak)
   };
 }

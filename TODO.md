@@ -278,6 +278,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`intel.nix`**: Enable `kvm-intel` module, Intel microcode updates
 - [✓] **`intel.nix`**: Set per-level optimization flags (CFLAGS, CXXFLAGS, RUSTFLAGS, GOAMD64, LDFLAGS, LTOFLAGS)
 - [✓] **`intel.nix`**: v1/v3/v4 CachyOS-sourced flags, v2 ALHP-sourced flags
+- [✓] **Tier 2 (S8) split**: `marchLevel` + all compiler/linker flags moved to
+  `modules/platform/x86-64.nix` under `steelbore.platform.x86_64`; `intel.nix` is now
+  vendor-only (`kvm-intel`, microcode). New sibling modules `modules/services/` (podman,
+  S13) and `modules/compat/` (appimage, S13); palette single-sourced in `lib/colors.nix`
+  (S9); desktop guard assertions in `modules/desktops/assertions.nix` (S11).
 
 ---
 
@@ -285,7 +290,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ### Host (`hosts/common.nix` + `hosts/thinkpad/`)
 
-- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `intel.marchLevel = "v3"`; enable `hardware.bluetooth`
+- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `steelbore.platform.x86_64.marchLevel = "v3"`; enable `hardware.bluetooth`
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`

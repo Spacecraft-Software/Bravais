@@ -14,5 +14,6 @@
     ./plasma.nix
     ./niri.nix
     ./leftwm.nix
+    ./assertions.nix
   ];
 }

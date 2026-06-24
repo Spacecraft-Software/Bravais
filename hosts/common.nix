@@ -73,6 +73,12 @@
     packages.ai.enable = true;
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
+
+    # Services
+    services.podman.enable = true;
+
+    # Compatibility layers
+    compat.appimage.enable = true;
   };
 
   system.stateVersion = "26.05";
