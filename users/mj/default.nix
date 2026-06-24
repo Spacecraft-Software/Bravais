@@ -12,7 +12,7 @@
       "input"
       "video"
       "audio"
-      "seat"      # Access to /run/seatd.sock (cage/Wayland kiosk)
+      "seat" # Access to /run/seatd.sock (cage/Wayland kiosk)
     ];
     shell = pkgs.nushell;
   };

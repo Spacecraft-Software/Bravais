@@ -86,19 +86,25 @@
 
       # Steelbore color palette as a reusable attribute set
       steelborePalette = {
-        voidNavy    = "#000027";
+        voidNavy = "#000027";
         moltenAmber = "#D98E32";
-        steelBlue   = "#4B7EB0";
+        steelBlue = "#4B7EB0";
         radiumGreen = "#50FA7B";
-        redOxide    = "#FF5C5C";
-        liquidCool  = "#8BE9FD";
+        redOxide = "#FF5C5C";
+        liquidCool = "#8BE9FD";
       };
 
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
       channels = {
-        stable   = { pkgs = nixpkgs;          hm = home-manager; };
-        unstable = { pkgs = nixpkgs-unstable; hm = home-manager-unstable; };
+        stable = {
+          pkgs = nixpkgs;
+          hm = home-manager;
+        };
+        unstable = {
+          pkgs = nixpkgs-unstable;
+          hm = home-manager-unstable;
+        };
       };
 
       # ── Machines ───────────────────────────────────────────────────────────
@@ -107,7 +113,7 @@
       # hostname + steelbore.hardware.* (including intel.marchLevel). Adding a
       # new machine = drop a hosts/<machine>/ dir here + two output lines below.
       hosts = {
-        thinkpad = ./hosts/thinkpad;   # Intel i7-8665U (Whiskey Lake) — x86-64-v3
+        thinkpad = ./hosts/thinkpad; # Intel i7-8665U (Whiskey Lake) — x86-64-v3
       };
 
       # ── mkBravais ────────────────────────────────────────────────────────
@@ -121,8 +127,9 @@
       #   host    — a machine path from `hosts` above
       #   channel — "stable" (26.05) or "unstable" (rolling)
       mkBravais =
-        { host
-        , channel ? "stable"
+        {
+          host,
+          channel ? "stable",
         }:
         let
           ch = channels.${channel};
@@ -140,7 +147,16 @@
         in
         ch.pkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit steelborePalette gitway construct rapg unstablePkgs antigravity-nix; };
+          specialArgs = {
+            inherit
+              steelborePalette
+              gitway
+              construct
+              rapg
+              unstablePkgs
+              antigravity-nix
+              ;
+          };
           modules = [
             # External modules
             ch.hm.nixosModules.home-manager
@@ -166,7 +182,16 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "backup";
-              home-manager.extraSpecialArgs = { inherit steelborePalette gitway construct rapg unstablePkgs antigravity-nix; };
+              home-manager.extraSpecialArgs = {
+                inherit
+                  steelborePalette
+                  gitway
+                  construct
+                  rapg
+                  unstablePkgs
+                  antigravity-nix
+                  ;
+              };
               home-manager.users.mj = import ./users/mj/home.nix;
             }
           ];
@@ -176,8 +201,11 @@
     {
       nixosConfigurations = {
         # ── ThinkPad (Intel i7-8665U — x86-64-v3, pinned in hosts/thinkpad) ──
-        bravais-thinkpad          = mkBravais { host = hosts.thinkpad; };
-        bravais-thinkpad-unstable = mkBravais { host = hosts.thinkpad; channel = "unstable"; };
+        bravais-thinkpad = mkBravais { host = hosts.thinkpad; };
+        bravais-thinkpad-unstable = mkBravais {
+          host = hosts.thinkpad;
+          channel = "unstable";
+        };
 
         # Convenience alias: bare `.#bravais` → the stable ThinkPad build.
         bravais = mkBravais { host = hosts.thinkpad; };
@@ -190,10 +218,10 @@
 
       devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
         packages = with nixpkgs.legacyPackages.${system}; [
-          nil          # Nix language server
-          nixfmt       # Nix formatter (RFC-style; canonical attr on 26.05)
-          statix       # Nix linter / antipattern checker
-          deadnix      # dead-code (unused binding) finder
+          nil # Nix language server
+          nixfmt # Nix formatter (RFC-style; canonical attr on 26.05)
+          statix # Nix linter / antipattern checker
+          deadnix # dead-code (unused binding) finder
         ];
       };
 
@@ -201,8 +229,7 @@
       # (stable + unstable). The x86-64 march level is pinned per host, so
       # there is no v1–v4 matrix to enumerate here.
       checks.${system} = {
-        bravais-thinkpad =
-          self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
+        bravais-thinkpad = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
         bravais-thinkpad-unstable =
           self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
       };

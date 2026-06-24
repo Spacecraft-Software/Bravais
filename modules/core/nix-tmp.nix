@@ -18,11 +18,16 @@
 # `build-dir` for security; only nix-daemon (root) needs to write here,
 # and it creates per-build subdirs as the nixbld* sandbox users itself.
 # This dir is *not* a user-level TMPDIR.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  imgPath  = "/run/media/mj/Expansion/nix-tmp.img";
-  mountAt  = "/mnt/nix-tmp";
+  imgPath = "/run/media/mj/Expansion/nix-tmp.img";
+  mountAt = "/mnt/nix-tmp";
   # 80 GiB chosen because 40 GiB couldn't fit deno-2.7.13 + LTO +
   # codegen-units=1 + parallel cargo for sibling crates
   # (deno_core/deno_runtime/test_server/dcore) — peak ~50–55 GiB.
@@ -30,7 +35,7 @@ let
   # Note: this only governs *fresh* image creation by the oneshot
   # service below; an already-existing .img must be grown imperatively
   # via truncate + e2fsck + resize2fs (see CLAUDE.md / Round 11 plan).
-  imgSize  = "80G";
+  imgSize = "80G";
 in
 {
   systemd.tmpfiles.rules = [ "d ${mountAt} 0755 root root -" ];

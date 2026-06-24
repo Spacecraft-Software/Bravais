@@ -7,7 +7,12 @@
 # took the zellij server (and its panes, including the Claude Code session) down with it.
 # This module gives the system memory headroom plus a name-aware OOM guard that kills the
 # *build* instead of the multiplexer.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # zram — ~16 GB of compressed, RAM-backed swap (zstd). Absorbs transient build spikes;

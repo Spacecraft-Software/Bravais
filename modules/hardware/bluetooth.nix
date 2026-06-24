@@ -10,7 +10,12 @@
 # no package collision or runtime conflict. The Niri keybinds that launch
 # them, and the existing XF86Bluetooth rfkill radio toggle, live in
 # users/mj/home.nix + modules/desktops/niri.nix.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options.steelbore.hardware.bluetooth = {
@@ -28,8 +33,8 @@
     };
 
     environment.systemPackages = [
-      pkgs.bluetui     # Rust -- TUI BlueZ client (default manager)
-      pkgs.overskride  # Rust -- GTK GUI BlueZ/OBEX client
+      pkgs.bluetui # Rust -- TUI BlueZ client (default manager)
+      pkgs.overskride # Rust -- GTK GUI BlueZ/OBEX client
     ];
   };
 }

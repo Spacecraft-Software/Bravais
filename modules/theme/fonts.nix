@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Typography Configuration
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   fonts.packages = with pkgs; [
@@ -18,7 +23,10 @@
   ];
 
   fonts.fontconfig.defaultFonts = {
-    monospace = [ "JetBrainsMono Nerd Font" "CaskaydiaMono Nerd Font" ];
+    monospace = [
+      "JetBrainsMono Nerd Font"
+      "CaskaydiaMono Nerd Font"
+    ];
     sansSerif = [ "Hack Nerd Font" ];
     serif = [ "Hack Nerd Font" ];
   };

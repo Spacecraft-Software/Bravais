@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — KDE Plasma 6 Desktop Environment (Wayland)
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options.steelbore.desktops.plasma = {
@@ -30,12 +35,12 @@
       # kdePackages.xdg-desktop-portal-kde
 
       # Wallet
-      kdePackages.kwalletmanager  # Wallet management GUI
-      kdePackages.kwallet         # KWallet daemon
-      pinentry-qt                 # GPG pinentry for KDE dialogs
+      kdePackages.kwalletmanager # Wallet management GUI
+      kdePackages.kwallet # KWallet daemon
+      pinentry-qt # GPG pinentry for KDE dialogs
 
       # Tiling
-      kdePackages.krohnkite       # KWin tiling script
+      kdePackages.krohnkite # KWin tiling script
     ];
 
     # Exclude KDE bloat
