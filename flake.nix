@@ -84,15 +84,8 @@
     let
       system = "x86_64-linux";
 
-      # Steelbore color palette as a reusable attribute set
-      steelborePalette = {
-        voidNavy = "#000027";
-        moltenAmber = "#D98E32";
-        steelBlue = "#4B7EB0";
-        radiumGreen = "#50FA7B";
-        redOxide = "#FF5C5C";
-        liquidCool = "#8BE9FD";
-      };
+      # Steelbore color palette — single canonical source in lib/colors.nix.
+      steelborePalette = import ./lib/colors.nix;
 
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
@@ -110,8 +103,9 @@
       # ── Machines ───────────────────────────────────────────────────────────
       # One entry per physical machine. Each path is a host module that imports
       # ./hosts/common.nix + its own ./hardware.nix and pins the machine's
-      # hostname + steelbore.hardware.* (including intel.marchLevel). Adding a
-      # new machine = drop a hosts/<machine>/ dir here + two output lines below.
+      # hostname + steelbore.hardware.* + steelbore.platform.x86_64.marchLevel.
+      # Adding a new machine = drop a hosts/<machine>/ dir here + two output
+      # lines below.
       hosts = {
         thinkpad = ./hosts/thinkpad; # Intel i7-8665U (Whiskey Lake) — x86-64-v3
       };
@@ -119,7 +113,7 @@
       # ── mkBravais ────────────────────────────────────────────────────────
       # Build a Bravais NixOS configuration for a given machine and channel.
       # The x86-64 march level is pinned inside each machine's host config
-      # (steelbore.hardware.intel.marchLevel), not here.
+      # (steelbore.platform.x86_64.marchLevel), not here.
       #
       # Usage:  nixos-rebuild switch --flake .#bravais-thinkpad
       #         nixos-rebuild switch --flake .#bravais-thinkpad-unstable
@@ -168,8 +162,11 @@
             ./modules/core
             ./modules/theme
             ./modules/hardware
+            ./modules/platform
             ./modules/desktops
             ./modules/login
+            ./modules/services
+            ./modules/compat
             ./modules/packages
 
             # System user account (mj) — single source of truth. Home Manager

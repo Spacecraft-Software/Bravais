@@ -104,7 +104,9 @@ All modules use the `spacecraft.*` namespace with `lib.mkEnableOption`:
 }
 ```
 
-A `mkSpacecraftModule` helper is available in `lib/default.nix` to reduce boilerplate.
+The canonical Steelbore palette lives in `lib/colors.nix` (imported by `flake.nix` as
+`steelborePalette`). The former `lib/default.nix` (a duplicate palette + an unused
+`mkSteelboreModule` helper) was removed.
 
 ### 2.3 Host Configuration Pattern
 
@@ -159,8 +161,8 @@ The x86-64 march level is pinned in each machine's host config, not exploded int
 
 Adding a machine = drop a `hosts/<machine>/` directory + two output lines in `flake.nix`.
 Shared host settings live in `hosts/common.nix`; each `hosts/<machine>/` imports it plus its
-own `hardware.nix` and pins `networking.hostName` + `steelbore.hardware.*` (incl.
-`intel.marchLevel`).
+own `hardware.nix` and pins `networking.hostName` + `steelbore.hardware.*` +
+`steelbore.platform.x86_64.marchLevel`.
 
 ---
 
@@ -201,8 +203,8 @@ mkBravais = { host, channel ? "stable" }: ...
 - `host` is a machine path from the `hosts` map in `flake.nix` (e.g. `./hosts/thinkpad`)
 - Selects nixpkgs and home-manager inputs based on `channel`
 - Passes `specialArgs = { inherit spacecraftPalette gitway; }`
-- Loads modules in order: external (home-manager, nix-flatpak), then `host`, core, theme, hardware, desktops, login, packages
-- The march level is **not** a parameter — it is pinned inside the host config via `steelbore.hardware.intel.marchLevel`
+- Loads modules in order: external (home-manager, nix-flatpak), then `host`, core, theme, hardware, platform, desktops, login, services, compat, packages
+- The march level is **not** a parameter — it is pinned inside the host config via `steelbore.platform.x86_64.marchLevel`
 - Configures Home Manager: `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, passes `spacecraftPalette` via `extraSpecialArgs`
 
 ### 3.4 Overlays
@@ -347,9 +349,12 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
-### 6.2 Intel CPU Optimizations (`modules/hardware/intel.nix`)
+### 6.2 CPU Vendor (`modules/hardware/intel.nix`) + x86-64 Platform Flags (`modules/platform/x86-64.nix`)
 
-**Option:** `spacecraft.hardware.intel.enable` with `marchLevel` suboption (enum: v1/v2/v3/v4, default: v4).
+**Options:** `steelbore.hardware.intel.enable` is vendor-only (`kvm-intel`, microcode).
+The x86-64 ISA level and **all** compiler/linker flags live in `modules/platform/x86-64.nix`
+under `steelbore.platform.x86_64.enable` with the `marchLevel` suboption (enum: v1/v2/v3/v4,
+default: v4) — an x86-64-vN level is not Intel-specific, so it is decoupled from the vendor module.
 
 **Flag sources:** CachyOS for v1/v3/v4, ALHP for v2.
 
@@ -416,7 +421,7 @@ the per-machine bits (`networking.hostName`, `steelbore.hardware.*`). Current ma
 
 - **Hostname:** `bravais-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.bluetooth.enable`, `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
-- **March level:** `steelbore.hardware.intel.marchLevel = "v3"` (i7-8665U is AVX2-max, no AVX-512)
+- **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }` (i7-8665U is AVX2-max, no AVX-512)
 
 ### 7.2 User Account
 
@@ -888,9 +893,9 @@ and a `/home/linuxbrew` prefix that NixOS does not provide, so it runs inside a
 where it behaves exactly as upstream intends: full FHS, an apt-managed userland,
 passwordless sudo inside the box, and brew-installed binaries that run normally.
 
-**Dependency:** distrobox drives the host's rootless podman, configured by the
-`system` bundle (`virtualisation.podman.enable`). The host enables both
-`packages.system` and `packages.homebrew`, so this is always satisfied — noted
+**Dependency:** distrobox drives the host's rootless podman, enabled by the
+`steelbore.services.podman` module (`virtualisation.podman.enable`). The host enables both
+`services.podman` and `packages.homebrew`, so this is always satisfied — noted
 so the coupling is explicit.
 
 **Commands installed** (all `pkgs.writeShellApplication`, shellcheck-linted at
@@ -926,6 +931,8 @@ module's `image` binding.
 
 ### 12.1 Podman
 
+Module `modules/services/podman.nix` — toggle `steelbore.services.podman.enable`.
+
 ```nix
 virtualisation.podman = {
   enable = true;
@@ -941,6 +948,8 @@ services.flatpak.enable = true;
 ```
 
 ### 12.3 AppImage
+
+Module `modules/compat/appimage.nix` — toggle `steelbore.compat.appimage.enable`.
 
 First-class support: `binfmt` auto-run for any `*.AppImage`, plus the AppImagePool GUI
 (Flatpak). Loose AppImages live in `~/Applications/` by convention. When an AppImage is
