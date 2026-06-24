@@ -652,11 +652,19 @@ in
         # Update the Construct skill flake input — thin alias to the construct
         # CLI (`construct skill sync`, flake-update-only). Run rebuild afterwards
         # to apply. The binary is on PATH via home.packages.
-        def skills-sync [] { ^construct skill sync }
+        def skills-sync [topic?: string] {
+          if $topic == "help" { ^construct skill sync --help; return }
+          if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: skills-sync help(ansi reset)"; return }
+          ^construct skill sync
+        }
 
         # Ship local Construct skill edits — commit (signed) + push, then sync.
         # Run from / pointed at the construct clone; rebuild afterwards to apply.
-        def skills-ship [] { ^construct skill ship }
+        def skills-ship [topic?: string] {
+          if $topic == "help" { ^construct skill ship --help; return }
+          if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: skills-ship help(ansi reset)"; return }
+          ^construct skill ship
+        }
 
         # Full system rebuild for bravais-thinkpad: load the signing key, bump
         # the three tracked flake inputs (construct == skills-sync), free disk
@@ -666,7 +674,9 @@ in
         #   --no-update  skip `nix flake update`
         #   --no-gc      skip garbage collection + journal vacuum
         #   --trace      add --show-trace --verbose (to diagnose eval failures)
-        def rebuild [--dry, --no-update, --no-gc, --trace] {
+        def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace] {
+          if $topic == "help" { help rebuild; return }
+          if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
           cd /spacecraft-software/bravais
           if not $no_update {
             gitway-add ~/.ssh/id_ed25519
