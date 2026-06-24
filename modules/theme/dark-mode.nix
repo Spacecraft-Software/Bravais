@@ -15,7 +15,12 @@
 # carry their own appearance controllers; the dconf keys this module's
 # HM counterpart writes only take effect when those DEs' own theme
 # system is not overriding (i.e. under Niri / LeftWM).
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # dconf is the storage backend HM's gtk module writes to (and what
@@ -33,14 +38,14 @@
   # apps, system services with a GUI, .desktop entries from
   # /run/current-system/sw/share/applications).
   environment.systemPackages = with pkgs; [
-    adw-gtk3                   # GTK3 theme matching libadwaita / GTK4
-    papirus-icon-theme         # Icon theme (provides Papirus-Dark)
-    bibata-cursors             # Cursor theme (Bibata-Modern-Classic)
-    adwaita-qt                 # Qt5 Adwaita platform theme
-    adwaita-qt6                # Qt6 Adwaita platform theme
-    qadwaitadecorations        # Qt5 window decorations
-    qadwaitadecorations-qt6    # Qt6 window decorations
-    xdg-desktop-portal-gtk     # Appearance backend for bare WMs
+    adw-gtk3 # GTK3 theme matching libadwaita / GTK4
+    papirus-icon-theme # Icon theme (provides Papirus-Dark)
+    bibata-cursors # Cursor theme (Bibata-Modern-Classic)
+    adwaita-qt # Qt5 Adwaita platform theme
+    adwaita-qt6 # Qt6 Adwaita platform theme
+    qadwaitadecorations # Qt5 window decorations
+    qadwaitadecorations-qt6 # Qt6 window decorations
+    xdg-desktop-portal-gtk # Appearance backend for bare WMs
   ];
 
   # xdg-desktop-portal-gtk is the appearance backend that serves

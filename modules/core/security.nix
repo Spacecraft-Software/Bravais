@@ -26,14 +26,14 @@
   # this declaration the service is unknown to PAM and gtklock rejects
   # every password. Empty attrset = NixOS defaults (pam_unix), which is
   # what `auth include login` resolves to here.
-  security.pam.services.gtklock = {};
+  security.pam.services.gtklock = { };
 
   # SSH agent — provided by gitway-agent (NixOS module from the gitway flake;
   # imported in flake.nix). Disable system OpenSSH ssh-agent.service so it
   # doesn't race gitway-agent for $SSH_AUTH_SOCK. The OpenSSH CLI tools remain
   # available as a fallback for non-Git SSH workflows.
   programs.ssh.startAgent = false;
-  services.gnome.gcr-ssh-agent.enable = false;   # guard against GCR clobbering the socket
+  services.gnome.gcr-ssh-agent.enable = false; # guard against GCR clobbering the socket
 
   services.gitway-agent.enable = true;
 
@@ -46,8 +46,8 @@
 
   # nixosModules.default doesn't expose defaultLifetime; restore the 24 h TTL
   # (parity with the previous home-manager configuration) by appending `-t 86400`.
-  systemd.user.services.gitway-agent.serviceConfig.ExecStart = lib.mkForce
-    "${config.services.gitway-agent.package}/bin/gitway agent start -D -s -a %t/gitway-agent.sock -t 86400";
+  systemd.user.services.gitway-agent.serviceConfig.ExecStart =
+    lib.mkForce "${config.services.gitway-agent.package}/bin/gitway agent start -D -s -a %t/gitway-agent.sock -t 86400";
 
   # Make the gitway-agent socket visible to greetd-launched shells. The
   # gitway NixOS module already drops /etc/environment.d/10-gitway-agent.conf,
@@ -55,8 +55,7 @@
   # greetd's PAM session need the variable in /etc/profile and pam_env's
   # /etc/pam/environment — `environment.sessionVariables` writes to both.
   # The `$` is escaped so Nix passes it through and /etc/profile expands it.
-  environment.sessionVariables.SSH_AUTH_SOCK =
-    "\${XDG_RUNTIME_DIR}/gitway-agent.sock";
+  environment.sessionVariables.SSH_AUTH_SOCK = "\${XDG_RUNTIME_DIR}/gitway-agent.sock";
 
   # Tmpfiles rules
   systemd.tmpfiles.rules = [

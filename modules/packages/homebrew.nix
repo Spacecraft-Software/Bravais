@@ -19,7 +19,12 @@
 # `system` bundle (virtualisation.podman.enable). The host enables both
 # packages.system and packages.homebrew, so the coupling is always satisfied —
 # but it is called out here so the dependency is explicit.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.steelbore.packages.homebrew;
@@ -38,7 +43,10 @@ let
     # podman: distrobox's backend, and the parse-stable source of truth for the
     # box-exists check (a distrobox container *is* a podman container named
     # exactly `${box}`) — far more robust than scraping `distrobox list`.
-    runtimeInputs = [ pkgs.distrobox pkgs.podman ];
+    runtimeInputs = [
+      pkgs.distrobox
+      pkgs.podman
+    ];
     # SC2016: the single-quoted inner script is intentional — $(...) and the
     # installer must expand *inside* the container, not on the host.
     excludeShellChecks = [ "SC2016" ];
@@ -66,7 +74,10 @@ let
   # via bash's positional parameters (no nested quoting games).
   brewWrapper = pkgs.writeShellApplication {
     name = "brew";
-    runtimeInputs = [ pkgs.distrobox pkgs.podman ];
+    runtimeInputs = [
+      pkgs.distrobox
+      pkgs.podman
+    ];
     # SC2016: the single-quoted inner script is intentional — `$@` and shellenv
     # must expand *inside* the container, not on the host.
     excludeShellChecks = [ "SC2016" ];
@@ -90,7 +101,10 @@ let
   # running brew-installed tools, which run normally in here).
   brewBox = pkgs.writeShellApplication {
     name = "brew-box";
-    runtimeInputs = [ pkgs.distrobox pkgs.podman ];
+    runtimeInputs = [
+      pkgs.distrobox
+      pkgs.podman
+    ];
     text = ''
       exec distrobox enter "${box}"
     '';
@@ -103,9 +117,9 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
-      brewBoxInit  # `brew-box-init` — one-time: create box + install Homebrew
-      brewWrapper  # `brew`          — run brew from the normal shell
-      brewBox      # `brew-box`      — interactive shell inside the container
+      brewBoxInit # `brew-box-init` — one-time: create box + install Homebrew
+      brewWrapper # `brew`          — run brew from the normal shell
+      brewBox # `brew-box`      — interactive shell inside the container
     ];
   };
 }

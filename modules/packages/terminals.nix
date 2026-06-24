@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Terminal Emulators (All with Steelbore Theme)
-{ config, lib, pkgs, steelborePalette, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  steelborePalette,
+  ...
+}:
 
 let
   # Foot requires hex colors without the '#' prefix
@@ -18,26 +24,27 @@ in
       alacritty
       wezterm
       rio
-      ghostty                    # Zig, but memory-safe
+      ghostty # Zig, but memory-safe
 
       # Other terminals
-      ptyxis                     # GNOME terminal (VTE-based) — host install so
-                                 #   distrobox/container integration works out-of-box.
-      waveterm                   # AI-native terminal
-      warp-terminal              # AI-powered terminal
-      termius                    # SSH client
-      cosmic-term                # COSMIC terminal
+      ptyxis
+      # GNOME terminal (VTE-based) — host install so
+      #   distrobox/container integration works out-of-box.
+      waveterm # AI-native terminal
+      warp-terminal # AI-powered terminal
+      termius # SSH client
+      cosmic-term # COSMIC terminal
 
       # KDE terminals
-      kdePackages.konsole        # KDE terminal emulator
-      kdePackages.yakuake        # KDE drop-down terminal
+      kdePackages.konsole # KDE terminal emulator
+      kdePackages.yakuake # KDE drop-down terminal
 
       # GNOME terminals
-      gnome-console              # GNOME Console (kgx)
+      gnome-console # GNOME Console (kgx)
 
       # Wayland/X11 terminals
-      foot                       # Wayland terminal (C, lightweight)
-      xterm                      # Classic X11 terminal
+      foot # Wayland terminal (C, lightweight)
+      xterm # Classic X11 terminal
 
       # XFCE terminal — top-level on unstable, under `xfce.` on stable.
       # `or`-fallback evaluates clean on both channels.

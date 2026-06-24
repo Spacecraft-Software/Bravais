@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — greetd + tuigreet Login Manager
-{ config, lib, pkgs, steelborePalette, gitway, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  steelborePalette,
+  gitway,
+  ...
+}:
 
 let
   # Wrap each shell-as-session in cage (single-app Wayland kiosk) plus rio
@@ -9,36 +16,56 @@ let
   # stdin, ion fails fast, nushell silently swallows its own startup error.
   # cage gives the missing compositor; rio gives the missing PTY; the shell
   # gets a real interactive terminal as it expects.
-  mkShellSession = { name, sessionName, exec, comment }: (pkgs.runCommand name {
-    passthru.providedSessions = [ sessionName ];
-  } ''
-    mkdir -p $out/share/wayland-sessions
-    cat > $out/share/wayland-sessions/${sessionName}.desktop <<EOF
-    [Desktop Entry]
-    Name=${name}
-    Comment=${comment}
-    Exec=${pkgs.cage}/bin/cage -- ${pkgs.rio}/bin/rio -e ${exec}
-    Type=Application
-    DesktopNames=${sessionName}
-    EOF
-  '');
+  mkShellSession =
+    {
+      name,
+      sessionName,
+      exec,
+      comment,
+    }:
+    (pkgs.runCommand name
+      {
+        passthru.providedSessions = [ sessionName ];
+      }
+      ''
+        mkdir -p $out/share/wayland-sessions
+        cat > $out/share/wayland-sessions/${sessionName}.desktop <<EOF
+        [Desktop Entry]
+        Name=${name}
+        Comment=${comment}
+        Exec=${pkgs.cage}/bin/cage -- ${pkgs.rio}/bin/rio -e ${exec}
+        Type=Application
+        DesktopNames=${sessionName}
+        EOF
+      ''
+    );
 
   # X11 session entry. Used for window managers that need Xorg started by the
   # session itself (greetd does not start Xorg). The Exec line should already
   # bring up an X server — typically via `startx <wm>` from xorg.xinit.
-  mkXSession = { name, sessionName, exec, comment }: (pkgs.runCommand "${name}-xsession" {
-    passthru.providedSessions = [ sessionName ];
-  } ''
-    mkdir -p $out/share/xsessions
-    cat > $out/share/xsessions/${sessionName}.desktop <<EOF
-    [Desktop Entry]
-    Name=${name}
-    Comment=${comment}
-    Exec=${exec}
-    Type=XSession
-    DesktopNames=${sessionName}
-    EOF
-  '');
+  mkXSession =
+    {
+      name,
+      sessionName,
+      exec,
+      comment,
+    }:
+    (pkgs.runCommand "${name}-xsession"
+      {
+        passthru.providedSessions = [ sessionName ];
+      }
+      ''
+        mkdir -p $out/share/xsessions
+        cat > $out/share/xsessions/${sessionName}.desktop <<EOF
+        [Desktop Entry]
+        Name=${name}
+        Comment=${comment}
+        Exec=${exec}
+        Type=XSession
+        DesktopNames=${sessionName}
+        EOF
+      ''
+    );
 
   ion-shell-session = mkShellSession {
     name = "Ion Shell";
@@ -70,13 +97,15 @@ let
   # systemd-unit reset that we don't want to skip), and the cosmic NixOS
   # module pulls cosmic-session into systemPackages. Defining our own would
   # collide on /run/current-system/sw/bin/start-cosmic.
-  mkStartWrapper = name: command: pkgs.writeShellScriptBin "start-${name}" ''
-    exec ${command} "$@"
-  '';
+  mkStartWrapper =
+    name: command:
+    pkgs.writeShellScriptBin "start-${name}" ''
+      exec ${command} "$@"
+    '';
 
-  start-gnome      = mkStartWrapper "gnome"      "${pkgs.gnome-session}/bin/gnome-session";
-  start-plasma     = mkStartWrapper "plasma"     "${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland";
-  start-niri       = mkStartWrapper "niri"       "${pkgs.niri}/bin/niri-session";
+  start-gnome = mkStartWrapper "gnome" "${pkgs.gnome-session}/bin/gnome-session";
+  start-plasma = mkStartWrapper "plasma" "${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland";
+  start-niri = mkStartWrapper "niri" "${pkgs.niri}/bin/niri-session";
 
   # X11 launchers need to bring up Xorg themselves — greetd does NOT start
   # an X server (unlike SDDM/GDM/LightDM). startx is a shell script that
@@ -88,11 +117,11 @@ let
   # pkgs.xorg.* paths warn. On stable 25.11 only the xorg.* paths exist.
   # The `or`-fallback evaluates clean on both channels — same
   # stable/unstable split as xfce4-terminal (CLAUDE.md known constraint #5).
-  xinitPkg    = pkgs.xinit    or pkgs.xorg.xinit;
-  xauthPkg    = pkgs.xauth    or pkgs.xorg.xauth;
-  xrdbPkg     = pkgs.xrdb     or pkgs.xorg.xrdb;
+  xinitPkg = pkgs.xinit or pkgs.xorg.xinit;
+  xauthPkg = pkgs.xauth or pkgs.xorg.xauth;
+  xrdbPkg = pkgs.xrdb or pkgs.xorg.xrdb;
   xsetrootPkg = pkgs.xsetroot or pkgs.xorg.xsetroot;
-  startxPath  = "${xinitPkg}/bin:${xauthPkg}/bin:${xrdbPkg}/bin:${pkgs.util-linux}/bin";
+  startxPath = "${xinitPkg}/bin:${xauthPkg}/bin:${xrdbPkg}/bin:${pkgs.util-linux}/bin";
 
   # Pre-create the per-PID xauth file so xauth doesn't print
   # "file ... does not exist" before startx generates it. bash's $$ is
@@ -129,7 +158,9 @@ let
     ${pkgs.dunst}/bin/dunst &
     ${pkgs.eww}/bin/eww open bar &
     ${pkgs.numlockx}/bin/numlockx on &
-    ${gitway.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/gitway-add "$HOME/.ssh/id_ed25519" &
+    ${
+      gitway.packages.${pkgs.stdenv.hostPlatform.system}.default
+    }/bin/gitway-add "$HOME/.ssh/id_ed25519" &
     # After leftwm is up, force-apply the Steelbore theme and re-set the
     # root background. Both calls must happen AFTER leftwm starts:
     #
@@ -190,38 +221,44 @@ let
   # GNOME X11 is not added back: gnome-session 49 ships no xsessions/
   # directory; reintroducing it would require pinning an older release
   # which is out of scope for Bravais.
-  gnome-wayland-hidden = pkgs.runCommand "gnome-wayland-hidden" {
-    passthru.providedSessions = [ "gnome-wayland" ];
-  } ''
-    mkdir -p $out/share/wayland-sessions
-    cat > $out/share/wayland-sessions/gnome-wayland.desktop <<EOF
-    [Desktop Entry]
-    Type=Application
-    Name=GNOME on Wayland (hidden)
-    NoDisplay=true
-    Hidden=true
-    Exec=true
-    EOF
-  '';
+  gnome-wayland-hidden =
+    pkgs.runCommand "gnome-wayland-hidden"
+      {
+        passthru.providedSessions = [ "gnome-wayland" ];
+      }
+      ''
+        mkdir -p $out/share/wayland-sessions
+        cat > $out/share/wayland-sessions/gnome-wayland.desktop <<EOF
+        [Desktop Entry]
+        Type=Application
+        Name=GNOME on Wayland (hidden)
+        NoDisplay=true
+        Hidden=true
+        Exec=true
+        EOF
+      '';
 
   # Hide the upstream plasmax11.desktop — its Exec runs `startplasma-x11`
   # directly without bringing up Xorg, so under greetd it crashes with
   # "$DISPLAY is not set". Our plasma-x11-xsession (started via startx)
   # is the working entry. Same first-wins symlinkJoin trick as the GNOME
   # shadow above.
-  plasmax11-hidden = pkgs.runCommand "plasmax11-hidden" {
-    passthru.providedSessions = [ "plasmax11" ];
-  } ''
-    mkdir -p $out/share/xsessions
-    cat > $out/share/xsessions/plasmax11.desktop <<EOF
-    [Desktop Entry]
-    Type=XSession
-    Name=Plasma (X11) (hidden)
-    NoDisplay=true
-    Hidden=true
-    Exec=true
-    EOF
-  '';
+  plasmax11-hidden =
+    pkgs.runCommand "plasmax11-hidden"
+      {
+        passthru.providedSessions = [ "plasmax11" ];
+      }
+      ''
+        mkdir -p $out/share/xsessions
+        cat > $out/share/xsessions/plasmax11.desktop <<EOF
+        [Desktop Entry]
+        Type=XSession
+        Name=Plasma (X11) (hidden)
+        NoDisplay=true
+        Hidden=true
+        Exec=true
+        EOF
+      '';
 in
 {
   # greetd display manager with tuigreet
@@ -255,13 +292,15 @@ in
     # over the upstream packages' duplicates/broken entries.
     gnome-wayland-hidden
     plasmax11-hidden
-  ] ++ (with pkgs; [
+  ]
+  ++ (with pkgs; [
     niri
     cosmic-session
     ion-shell-session
     nushell-session
     brush-session
-  ]) ++ [
+  ])
+  ++ [
     leftwm-xsession
     plasma-x11-xsession
   ];
@@ -280,15 +319,18 @@ in
     ion
   '';
 
-  environment.systemPackages = with pkgs; [
-    tuigreet
-  ] ++ [
-    start-gnome
-    start-plasma
-    start-plasma-x11
-    start-niri
-    start-leftwm
-  ];
+  environment.systemPackages =
+    with pkgs;
+    [
+      tuigreet
+    ]
+    ++ [
+      start-gnome
+      start-plasma
+      start-plasma-x11
+      start-niri
+      start-leftwm
+    ];
 
   # PAM configuration for greetd
   security.pam.services.greetd.enableGnomeKeyring = true;

@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Boot Configuration
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # Bootloader: systemd-boot
@@ -12,7 +17,11 @@
 
   # Kernel modules
   boot.initrd.availableKernelModules = [
-    "xhci_pci" "nvme" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"
+    "xhci_pci"
+    "nvme"
+    "usb_storage"
+    "sd_mod"
+    "rtsx_pci_sdmmc"
   ];
   boot.kernelModules = [ "kvm-intel" ];
 }

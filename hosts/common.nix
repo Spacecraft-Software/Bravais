@@ -40,7 +40,11 @@
 
   # Register shells as valid login shells
   # Ion kept as available; bash is present in NixOS internals but not a user shell
-  environment.shells = [ pkgs.nushell pkgs.brush pkgs.ion ];
+  environment.shells = [
+    pkgs.nushell
+    pkgs.brush
+    pkgs.ion
+  ];
   # Note: programs.bash.enable is intentionally left at its default (true) because
   # NixOS activation scripts and PAM tooling (userdel, useradd, etc.) depend on the
   # bash module being active. Bash is excluded from user shells via shell= and
@@ -51,7 +55,7 @@
   steelbore = {
     # Desktop environments
     desktops.gnome.enable = true;
-    desktops.cosmic.enable = true;   # stable pkgs (nixos-26.05)
+    desktops.cosmic.enable = true; # stable pkgs (nixos-26.05)
     desktops.plasma.enable = true;
     desktops.niri.enable = true;
     desktops.leftwm.enable = true;
@@ -68,7 +72,7 @@
     packages.system.enable = true;
     packages.ai.enable = true;
     packages.flatpak.enable = true;
-    packages.homebrew.enable = true;   # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
+    packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
   };
 
   system.stateVersion = "26.05";

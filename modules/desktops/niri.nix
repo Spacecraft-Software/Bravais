@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Niri Scrolling Tiling Compositor (Wayland)
-{ config, lib, pkgs, steelborePalette, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  steelborePalette,
+  ...
+}:
 
 {
   options.steelbore.desktops.niri = {
@@ -58,71 +64,74 @@
       '';
     in
     {
-    # Enable Niri
-    programs.niri.enable = true;
+      # Enable Niri
+      programs.niri.enable = true;
 
-    # Niri and companion packages.
-    # Stack matches LeftWM where cross-platform (eww, dunst, gtklock) and
-    # uses Wayland-only tools where the X11 alternatives don't exist.
-    environment.systemPackages = (with pkgs; [
-      niri
-      xwayland-satellite        # X11 app support inside Niri
+      # Niri and companion packages.
+      # Stack matches LeftWM where cross-platform (eww, dunst, gtklock) and
+      # uses Wayland-only tools where the X11 alternatives don't exist.
+      environment.systemPackages =
+        (with pkgs; [
+          niri
+          xwayland-satellite # X11 app support inside Niri
 
-      # Status bar — Eww (Rust, X11 + Wayland; shared with LeftWM)
-      eww
+          # Status bar — Eww (Rust, X11 + Wayland; shared with LeftWM)
+          eww
 
-      # Launcher — Anyrun (Rust, Wayland)
-      anyrun
+          # Launcher — Anyrun (Rust, Wayland)
+          anyrun
 
-      # Notifications — dunst (cross-platform with LeftWM)
-      dunst
+          # Notifications — dunst (cross-platform with LeftWM)
+          dunst
 
-      # Screen locker — gtklock (cross-platform with LeftWM)
-      gtklock
-      swayidle                  # Idle management
+          # Screen locker — gtklock (cross-platform with LeftWM)
+          gtklock
+          swayidle # Idle management
 
-      # Clipboard / screenshot
-      wl-clipboard
-      wl-clipboard-rs           # (Rust)
-      grim                      # Screenshot
-      slurp                     # Region selection
+          # Clipboard / screenshot
+          wl-clipboard
+          wl-clipboard-rs # (Rust)
+          grim # Screenshot
+          slurp # Region selection
 
-      # Dedicated/multimedia key handling (Niri has no built-in daemon for
-      # XF86 keys, unlike GNOME/Plasma/COSMIC). The binds that drive these
-      # live in the Niri config in users/mj/home.nix.
-      swayosd                   # On-screen-display bars for brightness/volume
-      brightnessctl             # C — display + keyboard backlight control
-      playerctl                 # MPRIS media control (was only transitive)
-    ]) ++ [
-      # Wallpaper daemon — awww (renamed from swww upstream).
-      wallpaperPkg
-      # Radio-toggle wrappers for the Bluetooth / airplane-mode keys.
-      btToggle
-      airplaneToggle
-      # Caffeine toggle (pauses/resumes swayidle) — bound to Mod+Shift+C.
-      caffeineToggle
-    ];
+          # Dedicated/multimedia key handling (Niri has no built-in daemon for
+          # XF86 keys, unlike GNOME/Plasma/COSMIC). The binds that drive these
+          # live in the Niri config in users/mj/home.nix.
+          swayosd # On-screen-display bars for brightness/volume
+          brightnessctl # C — display + keyboard backlight control
+          playerctl # MPRIS media control (was only transitive)
+        ])
+        ++ [
+          # Wallpaper daemon — awww (renamed from swww upstream).
+          wallpaperPkg
+          # Radio-toggle wrappers for the Bluetooth / airplane-mode keys.
+          btToggle
+          airplaneToggle
+          # Caffeine toggle (pauses/resumes swayidle) — bound to Mod+Shift+C.
+          caffeineToggle
+        ];
 
-    # brightnessctl ships udev rules that make /sys/class/backlight (group
-    # `video`) and /sys/class/leds (group `input`) group-writable, so the
-    # display + keyboard backlight are controllable rootless. User `mj` is
-    # in both groups. swayosd-server's brightness backend also relies on
-    # the backlight being `video`-writable.
-    services.udev.packages = [ pkgs.brightnessctl ];
+      # brightnessctl ships udev rules that make /sys/class/backlight (group
+      # `video`) and /sys/class/leds (group `input`) group-writable, so the
+      # display + keyboard backlight are controllable rootless. User `mj` is
+      # in both groups. swayosd-server's brightness backend also relies on
+      # the backlight being `video`-writable.
+      services.udev.packages = [ pkgs.brightnessctl ];
 
-    # The Niri config itself is the SINGLE SOURCE at the user level:
-    # users/mj/home.nix → xdg.configFile."niri/config.kdl". niri reads
-    # ~/.config/niri/config.kdl in preference to /etc/niri/config.kdl, so a
-    # second copy here would be dead (and previously drifted — brightness
-    # binds added here never took effect). Layout, startup (incl.
-    # swayosd-server), and all key binds — including the XF86 keys that call
-    # the packages and wrapper scripts above — live in home.nix. This module
-    # only enables Niri, installs companion packages, ships the backlight
-    # udev rule, and provides the rfkill toggle wrappers.
-    #
-    # Status bar / launcher / notifications / wallpaper / lock are likewise
-    # configured at the home-manager level. Eww config lives in
-    # users/mj/home.nix (xdg.configFile."eww/..."); dunst remains at
-    # /etc/dunst/dunstrc (set in modules/desktops/leftwm.nix).
-  });
+      # The Niri config itself is the SINGLE SOURCE at the user level:
+      # users/mj/home.nix → xdg.configFile."niri/config.kdl". niri reads
+      # ~/.config/niri/config.kdl in preference to /etc/niri/config.kdl, so a
+      # second copy here would be dead (and previously drifted — brightness
+      # binds added here never took effect). Layout, startup (incl.
+      # swayosd-server), and all key binds — including the XF86 keys that call
+      # the packages and wrapper scripts above — live in home.nix. This module
+      # only enables Niri, installs companion packages, ships the backlight
+      # udev rule, and provides the rfkill toggle wrappers.
+      #
+      # Status bar / launcher / notifications / wallpaper / lock are likewise
+      # configured at the home-manager level. Eww config lives in
+      # users/mj/home.nix (xdg.configFile."eww/..."); dunst remains at
+      # /etc/dunst/dunstrc (set in modules/desktops/leftwm.nix).
+    }
+  );
 }

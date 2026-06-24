@@ -194,33 +194,34 @@ in
   # Installing standalone cargo/rustc alongside rustup causes a buildEnv
   # conflict (both ship _cargo zsh completions). After rebuild run:
   #   rustup install stable && rustup default stable
-  home.packages = (with unstablePkgs; [
-    rustup          # manages rustc/cargo/rustfmt/clippy/rust-analyzer as components
-    cargo-update    # cargo install-update subcommand
-    cargo-watch
-    cargo-nextest
-    cargo-audit
-    sccache
-    cargo-expand
-  ]) ++ [
-    # `construct` skills CLI from the Construct flake input (constraint #7:
-    # flake-input package consumed by attr-path, threaded via extraSpecialArgs).
-    construct.packages.${pkgs.stdenv.hostPlatform.system}.construct
+  home.packages =
+    (with unstablePkgs; [
+      rustup # manages rustc/cargo/rustfmt/clippy/rust-analyzer as components
+      cargo-update # cargo install-update subcommand
+      cargo-watch
+      cargo-nextest
+      cargo-audit
+      sccache
+      cargo-expand
+    ])
+    ++ [
+      # `construct` skills CLI from the Construct flake input (constraint #7:
+      # flake-input package consumed by attr-path, threaded via extraSpecialArgs).
+      construct.packages.${pkgs.stdenv.hostPlatform.system}.construct
 
-    # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
-    # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
-    # competing with — and taking down — the editor/multiplexer session.
-    # Usage: cargo-capped test -p <crate>
-    (pkgs.writeShellScriptBin "cargo-capped" ''
-      exec systemd-run --user --scope --quiet \
-        -p MemoryMax=24G -p MemorySwapMax=8G -- cargo "$@"
-    '')
-  ];
+      # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
+      # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
+      # competing with — and taking down — the editor/multiplexer session.
+      # Usage: cargo-capped test -p <crate>
+      (pkgs.writeShellScriptBin "cargo-capped" ''
+        exec systemd-run --user --scope --quiet \
+          -p MemoryMax=24G -p MemorySwapMax=8G -- cargo "$@"
+      '')
+    ];
 
   home.file = {
     # Steelbore project symlink
     "steelbore".source = config.lib.file.mkOutOfStoreSymlink "/spacecraft-software";
-
 
   };
 
@@ -232,15 +233,14 @@ in
 
   # Session variables
   home.sessionVariables = {
-    EDITOR  = "${pkgs.msedit}/bin/edit";
-    VISUAL  = "${pkgs.msedit}/bin/edit";
-    BROWSER = "flatpak run com.google.Chrome";  # default browser — see xdg.mimeApps below to change
+    EDITOR = "${pkgs.msedit}/bin/edit";
+    VISUAL = "${pkgs.msedit}/bin/edit";
+    BROWSER = "flatpak run com.google.Chrome"; # default browser — see xdg.mimeApps below to change
     STEELBORE_THEME = "true";
     NIXPKGS_ALLOW_UNFREE = "1";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
-
 
   # Refresh the tealdeer (tldr) cache on every home-manager activation.
   # `tldr --update` pulls the latest pages bundle. Failure is non-fatal so
@@ -273,8 +273,14 @@ in
         gpg.ssh.program = "${gitway.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/gitway-keygen";
         commit.gpgsign = true;
         init.defaultBranch = "main";
-        "credential.https://github.com".helper = ["" "!${pkgs.gh}/bin/gh auth git-credential"];
-        "credential.https://gist.github.com".helper = ["" "!${pkgs.gh}/bin/gh auth git-credential"];
+        "credential.https://github.com".helper = [
+          ""
+          "!${pkgs.gh}/bin/gh auth git-credential"
+        ];
+        "credential.https://gist.github.com".helper = [
+          ""
+          "!${pkgs.gh}/bin/gh auth git-credential"
+        ];
       };
     };
 
@@ -476,17 +482,17 @@ in
         # value resolves to a token from the Steelbore canonical palette.
         palettes.steelbore = {
           # Powerline section accents
-          red      = "#FF5C5C";  # red_oxide     — OS / username cap
-          peach    = "#D98E32";  # molten_amber  — directory block
-          yellow   = "#6272A4";  # slag_grey     — git block
-          green    = "#50FA7B";  # radium_green  — language runtimes
-          sapphire = "#4B7EB0";  # steel_blue    — docker / conda
-          lavender = "#8BE9FD";  # liquid_cool   — time block
+          red = "#FF5C5C"; # red_oxide     — OS / username cap
+          peach = "#D98E32"; # molten_amber  — directory block
+          yellow = "#6272A4"; # slag_grey     — git block
+          green = "#50FA7B"; # radium_green  — language runtimes
+          sapphire = "#4B7EB0"; # steel_blue    — docker / conda
+          lavender = "#8BE9FD"; # liquid_cool   — time block
 
           # Dark canvas (foreground text on bright section blocks)
-          crust  = "#000027";
+          crust = "#000027";
           mantle = "#000027";
-          base   = "#000027";
+          base = "#000027";
 
           # Secondary surfaces
           surface0 = "#050530";
@@ -499,19 +505,19 @@ in
           overlay2 = "#6272A4";
 
           # Foreground text scale
-          text     = "#D98E32";
+          text = "#D98E32";
           subtext0 = "#E6E6F0";
           subtext1 = "#E6E6F0";
 
           # Remaining catppuccin role keys mapped to nearest Steelbore semantic
           rosewater = "#FF5C5C";
-          flamingo  = "#FF5C5C";
-          pink      = "#FF5C5C";
-          mauve     = "#FF5C5C";
-          maroon    = "#FF5C5C";
-          teal      = "#8BE9FD";
-          sky       = "#8BE9FD";
-          blue      = "#4B7EB0";
+          flamingo = "#FF5C5C";
+          pink = "#FF5C5C";
+          mauve = "#FF5C5C";
+          maroon = "#FF5C5C";
+          teal = "#8BE9FD";
+          sky = "#8BE9FD";
+          blue = "#4B7EB0";
         };
       };
     };
@@ -796,10 +802,10 @@ in
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html"                = "com.google.Chrome.desktop";
-      "x-scheme-handler/http"   = "com.google.Chrome.desktop";
-      "x-scheme-handler/https"  = "com.google.Chrome.desktop";
-      "x-scheme-handler/about"  = "com.google.Chrome.desktop";
+      "text/html" = "com.google.Chrome.desktop";
+      "x-scheme-handler/http" = "com.google.Chrome.desktop";
+      "x-scheme-handler/https" = "com.google.Chrome.desktop";
+      "x-scheme-handler/about" = "com.google.Chrome.desktop";
       "x-scheme-handler/unknown" = "com.google.Chrome.desktop";
     }
     # Default image viewer — oculante (Rust, GPU-accelerated, editing +
@@ -820,8 +826,8 @@ in
       "image/vnd.microsoft.icon"
       "image/x-tga"
       "image/x-exr"
-      "application/vnd.adobe.photoshop"  # PSD
-      "image/x-adobe-dng"                # RAW
+      "application/vnd.adobe.photoshop" # PSD
+      "image/x-adobe-dng" # RAW
       "image/x-canon-cr2"
       "image/x-nikon-nef"
       "image/x-sony-arw"
@@ -1468,7 +1474,6 @@ in
       return config
     '';
 
-
     # ═══════════════════════════════════════════════════════════════════════════
     # RIO — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
@@ -2075,36 +2080,36 @@ in
 
   # XTerm Xresources (loaded by xrdb on X session start)
   xresources.properties = {
-    "XTerm*termName"               = "xterm-256color";
-    "XTerm*faceName"               = "JetBrainsMono Nerd Font";
-    "XTerm*faceSize"               = 12;
-    "XTerm*loginShell"             = true;
-    "XTerm*scrollBar"              = false;
-    "XTerm*saveLines"              = 10000;
-    "XTerm*bellIsUrgent"           = true;
-    "XTerm*internalBorder"         = 10;
-    "XTerm*background"             = steelborePalette.voidNavy;
-    "XTerm*foreground"             = steelborePalette.moltenAmber;
-    "XTerm*cursorColor"            = steelborePalette.moltenAmber;
+    "XTerm*termName" = "xterm-256color";
+    "XTerm*faceName" = "JetBrainsMono Nerd Font";
+    "XTerm*faceSize" = 12;
+    "XTerm*loginShell" = true;
+    "XTerm*scrollBar" = false;
+    "XTerm*saveLines" = 10000;
+    "XTerm*bellIsUrgent" = true;
+    "XTerm*internalBorder" = 10;
+    "XTerm*background" = steelborePalette.voidNavy;
+    "XTerm*foreground" = steelborePalette.moltenAmber;
+    "XTerm*cursorColor" = steelborePalette.moltenAmber;
     "XTerm*pointerColorBackground" = steelborePalette.voidNavy;
     "XTerm*pointerColorForeground" = steelborePalette.moltenAmber;
-    "XTerm*highlightColor"         = steelborePalette.steelBlue;
-    "XTerm*color0"                 = steelborePalette.voidNavy;
-    "XTerm*color1"                 = steelborePalette.redOxide;
-    "XTerm*color2"                 = steelborePalette.radiumGreen;
-    "XTerm*color3"                 = steelborePalette.moltenAmber;
-    "XTerm*color4"                 = steelborePalette.steelBlue;
-    "XTerm*color5"                 = steelborePalette.steelBlue;
-    "XTerm*color6"                 = steelborePalette.liquidCool;
-    "XTerm*color7"                 = steelborePalette.moltenAmber;
-    "XTerm*color8"                 = steelborePalette.steelBlue;
-    "XTerm*color9"                 = steelborePalette.redOxide;
-    "XTerm*color10"                = steelborePalette.radiumGreen;
-    "XTerm*color11"                = steelborePalette.moltenAmber;
-    "XTerm*color12"                = steelborePalette.liquidCool;
-    "XTerm*color13"                = steelborePalette.liquidCool;
-    "XTerm*color14"                = steelborePalette.liquidCool;
-    "XTerm*color15"                = steelborePalette.moltenAmber;
+    "XTerm*highlightColor" = steelborePalette.steelBlue;
+    "XTerm*color0" = steelborePalette.voidNavy;
+    "XTerm*color1" = steelborePalette.redOxide;
+    "XTerm*color2" = steelborePalette.radiumGreen;
+    "XTerm*color3" = steelborePalette.moltenAmber;
+    "XTerm*color4" = steelborePalette.steelBlue;
+    "XTerm*color5" = steelborePalette.steelBlue;
+    "XTerm*color6" = steelborePalette.liquidCool;
+    "XTerm*color7" = steelborePalette.moltenAmber;
+    "XTerm*color8" = steelborePalette.steelBlue;
+    "XTerm*color9" = steelborePalette.redOxide;
+    "XTerm*color10" = steelborePalette.radiumGreen;
+    "XTerm*color11" = steelborePalette.moltenAmber;
+    "XTerm*color12" = steelborePalette.liquidCool;
+    "XTerm*color13" = steelborePalette.liquidCool;
+    "XTerm*color14" = steelborePalette.liquidCool;
+    "XTerm*color15" = steelborePalette.moltenAmber;
   };
 
   # dconf settings for GNOME-based terminals (Ptyxis, GNOME Console) +
@@ -2117,13 +2122,13 @@ in
   dconf.settings = {
     # ── Dark Mode (Niri + LeftWM appearance source) ─────────────────────────
     "org/gnome/desktop/interface" = {
-      color-scheme        = "prefer-dark";
-      gtk-theme           = "adw-gtk3-dark";
-      icon-theme          = "Papirus-Dark";
-      cursor-theme        = "Bibata-Modern-Classic";
-      cursor-size         = 24;
-      font-name           = "Hack Nerd Font 11";
-      document-font-name  = "Hack Nerd Font 11";
+      color-scheme = "prefer-dark";
+      gtk-theme = "adw-gtk3-dark";
+      icon-theme = "Papirus-Dark";
+      cursor-theme = "Bibata-Modern-Classic";
+      cursor-size = 24;
+      font-name = "Hack Nerd Font 11";
+      document-font-name = "Hack Nerd Font 11";
       monospace-font-name = "JetBrainsMono Nerd Font 11";
     };
 
@@ -2136,22 +2141,22 @@ in
     "org/gnome/Ptyxis/Profiles/steelbore" = {
       label = "Steelbore";
       palette = [
-        steelborePalette.voidNavy      # black
-        steelborePalette.redOxide      # red
-        steelborePalette.radiumGreen   # green
-        steelborePalette.moltenAmber   # yellow
-        steelborePalette.steelBlue     # blue
-        steelborePalette.steelBlue     # magenta
-        steelborePalette.liquidCool    # cyan
-        steelborePalette.moltenAmber   # white
-        steelborePalette.steelBlue     # bright black
-        steelborePalette.redOxide      # bright red
-        steelborePalette.radiumGreen   # bright green
-        steelborePalette.moltenAmber   # bright yellow
-        steelborePalette.liquidCool    # bright blue
-        steelborePalette.liquidCool    # bright magenta
-        steelborePalette.liquidCool    # bright cyan
-        steelborePalette.moltenAmber   # bright white
+        steelborePalette.voidNavy # black
+        steelborePalette.redOxide # red
+        steelborePalette.radiumGreen # green
+        steelborePalette.moltenAmber # yellow
+        steelborePalette.steelBlue # blue
+        steelborePalette.steelBlue # magenta
+        steelborePalette.liquidCool # cyan
+        steelborePalette.moltenAmber # white
+        steelborePalette.steelBlue # bright black
+        steelborePalette.redOxide # bright red
+        steelborePalette.radiumGreen # bright green
+        steelborePalette.moltenAmber # bright yellow
+        steelborePalette.liquidCool # bright blue
+        steelborePalette.liquidCool # bright magenta
+        steelborePalette.liquidCool # bright cyan
+        steelborePalette.moltenAmber # bright white
       ];
       background-color = steelborePalette.voidNavy;
       foreground-color = steelborePalette.moltenAmber;
@@ -2235,8 +2240,8 @@ in
     name = "Bibata-Modern-Classic";
     package = pkgs.bibata-cursors;
     size = 24;
-    gtk.enable = true;        # writes ~/.config/gtk-{3,4}.0/settings.ini cursor keys
-    x11.enable = true;        # writes ~/.Xresources + Xcursor.theme / .size
-    dotIcons.enable = true;   # writes ~/.icons/default/index.theme (XDG)
+    gtk.enable = true; # writes ~/.config/gtk-{3,4}.0/settings.ini cursor keys
+    x11.enable = true; # writes ~/.Xresources + Xcursor.theme / .size
+    dotIcons.enable = true; # writes ~/.icons/default/index.theme (XDG)
   };
 }

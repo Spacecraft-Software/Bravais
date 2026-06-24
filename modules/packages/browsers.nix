@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Web Browsers
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   # BrowserOS — agentic, Chromium-based browser shipped only as an x64 AppImage.
@@ -28,7 +33,7 @@ in
     # programs.firefox.enable = true;
 
     environment.systemPackages = with pkgs; [
-      browseros                  # Chromium/AppImage -- Agentic browser (appimageTools.wrapType2)
+      browseros # Chromium/AppImage -- Agentic browser (appimageTools.wrapType2)
 
       # google-chrome → Flatpak: com.google.Chrome
       # brave → Flatpak: com.brave.Browser (Chromium source build, too large for march configs)

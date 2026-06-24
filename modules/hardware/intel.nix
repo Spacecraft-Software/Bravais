@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Intel CPU Optimizations
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.steelbore.hardware.intel;
@@ -36,8 +41,7 @@ let
 
   # ALHP variant — same linker change rationale.
   alhpLdFlags =
-    "-fuse-ld=mold -Wl,-O1 -Wl,--sort-common -Wl,--as-needed "
-    + "-Wl,-z,relro -Wl,-z,now";
+    "-fuse-ld=mold -Wl,-O1 -Wl,--sort-common -Wl,--as-needed " + "-Wl,-z,relro -Wl,-z,now";
 
   # ── Per-level flag sets ────────────────────────────────────────────────────
   flagsByLevel = {
@@ -45,33 +49,33 @@ let
     # v1 — baseline x86-64 (SSE2). -mtune=generic to preserve portability
     # of the v1 profile (was -mtune=native, which defeats the point).
     v1 = {
-      cFlags  = "-march=x86-64 -mtune=generic ${commonCFlags}";
+      cFlags = "-march=x86-64 -mtune=generic ${commonCFlags}";
       ldFlags = commonLdFlags;
-      rust    = "-C target-cpu=x86-64 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
+      rust = "-C target-cpu=x86-64 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
       goamd64 = "v1";
     };
 
     # v2 — ALHP-derived (SSE4.2 / POPCNT / CX16). -mtune=generic for portability.
     v2 = {
-      cFlags  = "-march=x86-64-v2 -mtune=generic -O3 -mpclmul -falign-functions=32 -flto=auto";
+      cFlags = "-march=x86-64-v2 -mtune=generic -O3 -mpclmul -falign-functions=32 -flto=auto";
       ldFlags = alhpLdFlags;
-      rust    = "-Copt-level=3 -Ctarget-cpu=x86-64-v2 -Clink-arg=-fuse-ld=mold";
+      rust = "-Copt-level=3 -Ctarget-cpu=x86-64-v2 -Clink-arg=-fuse-ld=mold";
       goamd64 = "v2";
     };
 
     # v3 — CachyOS-derived (AVX2 / BMI1/2 / FMA / MOVBE).
     v3 = {
-      cFlags  = "-march=x86-64-v3 -mtune=native -mpclmul ${commonCFlags}";
+      cFlags = "-march=x86-64-v3 -mtune=native -mpclmul ${commonCFlags}";
       ldFlags = commonLdFlags;
-      rust    = "-C target-cpu=x86-64-v3 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
+      rust = "-C target-cpu=x86-64-v3 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
       goamd64 = "v3";
     };
 
     # v4 — CachyOS-derived (AVX-512F/BW/CD/DQ/VL).
     v4 = {
-      cFlags  = "-march=x86-64-v4 -mtune=native -mpclmul ${commonCFlags}";
+      cFlags = "-march=x86-64-v4 -mtune=native -mpclmul ${commonCFlags}";
       ldFlags = commonLdFlags;
-      rust    = "-C target-cpu=x86-64-v4 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
+      rust = "-C target-cpu=x86-64-v4 -C opt-level=3 -Clink-arg=-fuse-ld=mold -Clink-arg=-Wl,-z,pack-relative-relocs";
       goamd64 = "v4";
     };
   };
@@ -84,7 +88,12 @@ in
     enable = lib.mkEnableOption "Intel CPU optimizations";
 
     marchLevel = lib.mkOption {
-      type    = lib.types.enum [ "v1" "v2" "v3" "v4" ];
+      type = lib.types.enum [
+        "v1"
+        "v2"
+        "v3"
+        "v4"
+      ];
       default = "v4";
       description = ''
         x86-64 microarchitecture level used for all compiler flags.
@@ -102,8 +111,7 @@ in
   config = lib.mkIf cfg.enable {
     boot.kernelModules = [ "kvm-intel" ];
 
-    hardware.cpu.intel.updateMicrocode =
-      lib.mkDefault config.hardware.enableRedistributableFirmware;
+    hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     # mold must be available system-wide so -fuse-ld=mold can resolve it
     # in user-driven builds. (nixos-rebuild itself sandboxes its env, so
@@ -111,19 +119,19 @@ in
     environment.systemPackages = [ pkgs.mold ];
 
     environment.sessionVariables = {
-      CFLAGS    = flags.cFlags;
-      CXXFLAGS  = "${flags.cFlags} -Wp,-D_GLIBCXX_ASSERTIONS";
-      LDFLAGS   = flags.ldFlags;
-      LTOFLAGS  = "-flto=auto";
+      CFLAGS = flags.cFlags;
+      CXXFLAGS = "${flags.cFlags} -Wp,-D_GLIBCXX_ASSERTIONS";
+      LDFLAGS = flags.ldFlags;
+      LTOFLAGS = "-flto=auto";
       RUSTFLAGS = flags.rust;
-      GOAMD64   = flags.goamd64;
+      GOAMD64 = flags.goamd64;
 
       # LTO-aware archive tools — required on NixOS because the wrapped
       # `gcc` package does not put gcc-ar/gcc-nm/gcc-ranlib on PATH and
       # plain binutils `ar`/`nm`/`ranlib` cannot autoload liblto_plugin.so
       # (there is no /usr/lib/bfd-plugins on NixOS).
-      AR     = "${gccUnwrapped}/bin/gcc-ar";
-      NM     = "${gccUnwrapped}/bin/gcc-nm";
+      AR = "${gccUnwrapped}/bin/gcc-ar";
+      NM = "${gccUnwrapped}/bin/gcc-nm";
       RANLIB = "${gccUnwrapped}/bin/gcc-ranlib";
     };
   };

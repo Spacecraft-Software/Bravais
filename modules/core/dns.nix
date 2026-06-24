@@ -22,18 +22,24 @@
 # exist. The `options.services.resolved ? settings` check picks the
 # right form per channel — same stable/unstable workaround pattern
 # as CLAUDE.md known constraint #5.
-{ config, lib, pkgs, options, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  options,
+  ...
+}:
 
 let
   resolveSettings = {
-    DNSSEC      = "true";
-    DNSOverTLS  = "true";
+    DNSSEC = "true";
+    DNSOverTLS = "true";
     # `~.` is systemd-resolved's "everything" routing domain. Sending
     # it as a global Domains entry forces ALL queries through the
     # global DNS list (Cloudflare malware-block) regardless of which
     # link they would otherwise route via. Link-specific DNS pushed
     # by NetworkManager/DHCP becomes effectively unused.
-    Domains     = [ "~." ];
+    Domains = [ "~." ];
     FallbackDNS = [
       "1.1.1.1#cloudflare-dns.com"
       "1.0.0.1#cloudflare-dns.com"
@@ -47,14 +53,20 @@ in
 {
   services.resolved = {
     enable = true;
-  } // (if hasSettings then {
-    settings.Resolve = resolveSettings;
-  } else {
-    dnssec      = resolveSettings.DNSSEC;
-    dnsovertls  = resolveSettings.DNSOverTLS;
-    domains     = resolveSettings.Domains;
-    fallbackDns = resolveSettings.FallbackDNS;
-  });
+  }
+  // (
+    if hasSettings then
+      {
+        settings.Resolve = resolveSettings;
+      }
+    else
+      {
+        dnssec = resolveSettings.DNSSEC;
+        dnsovertls = resolveSettings.DNSOverTLS;
+        domains = resolveSettings.Domains;
+        fallbackDns = resolveSettings.FallbackDNS;
+      }
+  );
 
   # Primary DNS list. Lowered to `DNS=` in /etc/systemd/resolved.conf
   # by the NixOS resolved module. The `IP#hostname` form carries the
