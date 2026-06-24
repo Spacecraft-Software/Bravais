@@ -128,8 +128,9 @@
       extraPackages = [ pkgs.youki pkgs.runc ];
     };
 
-    # Flatpak service
-    services.flatpak.enable = true;
+    # Flatpak is owned solely by modules/packages/flatpak.nix (service,
+    # remotes, declarative packages), gated behind steelbore.packages.flatpak.
+    # Do not re-enable services.flatpak here — that decoupled the toggle.
 
     # AppImage support (auto-run via binfmt)
     programs.appimage = {

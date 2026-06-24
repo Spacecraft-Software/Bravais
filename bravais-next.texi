@@ -1,0 +1,417 @@
+\input texinfo   @c -*- texinfo -*-
+@c SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
+@c SPDX-License-Identifier: CC-BY-SA-4.0
+@c
+@c Bravais Next — evaluation of the 2026-06-17 flake-structure proposal and the
+@c go-forward roadmap.  Builds clean with:  makeinfo --no-split bravais-next.texi
+@c %**start of header
+@setfilename bravais-next.info
+@documentencoding UTF-8
+@documentlanguage en
+@settitle Bravais Next — Flake Evolution Roadmap
+@c %**end of header
+
+@set PROJECT Bravais
+@set VERSION r1
+@set UPDATED 2026-06-24
+@set SUBDOMAIN https://Bravais.SpacecraftSoftware.org/
+
+@copying
+@value{PROJECT} Next (revision @value{VERSION}, updated @value{UPDATED}) is the
+evaluation of the external @cite{Bravais Nix Flake Structure Improvement Plan}
+(dated 2026-06-17) and the prioritised roadmap that follows from it.
+
+Copyright @copyright{} 2026 Mohamed Hammad & Spacecraft Software.
+
+@quotation
+This document is licensed under the Creative Commons Attribution-ShareAlike
+4.0 International License (CC-BY-SA-4.0).  To view a copy of this licence,
+visit @url{https://creativecommons.org/licenses/by-sa/4.0/}.
+@end quotation
+@end copying
+
+@dircategory Spacecraft Software
+@direntry
+* Bravais Next: (bravais-next).   Evaluation & roadmap for the Bravais flake.
+@end direntry
+
+@titlepage
+@title @value{PROJECT} Next
+@subtitle Flake-Structure Proposal Evaluation & Roadmap
+@subtitle Revision @value{VERSION} --- @value{UPDATED}
+@author Mohamed Hammad
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+Maintained by Mohamed Hammad
+@email{Mohamed.Hammad@@SpacecraftSoftware.org}.
+@*
+@uref{@value{SUBDOMAIN}}
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top @value{PROJECT} Next
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::        What this document is and where it came from.
+* Method::              How the proposal was evaluated.
+* Repository State::    The verified current state of the flake.
+* Corrections::         Factual errors in the source proposal.
+* Evaluation::          Per-suggestion validity verdicts.
+* Roadmap::             What to do, in priority order.
+* Quick Wins::          The Tier 1 changes applied now.
+* Index::               Complete index.
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@cindex introduction
+@cindex source proposal
+This document evaluates an external proposal --- the @cite{Bravais Nix Flake
+Structure Improvement Plan}, an HTML report dated 2026-06-17 --- against the
+@emph{actual} state of the Bravais flake, and distils the result into a
+go-forward roadmap.
+
+The proposal makes sixteen structural recommendations (a thin @file{flake.nix},
+a generated CPU/channel matrix, exported modules, a profiles layer, a package
+catalogue, and more).  Several are sound.  Others are built on a
+@strong{stale or speculative snapshot} of the repository and do not match what
+is on disk today.
+
+@cindex key finding
+The cardinal finding: @emph{the source proposal must not be relayed
+uncritically}.  This document classifies every suggestion as @dfn{adopt},
+@dfn{adopt with modification}, @dfn{defer}, or @dfn{reject}, with the reasoning
+grounded in concrete file references, and then orders the survivors by value and
+risk.
+
+@node Method
+@chapter Method
+
+@cindex method
+@cindex evaluation criteria
+Each suggestion was checked by reading the live tree --- @file{flake.nix},
+@file{modules/}, @file{hosts/}, @file{users/}, @file{overlays/}, and
+@file{README.md} --- rather than trusting the proposal's description of it.
+
+The weighting follows The Steelbore Standard priority hierarchy (Standard
+@samp{S3}): @strong{stability and correctness rank first}.  A change that
+removes a latent bug, a drift trap, or an ambiguity outranks a change whose only
+payoff is speculative reuse by a hypothetical future distribution.  A
+single-machine personal configuration does not pay the carrying cost of
+abstractions that only amortise across many machines or many consumers.
+
+Verdicts use four levels:
+
+@table @asis
+@item @strong{Adopt}
+Valid and worth doing; low risk.
+@item @strong{Adopt (modified)}
+The underlying problem is real, but the fix is lighter or differently shaped
+than the proposal's.
+@item @strong{Defer}
+Sound in principle, but the trigger condition (a second machine, real external
+reuse, painful drift) has not arrived.
+@item @strong{Reject}
+Contradicts a deliberate design decision, or rests on a factual error.
+@end table
+
+@node Repository State
+@chapter Repository State
+
+@cindex repository state, verified
+The following facts were confirmed by direct reading and anchor every verdict in
+@ref{Evaluation}.
+
+@itemize @bullet
+@item
+@file{flake.nix} is 182 lines and already lean; @code{mkBravais} is a 57-line
+inline function (it does @emph{not} need extracting into @file{lib/}).
+@item
+The configuration outputs are @code{bravais-thinkpad},
+@code{bravais-thinkpad-unstable}, and the @code{bravais} alias.  There is
+@strong{no} @code{bravais-v1}@dots{}@code{v4} matrix; the x86-64 march level is
+@strong{pinned per host} (the ThinkPad's i7-8665U is @samp{v3}).
+@item
+The stable channel is @code{nixos-26.05}; @code{kimi-cli} is commented out, not
+an active input.
+@item
+@code{users.users.mj} is @strong{duplicated}: the active definition is in
+@file{hosts/common.nix} (and includes the @samp{seat} group), while
+@file{users/mj/default.nix} holds a dead, unimported copy that has drifted (it
+is missing @samp{seat}).
+@item
+@file{modules/packages/system.nix} mixes pure packages with services and
+compatibility layers --- @code{virtualisation.podman}, @code{programs.appimage},
+and @code{services.flatpak.enable}.  The Flatpak service is
+@strong{double-declared}: @file{modules/packages/flatpak.nix} already owns it,
+properly gated behind its own toggle.
+@item
+The flake exposes only @code{nixosConfigurations}.  There are no
+@code{formatter}, @code{devShells}, @code{checks}, @code{nixosModules}, or
+@code{overlays} outputs.
+@item
+The Steelbore palette is duplicated: an inline @code{steelborePalette} in
+@file{flake.nix} and an unused copy in @file{lib/default.nix}, with a naming
+drift (@code{liquidCool} in the repo versus @code{liquidCoolant} in the
+proposal).
+@item
+@file{README.md} carries a hand-maintained package table (185 packages, 57.8%
+Rust-first) that will drift as the inventory changes.
+@end itemize
+
+@node Corrections
+@chapter Corrections
+
+@cindex corrections to the source proposal
+Three of the proposal's load-bearing premises are simply out of date.  They are
+recorded here so the report is not mistaken for an endorsement of them.
+
+@enumerate
+@item
+@strong{Channel.}  The proposal's example @file{flake.nix} pins
+@code{nixos-25.11} and lists @code{kimi-cli} as an input.  The repository tracks
+@code{nixos-26.05}, and @code{kimi-cli} is commented out.
+@item
+@strong{CPU matrix.}  The proposal's flagship recommendation generates
+@code{bravais-v1}@dots{}@code{v4} per channel from a matrix function.  No such
+outputs exist; march is pinned per host by deliberate design.
+@item
+@strong{Thin flake.}  The proposal argues for shrinking @file{flake.nix} by
+moving @code{mkBravais} into @file{lib/}.  The flake is already small and
+auditable; the move would add indirection without removing weight.
+@end enumerate
+
+@node Evaluation
+@chapter Evaluation
+
+@cindex verdict table
+The verdicts, keyed to the section numbers in the source proposal:
+
+@multitable @columnfractions .07 .31 .19 .43
+@headitem Pr. @tab Suggestion @tab Verdict @tab Why
+@item S6
+@tab Generate a CPU v1--v4 / channel matrix
+@tab @strong{Reject}
+@tab Contradicts a deliberate design --- no v1--v4 outputs; march pinned per
+host.
+@item S5
+@tab Make @file{flake.nix} thin (move @code{mkBravais} to @file{lib/})
+@tab @strong{Reject}
+@tab Already lean (182 lines); example uses the stale 25.11 + @code{kimi-cli}.
+@item S15
+@tab Formatter / dev shell / checks
+@tab @strong{Adopt now}
+@tab Absent, cheap, high value; fix bogus @code{v1}/@code{v4} check refs.
+@item S12
+@tab Centralise user + Home Manager
+@tab @strong{Adopt now}
+@tab Real duplication and drift trap.
+@item S13
+@tab Split packages / services / compat
+@tab @strong{Adopt}
+@tab Real mixing; the Flatpak double-declare is a latent decoupling bug.
+@item S9
+@tab Centralise the palette
+@tab @strong{Adopt (modified)}
+@tab Real duplication + naming drift; single-source it, drop the module-option
+weight.
+@item S8
+@tab Split hardware (vendor) from platform (ISA flags)
+@tab @strong{Adopt (modified)}
+@tab @file{intel.nix} genuinely mixes microcode with march/@code{RUSTFLAGS};
+keep march pinned.
+@item S11
+@tab Desktop primary/extras + assertions
+@tab @strong{Adopt (assertions only)}
+@tab Kitchen-sink is intentional; add guard assertions, do not force
+exclusivity.
+@item S10
+@tab Profiles layer
+@tab @strong{Defer}
+@tab Host is already lean; @file{common.nix} already serves as the profile.
+@item S7
+@tab Export modules / overlays
+@tab @strong{Defer}
+@tab Only worth it for real external reuse; modules are tightly coupled.
+@item S14
+@tab Package catalogue + generated docs
+@tab @strong{Defer}
+@tab Stats will drift, but a full catalogue for 185 packages is heavy; a count
+script is lighter.
+@item S4
+@tab Full directory reorganisation
+@tab @strong{Defer (partial)}
+@tab Heavy for a single-machine personal config; adopt sub-parts individually.
+@end multitable
+
+@cindex strengths of the proposal
+The proposal's strengths are real and worth affirming: it correctly identifies
+the hardware/platform conflation (@pxref{Roadmap}), the kitchen-sink desktop
+model, the package/service mixing, and the hand-maintained statistics as genuine
+issues.  The disagreement is about which fixes are proportionate to a personal,
+single-machine distribution --- and about the factual premises in
+@ref{Corrections}.
+
+@node Roadmap
+@chapter Roadmap
+
+@cindex roadmap
+@cindex tiers
+The survivors, ordered by value and risk.
+
+@menu
+* Tier 1::      Adopt now --- low risk, high value.
+* Tier 2::      Adopt soon --- sound, moderate effort.
+* Tier 3::      Defer --- conditional on a trigger.
+* Rejected::    Not pursued.
+@end menu
+
+@node Tier 1
+@section Tier 1 --- Adopt now
+
+@cindex Tier 1
+Low-risk, high-value changes applied in the same pass as this document
+(@pxref{Quick Wins} for the mechanics):
+
+@itemize @bullet
+@item
+Add @code{formatter}, @code{devShells}, and @code{checks} flake outputs, with
+the checks referencing the @emph{real} @code{bravais-thinkpad} and
+@code{bravais-thinkpad-unstable} configurations.
+@item
+De-duplicate the @code{mj} user account into a single owning module.
+@item
+Remove the redundant Flatpak service declaration so Flatpak has one owner.
+@end itemize
+
+@node Tier 2
+@section Tier 2 --- Adopt soon
+
+@cindex Tier 2
+Sound improvements of moderate effort, queued behind Tier 1:
+
+@itemize @bullet
+@item
+@strong{Single-source the palette.}  Make @file{flake.nix} import one canonical
+colour definition and delete the unused, drifted copy in @file{lib/default.nix}.
+This is the @emph{lightweight} form of proposal S9 --- a data file, not a module
+option read through @code{config}.
+@item
+@strong{Split hardware from platform (S8).}  Separate CPU-vendor settings
+(@code{kvm-intel}, microcode) from x86-64 ISA / compiler-flag policy
+(@code{marchLevel}, @code{RUSTFLAGS}, LTO) so an AMD machine would not require
+rewriting the whole module.  The march level stays @strong{pinned per host}.
+@item
+@strong{Desktop guard assertions (S11).}  Keep all desktops enableable, but add
+assertions and documentation around the X11/Wayland interplay (LeftWM
+unconditionally enables X11 today, with no guard).
+@item
+@strong{Relocate services/compat out of @file{system.nix} (S13).}  Move
+@code{virtualisation.podman} and @code{programs.appimage} into dedicated
+service/compat modules so a @samp{packages} module installs packages only.
+@end itemize
+
+@node Tier 3
+@section Tier 3 --- Defer
+
+@cindex Tier 3
+@cindex trigger conditions
+Each of these is reasonable @emph{once a trigger arrives}:
+
+@table @asis
+@item Profiles layer (S10)
+Trigger: a second machine, or a meaningfully different system personality.
+@item Export modules and overlays (S7)
+Trigger: a real external consumer of the Bravais modules.
+@item Generated package report (S14)
+Trigger: the hand-maintained statistics become painful to keep accurate; a small
+count script is the cheaper first step before a full catalogue.
+@item Broad directory reorganisation (S4)
+Trigger: Tier 2 and the deferred items converge on it; otherwise the churn is
+not justified.
+@end table
+
+@node Rejected
+@section Rejected
+
+@cindex rejected suggestions
+@itemize @bullet
+@item
+@strong{CPU v1--v4 matrix (S6)} --- contradicts the per-host march pin, a
+documented and deliberate decision.
+@item
+@strong{Thin-flake extraction (S5)} --- the flake is already lean; the premise
+rests on the stale snapshot.
+@end itemize
+
+@node Quick Wins
+@chapter Quick Wins
+
+@cindex quick wins
+@cindex Tier 1 implementation
+The three Tier 1 changes, as applied.
+
+@section Flake quality outputs
+
+@cindex formatter
+@cindex checks
+@cindex dev shell
+Added to the output set of @file{flake.nix}, reusing the existing @code{system}
+binding and @code{self}.  The formatter is @code{nixfmt} (now the canonical
+RFC-style formatter attribute on 26.05); the checks point at the real
+configurations, not the proposal's non-existent @code{bravais-v1}/@code{v4}:
+
+@verbatim
+formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
+
+devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
+  packages = with nixpkgs.legacyPackages.${system}; [ nil nixfmt statix deadnix ];
+};
+
+checks.${system} = {
+  bravais-thinkpad          = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
+  bravais-thinkpad-unstable = self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
+};
+@end verbatim
+
+This makes @command{nix fmt}, @command{nix flake check}, and @command{nix
+develop} work out of the box.
+
+@section User-account de-duplication
+
+@cindex user account
+@cindex duplication
+The @code{mj} account now has a single owner.  @file{users/mj/default.nix}
+(documented as the system user definition) gains the @samp{seat} group it was
+missing, is wired into the @code{mkBravais} module list, and the duplicate block
+is removed from @file{hosts/common.nix} (its @code{root} shell and
+@code{environment.shells} lines stay).  The dead, drifted copy is no longer a
+trap.
+
+@section Flatpak single owner
+
+@cindex Flatpak
+@cindex double-declaration
+The redundant @code{services.flatpak.enable = true} is removed from
+@file{modules/packages/system.nix}.  @file{modules/packages/flatpak.nix} already
+enables the service, its remotes, and its package list behind
+@code{steelbore.packages.flatpak.enable}.  With both toggles on (the default),
+behaviour is unchanged; with the Flatpak toggle off, Flatpak now actually turns
+off.  The @code{podman} and @code{appimage} blocks are left in place --- their
+relocation is Tier 2 work, not a quick win.
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye

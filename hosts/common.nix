@@ -32,20 +32,8 @@
   # Printing
   services.printing.enable = true;
 
-  # User account
-  users.users.mj = {
-    isNormalUser = true;
-    description = "Mohamed Hammad";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-      "input"
-      "video"
-      "audio"
-      "seat"      # Access to /run/seatd.sock (cage/Wayland kiosk)
-    ];
-    shell = pkgs.nushell;
-  };
+  # User account `mj` is defined once in users/mj/default.nix (imported in
+  # flake.nix's module list), not here — avoids a duplicate/drifting definition.
 
   # Root shell — Brush (Rust, Bash-compatible)
   users.users.root.shell = pkgs.brush;

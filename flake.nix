@@ -156,6 +156,10 @@
             ./modules/login
             ./modules/packages
 
+            # System user account (mj) — single source of truth. Home Manager
+            # session config lives in users/mj/home.nix (wired below).
+            ./users/mj/default.nix
+
             # Home Manager integration (march level is pinned per-machine in
             # the host config, not here).
             {
@@ -177,6 +181,30 @@
 
         # Convenience alias: bare `.#bravais` → the stable ThinkPad build.
         bravais = mkBravais { host = hosts.thinkpad; };
+      };
+
+      # ── Developer tooling ────────────────────────────────────────────────
+      # Quality-of-life outputs for `nix fmt`, `nix develop`, `nix flake check`.
+      # These use the stable channel's package set for the host system.
+      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
+
+      devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
+        packages = with nixpkgs.legacyPackages.${system}; [
+          nil          # Nix language server
+          nixfmt       # Nix formatter (RFC-style; canonical attr on 26.05)
+          statix       # Nix linter / antipattern checker
+          deadnix      # dead-code (unused binding) finder
+        ];
+      };
+
+      # `nix flake check` evaluates *and* builds both real machine configs
+      # (stable + unstable). The x86-64 march level is pinned per host, so
+      # there is no v1–v4 matrix to enumerate here.
+      checks.${system} = {
+        bravais-thinkpad =
+          self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
+        bravais-thinkpad-unstable =
+          self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
       };
     };
 }

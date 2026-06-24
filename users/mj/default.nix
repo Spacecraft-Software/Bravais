@@ -6,7 +6,14 @@
   users.users.mj = {
     isNormalUser = true;
     description = "Mohamed Hammad";
-    extraGroups = [ "networkmanager" "wheel" "input" "video" "audio" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "input"
+      "video"
+      "audio"
+      "seat"      # Access to /run/seatd.sock (cage/Wayland kiosk)
+    ];
     shell = pkgs.nushell;
   };
 }

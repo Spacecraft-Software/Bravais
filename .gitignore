@@ -18,6 +18,9 @@ chat/goose1.txt
 
 # Scratch files
 *.txt
+# …but REUSE license texts must be version-controlled (Standard §4.3)
+!LICENSES/
+!LICENSES/*.txt
 
 # Home Manager backup files
 *.backup
