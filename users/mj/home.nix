@@ -677,10 +677,12 @@ in
             try { sudo journalctl --vacuum-time=7d }
           }
           print $"(ansi blue)── disk before ──(ansi reset)"; df -h /
-          # --no-warn-dirty silences the "Git tree is dirty" warning on the local
-          # flake eval (also set declaratively via nix.settings.warn-dirty; this
-          # covers the rebuild run before that lands in /etc/nix/nix.conf).
-          let extra = (["--no-warn-dirty"] | append (if $trace { ["--show-trace" "--verbose"] } else { [] }))
+          # --option warn-dirty false silences the "Git tree is dirty" warning on
+          # the local flake eval (also set declaratively via nix.settings.warn-dirty;
+          # this covers the rebuild run before that lands in /etc/nix/nix.conf).
+          # nixos-rebuild-ng rejects nix's --no-warn-dirty passthrough, so use the
+          # forwarded --option form it does accept.
+          let extra = (["--option" "warn-dirty" "false"] | append (if $trace { ["--show-trace" "--verbose"] } else { [] }))
           if $dry {
             sudo nixos-rebuild dry-build --flake .#bravais-thinkpad ...$extra
           } else {
