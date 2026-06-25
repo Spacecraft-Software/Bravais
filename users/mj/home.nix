@@ -1212,6 +1212,10 @@ in
           keyboard {
               xkb {
                   layout "us,ar"
+                  // grp:ctrl_space_toggle drives switching under X11/LeftWM, but
+                  // is a no-op in Niri (Niri grabs keys for its own binds before
+                  // xkbcommon's group-toggle action fires). The Mod+Space bind in
+                  // `binds` below does the switching here. Kept for X11 parity.
                   options "grp:ctrl_space_toggle"
               }
           }
@@ -1239,6 +1243,10 @@ in
           // `?` when shifted) — consistent with our use of symbolic names
           // (Minus, Equal, Return) elsewhere in the bind table.
           Mod+Shift+Slash hotkey-overlay-title="Show Important Hotkeys" { show-hotkey-overlay; }
+
+          // Keyboard layout — toggle us ⇄ ar. Niri's native action (see the xkb
+          // note above for why the grp: toggle alone doesn't switch here).
+          Mod+Space hotkey-overlay-title="Switch Keyboard Layout (us/ar)" { switch-layout "next"; }
 
           // Applications
           Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
