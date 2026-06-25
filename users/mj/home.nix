@@ -1074,7 +1074,7 @@ in
 
       (defwidget bar []
         (centerbox :orientation "h"
-          (label :class "title" :halign "start" :text "STEELBORE :: BRAVAIS")
+          (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
             ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
