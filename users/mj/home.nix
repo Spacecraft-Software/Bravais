@@ -1074,12 +1074,15 @@ in
 
       (defwidget bar []
         (centerbox :orientation "h"
-          (label :class "title" :text "STEELBORE :: BRAVAIS")
+          (label :class "title" :halign "start" :text "STEELBORE :: BRAVAIS")
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
-            (label :class "metric" :text "CPU ''${cpu}%")
-            (label :class "metric" :text "RAM ''${memory}%")
-            (label :class "metric" :text "BAT ''${battery}%"))))
+            ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
+            ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
+            ;; neutral. See .metric-warn / .metric-crit in eww.scss.
+            (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "CPU ''${cpu}%")
+            (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "RAM ''${memory}%")
+            (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "BAT ''${battery}%"))))
 
       (defwindow bar
         :monitor 0
@@ -1117,7 +1120,9 @@ in
       .title  { color: $moltenAmber; }
       .clock  { color: $liquidCool; }
       .metrics { padding-right: 12px; }
-      .metric { color: $radiumGreen; }
+      .metric      { color: $radiumGreen; }  // normal
+      .metric-warn { color: $moltenAmber; }  // >=75% cpu/ram, <=30% battery
+      .metric-crit { color: $redOxide; }     // >=90% cpu/ram, <=15% battery
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════
