@@ -173,7 +173,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install build tools (just, sad, pueue, tokei)
 - [✓] Install environment tools (lorri, dotter)
 - [✓] Install Cloud CLIs (google-cloud-sdk, azure-cli, awscli)
-- [✓] Install languages (JDK, PHP)
+- [✓] Install languages (JDK, PHP, Guile + guile-json)
+- [✓] Install Ada toolchain (gnat16 — GNAT/GCC 16 Ada compiler)
 - [✓] Install Nix ecosystem (nixfmt, cachix, nix, guix)
 - [✓] Configure system Git defaults (`init.defaultBranch`, `core.editor`)
 
