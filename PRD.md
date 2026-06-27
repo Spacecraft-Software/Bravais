@@ -759,7 +759,9 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Cloud CLIs:** google-cloud-sdk, azure-cli, awscli
 
-**Languages:** jdk, php
+**Languages:** guile + guile-json (Scheme), jdk, php
+
+**Ada Toolchain:** gnat16 (GNAT — GCC 16 Ada compiler)
 
 **Nix Ecosystem:** nixfmt (Rust), cachix, nix, guix, emacsPackages.guix
 

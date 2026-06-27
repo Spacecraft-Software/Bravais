@@ -32,6 +32,10 @@
         # C/C++ Toolchain
         gcc # C — GNU Compiler Collection
 
+        # Ada Toolchain — lowPrio so GNAT's bundled gcc/cpp/cc/g++ yield to the
+        # primary `gcc` above on buildEnv collision; gnat/gnatmake/etc. still link.
+        (lib.lowPrio gnat16) # Ada — GNAT (GCC 16 Ada) compiler
+
         # Rust Toolchain — managed via Home Manager (unstablePkgs): rustup +
         # cargo subcommands. rustup proxies rustc/cargo/rustfmt/clippy/rust-analyzer
         # as shim binaries, so those must not be declared separately in Nix.
@@ -53,6 +57,7 @@
 
         # Languages
         guile # Scheme — GNU extension language
+        guile-json # Scheme — JSON reader/writer library for Guile
         jdk
         php
         python3 # Python runtime
