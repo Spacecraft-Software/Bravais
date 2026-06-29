@@ -272,7 +272,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ## Phase 7: Hardware Modules (`modules/hardware/`)
 
-- [✓] **`default.nix`**: Hardware module entry point (imports bluetooth, fingerprint, intel)
+- [✓] **`default.nix`**: Hardware module entry point (imports audio-led, bluetooth, fingerprint, intel)
+- [✓] **`audio-led.nix`**: Define option; mute/mic-mute keyboard LED sync — ship `steelbore-audio-led` (Rust + libpulse-binding, `pkgs/steelbore-audio-led/`) as a systemd user service, plus a udev rule clearing the `platform::{mute,micmute}` LED triggers so the daemon owns them (CapsLock + FnLock already work)
 - [✓] **`bluetooth.nix`**: Define option, enable BlueZ (`hardware.bluetooth`, powerOnBoot, Experimental), install bluetui + overskride
 - [✓] **`fingerprint.nix`**: Define option, enable fprintd
 - [✓] **`intel.nix`**: Define option with `marchLevel` suboption (enum: v1/v2/v3/v4, default: v4)
@@ -291,7 +292,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ### Host (`hosts/common.nix` + `hosts/thinkpad/`)
 
-- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `steelbore.platform.x86_64.marchLevel = "v3"`; enable `hardware.bluetooth`
+- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `steelbore.platform.x86_64.marchLevel = "v3"`; enable `hardware.audioLed` + `hardware.bluetooth`
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
@@ -300,7 +301,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Set user shell to Nushell (Rust), root shell to Brush (Rust)
 - [✓] **`default.nix`**: Register Nushell, Brush, Ion as valid login shells; bash excluded from `environment.shells` (`programs.bash.enable` kept — NixOS PAM/activation scripts require it; overlay replacement impossible due to nixpkgs bootstrapping cycle)
 - [✓] **`default.nix`**: Enable all spacecraft desktop modules (gnome, cosmic, plasma, niri, leftwm)
-- [✓] **`default.nix`**: Enable all spacecraft hardware modules (bluetooth, fingerprint, intel)
+- [✓] **`default.nix`**: Enable all spacecraft hardware modules (audio-led, bluetooth, fingerprint, intel)
 - [✓] **`default.nix`**: Enable all spacecraft package modules (13 modules including flatpak, homebrew)
 - [✓] **`default.nix`**: Set `stateVersion = "26.05"`
 - [✓] **`hardware.nix`**: Import from `modulesPath`, configure root (ext4) and boot (vfat) filesystems
@@ -400,7 +401,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 | 4. Login Management | Complete | 5/5 |
 | 5. Desktop Environments | Complete | 33/33 |
 | 6. Package Modules | Complete | 73/73 |
-| 7. Hardware Modules | Complete | 7/7 |
+| 7. Hardware Modules | Complete | 8/8 |
 | 8. Host & User Config | Complete | 26/26 |
 | 9. Overlays | Complete | 2/2 |
 | 10. Testing | In Progress | 2/21 |

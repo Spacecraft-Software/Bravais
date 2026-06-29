@@ -53,6 +53,7 @@ bravais/
 |   |   +-- fonts.nix              # Typography (system fonts)
 |   +-- hardware/                  # Hardware-specific modules
 |   |   +-- default.nix            # Hardware module entry
+|   |   +-- audio-led.nix          # mute/mic-mute keyboard LED sync (steelbore-audio-led)
 |   |   +-- bluetooth.nix          # BlueZ stack + bluetui/overskride
 |   |   +-- fingerprint.nix        # fprintd
 |   |   +-- intel.nix              # Intel CPU optimizations (v1-v4 march levels)
@@ -400,6 +401,12 @@ default: v4) — an x86-64-vN level is not Intel-specific, so it is decoupled fr
 
 When enabled: `hardware.bluetooth.enable = true` (BlueZ / `bluetoothd`), `powerOnBoot = true`, and `settings.General.Experimental = true` (battery-level reporting). Ships two memory-safe (Rust), GPL-3.0 BlueZ clients — **bluetui** (TUI; Niri `Mod+B`) and **overskride** (GTK GUI + OBEX; Niri `Mod+Shift+B`). Niri has no Bluetooth applet; the existing `XF86Bluetooth` key only toggles the radio (rfkill), so these clients are what actually pair/connect devices. Audio routing to a connected sink is done via the PipeWire mixers (`wpctl` / `wiremix` / `pavucontrol`).
 
+### 6.4 Audio Mute LEDs (`modules/hardware/audio-led.nix`)
+
+**Option:** `steelbore.hardware.audioLed.enable`
+
+Lights the ThinkPad **mute** (`platform::mute`) and **mic-mute** (`platform::micmute`) keyboard LEDs to follow the real mute state under Niri. The kernel `audio-mute` / `audio-micmute` triggers follow the ALSA *hardware* mute, but PipeWire mutes in *software*, so the LEDs would otherwise never light. Ships **steelbore-audio-led** (`pkgs/steelbore-audio-led/`; Rust + `libpulse-binding`, GPL-3.0): a tiny event-driven daemon, run as a systemd **user** service, that mirrors the default sink/source mute onto the LED `brightness` nodes — so they track mute no matter how it was toggled (key, GUI, per-app). A udev rule sets each LED's `trigger` to `none` so the daemon owns it; `brightness` is `input`-group-writable via the existing brightnessctl udev rule (`modules/desktops/niri.nix`). **CapsLock** (kernel input layer) and **FnLock** (EC + `thinkpad_acpi`) already work and need no module.
+
 ---
 
 ## 7. Host Configuration (`hosts/`)
@@ -420,7 +427,7 @@ the per-machine bits (`networking.hostName`, `steelbore.hardware.*`). Current ma
 ### 7.1.1 ThinkPad (`hosts/thinkpad/default.nix`)
 
 - **Hostname:** `bravais-thinkpad`
-- **Hardware toggles:** `steelbore.hardware.bluetooth.enable`, `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
+- **Hardware toggles:** `steelbore.hardware.audioLed.enable`, `steelbore.hardware.bluetooth.enable`, `steelbore.hardware.fingerprint.enable`, `steelbore.hardware.intel.enable`
 - **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }` (i7-8665U is AVX2-max, no AVX-512)
 
 ### 7.2 User Account

@@ -9,6 +9,7 @@
 
 {
   imports = [
+    ./audio-led.nix
     ./bluetooth.nix
     ./fingerprint.nix
     ./intel.nix
