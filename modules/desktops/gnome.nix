@@ -44,7 +44,7 @@
       gnomeExtensions.forge
       gnomeExtensions.tiling-shell
       gnomeExtensions.smart-tiling
-      gnomeExtensions.ollama-indicator
+      # gnomeExtensions.ollama-indicator   # DISABLED — re-enable by uncommenting (Ollama status indicator)
       gnomeExtensions.simple-tiling
       gnomeExtensions.warp-toggle
       gnomeExtensions.resource-monitor
