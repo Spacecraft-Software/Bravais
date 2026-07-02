@@ -868,6 +868,8 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (pinned to latest npm release via overlay)
 
+**GUI:** claude-desktop — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump `version` + `src.hash` per release (get them from the apt `Packages` index); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
+
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
 
 **Remote:** flathub (`https://dl.flathub.org/repo/flathub.flatpakrepo`)

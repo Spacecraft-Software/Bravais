@@ -55,6 +55,10 @@
         # original rationale.
         # claude-code
         # mcp-nixos DISABLED — pulls fastmcp whose tests hang in Nix sandbox
-      ]);
+      ])
+      # Claude Desktop — official Anthropic Linux beta, repackaged from the .deb
+      # (no nixpkgs package). Derivation + version/hash-bump notes live in
+      # pkgs/claude-desktop/. Unfree; allowUnfree is set in modules/core/nix.nix.
+      ++ [ (pkgs.callPackage ../../pkgs/claude-desktop/package.nix { }) ];
   };
 }

@@ -250,6 +250,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install AI tools (codex, copilot-cli, gpt-cli, mcp-nixos)
 - [✓] Install task-master (npx wrapper; nixpkgs `task-master-ai` unfixable — see CLAUDE.md note 3)
 - [✓] Install claude-code from channel-appropriate `pkgs` (stable on stable, unstable on unstable)
+- [✓] Install Claude Desktop (official Linux beta) — repackage the official `.deb` (`pkgs/claude-desktop/`, dpkg -x + `autoPatchelfHook` + Wayland/MCP wrapper); no nixpkgs package
 
 ### flatpak.nix
 
