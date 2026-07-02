@@ -49,7 +49,18 @@
   pango,
   systemd,
   wayland,
-  xorg,
+  libx11,
+  libxcb,
+  libxcomposite,
+  libxdamage,
+  libxext,
+  libxfixes,
+  libxkbfile,
+  libxrandr,
+  libxrender,
+  libxscrnsaver,
+  libxshmfence,
+  libxtst,
   # MCP launchers must resolve at runtime (npx / uvx)
   nodejs,
   uv,
@@ -102,18 +113,18 @@ stdenv.mkDerivation (finalAttrs: {
     (lib.getLib stdenv.cc.cc) # libstdc++ / libgcc_s
     systemd # libudev
     wayland
-    xorg.libX11
-    xorg.libXcomposite
-    xorg.libXdamage
-    xorg.libXext
-    xorg.libXfixes
-    xorg.libXrandr
-    xorg.libXrender
-    xorg.libXtst
-    xorg.libXScrnSaver
-    xorg.libxcb
-    xorg.libxkbfile
-    xorg.libxshmfence
+    libx11
+    libxcb
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxkbfile
+    libxrandr
+    libxrender
+    libxscrnsaver
+    libxshmfence
+    libxtst
   ];
 
   # Electron dlopen()s these at runtime (not in DT_NEEDED), so add them to rpath.
