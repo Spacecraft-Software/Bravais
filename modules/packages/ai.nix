@@ -43,8 +43,10 @@
         # installer; the unstablePkgs entry below is commented out. See the
         # block under `with unstablePkgs;` for re-enabling.
 
-        # Local LLM runtime
-        # ollama-cpu               # DISABLED — re-enable by uncommenting (Go, CPU-only Ollama local LLM server)
+        # Local LLM runtime — CPU-only (the ThinkPad has no discrete GPU). Stable
+        # (0.24.0) currently ships a newer ollama than the pinned unstable input.
+        # Package only; run `ollama serve` (no services.ollama module).
+        ollama-cpu # Go — CPU-only Ollama (local LLM server)
       ])
       # mcp-nixos: always from nixpkgs-unstable via specialArgs threading.
       ++ (with unstablePkgs; [
