@@ -229,10 +229,11 @@
       }
 
       # ── AI ─────────────────────────────────────────────────────────────────
-      {
-        appId = "com.jeffser.Alpaca";
-        origin = "flathub";
-      }
+      # Alpaca (Ollama GUI client) — DISABLED with Ollama; re-enable by uncommenting.
+      # {
+      #   appId = "com.jeffser.Alpaca";
+      #   origin = "flathub";
+      # }
     ];
   };
 }

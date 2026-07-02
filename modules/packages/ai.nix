@@ -44,7 +44,7 @@
         # block under `with unstablePkgs;` for re-enabling.
 
         # Local LLM runtime
-        ollama-cpu # Go — CPU-only Ollama (local LLM server)
+        # ollama-cpu               # DISABLED — re-enable by uncommenting (Go, CPU-only Ollama local LLM server)
       ])
       # mcp-nixos: always from nixpkgs-unstable via specialArgs threading.
       ++ (with unstablePkgs; [
