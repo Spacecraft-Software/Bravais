@@ -2,6 +2,7 @@
 # Steelbore Bravais — Services (opt-in system services)
 {
   imports = [
+    ./chrome-remote-desktop.nix
     ./podman.nix
   ];
 }

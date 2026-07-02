@@ -952,13 +952,19 @@ virtualisation.podman = {
 };
 ```
 
-### 12.2 Flatpak
+### 12.2 Chrome Remote Desktop
+
+Module `modules/services/chrome-remote-desktop.nix` — toggle `steelbore.services.chromeRemoteDesktop.{enable,user}` (enabled on the ThinkPad host).
+
+Not in nixpkgs — `pkgs/chrome-remote-desktop/` repackages Google's official `.deb` (`dpkg -x` + `autoPatchelfHook`; the app dir is added to RUNPATH so `libremoting_core.so` resolves; the Python management script's hardcoded paths — interpreter, Xvfb/Xorg/xrandr/xdpyinfo, the Xorg module dir, sudo/pkexec — are patched to Nix-store / `/run/wrappers` equivalents). The module adds a `chrome-remote-desktop` group, a `pam_unix` PAM stack, and a `chrome-remote-desktop@mj` system service. CRD runs a **headless virtual X11** session and execs `~/.chrome-remote-desktop-session` → LeftWM (provided in `users/mj/home.nix`; Niri/GNOME here are Wayland). One-time authorization is manual: `remotedesktop.google.com/headless` → `start-host --code=…` → 6-digit PIN → connect at `/access`. Outbound HTTPS only (no inbound firewall port). Bump `version` + `src.sha256` from the CRD apt index per release.
+
+### 12.3 Flatpak
 
 ```nix
 services.flatpak.enable = true;
 ```
 
-### 12.3 AppImage
+### 12.4 AppImage
 
 Module `modules/compat/appimage.nix` — toggle `steelbore.compat.appimage.enable`.
 
