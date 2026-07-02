@@ -1192,9 +1192,10 @@ in
 
       // Startup. The wallpaper daemon needs to bind its IPC socket before
       // any client command; the inline sleep gives it a moment before the
-      // `clear` call sets the solid Void Navy wallpaper.
+      // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
+      // fall back to the solid Void Navy fill if it's ever missing.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
-      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
+      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
       // OSD daemon for the dedicated brightness/volume keys (binds below).
