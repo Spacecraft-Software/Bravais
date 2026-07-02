@@ -241,6 +241,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install benchmarking (phoronix-test-suite, perf)
 - [✓] Enable Flatpak and AppImage (binfmt) services
 - [✓] Enable Podman with `dockerCompat`, runc + youki runtimes
+- [✓] Enable Chrome Remote Desktop (`modules/services/chrome-remote-desktop.nix`, `steelbore.services.chromeRemoteDesktop`) — repackage official `.deb` (`pkgs/chrome-remote-desktop/`, autoPatchelfHook + path patches); headless X11 host via a LeftWM `~/.chrome-remote-desktop-session`; one-time Google web-auth + PIN is manual
 
 ### ai.nix
 

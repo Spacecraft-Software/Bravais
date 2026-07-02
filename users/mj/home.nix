@@ -2248,6 +2248,22 @@ in
   # module sets force = false explicitly, so mkForce is needed to override it.
   home.file."${config.home.homeDirectory}/.gtkrc-2.0".force = lib.mkForce true;
 
+  # Chrome Remote Desktop virtual-session launcher (see
+  # modules/services/chrome-remote-desktop.nix). CRD starts a headless *X11*
+  # virtual server and execs this file, so use LeftWM (Niri/GNOME here are
+  # Wayland — CRD can't drive them). Launch leftwm directly under a fresh D-Bus,
+  # NOT via the startx-based start-leftwm, which would spawn a second physical
+  # Xorg that collides with CRD's virtual X.
+  home.file.".chrome-remote-desktop-session" = {
+    executable = true;
+    text = ''
+      #!${pkgs.runtimeShell}
+      export GDK_BACKEND=x11
+      export XDG_CURRENT_DESKTOP=leftwm
+      exec ${pkgs.dbus}/bin/dbus-run-session -- ${pkgs.leftwm}/bin/leftwm
+    '';
+  };
+
   qt = {
     enable = true;
     # `adwaita` brings in adwaita-qt(6) + qadwaitadecorations. HM marks

@@ -25,6 +25,13 @@
     intel.enable = true;
   };
 
+  # Remote access into this machine (headless X11 virtual session via LeftWM).
+  # One-time Google authorization is manual — see modules/services/chrome-remote-desktop.nix.
+  steelbore.services.chromeRemoteDesktop = {
+    enable = true;
+    user = "mj";
+  };
+
   # i7-8665U is x86-64-v3 (AVX2/BMI2/FMA) but has NO AVX-512, so v4 would
   # emit illegal instructions on this CPU. Pin to v3.
   steelbore.platform.x86_64 = {
