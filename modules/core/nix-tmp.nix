@@ -19,8 +19,6 @@
 # and it creates per-build subdirs as the nixbld* sandbox users itself.
 # This dir is *not* a user-level TMPDIR.
 {
-  config,
-  lib,
   pkgs,
   ...
 }:

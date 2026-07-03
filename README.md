@@ -67,8 +67,7 @@ bravais/
 │   └── mj/                        # User "mj"
 │       ├── default.nix            # System-level user config
 │       └── home.nix               # Home Manager configuration
-├── overlays/                      # Package overlays
-│   └── default.nix                # Custom derivations (sequoia-wot fix)
+├── pkgs/                          # In-tree packages (audio-led, claude-desktop, CRD, ollama)
 └── v0/                            # Frozen v0-era configurations (archive)
 ```
 

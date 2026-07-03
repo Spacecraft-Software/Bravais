@@ -8,9 +8,6 @@
 # This module gives the system memory headroom plus a name-aware OOM guard that kills the
 # *build* instead of the multiplexer.
 {
-  config,
-  lib,
-  pkgs,
   ...
 }:
 

@@ -4,9 +4,6 @@
 # Per-machine config. Shared host settings live in ../common.nix; only the
 # machine-specific bits are set here.
 {
-  config,
-  pkgs,
-  lib,
   ...
 }:
 

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Nix Settings
 {
-  config,
-  lib,
   pkgs,
   ...
 }:
@@ -61,9 +59,9 @@
   # modules/packages/ai.nix). Unstable already tracks recent npm
   # releases without our manual pin.
   nixpkgs.overlays = [
-    (final: prev: {
+    (_final: prev: {
       # Disable failing tests for sequoia-wot
-      sequoia-wot = prev.sequoia-wot.overrideAttrs (old: {
+      sequoia-wot = prev.sequoia-wot.overrideAttrs (_old: {
         doCheck = false;
       });
     })

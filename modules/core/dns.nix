@@ -23,9 +23,6 @@
 # right form per channel — same stable/unstable workaround pattern
 # as CLAUDE.md known constraint #5.
 {
-  config,
-  lib,
-  pkgs,
   options,
   ...
 }:

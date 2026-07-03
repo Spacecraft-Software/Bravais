@@ -99,16 +99,21 @@ in
         "v3"
         "v4"
       ];
-      default = "v4";
+      # Default v2, NOT v4: a v4 default emits AVX-512 instructions that
+      # SIGILL on any CPU without it (including this repo's only real
+      # machine). v2 runs on every x86-64 CPU from ~2009 on; each host is
+      # expected to pin its true level explicitly (the ThinkPad pins v3).
+      default = "v2";
       description = ''
         x86-64 microarchitecture level used for all compiler flags.
         v1/v2 use -mtune=generic (portable); v3/v4 use -mtune=native.
         RUSTFLAGS include -Clink-arg=-fuse-ld=mold on all levels;
         -Wl,-z,pack-relative-relocs on v1/v3/v4 (omitted on v2 per ALHP).
           v1 — baseline x86-64 (SSE2)         CachyOS baseline flags
-          v2 — SSE4.2 / POPCNT / CX16         ALHP-derived flags
+          v2 — SSE4.2 / POPCNT / CX16         ALHP-derived flags     (safe default)
           v3 — AVX2 / BMI1/2 / FMA / MOVBE    CachyOS-derived flags  (CachyOS default)
-          v4 — AVX-512F/BW/CD/DQ/VL           CachyOS-derived flags  (Bravais default)
+          v4 — AVX-512F/BW/CD/DQ/VL           CachyOS-derived flags
+        Pin the real level per machine in hosts/<machine>/default.nix.
       '';
     };
   };

@@ -19,7 +19,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Factor shared host config into `hosts/common.nix`; one `hosts/<machine>/` dir per machine
 - [✓] Set up `spacecraftPalette` in specialArgs
 - [✓] ~~Pass `stablePkgs` to modules via specialArgs~~ (removed — claude-code now uses channel-appropriate `pkgs`)
-- [✓] Build folder hierarchy (`hosts/`, `modules/`, `lib/`, `users/`, `overlays/`)
+- [✓] Build folder hierarchy (`hosts/`, `modules/`, `lib/`, `users/`, `pkgs/`)
 
 ---
 
@@ -279,7 +279,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`audio-led.nix`**: Define option; mute/mic-mute keyboard LED sync — ship `steelbore-audio-led` (Rust + libpulse-binding, `pkgs/steelbore-audio-led/`) as a systemd user service, plus a udev rule clearing the `platform::{mute,micmute}` LED triggers so the daemon owns them (CapsLock + FnLock already work)
 - [✓] **`bluetooth.nix`**: Define option, enable BlueZ (`hardware.bluetooth`, powerOnBoot, Experimental), install bluetui + overskride
 - [✓] **`fingerprint.nix`**: Define option, enable fprintd
-- [✓] **`intel.nix`**: Define option with `marchLevel` suboption (enum: v1/v2/v3/v4, default: v4)
+- [✓] **`intel.nix`**: Define option with `marchLevel` suboption (enum: v1/v2/v3/v4, default: v2 — safe portable level; hosts pin their true level)
 - [✓] **`intel.nix`**: Enable `kvm-intel` module, Intel microcode updates
 - [✓] **`intel.nix`**: Set per-level optimization flags (CFLAGS, CXXFLAGS, RUSTFLAGS, GOAMD64, LDFLAGS, LTOFLAGS)
 - [✓] **`intel.nix`**: v1/v3/v4 CachyOS-sourced flags, v2 ALHP-sourced flags
@@ -327,11 +327,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ---
 
-## Phase 9: Overlays (`overlays/default.nix`)
+## Phase 9: Overlays (inline in `modules/core/nix.nix`)
 
 - [✓] **sequoia-wot**: Disable failing tests (`doCheck = false`)
-- [✓] **claude-code**: Pinned to 2.1.113 via `overrideAttrs` overlay; `src` built with `runCommand` to bake `overlays/claude-code-package-lock.json` into the source tree; `npmDeps` explicitly overridden (workaround for `overrideAttrs` not propagating into internal `fetchNpmDeps`); `postInstall` copies native binary from `@anthropic-ai/claude-code-linux-x64` over the placeholder `bin/claude.exe`; `autoPatchelfHook` + `autoPatchelfIgnoreMissingDeps = [ "libc.musl-x86_64.so.1" ]` for ELF patching on NixOS
-- [✓] **overlay location**: Defined inline in `modules/core/nix.nix`; reference copy in `overlays/default.nix`
+- [✓] **claude-code overlay**: RETIRED — the npm-pinning overlay was dropped; claude-code is installed out-of-band via the official installer (`CLAUDE.md` constraint #4), `unstablePkgs.claude-code` is the re-enable path
+- [✓] **overlay location**: Defined inline in `modules/core/nix.nix` (sole location; the dead `overlays/` reference copy and the `modules/core/brush-wrapper.nix` tombstone were deleted in Phase A of the engineering-elegance plan)
 - [✓] **bash→brush overlay**: Investigated and found infeasible — nixpkgs bootstrapping cycle prevents overriding `pkgs.bash` via any overlay
 
 ---
@@ -374,7 +374,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
 
-2. **claude-code**: Pinned to 2.1.113 via `overrideAttrs` overlay in `modules/core/nix.nix`. Lock file stored at `overlays/claude-code-package-lock.json`. Native-binary architecture (since ~2.1.113) requires explicit `npmDeps` override, `postInstall` copy from `@anthropic-ai/claude-code-linux-x64`, and `autoPatchelfHook`. See `CLAUDE.md` constraint #4 for full gotchas and update procedure.
+2. **claude-code**: Installed out-of-band via the official installer (self-updating; release cadence outpaces nixpkgs). The former npm-pinning overlay was retired; `unstablePkgs.claude-code` in `modules/packages/ai.nix` is the declarative re-enable path. See `CLAUDE.md` constraint #4.
 
 3. **XanMod kernel**: Sourced from unstable channel for latest version.
 
@@ -384,7 +384,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 6. **Bash cannot be replaced via nixpkgs overlay**: Every nixpkgs derivation uses `final.bash` as its build shell via stdenv. Overriding `pkgs.bash` in an overlay creates an unavoidable bootstrapping cycle (`final.bash → prev.bash.stdenv.shell = "${final.bash}/bin/bash" → final.bash`). Bash is excluded from login shells but `programs.bash.enable` must remain `true` for NixOS PAM and activation script generation. Users get Nushell; root gets Brush.
 
-7. **Overlays** are defined inline in `modules/core/nix.nix`. `overlays/default.nix` exists as a reference copy.
+7. **Overlays** are defined inline in `modules/core/nix.nix` (sole location; the dead `overlays/` reference copy was deleted).
 
 8. **task-master-ai**: nixpkgs build is unfixable via overlay — upstream's `package-lock.json` omits the platform-specific optionalDependencies of `@biomejs/biome` and `esbuild`, and `npm ci`'s lockfile validation runs before any `--omit=optional` or fetcher-v2 logic. `modules/packages/ai.nix` ships a `task-master` shell wrapper that runs `npx -y --package=task-master-ai task-master "$@"` against `pkgs.nodejs` instead. See `CLAUDE.md` constraint #3.
 

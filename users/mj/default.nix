@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — User System Configuration
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   users.users.mj = {

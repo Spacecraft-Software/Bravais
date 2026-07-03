@@ -2,7 +2,6 @@
 # Steelbore Bravais — greetd + tuigreet Login Manager
 {
   config,
-  lib,
   pkgs,
   steelborePalette,
   gitway,
