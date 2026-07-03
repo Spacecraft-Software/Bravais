@@ -16,6 +16,9 @@ Chat.txt
 chat/
 chat/goose1.txt
 
+# Local-only design/spec documents (kept local, not version-controlled)
+docs-local/
+
 # Scratch files
 *.txt
 # …but REUSE license texts must be version-controlled (Standard §4.3)
