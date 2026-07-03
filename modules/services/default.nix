@@ -3,6 +3,7 @@
 {
   imports = [
     ./chrome-remote-desktop.nix
+    ./ollama.nix
     ./podman.nix
   ];
 }
