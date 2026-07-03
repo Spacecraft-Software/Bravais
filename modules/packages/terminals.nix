@@ -238,7 +238,7 @@ in
       palette = 14=${steelborePalette.liquidCool}
       palette = 15=${steelborePalette.moltenAmber}
 
-      # Shell — launches ion
+      # Shell — launches Nushell
       command = ${pkgs.nushell}/bin/nu
     '';
 
@@ -676,7 +676,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # GNOME CONSOLE (kgx) — GNOME 4x minimal terminal
     # Color palette is fixed by theme; "night" is the closest dark option.
-    # Shell is inherited from $SHELL (ion). Configured via dconf in home.
+    # Shell is inherited from $SHELL (Nushell login shell). Configured via dconf in home.
     # ═══════════════════════════════════════════════════════════════════════════
   };
 }

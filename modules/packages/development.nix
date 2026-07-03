@@ -34,7 +34,10 @@
 
         # Ada Toolchain — lowPrio so GNAT's bundled gcc/cpp/cc/g++ yield to the
         # primary `gcc` above on buildEnv collision; gnat/gnatmake/etc. still link.
-        (lib.lowPrio gnat16) # Ada — GNAT (GCC 16 Ada) compiler
+        # gnat16-or-gnat fallback (CLAUDE.md constraint #5): the pinned unstable
+        # channel tops out at gnat15, so a bare gnat16 broke the
+        # bravais-thinkpad-unstable eval; `gnat` is the channel's default GNAT.
+        (lib.lowPrio (pkgs.gnat16 or pkgs.gnat)) # Ada — GNAT (GCC Ada) compiler
 
         # Rust Toolchain — managed via Home Manager (unstablePkgs): rustup +
         # cargo subcommands. rustup proxies rustc/cargo/rustfmt/clippy/rust-analyzer

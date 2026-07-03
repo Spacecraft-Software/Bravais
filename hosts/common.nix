@@ -7,9 +7,7 @@
 # toggles (fingerprint, intel + marchLevel). Everything below applies to all
 # Bravais machines.
 {
-  config,
   pkgs,
-  lib,
   ...
 }:
 

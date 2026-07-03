@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Locale Configuration
 {
-  config,
-  lib,
-  pkgs,
   ...
 }:
 

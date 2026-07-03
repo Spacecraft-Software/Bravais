@@ -119,21 +119,22 @@ stdenv.mkDerivation (finalAttrs: {
     runHook postUnpack
   '';
 
-  # Path patches only — NOT behavior patches. --replace-warn so a shifted string
-  # in a future release warns (visible in the build log) instead of silently
-  # failing the whole build.
+  # Path patches only — NOT behavior patches. Every substitution is
+  # --replace-fail: they are all load-bearing, so a future .deb that moves
+  # one of these strings must fail the build loudly rather than ship a
+  # runtime-broken daemon with only a warning in the build log.
   patchPhase = ''
     runHook prePatch
     script=$out${crdDir}/chrome-remote-desktop
     substituteInPlace "$script" \
       --replace-fail '#!/usr/bin/python3' '#!${py}/bin/python3' \
-      --replace-warn '"Xvfb"' '"${xorg-server}/bin/Xvfb"' \
-      --replace-warn '"Xorg"' '"${xorg-server}/bin/Xorg"' \
-      --replace-warn '"xrandr"' '"${xrandr}/bin/xrandr"' \
-      --replace-warn 'xdpyinfo' '${xdpyinfo}/bin/xdpyinfo' \
-      --replace-warn '/usr/lib/xorg/modules' '${xorg-server}/lib/xorg/modules' \
-      --replace-warn '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
-      --replace-warn '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
+      --replace-fail '"Xvfb"' '"${xorg-server}/bin/Xvfb"' \
+      --replace-fail '"Xorg"' '"${xorg-server}/bin/Xorg"' \
+      --replace-fail '"xrandr"' '"${xrandr}/bin/xrandr"' \
+      --replace-fail 'xdpyinfo' '${xdpyinfo}/bin/xdpyinfo' \
+      --replace-fail '/usr/lib/xorg/modules' '${xorg-server}/lib/xorg/modules' \
+      --replace-fail '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
+      --replace-fail '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
     runHook postPatch
   '';
 

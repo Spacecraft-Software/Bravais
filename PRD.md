@@ -56,7 +56,7 @@ bravais/
 |   |   +-- audio-led.nix          # mute/mic-mute keyboard LED sync (steelbore-audio-led)
 |   |   +-- bluetooth.nix          # BlueZ stack + bluetui/overskride
 |   |   +-- fingerprint.nix        # fprintd
-|   |   +-- intel.nix              # Intel CPU optimizations (v1-v4 march levels)
+|   |   +-- intel.nix              # Intel vendor bits (kvm-intel, microcode); march levels in modules/platform/
 |   +-- desktops/                  # Desktop environments (opt-in)
 |   |   +-- default.nix            # Desktop module entry
 |   |   +-- gnome.nix              # GNOME on Wayland
@@ -84,9 +84,11 @@ bravais/
 |   +-- mj/                        # User "mj"
 |       +-- default.nix            # System-level user config
 |       +-- home.nix               # Home Manager configuration
-+-- overlays/                      # Package overlays
-    +-- default.nix                # sequoia-wot fix (doCheck = false)
++-- pkgs/                          # In-tree packages (audio-led, claude-desktop, CRD, ollama)
 ```
+
+(Overlays are defined inline in `modules/core/nix.nix`; the former `overlays/`
+reference copy was removed as dead code.)
 
 ### 2.2 Module Design Pattern
 
@@ -210,11 +212,15 @@ mkBravais = { host, channel ? "stable" }: ...
 
 ### 3.4 Overlays
 
-Defined inline in `modules/core/nix.nix` via `nixpkgs.overlays`. A reference copy exists in `overlays/default.nix`.
+Defined inline in `modules/core/nix.nix` via `nixpkgs.overlays` (the sole
+location — the former `overlays/` reference copy was removed as dead code).
 
 **sequoia-wot:** Disables failing tests (`doCheck = false`).
 
-**claude-code:** Pinned to latest npm release (2.1.113) via `overrideAttrs` overlay. Overrides `version`, `src` (built via `runCommand` to bake `overlays/claude-code-package-lock.json` into the source tree), `npmDepsHash`, and `npmDeps` (explicit `fetchNpmDeps` call — `overrideAttrs` does not propagate `src`/`npmDepsHash` into the internal `fetchNpmDeps`). Since ~2.1.113, claude-code ships a native binary via optional dependency `@anthropic-ai/claude-code-linux-x64`; `bin/claude.exe` is a placeholder replaced at install time. Because `buildNpmPackage` does not run `postinstall`, the overlay's `postInstall` copies the native binary from `node_modules` over the placeholder and relinks `$out/bin/claude`. `autoPatchelfHook` patches the ELF interpreter/RPATHs for NixOS, with `autoPatchelfIgnoreMissingDeps = [ "libc.musl-x86_64.so.1" ]` so the unused musl variant doesn't fail the build. This bypasses the lag between npm releases and nixpkgs packaging.
+**claude-code:** No longer overlaid. The npm-pinning overlay was dropped;
+claude-code is installed out-of-band via the official installer (see
+`CLAUDE.md` constraint #4), with `unstablePkgs.claude-code` as the re-enable
+path in `modules/packages/ai.nix`.
 
 **bash→brush (not implemented):** Replacing `pkgs.bash` via a nixpkgs overlay is architecturally infeasible — every nixpkgs derivation uses `final.bash` as its build shell via stdenv, creating an unavoidable bootstrapping cycle. Bash is excluded from all login shell assignments; users get Nushell and root gets Brush.
 
@@ -299,7 +305,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **Experimental features:** `nix-command`, `flakes`
 - **Garbage collection:** automatic, weekly, `--delete-older-than 30d`
 - **nixpkgs.config:** `allowUnfree = true`
-- **Overlays:** defined inline; sequoia-wot test fix (`doCheck = false`), claude-code pinned to latest npm release via `overrideAttrs`
+- **Overlays:** defined inline; sequoia-wot test fix (`doCheck = false`). (The former claude-code npm-pinning overlay was retired — claude-code is out-of-band per CLAUDE.md constraint #4.)
 
 ### 5.2 Boot (`modules/core/boot.nix`)
 
@@ -355,7 +361,9 @@ When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 **Options:** `steelbore.hardware.intel.enable` is vendor-only (`kvm-intel`, microcode).
 The x86-64 ISA level and **all** compiler/linker flags live in `modules/platform/x86-64.nix`
 under `steelbore.platform.x86_64.enable` with the `marchLevel` suboption (enum: v1/v2/v3/v4,
-default: v4) — an x86-64-vN level is not Intel-specific, so it is decoupled from the vendor module.
+default: v2 — the safe portable level; a v4 default would SIGILL on non-AVX-512 CPUs. Each
+host pins its true level explicitly; the ThinkPad pins v3) — an x86-64-vN level is not
+Intel-specific, so it is decoupled from the vendor module.
 
 **Flag sources:** CachyOS for v1/v3/v4, ALHP for v2.
 
@@ -866,7 +874,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Rust:** aichat, gemini-cli
 
-**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (pinned to latest npm release via overlay)
+**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CLAUDE.md constraint #4; `unstablePkgs.claude-code` is the re-enable path)
 
 **GUI:** claude-desktop — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump `version` + `src.hash` per release (get them from the apt `Packages` index); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
 

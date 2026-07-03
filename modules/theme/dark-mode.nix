@@ -16,8 +16,6 @@
 # HM counterpart writes only take effect when those DEs' own theme
 # system is not overriding (i.e. under Niri / LeftWM).
 {
-  config,
-  lib,
   pkgs,
   ...
 }:

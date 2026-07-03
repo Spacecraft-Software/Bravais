@@ -34,7 +34,7 @@ bravais/
 │       ├── productivity.nix
 │       ├── system.nix             # Modern Unix, containers, shells
 │       └── ai.nix                 # AI coding assistants
-├── overlays/default.nix           # Custom package derivations
+├── pkgs/                          # In-tree packages (audio-led, claude-desktop, CRD, ollama)
 ├── users/mj/                      # User "mj" (Home Manager)
 │   ├── default.nix
 │   └── home.nix
@@ -145,9 +145,10 @@ Always run `nix flake check` before opening a PR. The CI workflow
 
 - **User shell (mj):** nushell + starship prompt
 - **Root shell:** Brush (Rust, Bash-compatible)
-- **Bash compatibility:** a `bash` wrapper re-dispatches to Brush for all users;
-  NixOS internal activation scripts retain access to the real bash via its Nix
-  store path.
+- **Bash compatibility:** bash stays installed and `programs.bash.enable`
+  remains true (NixOS PAM/activation scripts require it), but bash is not a
+  login shell. (An earlier bash→Brush PATH wrapper was abandoned; no such
+  wrapper exists.)
 - `programs.bash.enable` is intentionally `true` — required by NixOS activation
   scripts and PAM tooling. Users are not assigned bash as their login shell.
 
@@ -158,11 +159,10 @@ Always run `nix flake check` before opening a PR. The CI workflow
 | Module | Purpose |
 |---|---|
 | `modules/core/security.nix` | sudo-rs (replaces sudo), polkit, gitway-agent |
-| `modules/core/brush-wrapper.nix` | PATH-priority bash→Brush wrapper for all users |
-| `modules/hardware/intel.nix` | x86-64 march level selection (v1–v4) |
+| `modules/hardware/intel.nix` | Intel vendor bits (kvm-intel, microcode); march levels live in `modules/platform/x86-64.nix` |
 | `modules/desktops/niri.nix` | The Steelbore Standard desktop |
 | `modules/packages/development.nix` | Rust toolchain (gcc, rustup, cargo, rustfmt, clippy) |
-| `overlays/default.nix` | sequoia-wot test-disable patch |
+| `modules/core/nix.nix` (inline overlays) | sequoia-wot test-disable patch |
 
 ---
 

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Typography Configuration
 {
-  config,
-  lib,
   pkgs,
   ...
 }:
