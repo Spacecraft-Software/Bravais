@@ -242,6 +242,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable Flatpak and AppImage (binfmt) services
 - [✓] Enable Podman with `dockerCompat`, runc + youki runtimes
 - [✓] Enable Chrome Remote Desktop (`modules/services/chrome-remote-desktop.nix`, `steelbore.services.chromeRemoteDesktop`) — repackage official `.deb` (`pkgs/chrome-remote-desktop/`, autoPatchelfHook + path patches); headless X11 host via a LeftWM `~/.chrome-remote-desktop-session`; one-time Google web-auth + PIN is manual
+- [✓] Enable Ollama (`modules/services/ollama.nix`, `steelbore.services.ollama`) — repackage the official prebuilt 0.31.1 (`pkgs/ollama/`, zstd+tar+autoPatchelfHook, CUDA/Vulkan runners stripped → CPU-only ~66 MB) via `services.ollama`; nixpkgs' 0.24.0 is too old for current models
 
 ### ai.nix
 

@@ -988,6 +988,12 @@ programs.appimage = {
 runtime = "runc"
 ```
 
+### 12.5 Ollama
+
+Module `modules/services/ollama.nix` — toggle `steelbore.services.ollama.enable` (on in `hosts/common.nix`).
+
+nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-reject that). `pkgs/ollama/` repackages Ollama's **official prebuilt** Linux binary (pinned **0.31.1**): `zstd` + `tar` extract, `autoPatchelfHook`, with the ~2 GB CUDA (`cuda_v12`/`cuda_v13`) + Vulkan runners **stripped** — the ThinkPad has no NVIDIA GPU, leaving the binary + CPU `libggml-cpu-*` runners (~66 MB). Runs via the stock `services.ollama` module (daemon on `127.0.0.1:11434` as the `ollama` user; `ollama` client on PATH). Bump `version` + `src.hash` from the ollama GitHub releases per update (it doesn't self-update here).
+
 ---
 
 ## 13. User Configuration (Home Manager)
