@@ -55,7 +55,8 @@
   # the hardened systemd.user.services.gitway-agent unit, so neither needs to
   # be duplicated here.
 
-  # SSH key loading happens lazily via the bash/brush rc snippet above on the
+  # SSH key loading happens lazily via the bash/brush rc snippet (programs.bash
+  # in shell.nix) on the
   # first interactive shell. A boot-time systemd user unit was tried but
   # failed silently against passphrase-protected keys without a TTY/SSH_ASKPASS.
 }

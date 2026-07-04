@@ -21,7 +21,7 @@
   #      the declarative source of truth consulted by xdg-open, Niri, and the
   #      desktop portals. HM owns this file (conflicts backed up to
   #      mimeapps.list.backup), so do NOT hand-edit it — change it here.
-  #   2. `BROWSER` in `home.sessionVariables` (top of this file) — for CLI tools
+  #   2. `BROWSER` in `home.sessionVariables` (shell.nix) — for CLI tools
   #      that open URLs via $BROWSER. Verified to reach all four shells
   #      (Nushell, Ion, Brush, Bash): the greetd session sources
   #      hm-session-vars.sh at login, and every WM-spawned shell inherits it.

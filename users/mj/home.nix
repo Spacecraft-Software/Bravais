@@ -5,6 +5,7 @@
   pkgs,
   construct,
   unstablePkgs,
+  primaryUser,
   ...
 }:
 
@@ -40,8 +41,8 @@
     ];
   };
 
-  home.username = "mj";
-  home.homeDirectory = "/home/mj";
+  home.username = primaryUser;
+  home.homeDirectory = "/home/${primaryUser}";
   home.stateVersion = "26.05";
 
   # Rust toolchain — rustup manages rustc/cargo/rustfmt/clippy itself.
