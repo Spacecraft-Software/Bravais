@@ -123,82 +123,10 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # WEZTERM — Rust-based GPU-accelerated terminal with Lua config
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."wezterm/wezterm.lua".text = ''
-      -- Steelbore WezTerm Configuration
-      local wezterm = require 'wezterm'
-      local config = {}
-
-      -- Font configuration
-      config.font = wezterm.font 'JetBrainsMono Nerd Font'
-      config.font_size = 12.0
-
-      -- Window configuration
-      config.window_background_opacity = 0.95
-      config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
-      config.enable_tab_bar = true
-      config.hide_tab_bar_if_only_one_tab = true
-      config.default_prog = { "${pkgs.nushell}/bin/nu" }
-
-      -- Steelbore color scheme
-      config.colors = {
-        foreground = "${steelborePalette.moltenAmber}",
-        background = "${steelborePalette.voidNavy}",
-        cursor_bg = "${steelborePalette.moltenAmber}",
-        cursor_fg = "${steelborePalette.voidNavy}",
-        cursor_border = "${steelborePalette.moltenAmber}",
-        selection_bg = "${steelborePalette.steelBlue}",
-        selection_fg = "${steelborePalette.voidNavy}",
-        scrollbar_thumb = "${steelborePalette.steelBlue}",
-        split = "${steelborePalette.steelBlue}",
-
-        ansi = {
-          "${steelborePalette.voidNavy}",
-          "${steelborePalette.redOxide}",
-          "${steelborePalette.radiumGreen}",
-          "${steelborePalette.moltenAmber}",
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.moltenAmber}"
-        },
-        brights = {
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.redOxide}",
-          "${steelborePalette.radiumGreen}",
-          "${steelborePalette.moltenAmber}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.moltenAmber}"
-        },
-
-        tab_bar = {
-          background = "${steelborePalette.voidNavy}",
-          active_tab = {
-            bg_color = "${steelborePalette.steelBlue}",
-            fg_color = "${steelborePalette.moltenAmber}",
-          },
-          inactive_tab = {
-            bg_color = "${steelborePalette.voidNavy}",
-            fg_color = "${steelborePalette.steelBlue}",
-          },
-          inactive_tab_hover = {
-            bg_color = "${steelborePalette.steelBlue}",
-            fg_color = "${steelborePalette.moltenAmber}",
-          },
-          new_tab = {
-            bg_color = "${steelborePalette.voidNavy}",
-            fg_color = "${steelborePalette.steelBlue}",
-          },
-          new_tab_hover = {
-            bg_color = "${steelborePalette.steelBlue}",
-            fg_color = "${steelborePalette.moltenAmber}",
-          },
-        },
-      }
-
-      return config
-    '';
+    environment.etc."wezterm/wezterm.lua".text = tt.weztermLua {
+      header = "Steelbore WezTerm Configuration";
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # GHOSTTY — Zig-based GPU-accelerated terminal (memory-safe)
@@ -215,48 +143,7 @@ in
       "Steelbore"
     '';
 
-    environment.etc."cosmic/com.system76.CosmicTerm/v1/color_schemes_dark".text = ''
-      {
-          1: (
-              name: "Steelbore",
-              foreground: "${steelborePalette.moltenAmber}",
-              background: "${steelborePalette.voidNavy}",
-              cursor: "${steelborePalette.moltenAmber}",
-              bright_foreground: "${steelborePalette.moltenAmber}",
-              dim_foreground: "${steelborePalette.steelBlue}",
-              normal: (
-                  black: "${steelborePalette.voidNavy}",
-                  red: "${steelborePalette.redOxide}",
-                  green: "${steelborePalette.radiumGreen}",
-                  yellow: "${steelborePalette.moltenAmber}",
-                  blue: "${steelborePalette.steelBlue}",
-                  magenta: "${steelborePalette.steelBlue}",
-                  cyan: "${steelborePalette.liquidCool}",
-                  white: "${steelborePalette.moltenAmber}",
-              ),
-              bright: (
-                  black: "${steelborePalette.steelBlue}",
-                  red: "${steelborePalette.redOxide}",
-                  green: "${steelborePalette.radiumGreen}",
-                  yellow: "${steelborePalette.moltenAmber}",
-                  blue: "${steelborePalette.liquidCool}",
-                  magenta: "${steelborePalette.liquidCool}",
-                  cyan: "${steelborePalette.liquidCool}",
-                  white: "${steelborePalette.moltenAmber}",
-              ),
-              dim: (
-                  black: "${steelborePalette.voidNavy}",
-                  red: "${steelborePalette.redOxide}",
-                  green: "${steelborePalette.radiumGreen}",
-                  yellow: "${steelborePalette.moltenAmber}",
-                  blue: "${steelborePalette.steelBlue}",
-                  magenta: "${steelborePalette.steelBlue}",
-                  cyan: "${steelborePalette.liquidCool}",
-                  white: "${steelborePalette.moltenAmber}",
-              ),
-          ),
-      }
-    '';
+    environment.etc."cosmic/com.system76.CosmicTerm/v1/color_schemes_dark".text = tt.cosmicTermScheme;
 
     # Default profile → launch Nushell, matching every other terminal here.
     # cosmic-term shlex-splits profile.command for the PTY (main.rs); a single
@@ -296,43 +183,7 @@ in
     # WAVETERM — AI-native terminal
     # Uses JSON configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."waveterm/config.json".text = builtins.toJSON {
-      term = {
-        fontfamily = "JetBrainsMono Nerd Font";
-        fontsize = 12;
-        theme = "custom";
-      };
-      themes = {
-        custom = {
-          display = {
-            name = "Steelbore";
-            order = 1;
-          };
-          terminal = {
-            background = steelborePalette.voidNavy;
-            foreground = steelborePalette.moltenAmber;
-            cursor = steelborePalette.moltenAmber;
-            selectionBackground = steelborePalette.steelBlue;
-            black = steelborePalette.voidNavy;
-            red = steelborePalette.redOxide;
-            green = steelborePalette.radiumGreen;
-            yellow = steelborePalette.moltenAmber;
-            blue = steelborePalette.steelBlue;
-            magenta = steelborePalette.steelBlue;
-            cyan = steelborePalette.liquidCool;
-            white = steelborePalette.moltenAmber;
-            brightBlack = steelborePalette.steelBlue;
-            brightRed = steelborePalette.redOxide;
-            brightGreen = steelborePalette.radiumGreen;
-            brightYellow = steelborePalette.moltenAmber;
-            brightBlue = steelborePalette.liquidCool;
-            brightMagenta = steelborePalette.liquidCool;
-            brightCyan = steelborePalette.liquidCool;
-            brightWhite = steelborePalette.moltenAmber;
-          };
-        };
-      };
-    };
+    environment.etc."waveterm/config.json".text = builtins.toJSON tt.wavetermConfig;
 
     # ═══════════════════════════════════════════════════════════════════════════
     # WARP TERMINAL — AI-powered terminal

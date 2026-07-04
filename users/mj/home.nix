@@ -1473,62 +1473,10 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # WEZTERM — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    "wezterm/wezterm.lua".text = ''
-      -- Steelbore WezTerm User Configuration
-      local wezterm = require 'wezterm'
-      local config = {}
-
-      config.font = wezterm.font 'JetBrainsMono Nerd Font'
-      config.font_size = 12.0
-      config.window_background_opacity = 0.95
-      config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
-      config.enable_tab_bar = true
-      config.hide_tab_bar_if_only_one_tab = true
-      config.default_prog = { "${pkgs.nushell}/bin/nu" }
-
-      config.colors = {
-        foreground = "${steelborePalette.moltenAmber}",
-        background = "${steelborePalette.voidNavy}",
-        cursor_bg = "${steelborePalette.moltenAmber}",
-        cursor_fg = "${steelborePalette.voidNavy}",
-        cursor_border = "${steelborePalette.moltenAmber}",
-        selection_bg = "${steelborePalette.steelBlue}",
-        selection_fg = "${steelborePalette.voidNavy}",
-        ansi = {
-          "${steelborePalette.voidNavy}",
-          "${steelborePalette.redOxide}",
-          "${steelborePalette.radiumGreen}",
-          "${steelborePalette.moltenAmber}",
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.moltenAmber}"
-        },
-        brights = {
-          "${steelborePalette.steelBlue}",
-          "${steelborePalette.redOxide}",
-          "${steelborePalette.radiumGreen}",
-          "${steelborePalette.moltenAmber}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.liquidCool}",
-          "${steelborePalette.moltenAmber}"
-        },
-        tab_bar = {
-          background = "${steelborePalette.voidNavy}",
-          active_tab = {
-            bg_color = "${steelborePalette.steelBlue}",
-            fg_color = "${steelborePalette.moltenAmber}",
-          },
-          inactive_tab = {
-            bg_color = "${steelborePalette.voidNavy}",
-            fg_color = "${steelborePalette.steelBlue}",
-          },
-        },
-      }
-
-      return config
-    '';
+    "wezterm/wezterm.lua".text = tt.weztermLua {
+      header = "Steelbore WezTerm User Configuration";
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # RIO — User configuration
@@ -1734,141 +1682,11 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # KONSOLE — User profile and colorscheme
     # ═══════════════════════════════════════════════════════════════════════════
-    "konsole/Steelbore.colorscheme".text = ''
-      # Steelbore Konsole Color Scheme
+    "konsole/Steelbore.colorscheme".text = tt.konsoleColorschemePlain;
 
-      [Background]
-      Color=${t steelborePalette.voidNavy}
-
-      [BackgroundFaint]
-      Color=${t steelborePalette.voidNavy}
-
-      [BackgroundIntense]
-      Bold=true
-      Color=${t steelborePalette.steelBlue}
-
-      [Color0]
-      Color=${t steelborePalette.voidNavy}
-
-      [Color0Faint]
-      Color=${t steelborePalette.voidNavy}
-
-      [Color0Intense]
-      Bold=true
-      Color=${t steelborePalette.steelBlue}
-
-      [Color1]
-      Color=${t steelborePalette.redOxide}
-
-      [Color1Faint]
-      Color=${t steelborePalette.redOxide}
-
-      [Color1Intense]
-      Bold=true
-      Color=${t steelborePalette.redOxide}
-
-      [Color2]
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color2Faint]
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color2Intense]
-      Bold=true
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color3]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color3Faint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color3Intense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color4]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color4Faint]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color4Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color5]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color5Faint]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color5Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6]
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6Faint]
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color7]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color7Faint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color7Intense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [Foreground]
-      Color=${t steelborePalette.moltenAmber}
-
-      [ForegroundFaint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [ForegroundIntense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [General]
-      Anchor=0.5,0.5
-      Blur=false
-      ColorRandomization=false
-      Description=Steelbore
-      FillStyle=Tile
-      Opacity=0.95
-      Spread=1.0
-      Wallpaper=
-    '';
-
-    "konsole/Steelbore.profile".text = ''
-      # Steelbore Konsole Profile
-
-      [Appearance]
-      ColorScheme=Steelbore
-      Font=JetBrainsMono Nerd Font,12,-1,5,50,0,0,0,0,0
-
-      [General]
-      Command=${pkgs.nushell}/bin/nu
-      Name=Steelbore
-      Parent=FALLBACK/
-      TerminalColumns=160
-      TerminalRows=48
-
-      [Scrolling]
-      HistoryMode=2
-      ScrollFullPage=false
-
-      [Terminal Features]
-      BlinkingCursorEnabled=true
-    '';
+    "konsole/Steelbore.profile".text = tt.konsoleProfile {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # HALLOY — Rust + iced multi-server IRCv3 client (GUI)

@@ -62,6 +62,64 @@ let
   };
 
   at = list: i: builtins.elemAt list i;
+
+  konsoleColorschemeWith =
+    withPaletteComment:
+    let
+      rt = p.convert.rgbTriple;
+      slot = i: ''
+        [Color${toString i}]
+        Color=${rt (at theme.ansi.normal i)}
+
+        [Color${toString i}Faint]
+        Color=${rt (at theme.ansi.normal i)}
+
+        [Color${toString i}Intense]
+        Bold=true
+        Color=${rt (at theme.ansi.bright i)}
+      '';
+      slots = builtins.concatStringsSep "\n" (builtins.genList slot 8);
+    in
+    ''
+      # Steelbore Konsole Color Scheme
+      ${
+        if withPaletteComment then
+          "# Palette: Void Navy / Molten Amber / Steel Blue / Radium Green / Red Oxide / Liquid Coolant
+"
+        else
+          ""
+      }
+      [Background]
+      Color=${rt theme.background}
+
+      [BackgroundFaint]
+      Color=${rt theme.background}
+
+      [BackgroundIntense]
+      Bold=true
+      Color=${rt (at theme.ansi.bright 0)}
+
+      ${slots}
+      [Foreground]
+      Color=${rt theme.foreground}
+
+      [ForegroundFaint]
+      Color=${rt theme.foreground}
+
+      [ForegroundIntense]
+      Bold=true
+      Color=${rt theme.foreground}
+
+      [General]
+      Anchor=0.5,0.5
+      Blur=false
+      ColorRandomization=false
+      Description=Steelbore
+      FillStyle=Tile
+      Opacity=${theme.opacity}
+      Spread=1.0
+      Wallpaper=
+    '';
 in
 {
   inherit theme;
@@ -246,57 +304,8 @@ in
     '';
 
   # ── Konsole colorscheme (INI; decimal R,G,B; Intense == bright) ─────────
-  konsoleColorscheme =
-    let
-      rt = p.convert.rgbTriple;
-      slot = i: ''
-        [Color${toString i}]
-        Color=${rt (at theme.ansi.normal i)}
-
-        [Color${toString i}Faint]
-        Color=${rt (at theme.ansi.normal i)}
-
-        [Color${toString i}Intense]
-        Bold=true
-        Color=${rt (at theme.ansi.bright i)}
-      '';
-      slots = builtins.concatStringsSep "\n" (builtins.genList slot 8);
-    in
-    ''
-      # Steelbore Konsole Color Scheme
-      # Palette: Void Navy / Molten Amber / Steel Blue / Radium Green / Red Oxide / Liquid Coolant
-
-      [Background]
-      Color=${rt theme.background}
-
-      [BackgroundFaint]
-      Color=${rt theme.background}
-
-      [BackgroundIntense]
-      Bold=true
-      Color=${rt (at theme.ansi.bright 0)}
-
-      ${slots}
-      [Foreground]
-      Color=${rt theme.foreground}
-
-      [ForegroundFaint]
-      Color=${rt theme.foreground}
-
-      [ForegroundIntense]
-      Bold=true
-      Color=${rt theme.foreground}
-
-      [General]
-      Anchor=0.5,0.5
-      Blur=false
-      ColorRandomization=false
-      Description=Steelbore
-      FillStyle=Tile
-      Opacity=${theme.opacity}
-      Spread=1.0
-      Wallpaper=
-    '';
+  konsoleColorscheme = konsoleColorschemeWith true;
+  konsoleColorschemePlain = konsoleColorschemeWith false;
 
   # ── Konsole profile (INI) ────────────────────────────────────────────────
   konsoleProfile =
@@ -322,4 +331,152 @@ in
       [Terminal Features]
       BlinkingCursorEnabled=true
     '';
+
+  # ── WezTerm (Lua; full hex). ONE canonical body for both the /etc and the
+  # user config — the old user copy had drifted (lost comments,
+  # scrollbar_thumb/split, and three tab_bar states); unified deliberately
+  # in the Phase C migration. ──────────────────────────────────────────────
+  weztermLua =
+    { header, shell }:
+    let
+      # First line bare (inherits the literal prefix of the interpolation
+      # site); continuation lines carry the final rendered indent themselves.
+      luaList =
+        list:
+        builtins.concatStringsSep ",\n" (
+          builtins.genList (i: (if i == 0 then "" else "    ") + "\"${at list i}\"") 8
+        );
+    in
+    ''
+      -- ${header}
+      local wezterm = require 'wezterm'
+      local config = {}
+
+      -- Font configuration
+      config.font = wezterm.font '${theme.font}'
+      config.font_size = 12.0
+
+      -- Window configuration
+      config.window_background_opacity = ${theme.opacity}
+      config.window_padding = { left = 10, right = 10, top = 10, bottom = 10 }
+      config.enable_tab_bar = true
+      config.hide_tab_bar_if_only_one_tab = true
+      config.default_prog = { "${shell}" }
+
+      -- Steelbore color scheme
+      config.colors = {
+        foreground = "${theme.foreground}",
+        background = "${theme.background}",
+        cursor_bg = "${theme.cursor.cursor}",
+        cursor_fg = "${theme.cursor.text}",
+        cursor_border = "${theme.cursor.cursor}",
+        selection_bg = "${theme.selection.background}",
+        selection_fg = "${theme.selection.text}",
+        scrollbar_thumb = "${theme.selection.background}",
+        split = "${theme.selection.background}",
+
+        ansi = {
+          ${luaList theme.ansi.normal}
+        },
+        brights = {
+          ${luaList theme.ansi.bright}
+        },
+
+        tab_bar = {
+          background = "${theme.background}",
+          active_tab = {
+            bg_color = "${theme.selection.background}",
+            fg_color = "${theme.foreground}",
+          },
+          inactive_tab = {
+            bg_color = "${theme.background}",
+            fg_color = "${theme.selection.background}",
+          },
+          inactive_tab_hover = {
+            bg_color = "${theme.selection.background}",
+            fg_color = "${theme.foreground}",
+          },
+          new_tab = {
+            bg_color = "${theme.background}",
+            fg_color = "${theme.selection.background}",
+          },
+          new_tab_hover = {
+            bg_color = "${theme.selection.background}",
+            fg_color = "${theme.foreground}",
+          },
+        },
+      }
+
+      return config
+    '';
+
+  # ── COSMIC Term (RON) ────────────────────────────────────────────────────
+  cosmicTermScheme =
+    let
+      ronGroup =
+        list:
+        let
+          names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+          row = i: (if i == 0 then "" else "            ") + "${at names i}: \"${at list i}\",";
+        in
+        builtins.concatStringsSep "\n" (builtins.genList row 8);
+    in
+    ''
+      {
+          1: (
+              name: "Steelbore",
+              foreground: "${theme.foreground}",
+              background: "${theme.background}",
+              cursor: "${theme.cursor.cursor}",
+              bright_foreground: "${theme.foreground}",
+              dim_foreground: "${theme.selection.background}",
+              normal: (
+                  ${ronGroup theme.ansi.normal}
+              ),
+              bright: (
+                  ${ronGroup theme.ansi.bright}
+              ),
+              dim: (
+                  ${ronGroup theme.ansi.normal}
+              ),
+          ),
+      }
+    '';
+
+  # ── Waveterm (JSON attrset; render with builtins.toJSON) ────────────────
+  wavetermConfig = {
+    term = {
+      fontfamily = theme.font;
+      fontsize = 12;
+      theme = "custom";
+    };
+    themes.custom = {
+      display = {
+        name = "Steelbore";
+        order = 1;
+      };
+      terminal = {
+        background = theme.background;
+        foreground = theme.foreground;
+        cursor = theme.cursor.cursor;
+        selectionBackground = theme.selection.background;
+        black = at theme.ansi.normal 0;
+        red = at theme.ansi.normal 1;
+        green = at theme.ansi.normal 2;
+        yellow = at theme.ansi.normal 3;
+        blue = at theme.ansi.normal 4;
+        magenta = at theme.ansi.normal 5;
+        cyan = at theme.ansi.normal 6;
+        white = at theme.ansi.normal 7;
+        brightBlack = at theme.ansi.bright 0;
+        brightRed = at theme.ansi.bright 1;
+        brightGreen = at theme.ansi.bright 2;
+        brightYellow = at theme.ansi.bright 3;
+        brightBlue = at theme.ansi.bright 4;
+        brightMagenta = at theme.ansi.bright 5;
+        brightCyan = at theme.ansi.bright 6;
+        brightWhite = at theme.ansi.bright 7;
+      };
+    };
+  };
 }
