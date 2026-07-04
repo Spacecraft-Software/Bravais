@@ -737,7 +737,8 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 ### 11.1 Browsers (`modules/packages/browsers.nix`)
 
 - **BrowserOS** (Chromium/AppImage) — agentic browser, packaged with `appimageTools.wrapType2`
-  (pinned `fetchurl` + SRI hash) so it builds reproducibly into the Nix store
+  (pinned `fetchurl` + SRI hash) so it builds reproducibly into the Nix store; version/hash
+  bumped by `pkgs/update-vendored.nu`
 - **Firefox** (system-managed via `programs.firefox.enable`)
 - google-chrome, brave, microsoft-edge, librewolf
 
@@ -869,7 +870,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CLAUDE.md constraint #4; `unstablePkgs.claude-code` is the re-enable path)
 
-**GUI:** claude-desktop — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump `version` + `src.hash` per release (get them from the apt `Packages` index); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
+**GUI:** claude-desktop — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
 
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
 
@@ -957,7 +958,7 @@ virtualisation.podman = {
 
 Module `modules/services/chrome-remote-desktop.nix` — toggle `steelbore.services.chromeRemoteDesktop.{enable,user}` (enabled on the ThinkPad host).
 
-Not in nixpkgs — `pkgs/chrome-remote-desktop/` repackages Google's official `.deb` (`dpkg -x` + `autoPatchelfHook`; the app dir is added to RUNPATH so `libremoting_core.so` resolves; the Python management script's hardcoded paths — interpreter, Xvfb/Xorg/xrandr/xdpyinfo, the Xorg module dir, sudo/pkexec — are patched to Nix-store / `/run/wrappers` equivalents). The module adds a `chrome-remote-desktop` group, a `pam_unix` PAM stack, and a `chrome-remote-desktop@mj` system service. CRD runs a **headless virtual X11** session and execs `~/.chrome-remote-desktop-session` → LeftWM (provided in `users/mj/home.nix`; Niri/GNOME here are Wayland). One-time authorization is manual: `remotedesktop.google.com/headless` → `start-host --code=…` → 6-digit PIN → connect at `/access`. Outbound HTTPS only (no inbound firewall port). Bump `version` + `src.sha256` from the CRD apt index per release.
+Not in nixpkgs — `pkgs/chrome-remote-desktop/` repackages Google's official `.deb` (`dpkg -x` + `autoPatchelfHook`; the app dir is added to RUNPATH so `libremoting_core.so` resolves; the Python management script's hardcoded paths — interpreter, Xvfb/Xorg/xrandr/xdpyinfo, the Xorg module dir, sudo/pkexec — are patched to Nix-store / `/run/wrappers` equivalents). The module adds a `chrome-remote-desktop` group, a `pam_unix` PAM stack, and a `chrome-remote-desktop@mj` system service. CRD runs a **headless virtual X11** session and execs `~/.chrome-remote-desktop-session` → LeftWM (provided in `users/mj/home.nix`; Niri/GNOME here are Wayland). One-time authorization is manual: `remotedesktop.google.com/headless` → `start-host --code=…` → 6-digit PIN → connect at `/access`. Outbound HTTPS only (no inbound firewall port). Bump per release with `nu pkgs/update-vendored.nu chrome-remote-desktop` (reads the CRD apt index, rewrites `version` + `src.sha256`, builds).
 
 ### 12.3 Flatpak
 
@@ -993,7 +994,7 @@ runtime = "runc"
 
 Module `modules/services/ollama.nix` — toggle `steelbore.services.ollama.enable` (on in `hosts/common.nix`).
 
-nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-reject that). `pkgs/ollama/` repackages Ollama's **official prebuilt** Linux binary (pinned **0.31.1**): `zstd` + `tar` extract, `autoPatchelfHook`, with the ~2 GB CUDA (`cuda_v12`/`cuda_v13`) + Vulkan runners **stripped** — the ThinkPad has no NVIDIA GPU, leaving the binary + CPU `libggml-cpu-*` runners (~66 MB). Runs via the stock `services.ollama` module (daemon on `127.0.0.1:11434` as the `ollama` user; `ollama` client on PATH). Bump `version` + `src.hash` from the ollama GitHub releases per update (it doesn't self-update here).
+nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-reject that). `pkgs/ollama/` repackages Ollama's **official prebuilt** Linux binary (pinned, currently **0.31.1**): `zstd` + `tar` extract, `autoPatchelfHook`, with the ~2 GB CUDA (`cuda_v12`/`cuda_v13`) + Vulkan runners **stripped** — the ThinkPad has no NVIDIA GPU, leaving the binary + CPU `libggml-cpu-*` runners (~66 MB). Runs via the stock `services.ollama` module (daemon on `127.0.0.1:11434` as the `ollama` user; `ollama` client on PATH). Bump per update with `nu pkgs/update-vendored.nu ollama` (reads GitHub releases, prefetches, rewrites `version` + `src.hash`, builds; it doesn't self-update here).
 
 ---
 

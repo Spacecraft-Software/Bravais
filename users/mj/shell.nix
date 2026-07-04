@@ -437,9 +437,11 @@ in
         }
 
         # Full system rebuild for bravais-thinkpad: load the signing key, bump
-        # the three tracked flake inputs (construct == skills-sync), free disk
-        # while keeping a week of rollback targets, build + switch, then mirror
-        # the repo into /etc/nixos. A failed switch aborts before the mirror.
+        # the tracked flake inputs (construct == skills-sync; nixpkgs-unstable +
+        # home-manager-unstable so unstablePkgs never lags stable — elegance
+        # plan 5.2), free disk while keeping a week of rollback targets,
+        # build + switch, then mirror the repo into /etc/nixos. A failed
+        # switch aborts before the mirror.
         #   --dry        nixos-rebuild dry-build only; skips GC and the /etc mirror
         #   --no-update  skip `nix flake update`
         #   --no-gc      skip garbage collection + journal vacuum
@@ -448,9 +450,18 @@ in
           if $topic == "help" { help rebuild; return }
           if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
           cd /spacecraft-software/bravais
+          # Monthly vendored-binary reminder (elegance plan 5.1): claude-desktop,
+          # chrome-remote-desktop, ollama, and BrowserOS pin upstream binaries
+          # that `nix flake update` cannot bump.
+          let stamp = ($nu.home-path | path join ".cache" "bravais-vendored-check")
+          let stale = (not ($stamp | path exists)) or ((date now) - (ls $stamp | get 0.modified) > 30day)
+          if $stale {
+            print $"(ansi yellow)vendored binaries unchecked for 30+ days — run: nu pkgs/update-vendored.nu --check(ansi reset)"
+            mkdir ($stamp | path dirname); touch $stamp
+          }
           if not $no_update {
             gitway-add ~/.ssh/id_ed25519
-            nix flake update antigravity-nix construct gitway
+            nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
           }
           if (not $no_gc) and (not $dry) {
             try { sudo nix-collect-garbage --delete-older-than 7d }

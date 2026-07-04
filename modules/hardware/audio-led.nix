@@ -22,6 +22,19 @@ in
   };
 
   config = lib.mkIf config.steelbore.hardware.audioLed.enable {
+    # The daemon reads mute state from the user's PipeWire session; without
+    # PipeWire it starts, finds no server, and flaps under Restart=on-failure
+    # (elegance plan 2.4).
+    assertions = [
+      {
+        assertion = config.services.pipewire.enable;
+        message = ''
+          steelbore.hardware.audioLed requires services.pipewire.enable = true —
+          the LED daemon watches the default sink/source mute via PipeWire.
+        '';
+      }
+    ];
+
     environment.systemPackages = [ audioLed ];
 
     # Hand ownership of the two LEDs to the daemon by clearing their kernel

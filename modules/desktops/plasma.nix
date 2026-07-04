@@ -21,6 +21,18 @@
     # X server required for XWayland support
     services.xserver.enable = true;
 
+    # Portal routing — services.desktopManager.plasma6 already registers
+    # xdg-desktop-portal-kde (+ -gtk). Add the explicit per-DE config so
+    # multi-DE installs route interfaces deterministically when Plasma is
+    # the active session, mirroring gnome.nix and cosmic.nix (plan 2.4).
+    xdg.portal.config.kde = {
+      default = [
+        "kde"
+        "gtk"
+      ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "kde" ];
+    };
+
     # Avoid askpass conflicts when multiple desktop modules are enabled.
     programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
 
