@@ -12,6 +12,8 @@ let
   # Palette format converters from lib/colors.nix (single source, Standard §11)
   h = steelborePalette.convert.bareHex; # Foot needs hex without the '#'
   t = steelborePalette.convert.rgbTriple; # Konsole INI needs decimal R,G,B
+  # Shared terminal-theme record + per-format emitters (plan item 1.2)
+  tt = import ../../lib/terminal-theme.nix steelborePalette;
 in
 
 {
@@ -576,40 +578,10 @@ in
     # FOOT — Wayland terminal (C, lightweight)
     # System-level fallback config at /etc/xdg/foot/foot.ini
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."xdg/foot/foot.ini".text = ''
-      # Steelbore Foot Configuration
-
-      [main]
-      font=JetBrainsMono Nerd Font:size=12
-      shell=${pkgs.nushell}/bin/nu
-      term=xterm-256color
-
-      [colors]
-      background=${h steelborePalette.voidNavy}
-      foreground=${h steelborePalette.moltenAmber}
-      regular0=${h steelborePalette.voidNavy}
-      regular1=${h steelborePalette.redOxide}
-      regular2=${h steelborePalette.radiumGreen}
-      regular3=${h steelborePalette.moltenAmber}
-      regular4=${h steelborePalette.steelBlue}
-      regular5=${h steelborePalette.steelBlue}
-      regular6=${h steelborePalette.liquidCool}
-      regular7=${h steelborePalette.moltenAmber}
-      bright0=${h steelborePalette.steelBlue}
-      bright1=${h steelborePalette.redOxide}
-      bright2=${h steelborePalette.radiumGreen}
-      bright3=${h steelborePalette.moltenAmber}
-      bright4=${h steelborePalette.liquidCool}
-      bright5=${h steelborePalette.liquidCool}
-      bright6=${h steelborePalette.liquidCool}
-      bright7=${h steelborePalette.moltenAmber}
-      cursor=${h steelborePalette.voidNavy} ${h steelborePalette.moltenAmber}
-      selection-foreground=${h steelborePalette.voidNavy}
-      selection-background=${h steelborePalette.steelBlue}
-
-      [scrollback]
-      lines=10000
-    '';
+    environment.etc."xdg/foot/foot.ini".text = tt.foot {
+      header = "Steelbore Foot Configuration";
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # XTERM — Classic X11 terminal

@@ -16,6 +16,8 @@ let
   h = steelborePalette.convert.bareHex;
   t = steelborePalette.convert.rgbTriple; # Konsole INI decimal R,G,B
   x256 = steelborePalette.convert.x256; # xterm-256 indices (tiny IRC)
+  # Shared terminal-theme record + per-format emitters (plan item 1.2)
+  tt = import ../../lib/terminal-theme.nix steelborePalette;
 
   # ── Shell-init single sources (CLAUDE.md "PATH in home.nix") ─────────────
   # Out-of-band tool dirs (self-updating CLIs installed outside Nix). Stated
@@ -1638,40 +1640,10 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # FOOT — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    "foot/foot.ini".text = ''
-      # Steelbore Foot User Configuration
-
-      [main]
-      font=JetBrainsMono Nerd Font:size=12
-      shell=${pkgs.nushell}/bin/nu
-      term=xterm-256color
-
-      [colors]
-      background=${h steelborePalette.voidNavy}
-      foreground=${h steelborePalette.moltenAmber}
-      regular0=${h steelborePalette.voidNavy}
-      regular1=${h steelborePalette.redOxide}
-      regular2=${h steelborePalette.radiumGreen}
-      regular3=${h steelborePalette.moltenAmber}
-      regular4=${h steelborePalette.steelBlue}
-      regular5=${h steelborePalette.steelBlue}
-      regular6=${h steelborePalette.liquidCool}
-      regular7=${h steelborePalette.moltenAmber}
-      bright0=${h steelborePalette.steelBlue}
-      bright1=${h steelborePalette.redOxide}
-      bright2=${h steelborePalette.radiumGreen}
-      bright3=${h steelborePalette.moltenAmber}
-      bright4=${h steelborePalette.liquidCool}
-      bright5=${h steelborePalette.liquidCool}
-      bright6=${h steelborePalette.liquidCool}
-      bright7=${h steelborePalette.moltenAmber}
-      cursor=${h steelborePalette.voidNavy} ${h steelborePalette.moltenAmber}
-      selection-foreground=${h steelborePalette.voidNavy}
-      selection-background=${h steelborePalette.steelBlue}
-
-      [scrollback]
-      lines=10000
-    '';
+    "foot/foot.ini".text = tt.foot {
+      header = "Steelbore Foot User Configuration";
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # XFCE4-TERMINAL — User configuration
