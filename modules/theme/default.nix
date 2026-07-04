@@ -21,25 +21,33 @@
     SPACECRAFT_INFO = steelborePalette.liquidCool;
   };
 
-  # TTY / Virtual Console Colors (Steelbore Palette)
-  console.colors = [
-    # Normal: Black Red Green Yellow Blue Magenta Cyan White
-    "000027"
-    "FF5C5C"
-    "50FA7B"
-    "D98E32"
-    "4B7EB0"
-    "4B7EB0"
-    "8BE9FD"
-    "D98E32"
-    # Bright: Black Red Green Yellow Blue Magenta Cyan White
-    "4B7EB0"
-    "FF5C5C"
-    "50FA7B"
-    "D98E32"
-    "8BE9FD"
-    "8BE9FD"
-    "8BE9FD"
-    "D98E32"
-  ];
+  # TTY / Virtual Console Colors (Steelbore palette via convert.bareHex).
+  # Brand mapping deliberately collapses colors: magenta==blue (steelBlue),
+  # bright blue/magenta/cyan==liquidCool, white==moltenAmber — there is no
+  # true magenta or white on the console (documented trade-off, plan §5.6).
+  console.colors =
+    let
+      b = steelborePalette.convert.bareHex;
+      p = steelborePalette;
+    in
+    [
+      # Normal: Black Red Green Yellow Blue Magenta Cyan White
+      (b p.voidNavy)
+      (b p.redOxide)
+      (b p.radiumGreen)
+      (b p.moltenAmber)
+      (b p.steelBlue)
+      (b p.steelBlue)
+      (b p.liquidCool)
+      (b p.moltenAmber)
+      # Bright: Black Red Green Yellow Blue Magenta Cyan White
+      (b p.steelBlue)
+      (b p.redOxide)
+      (b p.radiumGreen)
+      (b p.moltenAmber)
+      (b p.liquidCool)
+      (b p.liquidCool)
+      (b p.liquidCool)
+      (b p.moltenAmber)
+    ];
 }

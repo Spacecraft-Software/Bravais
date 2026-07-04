@@ -9,8 +9,9 @@
 }:
 
 let
-  # Foot requires hex colors without the '#' prefix
-  h = c: builtins.substring 1 (builtins.stringLength c - 1) c;
+  # Palette format converters from lib/colors.nix (single source, Standard §11)
+  h = steelborePalette.convert.bareHex; # Foot needs hex without the '#'
+  t = steelborePalette.convert.rgbTriple; # Konsole INI needs decimal R,G,B
 in
 
 {
@@ -414,104 +415,104 @@ in
       # Palette: Void Navy / Molten Amber / Steel Blue / Radium Green / Red Oxide / Liquid Coolant
 
       [Background]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [BackgroundFaint]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [BackgroundIntense]
       Bold=true
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color0]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [Color0Faint]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [Color0Intense]
       Bold=true
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color1]
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color1Faint]
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color1Intense]
       Bold=true
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color2]
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color2Faint]
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color2Intense]
       Bold=true
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color3]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color3Faint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color3Intense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color4]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color4Faint]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color4Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color5]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color5Faint]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color5Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6]
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6Faint]
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color7]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color7Faint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color7Intense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Foreground]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [ForegroundFaint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [ForegroundIntense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [General]
       Anchor=0.5,0.5

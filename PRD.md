@@ -64,6 +64,7 @@ bravais/
 |   |   +-- plasma.nix             # KDE Plasma 6 on Wayland
 |   |   +-- niri.nix               # Niri + Ironbar on Wayland
 |   |   +-- leftwm.nix             # LeftWM + Polybar on X11
+|   |   +-- shared.nix             # Shared bare-WM config (dunst; gated on niri || leftwm)
 |   +-- login/                     # Display/login managers
 |   |   +-- default.nix            # greetd + tuigreet + shell sessions
 |   +-- packages/                  # Application bundles (opt-in)
@@ -311,8 +312,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 - **Bootloader:** systemd-boot, EFI variables writable
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
-- **Initrd modules:** `xhci_pci`, `nvme`, `usb_storage`, `sd_mod`, `rtsx_pci_sdmmc`
-- **Kernel modules:** `kvm-intel`
+- **Module lists:** none here — one owner per fact (initrd modules: generated `hosts/<machine>/hardware.nix`; `kvm-intel`: `modules/hardware/intel.nix`)
 
 ### 5.3 Locale (`modules/core/locale.nix`)
 
@@ -655,7 +655,7 @@ Key bindings:
 
 **Polybar Configuration** (`polybar.ini`):
 - Bar height: 32, fixed-center, Void Navy background
-- Fonts: Share Tech Mono 12, JetBrainsMono Nerd Font 12
+- Fonts: Hack Nerd Font 12, JetBrainsMono Nerd Font 12
 - Modules: leftwm-tags (left), date `%H:%M:%S :: %Y-%m-%d` (center), cpu/memory/network (right)
 - Colors: success (Radium Green), info (Liquid Coolant), warning (Red Oxide)
 
@@ -667,7 +667,7 @@ Key bindings:
 
 **Picom** (`picom.conf`): GLX backend, vsync, inactive opacity 0.95, fading (delta 5), no shadows, no rounded corners.
 
-**Dunst** (`dunstrc`): 350x150, top-right, 10x40 offset, Share Tech Mono 12, Steel Blue frame. Urgency colors: low (Liquid Coolant), normal (Molten Amber), critical (Red Oxide with Red Oxide frame, no timeout).
+**Dunst** (`dunstrc`): 350x150, top-right, 10x40 offset, Hack Nerd Font 12, Steel Blue frame. Urgency colors: low (Liquid Coolant), normal (Molten Amber), critical (Red Oxide with Red Oxide frame, no timeout).
 
 ---
 

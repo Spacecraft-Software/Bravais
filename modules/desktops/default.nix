@@ -5,6 +5,7 @@
     ./gnome.nix
     ./cosmic.nix
     ./plasma.nix
+    ./shared.nix
     ./niri.nix
     ./leftwm.nix
     ./assertions.nix

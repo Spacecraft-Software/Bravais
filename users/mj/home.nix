@@ -13,7 +13,35 @@
 
 let
   # Foot requires hex colors without the '#' prefix
-  h = c: builtins.substring 1 (builtins.stringLength c - 1) c;
+  h = steelborePalette.convert.bareHex;
+  t = steelborePalette.convert.rgbTriple; # Konsole INI decimal R,G,B
+  x256 = steelborePalette.convert.x256; # xterm-256 indices (tiny IRC)
+
+  # ── Shell-init single sources (CLAUDE.md "PATH in home.nix") ─────────────
+  # Out-of-band tool dirs (self-updating CLIs installed outside Nix). Stated
+  # ONCE here; rendered per shell below. APPENDED, never prepended, so Nix
+  # store binaries always win. Adding a dir = one edit to this list.
+  outOfBandDirs = [
+    ".local/bin"
+    ".cargo/bin"
+    ".kimi-code/bin"
+    ".npm-packages/bin"
+    ".opencode/bin"
+    ".kilo/bin"
+    ".mimocode/bin"
+    ".local/lib/qwen-code/bin"
+  ];
+  # POSIX-ish colon chain ($HOME/d1:$HOME/d2…) — bash and Ion share it.
+  posixPathAppend = lib.concatMapStringsSep ":" (d: "$HOME/" + d) outOfBandDirs;
+  # Nushell list form: $"($env.HOME)/d1" $"($env.HOME)/d2" …
+  nuPathAppend = lib.concatMapStringsSep " " (d: "$\"($env.HOME)/" + d + "\"") outOfBandDirs;
+
+  # gitway-agent socket override — same value in every shell; bash and Ion
+  # share the POSIX $(id -u) spelling, Nushell uses its native (id -u).
+  # WHY (stated once): PAM's pam_gnome_keyring pins SSH_AUTH_SOCK to
+  # /run/user/$UID/keyring/ssh at session start; gitway-agent owns the real
+  # socket (CLAUDE.md constraint #8), so every interactive shell re-points it.
+  gitwaySockPosix = "/run/user/$(id -u)/gitway-agent.sock";
 
   # Wallpaper daemon: upstream renamed swww → awww. On unstable both
   # exist (swww is a deprecation alias that warns); on stable 25.11
@@ -293,8 +321,8 @@ in
     bash = {
       enable = true;
       bashrcExtra = ''
-        export SSH_AUTH_SOCK="/run/user/$(id -u)/gitway-agent.sock"
-        export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin:$HOME/.mimocode/bin:$HOME/.local/lib/qwen-code/bin"
+        export SSH_AUTH_SOCK="${gitwaySockPosix}"
+        export PATH="$PATH:${posixPathAppend}"
 
         # Grok CLI tab-completion. grok is installed out-of-band in
         # ~/.local/bin (not via Nix), so it may be absent on a fresh build —
@@ -482,17 +510,17 @@ in
         # value resolves to a token from the Steelbore canonical palette.
         palettes.steelbore = {
           # Powerline section accents
-          red = "#FF5C5C"; # red_oxide     — OS / username cap
-          peach = "#D98E32"; # molten_amber  — directory block
+          red = steelborePalette.redOxide; # red_oxide     — OS / username cap
+          peach = steelborePalette.moltenAmber; # molten_amber  — directory block
           yellow = "#6272A4"; # slag_grey     — git block
-          green = "#50FA7B"; # radium_green  — language runtimes
-          sapphire = "#4B7EB0"; # steel_blue    — docker / conda
-          lavender = "#8BE9FD"; # liquid_cool   — time block
+          green = steelborePalette.radiumGreen; # radium_green  — language runtimes
+          sapphire = steelborePalette.steelBlue; # steel_blue    — docker / conda
+          lavender = steelborePalette.liquidCool; # liquid_cool   — time block
 
           # Dark canvas (foreground text on bright section blocks)
-          crust = "#000027";
-          mantle = "#000027";
-          base = "#000027";
+          crust = steelborePalette.voidNavy;
+          mantle = steelborePalette.voidNavy;
+          base = steelborePalette.voidNavy;
 
           # Secondary surfaces
           surface0 = "#050530";
@@ -505,19 +533,19 @@ in
           overlay2 = "#6272A4";
 
           # Foreground text scale
-          text = "#D98E32";
+          text = steelborePalette.moltenAmber;
           subtext0 = "#E6E6F0";
           subtext1 = "#E6E6F0";
 
           # Remaining catppuccin role keys mapped to nearest Steelbore semantic
-          rosewater = "#FF5C5C";
-          flamingo = "#FF5C5C";
-          pink = "#FF5C5C";
-          mauve = "#FF5C5C";
-          maroon = "#FF5C5C";
-          teal = "#8BE9FD";
-          sky = "#8BE9FD";
-          blue = "#4B7EB0";
+          rosewater = steelborePalette.redOxide;
+          flamingo = steelborePalette.redOxide;
+          pink = steelborePalette.redOxide;
+          mauve = steelborePalette.redOxide;
+          maroon = steelborePalette.redOxide;
+          teal = steelborePalette.liquidCool;
+          sky = steelborePalette.liquidCool;
+          blue = steelborePalette.steelBlue;
         };
       };
     };
@@ -545,16 +573,16 @@ in
         # it. The visible UX is identical except the indicator is uncolored.
         $env.PROMPT_MULTILINE_INDICATOR = "::: "
 
-        # Steelbore palette — kept in sync with flake.nix steelborePalette.
-        # Nushell needs literals; env-var interpolation isn't available inside
-        # color_config records.
+        # Steelbore palette — interpolated from the canonical lib/colors.nix
+        # (Nushell needs literal strings inside color_config records; Nix
+        # interpolation bakes them in at build time).
         let steelbore = {
-          voidNavy:    "#000027"
-          moltenAmber: "#D98E32"
-          steelBlue:   "#4B7EB0"
-          radiumGreen: "#50FA7B"
-          redOxide:    "#FF5C5C"
-          liquidCool:  "#8BE9FD"
+          voidNavy:    "${steelborePalette.voidNavy}"
+          moltenAmber: "${steelborePalette.moltenAmber}"
+          steelBlue:   "${steelborePalette.steelBlue}"
+          radiumGreen: "${steelborePalette.radiumGreen}"
+          redOxide:    "${steelborePalette.redOxide}"
+          liquidCool:  "${steelborePalette.liquidCool}"
         }
 
         $env.config = {
@@ -705,7 +733,7 @@ in
         }
 
         # User-local bins — appended so Nix store paths take precedence
-        $env.PATH = ($env.PATH | append [$"($env.HOME)/.local/bin" $"($env.HOME)/.cargo/bin" $"($env.HOME)/.kimi-code/bin" $"($env.HOME)/.npm-packages/bin" $"($env.HOME)/.opencode/bin" $"($env.HOME)/.kilo/bin" $"($env.HOME)/.mimocode/bin" $"($env.HOME)/.local/lib/qwen-code/bin"])
+        $env.PATH = ($env.PATH | append [${nuPathAppend}])
       '';
     };
 
@@ -1141,11 +1169,11 @@ in
 
       # Override SSH_AUTH_SOCK back to gitway-agent's socket. PAM's
       # pam_gnome_keyring otherwise sets it to /run/user/$UID/keyring/ssh.
-      let SSH_AUTH_SOCK = "/run/user/$(id -u)/gitway-agent.sock"
+      let SSH_AUTH_SOCK = "${gitwaySockPosix}"
       export SSH_AUTH_SOCK
 
       # User-local bins — appended so Nix store paths take precedence
-      let PATH = "$PATH:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.kimi-code/bin:$HOME/.npm-packages/bin:$HOME/.opencode/bin:$HOME/.kilo/bin:$HOME/.mimocode/bin:$HOME/.local/lib/qwen-code/bin"
+      let PATH = "$PATH:${posixPathAppend}"
       export PATH
 
       # Starship prompt
@@ -1195,7 +1223,7 @@ in
       // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
       // fall back to the solid Void Navy fill if it's ever missing.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
-      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${lib.removePrefix "#" steelborePalette.voidNavy}"
+      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.voidNavy}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
       // OSD daemon for the dedicated brightness/volume keys (binds below).
@@ -1752,104 +1780,104 @@ in
       # Steelbore Konsole Color Scheme
 
       [Background]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [BackgroundFaint]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [BackgroundIntense]
       Bold=true
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color0]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [Color0Faint]
-      Color=0,0,39
+      Color=${t steelborePalette.voidNavy}
 
       [Color0Intense]
       Bold=true
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color1]
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color1Faint]
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color1Intense]
       Bold=true
-      Color=255,92,92
+      Color=${t steelborePalette.redOxide}
 
       [Color2]
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color2Faint]
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color2Intense]
       Bold=true
-      Color=80,250,123
+      Color=${t steelborePalette.radiumGreen}
 
       [Color3]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color3Faint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color3Intense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color4]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color4Faint]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color4Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color5]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color5Faint]
-      Color=75,126,176
+      Color=${t steelborePalette.steelBlue}
 
       [Color5Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6]
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6Faint]
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color6Intense]
       Bold=true
-      Color=139,233,253
+      Color=${t steelborePalette.liquidCool}
 
       [Color7]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color7Faint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Color7Intense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [Foreground]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [ForegroundFaint]
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [ForegroundIntense]
       Bold=true
-      Color=217,142,50
+      Color=${t steelborePalette.moltenAmber}
 
       [General]
       Anchor=0.5,0.5
@@ -2020,86 +2048,86 @@ in
       # 256-color theme. See note above for the palette → index mapping.
       colors:
           # Per-nick color cycle through the palette.
-          nick: [172, 67, 84, 123, 203, 84, 67, 172, 123, 67]
+          nick: [${toString x256.moltenAmber}, ${toString x256.steelBlue}, ${toString x256.radiumGreen}, ${toString x256.liquidCool}, ${toString x256.redOxide}, ${toString x256.radiumGreen}, ${toString x256.steelBlue}, ${toString x256.moltenAmber}, ${toString x256.liquidCool}, ${toString x256.steelBlue}]
 
           clear:
               fg: default
               bg: default
 
           user_msg:
-              fg: 172            # Molten Amber
+              fg: ${toString x256.moltenAmber}            # Molten Amber
               bg: default
 
           err_msg:
-              fg: 203            # Red Oxide
+              fg: ${toString x256.redOxide}            # Red Oxide
               bg: default
               attrs: [bold]
 
           topic:
-              fg: 67             # Steel Blue
+              fg: ${toString x256.steelBlue}             # Steel Blue
               bg: default
               attrs: [bold]
 
           cursor:
-              fg: 17             # Void Navy on Molten Amber
-              bg: 172
+              fg: ${toString x256.voidNavy}             # Void Navy on Molten Amber
+              bg: ${toString x256.moltenAmber}
 
           join:
-              fg: 84             # Radium Green
+              fg: ${toString x256.radiumGreen}             # Radium Green
               bg: default
               attrs: [bold]
 
           part:
-              fg: 203            # Red Oxide
+              fg: ${toString x256.redOxide}            # Red Oxide
               bg: default
               attrs: [bold]
 
           nick_change:
-              fg: 84             # Radium Green
+              fg: ${toString x256.radiumGreen}             # Radium Green
               bg: default
               attrs: [bold]
 
           faded:
-              fg: 67             # Steel Blue
+              fg: ${toString x256.steelBlue}             # Steel Blue
               bg: default
 
           exit_dialogue:
-              fg: 172
-              bg: 17
+              fg: ${toString x256.moltenAmber}
+              bg: ${toString x256.voidNavy}
 
           highlight:
-              fg: 84             # Radium Green for mentions
+              fg: ${toString x256.radiumGreen}             # Radium Green for mentions
               bg: default
               attrs: [bold]
 
           completion:
-              fg: 123            # Liquid Coolant
+              fg: ${toString x256.liquidCool}            # Liquid Coolant
               bg: default
 
           timestamp:
-              fg: 67             # Steel Blue
+              fg: ${toString x256.steelBlue}             # Steel Blue
               bg: default
 
           tab_active:
-              fg: 172            # Molten Amber
+              fg: ${toString x256.moltenAmber}            # Molten Amber
               bg: default
               attrs: [bold]
 
           tab_normal:
-              fg: 67             # Steel Blue
+              fg: ${toString x256.steelBlue}             # Steel Blue
               bg: default
 
           tab_new_msg:
-              fg: 84             # Radium Green
+              fg: ${toString x256.radiumGreen}             # Radium Green
               bg: default
 
           tab_highlight:
-              fg: 203            # Red Oxide
+              fg: ${toString x256.redOxide}            # Red Oxide
               bg: default
               attrs: [bold]
 
           tab_joinpart:
-              fg: 67             # Steel Blue
+              fg: ${toString x256.steelBlue}             # Steel Blue
               bg: default
     '';
   };

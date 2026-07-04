@@ -28,8 +28,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Core module entry point with imports
 - [✓] **`boot.nix`**: systemd-boot configuration, EFI variables writable
 - [✓] **`boot.nix`**: XanMod kernel (`linuxPackages_xanmod_latest`)
-- [✓] **`boot.nix`**: initrd modules (`xhci_pci`, `nvme`, `usb_storage`, `sd_mod`, `rtsx_pci_sdmmc`)
-- [✓] **`boot.nix`**: Kernel modules (`kvm-intel`)
+- [✓] **`boot.nix`**: bootloader + kernel choice only — module lists moved to their owners (initrd modules: generated `hardware.nix`; `kvm-intel`: `hardware/intel.nix`) in Phase B of the elegance plan
 - [✓] **`nix.nix`**: Enable flakes and nix-command
 - [✓] **`nix.nix`**: Configure garbage collection (weekly, 30d retention)
 - [✓] **`nix.nix`**: Allow unfree packages
@@ -126,7 +125,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install companion packages (15: rlaunch, rofi, dmenu, polybar, picom, etc.)
 - [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → alacritty (default terminal)
 - [✓] Write theme files (`theme.ron`, `up`, `down`, `polybar.ini`, `template.liquid`, `picom.conf`)
-- [✓] Write `/etc/dunst/dunstrc` with Steelbore theme
+- [✓] Write `/etc/dunst/dunstrc` with Steelbore theme (moved to `modules/desktops/shared.nix` in Phase B — shared with Niri)
 
 ---
 
