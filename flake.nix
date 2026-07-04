@@ -87,6 +87,11 @@
       # Steelbore color palette — single canonical source in lib/colors.nix.
       steelborePalette = import ./lib/colors.nix;
 
+      # Primary (single) user of every machine — stated once (elegance plan
+      # 3.4) and threaded via specialArgs/extraSpecialArgs. The users/mj/
+      # directory name is a stable path, not a duplicate of this fact.
+      primaryUser = "mj";
+
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
       channels = {
@@ -144,6 +149,7 @@
           specialArgs = {
             inherit
               steelborePalette
+              primaryUser
               gitway
               construct
               rapg
@@ -182,6 +188,7 @@
               home-manager.extraSpecialArgs = {
                 inherit
                   steelborePalette
+                  primaryUser
                   gitway
                   construct
                   rapg
@@ -189,7 +196,7 @@
                   antigravity-nix
                   ;
               };
-              home-manager.users.mj = import ./users/mj/home.nix;
+              home-manager.users.${primaryUser} = import ./users/mj/home.nix;
             }
           ];
         };
@@ -206,6 +213,19 @@
 
         # Convenience alias: bare `.#bravais` → the stable ThinkPad build.
         bravais = mkBravais { host = hosts.thinkpad; };
+      };
+
+      # ── In-tree packages (elegance plan 3.2) ─────────────────────────────
+      # Same index the modules consume (pkgs/default.nix), exposed so each
+      # vendored/first-party package can be built and tested standalone:
+      #   nix build .#claude-desktop
+      # Instantiated with allowUnfree (claude-desktop and chrome-remote-
+      # desktop are unfree; legacyPackages carries no config).
+      packages.${system} = import ./pkgs {
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
       };
 
       # ── Developer tooling ────────────────────────────────────────────────
@@ -229,6 +249,21 @@
         bravais-thinkpad = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
         bravais-thinkpad-unstable =
           self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
+
+        # Niri config validation (elegance plan 5.5): the user config.kdl is a
+        # generated string Nix cannot type-check; run niri's own parser over
+        # the rendered file so a KDL/action-name error fails `nix flake check`
+        # instead of surfacing at session start.
+        niri-config =
+          let
+            checkPkgs = nixpkgs.legacyPackages.${system};
+            rendered =
+              self.nixosConfigurations.bravais-thinkpad.config.home-manager.users.${primaryUser}.xdg.configFile."niri/config.kdl".source;
+          in
+          checkPkgs.runCommand "niri-config-validate" { } ''
+            ${checkPkgs.niri}/bin/niri validate -c ${rendered}
+            touch $out
+          '';
       };
     };
 }

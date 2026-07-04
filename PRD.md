@@ -84,7 +84,8 @@ bravais/
 +-- users/                         # User profiles
 |   +-- mj/                        # User "mj"
 |       +-- default.nix            # System-level user config
-|       +-- home.nix               # Home Manager configuration
+|       +-- home.nix               # HM core: identity + imports (Phase D split)
+|       +-- {git,shell,terminals,niri,desktop-theme,apps}.nix  # one-concern HM modules
 +-- pkgs/                          # In-tree packages (audio-led, claude-desktop, CRD, ollama)
 ```
 

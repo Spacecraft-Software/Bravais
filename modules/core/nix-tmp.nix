@@ -19,12 +19,13 @@
 # and it creates per-build subdirs as the nixbld* sandbox users itself.
 # This dir is *not* a user-level TMPDIR.
 {
+  primaryUser,
   pkgs,
   ...
 }:
 
 let
-  imgPath = "/run/media/mj/Expansion/nix-tmp.img";
+  imgPath = "/run/media/${primaryUser}/Expansion/nix-tmp.img";
   mountAt = "/mnt/nix-tmp";
   # 80 GiB chosen because 40 GiB couldn't fit deno-2.7.13 + LTO +
   # codegen-units=1 + parallel cargo for sibling crates
@@ -41,7 +42,7 @@ in
   systemd.paths.nix-tmp-loop = {
     description = "Watch for Expansion drive auto-mount, then bring up nix-tmp loop";
     pathConfig = {
-      PathExists = "/run/media/mj/Expansion";
+      PathExists = "/run/media/${primaryUser}/Expansion";
       Unit = "nix-tmp-loop.service";
     };
     wantedBy = [ "multi-user.target" ];

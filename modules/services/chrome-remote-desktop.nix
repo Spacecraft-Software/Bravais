@@ -18,12 +18,13 @@
   config,
   lib,
   pkgs,
+  primaryUser,
   ...
 }:
 
 let
   cfg = config.steelbore.services.chromeRemoteDesktop;
-  crd = pkgs.callPackage ../../pkgs/chrome-remote-desktop/package.nix { };
+  crd = (import ../../pkgs { inherit pkgs; }).chrome-remote-desktop;
   crdDir = "/opt/google/chrome-remote-desktop";
 in
 {
@@ -31,7 +32,7 @@ in
     enable = lib.mkEnableOption "Google Chrome Remote Desktop headless host (X11 virtual session)";
     user = lib.mkOption {
       type = lib.types.str;
-      default = "mj";
+      default = primaryUser;
       description = "User the CRD host runs as (added to the chrome-remote-desktop group).";
     };
   };

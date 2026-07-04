@@ -14,7 +14,7 @@
 }:
 
 let
-  audioLed = pkgs.callPackage ../../pkgs/steelbore-audio-led/package.nix { };
+  audioLed = (import ../../pkgs { inherit pkgs; }).steelbore-audio-led;
 in
 {
   options.steelbore.hardware.audioLed = {

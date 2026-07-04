@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — LeftWM Tiling Window Manager (X11)
 {
+  primaryUser,
   config,
   lib,
   pkgs,
@@ -221,7 +222,8 @@
       ];
 
       # LeftWM configuration
-      home-manager.users.mj.xdg.configFile."leftwm/config.ron".text = ''
+      home-manager.users.${primaryUser}.xdg.configFile = {
+        "leftwm/config.ron".text = ''
         // Steelbore LeftWM Configuration
         // The Spacecraft Software Standard — X11 Tiling
 
@@ -324,11 +326,12 @@
             ],
             state_path: None,
         )
-      '';
+        '';
 
-      # LeftWM theme — single symlink to a nix-store directory containing
-      # all theme files. See the steelboreTheme let-binding above.
-      home-manager.users.mj.xdg.configFile."leftwm/themes/current".source = steelboreTheme;
+        # LeftWM theme — single symlink to a nix-store directory containing
+        # all theme files. See the steelboreTheme let-binding above.
+        "leftwm/themes/current".source = steelboreTheme;
+      };
 
     }
   );
