@@ -6,7 +6,8 @@
 # `autoPatchelfHook` to fix the ELF interpreter/rpaths against nixpkgs libraries,
 # then wrap the launcher for Wayland + MCP.
 #
-# Update on new releases: bump `version` and `src.hash`. Get the current version,
+# Update on new releases: run `nu pkgs/update-vendored.nu claude-desktop` (plan
+# 5.1), or by hand: bump `version` and `src.hash`. Get the current version,
 # pool path and SHA256 from the apt index:
 #   https://downloads.claude.ai/claude-desktop/apt/stable/dists/stable/main/binary-amd64/Packages
 # The Linux app does NOT self-update (updates via apt only), so a pinned Nix
@@ -68,11 +69,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "claude-desktop";
-  version = "1.17377.2";
+  version = "1.18286.0";
 
   src = fetchurl {
     url = "https://downloads.claude.ai/claude-desktop/apt/stable/pool/main/c/claude-desktop/claude-desktop_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-7AjUGqeYjS06P19P/fONIHtBLmYmOfQNeiZbivriEqs=";
+    hash = "sha256-jzFK0agKq1JxGo6qvAaq5I+zQfCt6koNcmTbXKudBTY=";
   };
 
   nativeBuildInputs = [
