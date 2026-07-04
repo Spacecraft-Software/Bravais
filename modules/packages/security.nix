@@ -30,8 +30,6 @@
 
         # Password Managers
         rbw # Rust — Bitwarden CLI (unofficial; kept for scripting)
-        # bitwarden-cli            # installed via Flatpak (com.bitwarden.desktop)
-        # bitwarden-desktop        # installed via Flatpak (com.bitwarden.desktop)
         authenticator # Rust — 2FA/OTP
 
         # SSH

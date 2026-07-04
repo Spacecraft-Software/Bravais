@@ -150,7 +150,9 @@ A higher-numbered priority **may never compromise** a lower-numbered one.
 
 ### SPDX Headers (mandatory on software source code files only)
 ```
+<!-- REUSE-IgnoreStart -->
 // SPDX-License-Identifier: GPL-3.0-or-later
+<!-- REUSE-IgnoreEnd -->
 ```
 **Software source code files** (`.rs`, `.ts`, `.js`, `.py`, `.sh`, `.ps1`, `.go`, etc.)
 and project manifests (`Cargo.toml`, `package.json`, `flake.nix`, etc.) must include
@@ -467,7 +469,9 @@ https://<ProjectName>.SpacecraftSoftware.org/
 | `--help`          | Project URL and maintainer name (at footer)                             |
 | README            | "Maintainer" section: name, `Mohamed.Hammad@SpacecraftSoftware.org`, project URL |
 | About / Info (GUI/TUI) | Maintainer name, project URL, copyright year                       |
+<!-- REUSE-IgnoreStart -->
 | SPDX header       | `// SPDX-License-Identifier: GPL-3.0-or-later` (existing §4 rule)      |
+<!-- REUSE-IgnoreEnd -->
 
 **Specific rules:**
 - The contact email is always `Mohamed.Hammad@SpacecraftSoftware.org` — never a personal

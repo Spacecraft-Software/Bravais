@@ -14,7 +14,7 @@ Bravais is a flake-based NixOS configuration implementing the Spacecraft Softwar
 **Core Principles:**
 
 - Memory-safe tooling preferred (Rust-first ecosystem)
-- Opt-in modularity via `lib.mkEnableOption` in the `spacecraft.*` namespace
+- Opt-in modularity via `lib.mkEnableOption` in the `steelbore.*` namespace
 - Steelbore Color Palette applied universally to all visual surfaces
 - Self-sufficient flake configuration (no external dependencies beyond nixpkgs, home-manager, nix-flatpak, and gitway)
 - Dual-channel support (stable nixos-26.05 / unstable rolling) with four x86-64 microarchitecture profiles (v1-v4)
@@ -39,7 +39,7 @@ bravais/
 |   +-- bravais/                   # Primary host
 |       +-- default.nix            # Host traits (boot, locale, user, toggles)
 |       +-- hardware.nix           # Hardware configuration (generated)
-+-- modules/                       # NixOS modules (spacecraft.* namespace)
++-- modules/                       # NixOS modules (steelbore.* namespace)
 |   +-- core/                      # Always-enabled necessities
 |   |   +-- default.nix            # Core module entry
 |   |   +-- nix.nix                # Nix settings, flakes, overlays
@@ -63,7 +63,7 @@ bravais/
 |   |   +-- cosmic.nix             # COSMIC DE on Wayland
 |   |   +-- plasma.nix             # KDE Plasma 6 on Wayland
 |   |   +-- niri.nix               # Niri + Ironbar on Wayland
-|   |   +-- leftwm.nix             # LeftWM + Polybar on X11
+|   |   +-- leftwm.nix             # LeftWM + eww bar on X11
 |   |   +-- shared.nix             # Shared bare-WM config (dunst; gated on niri || leftwm)
 |   +-- login/                     # Display/login managers
 |   |   +-- default.nix            # greetd + tuigreet + shell sessions
@@ -94,16 +94,16 @@ reference copy was removed as dead code.)
 
 ### 2.2 Module Design Pattern
 
-All modules use the `spacecraft.*` namespace with `lib.mkEnableOption`:
+All modules use the `steelbore.*` namespace with `lib.mkEnableOption`:
 
 ```nix
 { config, lib, pkgs, ... }:
 {
-  options.spacecraft.desktops.niri = {
+  options.steelbore.desktops.niri = {
     enable = lib.mkEnableOption "Niri scrolling tiling compositor (Wayland)";
   };
 
-  config = lib.mkIf config.spacecraft.desktops.niri.enable {
+  config = lib.mkIf config.steelbore.desktops.niri.enable {
     # Module implementation
   };
 }
@@ -118,7 +118,7 @@ The canonical Steelbore palette lives in `lib/colors.nix` (imported by `flake.ni
 The host toggles modules declaratively:
 
 ```nix
-spacecraft = {
+steelbore = {
   desktops.gnome.enable = true;
   desktops.cosmic.enable = true;
   desktops.plasma.enable = true;
@@ -189,7 +189,7 @@ own `hardware.nix` and pins `networking.hostName` + `steelbore.hardware.*` +
 Defined in `flake.nix` and passed as `specialArgs` to all modules:
 
 ```nix
-spacecraftPalette = {
+steelborePalette = {
   voidNavy    = "#000027";
   moltenAmber = "#D98E32";
   steelBlue   = "#4B7EB0";
@@ -207,10 +207,10 @@ mkBravais = { host, channel ? "stable" }: ...
 
 - `host` is a machine path from the `hosts` map in `flake.nix` (e.g. `./hosts/thinkpad`)
 - Selects nixpkgs and home-manager inputs based on `channel`
-- Passes `specialArgs = { inherit spacecraftPalette gitway; }`
+- Passes `specialArgs = { inherit steelborePalette gitway; }`
 - Loads modules in order: external (home-manager, nix-flatpak), then `host`, core, theme, hardware, platform, desktops, login, services, compat, packages
 - The march level is **not** a parameter — it is pinned inside the host config via `steelbore.platform.x86_64.marchLevel`
-- Configures Home Manager: `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, passes `spacecraftPalette` via `extraSpecialArgs`
+- Configures Home Manager: `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, passes `steelborePalette` via `extraSpecialArgs`
 
 ### 3.4 Overlays
 
@@ -353,7 +353,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 ### 6.1 Fingerprint Reader (`modules/hardware/fingerprint.nix`)
 
-**Option:** `spacecraft.hardware.fingerprint.enable`
+**Option:** `steelbore.hardware.fingerprint.enable`
 
 When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
 
@@ -406,7 +406,7 @@ Intel-specific, so it is decoupled from the vendor module.
 
 ### 6.3 Bluetooth (`modules/hardware/bluetooth.nix`)
 
-**Option:** `spacecraft.hardware.bluetooth.enable`
+**Option:** `steelbore.hardware.bluetooth.enable`
 
 When enabled: `hardware.bluetooth.enable = true` (BlueZ / `bluetoothd`), `powerOnBoot = true`, and `settings.General.Experimental = true` (battery-level reporting). Ships two memory-safe (Rust), GPL-3.0 BlueZ clients — **bluetui** (TUI; Niri `Mod+B`) and **overskride** (GTK GUI + OBEX; Niri `Mod+Shift+B`). Niri has no Bluetooth applet; the existing `XF86Bluetooth` key only toggles the radio (rfkill), so these clients are what actually pair/connect devices. Audio routing to a connected sink is done via the PipeWire mixers (`wpctl` / `wiremix` / `pavucontrol`).
 
@@ -527,7 +527,7 @@ brush
 
 ### 9.1 GNOME (Wayland)
 
-**Option:** `spacecraft.desktops.gnome.enable`
+**Option:** `steelbore.desktops.gnome.enable`
 
 **Services:**
 - `services.xserver.enable = true`
@@ -546,7 +546,7 @@ brush
 
 ### 9.2 COSMIC (Wayland)
 
-**Option:** `spacecraft.desktops.cosmic.enable`
+**Option:** `steelbore.desktops.cosmic.enable`
 
 **Services:**
 - `services.desktopManager.cosmic.enable = true`
@@ -556,7 +556,7 @@ Fully Rust-based desktop from System76. No additional packages needed.
 
 ### 9.3 KDE Plasma 6 (Wayland)
 
-**Option:** `spacecraft.desktops.plasma.enable`
+**Option:** `steelbore.desktops.plasma.enable`
 
 **Services:**
 - `services.desktopManager.plasma6.enable = true`
@@ -572,7 +572,7 @@ plasma-browser-integration, kdeconnect-kde, plasma-systemmonitor, filelight, kca
 
 ### 9.4 Niri (Wayland -- Scrolling Tiling)
 
-**Option:** `spacecraft.desktops.niri.enable`
+**Option:** `steelbore.desktops.niri.enable`
 
 **Service:** `programs.niri.enable = true`
 
@@ -620,12 +620,12 @@ Key bindings (Mod = Super):
 
 ### 9.5 LeftWM (X11 -- Tiling WM)
 
-**Option:** `spacecraft.desktops.leftwm.enable`
+**Option:** `steelbore.desktops.leftwm.enable`
 
 **Services:** `services.xserver.enable = true`, `services.xserver.windowManager.leftwm.enable = true`
 
 **Companion packages (15):**
-leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, polybar, picom, feh, dunst, xclip, xsel, maim, xdotool, numlockx
+leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, feh, dunst, xclip, xsel, maim, xdotool, numlockx
 
 **LeftWM Configuration** (`/etc/leftwm/config.ron`):
 - Modkey: Mod4 (Super), mousekey: Mod4
@@ -650,21 +650,13 @@ Key bindings:
 - Border width: 2, margin: 8, workspace margin: 8
 - Default border: Steel Blue, floating border: Liquid Coolant, focused border: Molten Amber
 
-**Startup Script** (`up`): feh (Void Navy background), picom, dunst, polybar spacecraft, numlockx on
+**Theme scripts** (`up`/`down`): no-ops (`exit 0`) — the real session bring-up
+lives in `modules/login/default.nix` (`leftwm-session-inner`: picom, dunst,
+eww bar, numlockx, SSH-key load, theme load + Void Navy root).
 
-**Shutdown Script** (`down`): kills polybar, picom, dunst
-
-**Polybar Configuration** (`polybar.ini`):
-- Bar height: 32, fixed-center, Void Navy background
-- Fonts: Hack Nerd Font 12, JetBrainsMono Nerd Font 12
-- Modules: leftwm-tags (left), date `%H:%M:%S :: %Y-%m-%d` (center), cpu/memory/network (right)
-- Colors: success (Radium Green), info (Liquid Coolant), warning (Red Oxide)
-
-**Polybar Tag Template** (`template.liquid`):
-- Active tag: Molten Amber with underline
-- Visible tag: Liquid Coolant
-- Busy tag: Steel Blue
-- Empty tag: Steel Blue at 50% opacity
+**Status bar:** the shared eww bar (same widget as Niri; see `users/mj/niri.nix`).
+Polybar was removed in Phase E of the elegance plan — it was configured but
+never launched by any session script.
 
 **Picom** (`picom.conf`): GLX backend, vsync, inactive opacity 0.95, fading (delta 5), no shadows, no rounded corners.
 
@@ -1091,7 +1083,7 @@ Config includes: `show_banner: false`, `ls_colors: true`, `clickable_links: true
 
 ### 13.9 Alacritty (Home Manager)
 
-Managed via `programs.alacritty.enable = true` with structured Nix settings. Shell: Nushell. Full Steelbore palette via `spacecraftPalette` variable references.
+Managed via `programs.alacritty.enable = true` with structured Nix settings. Shell: Nushell. Full Steelbore palette via `steelborePalette` variable references.
 
 ### 13.10 dconf Settings
 
@@ -1124,7 +1116,7 @@ Managed via `programs.alacritty.enable = true` with structured Nix settings. She
 | COSMIC  | Wayland  | Panel    | cosmic-launcher | cosmic-notifications |
 | Plasma  | Wayland  | Panel    | KRunner         | KDE Notifications    |
 | Niri    | Wayland  | Ironbar  | onagre/anyrun   | wired                |
-| LeftWM  | X11      | Polybar  | rlaunch/rofi    | dunst                |
+| LeftWM  | X11      | eww      | rlaunch/rofi    | dunst                |
 
 ---
 
@@ -1161,7 +1153,7 @@ sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable
 | COSMIC  | `cosmic-session --version` | Session starts with panel     |
 | Plasma  | `plasmashell --version`    | Session starts on Wayland     |
 | Niri    | `niri --version`           | WM starts with Ironbar        |
-| LeftWM  | `leftwm --version`         | WM starts with Polybar        |
+| LeftWM  | `leftwm --version`         | WM starts with eww bar        |
 
 ### 16.3 Spacecraft Software Standard Compliance
 

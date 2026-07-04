@@ -43,7 +43,12 @@
       }
     ];
 
-    # Declarative Flatpak packages
+    # Declarative Flatpak packages.
+    #
+    # DELIVERY POLICY (elegance plan 4.1): an app ships from nixpkgs UNLESS it
+    # is a huge source build (Chromium-family browsers, VLC, LibreOffice) or
+    # sandbox-hostile/self-updating GUI (VS Code, RustRover) — then Flatpak.
+    # Never both: nixpkgs Emacs/Vim/Yakuake replaced the Flatpak copies here.
     services.flatpak.packages = [
       # ── Browsers ───────────────────────────────────────────────────────────
       # { appId = "app.zen_browser.zen";               origin = "flathub"; }
@@ -60,6 +65,11 @@
         appId = "com.opera.Opera";
         origin = "flathub";
       }
+      {
+        appId = "com.brave.Browser";
+        origin = "flathub";
+      }
+      # { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
 
       # ── Communication ──────────────────────────────────────────────────────
       {
@@ -105,14 +115,8 @@
         appId = "io.github.shiftey.Desktop";
         origin = "flathub";
       } # GitHub Desktop
-      {
-        appId = "org.gnu.emacs";
-        origin = "flathub";
-      }
-      {
-        appId = "org.vim.Vim";
-        origin = "flathub";
-      }
+      # org.gnu.emacs / org.vim.Vim removed — nixpkgs emacs-pgtk and
+      # vim/neovim are the single delivery (policy above).
 
       # ── System & Utilities ─────────────────────────────────────────────────
       {
@@ -147,38 +151,6 @@
         appId = "org.gnome.baobab";
         origin = "flathub";
       } # Disk Usage Analyzer
-
-      # ── Gaming ─────────────────────────────────────────────────────────────
-      # DISABLED — commented out to reclaim disk space; re-enable to restore
-      # { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
-      # { appId = "com.usebottles.bottles";             origin = "flathub"; }
-      # { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
-      # { appId = "info.beyondallreason.bar";           origin = "flathub"; }
-      # { appId = "net.openra.OpenRA";                  origin = "flathub"; }
-      # { appId = "net.wz2100.wz2100";                  origin = "flathub"; }  # Warzone 2100
-      # { appId = "org.libretro.RetroArch";             origin = "flathub"; }
-      # { appId = "org.openttd.OpenTTD";                origin = "flathub"; }
-
-      # ── Retro / Classic Games ──────────────────────────────────────────────
-      # DISABLED — commented out to reclaim disk space; re-enable to restore
-      # { appId = "com.dosbox.DOSBox";                  origin = "flathub"; }
-      # { appId = "com.dosbox_x.DOSBox-X";              origin = "flathub"; }
-      # { appId = "com.play0ad.zeroad";                 origin = "flathub"; }  # 0 A.D.
-      # { appId = "com.remnantsoftheprecursors.ROTP";   origin = "flathub"; }
-      # { appId = "eu.jumplink.Learn6502";              origin = "flathub"; }
-      # { appId = "io.github.dosbox-staging";           origin = "flathub"; }
-      # { appId = "io.github.jotd666.gods-deluxe";      origin = "flathub"; }
-      # { appId = "io.github.dman95.SASM";              origin = "flathub"; }  # Assembly IDE
-      # { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
-      # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
-      # { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
-
-      # ── Browsers ───────────────────────────────────────────────────────────
-      {
-        appId = "com.brave.Browser";
-        origin = "flathub";
-      }
-      # { appId = "io.gitlab.librewolf-community";      origin = "flathub"; }
 
       # ── Multimedia ─────────────────────────────────────────────────────────
       {
@@ -222,10 +194,8 @@
         appId = "io.github.Qalculate";
         origin = "flathub";
       }
-      {
-        appId = "org.kde.yakuake";
-        origin = "flathub";
-      }
+      # org.kde.yakuake removed — kdePackages.yakuake (nixpkgs) is the single
+      # delivery; it inherits the generated Konsole Steelbore profile.
 
       # ── AI ─────────────────────────────────────────────────────────────────
       # Alpaca (Ollama GUI client) — DISABLED with Ollama; re-enable by uncommenting.
@@ -233,6 +203,32 @@
       #   appId = "com.jeffser.Alpaca";
       #   origin = "flathub";
       # }
+
+      # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
+      # ── Gaming ─────────────────────────────────────────────────────────────
+      # DISABLED — commented out to reclaim disk space; re-enable to restore
+      # { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
+      # { appId = "com.usebottles.bottles";             origin = "flathub"; }
+      # { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
+      # { appId = "info.beyondallreason.bar";           origin = "flathub"; }
+      # { appId = "net.openra.OpenRA";                  origin = "flathub"; }
+      # { appId = "net.wz2100.wz2100";                  origin = "flathub"; }  # Warzone 2100
+      # { appId = "org.libretro.RetroArch";             origin = "flathub"; }
+      # { appId = "org.openttd.OpenTTD";                origin = "flathub"; }
+
+      # ── Retro / Classic Games ──────────────────────────────────────────────
+      # DISABLED — commented out to reclaim disk space; re-enable to restore
+      # { appId = "com.dosbox.DOSBox";                  origin = "flathub"; }
+      # { appId = "com.dosbox_x.DOSBox-X";              origin = "flathub"; }
+      # { appId = "com.play0ad.zeroad";                 origin = "flathub"; }  # 0 A.D.
+      # { appId = "com.remnantsoftheprecursors.ROTP";   origin = "flathub"; }
+      # { appId = "eu.jumplink.Learn6502";              origin = "flathub"; }
+      # { appId = "io.github.dosbox-staging";           origin = "flathub"; }
+      # { appId = "io.github.jotd666.gods-deluxe";      origin = "flathub"; }
+      # { appId = "io.github.dman95.SASM";              origin = "flathub"; }  # Assembly IDE
+      # { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
+      # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
+      # { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
     ];
   };
 }

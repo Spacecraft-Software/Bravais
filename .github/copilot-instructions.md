@@ -58,7 +58,9 @@ March level is pinned per-machine in `hosts/<machine>/default.nix`
 
 ### General
 
+<!-- REUSE-IgnoreStart -->
 - **License header on every source file:** `# SPDX-License-Identifier: GPL-3.0-or-later`
+<!-- REUSE-IgnoreEnd -->
 - **Rust-first:** always prefer Rust packages over C/C++ equivalents. Annotate with
   `# Rust —` or `# Go —` comments in package lists.
 - **Module namespace:** all custom options live under `steelbore.*`.

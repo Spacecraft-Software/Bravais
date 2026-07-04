@@ -42,10 +42,13 @@
       gnomeExtensions.window-title-is-back
       gnomeExtensions.yakuake
       gnomeExtensions.forge
-      gnomeExtensions.tiling-shell
-      gnomeExtensions.smart-tiling
+      # Tiling: forge is THE tiling extension — the three below overlap and
+      # conflict when enabled together (elegance plan 4.3). Re-enable one by
+      # uncommenting, but disable forge first.
+      # gnomeExtensions.tiling-shell   # DISABLED — overlaps forge
+      # gnomeExtensions.smart-tiling   # DISABLED — overlaps forge
       # gnomeExtensions.ollama-indicator   # DISABLED — re-enable by uncommenting (Ollama status indicator)
-      gnomeExtensions.simple-tiling
+      # gnomeExtensions.simple-tiling   # DISABLED — overlaps forge
       gnomeExtensions.warp-toggle
       gnomeExtensions.resource-monitor
     ];

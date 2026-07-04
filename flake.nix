@@ -264,6 +264,18 @@
             ${checkPkgs.niri}/bin/niri validate -c ${rendered}
             touch $out
           '';
+
+        # REUSE / SPDX compliance (elegance plan 4.6, Standard §4.3). The
+        # flake source copy contains exactly the tracked files, so linting it
+        # matches linting the checkout.
+        reuse-lint =
+          let
+            checkPkgs = nixpkgs.legacyPackages.${system};
+          in
+          checkPkgs.runCommand "reuse-lint" { } ''
+            ${checkPkgs.reuse}/bin/reuse --root ${self} lint
+            touch $out
+          '';
       };
     };
 }

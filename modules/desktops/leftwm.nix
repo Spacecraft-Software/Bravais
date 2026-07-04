@@ -51,101 +51,6 @@
           '';
         }
         {
-          name = "polybar.ini";
-          path = pkgs.writeText "leftwm-steelbore-polybar.ini" ''
-            ; Steelbore Polybar Configuration
-
-            [colors]
-            background = ${steelborePalette.voidNavy}
-            foreground = ${steelborePalette.moltenAmber}
-            accent = ${steelborePalette.steelBlue}
-            success = ${steelborePalette.radiumGreen}
-            warning = ${steelborePalette.redOxide}
-            info = ${steelborePalette.liquidCool}
-
-            [bar/steelbore]
-            width = 100%
-            height = 32
-            fixed-center = true
-
-            background = ''${colors.background}
-            foreground = ''${colors.foreground}
-
-            line-size = 2
-            line-color = ''${colors.accent}
-
-            border-bottom-size = 2
-            border-bottom-color = ''${colors.accent}
-
-            padding-left = 2
-            padding-right = 2
-            module-margin = 1
-
-            font-0 = "Hack Nerd Font:size=12;2"
-            font-1 = "JetBrainsMono Nerd Font:size=12;2"
-
-            modules-left = leftwm-tags
-            modules-center = date
-            modules-right = cpu memory network
-
-            cursor-click = pointer
-            cursor-scroll = ns-resize
-
-            [module/leftwm-tags]
-            type = custom/script
-            exec = leftwm-state -w "$LEFTWM_STATE_SOCKET" -t "$LEFTWM_THEME_DIR/template.liquid"
-            tail = true
-
-            [module/date]
-            type = internal/date
-            interval = 1
-            date = "%Y-%m-%d"
-            time = "%H:%M:%S"
-            label = "%time% :: %date%"
-            label-foreground = ''${colors.foreground}
-
-            [module/cpu]
-            type = internal/cpu
-            interval = 1
-            label = "CPU: %percentage%%"
-            label-foreground = ''${colors.success}
-
-            [module/memory]
-            type = internal/memory
-            interval = 1
-            label = "RAM: %percentage_used%%"
-            label-foreground = ''${colors.success}
-
-            [module/network]
-            type = internal/network
-            interface-type = wireless
-            interval = 1
-            label-connected = "%essid%"
-            label-connected-foreground = ''${colors.info}
-            label-disconnected = "Offline"
-            label-disconnected-foreground = ''${colors.warning}
-          '';
-        }
-        {
-          name = "template.liquid";
-          path = pkgs.writeText "leftwm-steelbore-template.liquid" ''
-            {% for tag in workspace.tags %}
-            %{A1:leftwm-command "SendWorkspaceToTag {{ workspace.index }} {{ tag.index }}":}
-            {% if tag.mine %}
-            %{F${steelborePalette.moltenAmber}}%{+u}
-            {% elsif tag.visible %}
-            %{F${steelborePalette.liquidCool}}
-            {% elsif tag.busy %}
-            %{F${steelborePalette.steelBlue}}
-            {% else %}
-            %{F${steelborePalette.steelBlue}50}
-            {% endif %}
-              {{ tag.name }}
-            %{-u}%{F-}%{A}
-            {% endfor %}
-          '';
-        }
-        {
           name = "picom.conf";
           path = pkgs.writeText "leftwm-steelbore-picom.conf" ''
             # Steelbore Picom Configuration
@@ -205,7 +110,6 @@
         eww
 
         # Status bar — Polybar kept for transition; remove once Eww is stable
-        polybar
 
         # Compositor
         picom # Compositor for transparency/effects

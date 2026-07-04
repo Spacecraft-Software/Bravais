@@ -140,7 +140,9 @@ release), **MAJOR** (fix before next minor release).
 | 6 | `describe` sub-command present | `<tool> describe` → exit 0; output carries all required fields | BLOCKER |
 | 7 | Structured error on stderr in `--json` mode on non-zero exit | Induce error, capture stderr, parse as JSON, validate schema | BLOCKER |
 | 8 | stdout contains only data payload in machine mode | Capture stdout during error path; assert no content on error, no ANSI escapes, no log lines | BLOCKER |
+<!-- REUSE-IgnoreStart -->
 | 9 | GPL-3.0-or-later + SPDX header in every source file | Lint: `rg -L 'SPDX-License-Identifier: GPL-3.0-or-later' src/` → must be empty | BLOCKER |
+<!-- REUSE-IgnoreEnd -->
 | 10 | `NO_COLOR` suppresses ANSI | Set `NO_COLOR=1`, capture stdout+stderr, assert absence of `\x1B[` | CRITICAL |
 | 11 | `FORCE_COLOR` enables ANSI (human mode) | Set `FORCE_COLOR=1` with piped stdout → human mode with ANSI | CRITICAL |
 | 12 | `--dry-run` on every write / delete / destructive command | Iterate sub-commands via schema; assert `supports_dry_run == true` for write commands | CRITICAL |
