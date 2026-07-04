@@ -203,47 +203,9 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # GHOSTTY — Zig-based GPU-accelerated terminal (memory-safe)
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."ghostty/config".text = ''
-      # Steelbore Ghostty Configuration
-
-      font-family = JetBrainsMono Nerd Font
-      font-size = 12
-
-      background-opacity = 0.95
-      window-padding-x = 10
-      window-padding-y = 10
-
-      # Steelbore color palette
-      background = ${steelborePalette.voidNavy}
-      foreground = ${steelborePalette.moltenAmber}
-      cursor-color = ${steelborePalette.moltenAmber}
-      cursor-text = ${steelborePalette.voidNavy}
-      selection-background = ${steelborePalette.steelBlue}
-      selection-foreground = ${steelborePalette.voidNavy}
-
-      # Normal colors (0-7)
-      palette = 0=${steelborePalette.voidNavy}
-      palette = 1=${steelborePalette.redOxide}
-      palette = 2=${steelborePalette.radiumGreen}
-      palette = 3=${steelborePalette.moltenAmber}
-      palette = 4=${steelborePalette.steelBlue}
-      palette = 5=${steelborePalette.steelBlue}
-      palette = 6=${steelborePalette.liquidCool}
-      palette = 7=${steelborePalette.moltenAmber}
-
-      # Bright colors (8-15)
-      palette = 8=${steelborePalette.steelBlue}
-      palette = 9=${steelborePalette.redOxide}
-      palette = 10=${steelborePalette.radiumGreen}
-      palette = 11=${steelborePalette.moltenAmber}
-      palette = 12=${steelborePalette.liquidCool}
-      palette = 13=${steelborePalette.liquidCool}
-      palette = 14=${steelborePalette.liquidCool}
-      palette = 15=${steelborePalette.moltenAmber}
-
-      # Shell — launches Nushell
-      command = ${pkgs.nushell}/bin/nu
-    '';
+    environment.etc."ghostty/config".text = tt.ghostty {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # COSMIC-TERM — COSMIC desktop terminal (Rust-based)
@@ -587,64 +549,15 @@ in
     # XTERM — Classic X11 terminal
     # System-level Xresources loaded by xrdb on X session start
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."X11/Xresources".text = ''
-      ! Steelbore XTerm Configuration
-
-      XTerm*termName:              xterm-256color
-      XTerm*faceName:              JetBrainsMono Nerd Font
-      XTerm*faceSize:              12
-      XTerm*loginShell:            true
-      XTerm*scrollBar:             false
-      XTerm*saveLines:             10000
-      XTerm*bellIsUrgent:          true
-      XTerm*internalBorder:        10
-
-      XTerm*background:            ${steelborePalette.voidNavy}
-      XTerm*foreground:            ${steelborePalette.moltenAmber}
-      XTerm*cursorColor:           ${steelborePalette.moltenAmber}
-      XTerm*pointerColorBackground:${steelborePalette.voidNavy}
-      XTerm*pointerColorForeground:${steelborePalette.moltenAmber}
-      XTerm*highlightColor:        ${steelborePalette.steelBlue}
-
-      XTerm*color0:                ${steelborePalette.voidNavy}
-      XTerm*color1:                ${steelborePalette.redOxide}
-      XTerm*color2:                ${steelborePalette.radiumGreen}
-      XTerm*color3:                ${steelborePalette.moltenAmber}
-      XTerm*color4:                ${steelborePalette.steelBlue}
-      XTerm*color5:                ${steelborePalette.steelBlue}
-      XTerm*color6:                ${steelborePalette.liquidCool}
-      XTerm*color7:                ${steelborePalette.moltenAmber}
-      XTerm*color8:                ${steelborePalette.steelBlue}
-      XTerm*color9:                ${steelborePalette.redOxide}
-      XTerm*color10:               ${steelborePalette.radiumGreen}
-      XTerm*color11:               ${steelborePalette.moltenAmber}
-      XTerm*color12:               ${steelborePalette.liquidCool}
-      XTerm*color13:               ${steelborePalette.liquidCool}
-      XTerm*color14:               ${steelborePalette.liquidCool}
-      XTerm*color15:               ${steelborePalette.moltenAmber}
-    '';
+    environment.etc."X11/Xresources".text = tt.xresources;
 
     # ═══════════════════════════════════════════════════════════════════════════
     # XFCE4-TERMINAL — XFCE4 terminal
     # System-level fallback config
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."xdg/xfce4/terminal/terminalrc".text = ''
-      [Configuration]
-      FontName=JetBrainsMono Nerd Font 12
-      MiscDefaultGeometry=160x48
-      RunCustomCommand=TRUE
-      CustomCommand=${pkgs.nushell}/bin/nu
-      BackgroundMode=TERMINAL_BACKGROUND_TRANSPARENT
-      BackgroundDarkness=0.95
-      ColorBackground=${steelborePalette.voidNavy}
-      ColorForeground=${steelborePalette.moltenAmber}
-      ColorCursor=${steelborePalette.moltenAmber}
-      ColorBold=FALSE
-      ColorPalette=${steelborePalette.voidNavy};${steelborePalette.redOxide};${steelborePalette.radiumGreen};${steelborePalette.moltenAmber};${steelborePalette.steelBlue};${steelborePalette.steelBlue};${steelborePalette.liquidCool};${steelborePalette.moltenAmber};${steelborePalette.steelBlue};${steelborePalette.redOxide};${steelborePalette.radiumGreen};${steelborePalette.moltenAmber};${steelborePalette.liquidCool};${steelborePalette.liquidCool};${steelborePalette.liquidCool};${steelborePalette.moltenAmber}
-      MiscMenubarDefault=FALSE
-      ScrollingBar=TERMINAL_SCROLLBAR_NONE
-      ScrollingLines=10000
-    '';
+    environment.etc."xdg/xfce4/terminal/terminalrc".text = tt.xfce {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # GNOME CONSOLE (kgx) — GNOME 4x minimal terminal

@@ -108,4 +108,120 @@ in
       [scrollback]
       lines=${toString theme.scrollback}
     '';
+
+  # ── XTerm (Xresources; full hex) ─────────────────────────────────────────
+  xresources =
+    let
+      c = i: at theme.ansi.normal i;
+      cb = i: at theme.ansi.bright i;
+    in
+    ''
+      ! Steelbore XTerm Configuration
+
+      XTerm*termName:              xterm-256color
+      XTerm*faceName:              ${theme.font}
+      XTerm*faceSize:              12
+      XTerm*loginShell:            true
+      XTerm*scrollBar:             false
+      XTerm*saveLines:             ${toString theme.scrollback}
+      XTerm*bellIsUrgent:          true
+      XTerm*internalBorder:        10
+
+      XTerm*background:            ${theme.background}
+      XTerm*foreground:            ${theme.foreground}
+      XTerm*cursorColor:           ${theme.cursor.cursor}
+      XTerm*pointerColorBackground:${theme.background}
+      XTerm*pointerColorForeground:${theme.foreground}
+      XTerm*highlightColor:        ${theme.selection.background}
+
+      XTerm*color0:                ${c 0}
+      XTerm*color1:                ${c 1}
+      XTerm*color2:                ${c 2}
+      XTerm*color3:                ${c 3}
+      XTerm*color4:                ${c 4}
+      XTerm*color5:                ${c 5}
+      XTerm*color6:                ${c 6}
+      XTerm*color7:                ${c 7}
+      XTerm*color8:                ${cb 0}
+      XTerm*color9:                ${cb 1}
+      XTerm*color10:               ${cb 2}
+      XTerm*color11:               ${cb 3}
+      XTerm*color12:               ${cb 4}
+      XTerm*color13:               ${cb 5}
+      XTerm*color14:               ${cb 6}
+      XTerm*color15:               ${cb 7}
+    '';
+
+  # ── Xfce Terminal (INI; full hex; 16-color semicolon palette) ────────────
+  xfce =
+    { shell }:
+    let
+      pal = builtins.concatStringsSep ";" (theme.ansi.normal ++ theme.ansi.bright);
+    in
+    ''
+      [Configuration]
+      FontName=${theme.font} 12
+      MiscDefaultGeometry=160x48
+      RunCustomCommand=TRUE
+      CustomCommand=${shell}
+      BackgroundMode=TERMINAL_BACKGROUND_TRANSPARENT
+      BackgroundDarkness=${theme.opacity}
+      ColorBackground=${theme.background}
+      ColorForeground=${theme.foreground}
+      ColorCursor=${theme.cursor.cursor}
+      ColorBold=FALSE
+      ColorPalette=${pal}
+      MiscMenubarDefault=FALSE
+      ScrollingBar=TERMINAL_SCROLLBAR_NONE
+      ScrollingLines=${toString theme.scrollback}
+    '';
+
+  # ── Ghostty (key-value; full hex) ────────────────────────────────────────
+  ghostty =
+    { shell }:
+    let
+      c = i: at theme.ansi.normal i;
+      cb = i: at theme.ansi.bright i;
+    in
+    ''
+      # Steelbore Ghostty Configuration
+
+      font-family = ${theme.font}
+      font-size = 12
+
+      background-opacity = ${theme.opacity}
+      window-padding-x = 10
+      window-padding-y = 10
+
+      # Steelbore color palette
+      background = ${theme.background}
+      foreground = ${theme.foreground}
+      cursor-color = ${theme.cursor.cursor}
+      cursor-text = ${theme.cursor.text}
+      selection-background = ${theme.selection.background}
+      selection-foreground = ${theme.selection.text}
+
+      # Normal colors (0-7)
+      palette = 0=${c 0}
+      palette = 1=${c 1}
+      palette = 2=${c 2}
+      palette = 3=${c 3}
+      palette = 4=${c 4}
+      palette = 5=${c 5}
+      palette = 6=${c 6}
+      palette = 7=${c 7}
+
+      # Bright colors (8-15)
+      palette = 8=${cb 0}
+      palette = 9=${cb 1}
+      palette = 10=${cb 2}
+      palette = 11=${cb 3}
+      palette = 12=${cb 4}
+      palette = 13=${cb 5}
+      palette = 14=${cb 6}
+      palette = 15=${cb 7}
+
+      # Shell — launches Nushell
+      command = ${shell}
+    '';
 }

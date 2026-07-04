@@ -1648,23 +1648,9 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # XFCE4-TERMINAL — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    "xfce4/terminal/terminalrc".text = ''
-      [Configuration]
-      FontName=JetBrainsMono Nerd Font 12
-      MiscDefaultGeometry=160x48
-      RunCustomCommand=TRUE
-      CustomCommand=${pkgs.nushell}/bin/nu
-      BackgroundMode=TERMINAL_BACKGROUND_TRANSPARENT
-      BackgroundDarkness=0.95
-      ColorBackground=${steelborePalette.voidNavy}
-      ColorForeground=${steelborePalette.moltenAmber}
-      ColorCursor=${steelborePalette.moltenAmber}
-      ColorBold=FALSE
-      ColorPalette=${steelborePalette.voidNavy};${steelborePalette.redOxide};${steelborePalette.radiumGreen};${steelborePalette.moltenAmber};${steelborePalette.steelBlue};${steelborePalette.steelBlue};${steelborePalette.liquidCool};${steelborePalette.moltenAmber};${steelborePalette.steelBlue};${steelborePalette.redOxide};${steelborePalette.radiumGreen};${steelborePalette.moltenAmber};${steelborePalette.liquidCool};${steelborePalette.liquidCool};${steelborePalette.liquidCool};${steelborePalette.moltenAmber}
-      MiscMenubarDefault=FALSE
-      ScrollingBar=TERMINAL_SCROLLBAR_NONE
-      ScrollingLines=10000
-    '';
+    "xfce4/terminal/terminalrc".text = tt.xfce {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # KWIN — Enable Krohnkite tiling script
