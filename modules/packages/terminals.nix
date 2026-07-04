@@ -338,32 +338,7 @@ in
     # WARP TERMINAL — AI-powered terminal
     # Uses YAML configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."warp/themes/steelbore.yaml".text = ''
-      # Steelbore Theme for Warp Terminal
-      accent: '${steelborePalette.steelBlue}'
-      background: '${steelborePalette.voidNavy}'
-      foreground: '${steelborePalette.moltenAmber}'
-      details: darker
-      terminal_colors:
-        normal:
-          black: '${steelborePalette.voidNavy}'
-          red: '${steelborePalette.redOxide}'
-          green: '${steelborePalette.radiumGreen}'
-          yellow: '${steelborePalette.moltenAmber}'
-          blue: '${steelborePalette.steelBlue}'
-          magenta: '${steelborePalette.steelBlue}'
-          cyan: '${steelborePalette.liquidCool}'
-          white: '${steelborePalette.moltenAmber}'
-        bright:
-          black: '${steelborePalette.steelBlue}'
-          red: '${steelborePalette.redOxide}'
-          green: '${steelborePalette.radiumGreen}'
-          yellow: '${steelborePalette.moltenAmber}'
-          blue: '${steelborePalette.liquidCool}'
-          magenta: '${steelborePalette.liquidCool}'
-          cyan: '${steelborePalette.liquidCool}'
-          white: '${steelborePalette.moltenAmber}'
-    '';
+    environment.etc."warp/themes/steelbore.yaml".text = tt.warpYaml;
 
     # ═══════════════════════════════════════════════════════════════════════════
     # TERMIUS — SSH client (theming limited, uses app settings)
@@ -374,142 +349,11 @@ in
     # KONSOLE — KDE terminal emulator
     # Colorscheme + profile placed in system XDG data dir
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."xdg/konsole/Steelbore.colorscheme".text = ''
-      # Steelbore Konsole Color Scheme
-      # Palette: Void Navy / Molten Amber / Steel Blue / Radium Green / Red Oxide / Liquid Coolant
+    environment.etc."xdg/konsole/Steelbore.colorscheme".text = tt.konsoleColorscheme;
 
-      [Background]
-      Color=${t steelborePalette.voidNavy}
-
-      [BackgroundFaint]
-      Color=${t steelborePalette.voidNavy}
-
-      [BackgroundIntense]
-      Bold=true
-      Color=${t steelborePalette.steelBlue}
-
-      [Color0]
-      Color=${t steelborePalette.voidNavy}
-
-      [Color0Faint]
-      Color=${t steelborePalette.voidNavy}
-
-      [Color0Intense]
-      Bold=true
-      Color=${t steelborePalette.steelBlue}
-
-      [Color1]
-      Color=${t steelborePalette.redOxide}
-
-      [Color1Faint]
-      Color=${t steelborePalette.redOxide}
-
-      [Color1Intense]
-      Bold=true
-      Color=${t steelborePalette.redOxide}
-
-      [Color2]
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color2Faint]
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color2Intense]
-      Bold=true
-      Color=${t steelborePalette.radiumGreen}
-
-      [Color3]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color3Faint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color3Intense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color4]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color4Faint]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color4Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color5]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color5Faint]
-      Color=${t steelborePalette.steelBlue}
-
-      [Color5Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6]
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6Faint]
-      Color=${t steelborePalette.liquidCool}
-
-      [Color6Intense]
-      Bold=true
-      Color=${t steelborePalette.liquidCool}
-
-      [Color7]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color7Faint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [Color7Intense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [Foreground]
-      Color=${t steelborePalette.moltenAmber}
-
-      [ForegroundFaint]
-      Color=${t steelborePalette.moltenAmber}
-
-      [ForegroundIntense]
-      Bold=true
-      Color=${t steelborePalette.moltenAmber}
-
-      [General]
-      Anchor=0.5,0.5
-      Blur=false
-      ColorRandomization=false
-      Description=Steelbore
-      FillStyle=Tile
-      Opacity=0.95
-      Spread=1.0
-      Wallpaper=
-    '';
-
-    environment.etc."xdg/konsole/Steelbore.profile".text = ''
-      # Steelbore Konsole Profile
-
-      [Appearance]
-      ColorScheme=Steelbore
-      Font=JetBrainsMono Nerd Font,12,-1,5,50,0,0,0,0,0
-
-      [General]
-      Command=${pkgs.nushell}/bin/nu
-      Name=Steelbore
-      Parent=FALLBACK/
-      TerminalColumns=160
-      TerminalRows=48
-
-      [Scrolling]
-      HistoryMode=2
-      ScrollFullPage=false
-
-      [Terminal Features]
-      BlinkingCursorEnabled=true
-    '';
+    environment.etc."xdg/konsole/Steelbore.profile".text = tt.konsoleProfile {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     environment.etc."xdg/konsolerc".text = ''
       [Desktop Entry]

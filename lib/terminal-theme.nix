@@ -224,4 +224,102 @@ in
       # Shell — launches Nushell
       command = ${shell}
     '';
+
+  # ── Warp (YAML; full hex, single-quoted) ─────────────────────────────────
+  warpYaml =
+    let
+      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+      row = list: i: "    ${at names i}: '${at list i}'";
+      rows = list: builtins.concatStringsSep "\n" (builtins.genList (row list) 8);
+    in
+    ''
+      # Steelbore Theme for Warp Terminal
+      accent: '${theme.selection.background}'
+      background: '${theme.background}'
+      foreground: '${theme.foreground}'
+      details: darker
+      terminal_colors:
+        normal:
+      ${rows theme.ansi.normal}
+        bright:
+      ${rows theme.ansi.bright}
+    '';
+
+  # ── Konsole colorscheme (INI; decimal R,G,B; Intense == bright) ─────────
+  konsoleColorscheme =
+    let
+      rt = p.convert.rgbTriple;
+      slot = i: ''
+        [Color${toString i}]
+        Color=${rt (at theme.ansi.normal i)}
+
+        [Color${toString i}Faint]
+        Color=${rt (at theme.ansi.normal i)}
+
+        [Color${toString i}Intense]
+        Bold=true
+        Color=${rt (at theme.ansi.bright i)}
+      '';
+      slots = builtins.concatStringsSep "\n" (builtins.genList slot 8);
+    in
+    ''
+      # Steelbore Konsole Color Scheme
+      # Palette: Void Navy / Molten Amber / Steel Blue / Radium Green / Red Oxide / Liquid Coolant
+
+      [Background]
+      Color=${rt theme.background}
+
+      [BackgroundFaint]
+      Color=${rt theme.background}
+
+      [BackgroundIntense]
+      Bold=true
+      Color=${rt (at theme.ansi.bright 0)}
+
+      ${slots}
+      [Foreground]
+      Color=${rt theme.foreground}
+
+      [ForegroundFaint]
+      Color=${rt theme.foreground}
+
+      [ForegroundIntense]
+      Bold=true
+      Color=${rt theme.foreground}
+
+      [General]
+      Anchor=0.5,0.5
+      Blur=false
+      ColorRandomization=false
+      Description=Steelbore
+      FillStyle=Tile
+      Opacity=${theme.opacity}
+      Spread=1.0
+      Wallpaper=
+    '';
+
+  # ── Konsole profile (INI) ────────────────────────────────────────────────
+  konsoleProfile =
+    { shell }:
+    ''
+      # Steelbore Konsole Profile
+
+      [Appearance]
+      ColorScheme=Steelbore
+      Font=${theme.font},12,-1,5,50,0,0,0,0,0
+
+      [General]
+      Command=${shell}
+      Name=Steelbore
+      Parent=FALLBACK/
+      TerminalColumns=160
+      TerminalRows=48
+
+      [Scrolling]
+      HistoryMode=2
+      ScrollFullPage=false
+
+      [Terminal Features]
+      BlinkingCursorEnabled=true
+    '';
 }
