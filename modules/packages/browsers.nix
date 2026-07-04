@@ -11,15 +11,16 @@ let
   # BrowserOS — agentic, Chromium-based browser shipped only as an x64 AppImage.
   # Wrapped with appimageTools.wrapType2 so it runs reproducibly from the Nix store
   # (FHS env + FUSE) instead of as a loose binfmt AppImage in ~/Applications/.
-  # Update procedure: bump version, swap the URL, then refresh the hash with
+  # Update procedure: run `nu pkgs/update-vendored.nu browseros` (plan 5.1) —
+  # or by hand: bump version, swap the URL, then refresh the hash with
   #   nix store prefetch-file --hash-type sha256 <url>
-  browserosVersion = "0.44.0.1";
+  browserosVersion = "0.46.0";
   browseros = pkgs.appimageTools.wrapType2 {
     pname = "browseros";
     version = browserosVersion;
     src = pkgs.fetchurl {
       url = "https://github.com/browseros-ai/BrowserOS/releases/download/v${browserosVersion}/BrowserOS_v${browserosVersion}_x64.AppImage";
-      hash = "sha256-ALnyVMnexYy48br9qbWaEbOZm7hJR9g39a9nYzbWXwo=";
+      hash = "sha256-IV3Agg5i4TKDMQy+BjNbW6sqPsLfPcSOQkOADHhSmTw=";
     };
   };
 in

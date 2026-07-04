@@ -10,7 +10,8 @@
 # so those (and the Vulkan runner) are stripped — leaving the ollama binary + the
 # CPU `libggml-cpu-*` runners (~50 MB). Effectively the official "ollama-cpu".
 #
-# Update: bump `version` + `src.hash` from https://github.com/ollama/ollama/releases
+# Update: run `nu pkgs/update-vendored.nu ollama` (plan 5.1), or by hand: bump
+# `version` + `src.hash` from https://github.com/ollama/ollama/releases
 # (asset `ollama-linux-amd64.tar.zst`). Ollama does not self-update here, so a
 # pinned Nix install is deterministic.
 {

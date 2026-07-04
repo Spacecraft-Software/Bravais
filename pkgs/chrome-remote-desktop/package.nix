@@ -10,7 +10,8 @@
 # ~/.chrome-remote-desktop-session). No setuid `user-session` helper exists in
 # this release, so none is wrapped.
 #
-# Update: bump `version` + `src.sha256` from the apt index:
+# Update: run `nu pkgs/update-vendored.nu chrome-remote-desktop` (plan 5.1),
+# or by hand: bump `version` + `src.sha256` from the apt index:
 #   https://dl.google.com/linux/chrome-remote-desktop/deb/dists/stable/main/binary-amd64/Packages
 {
   lib,
