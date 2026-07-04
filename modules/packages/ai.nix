@@ -58,6 +58,6 @@
       # Claude Desktop — official Anthropic Linux beta, repackaged from the .deb
       # (no nixpkgs package). Derivation + version/hash-bump notes live in
       # pkgs/claude-desktop/. Unfree; allowUnfree is set in modules/core/nix.nix.
-      ++ [ (pkgs.callPackage ../../pkgs/claude-desktop/package.nix { }) ];
+      ++ [ (import ../../pkgs { inherit pkgs; }).claude-desktop ];
   };
 }

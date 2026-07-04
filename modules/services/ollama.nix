@@ -14,7 +14,7 @@
 
 let
   cfg = config.steelbore.services.ollama;
-  ollama = pkgs.callPackage ../../pkgs/ollama/package.nix { };
+  ollama = (import ../../pkgs { inherit pkgs; }).ollama;
 in
 {
   options.steelbore.services.ollama = {

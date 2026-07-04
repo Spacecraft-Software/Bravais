@@ -23,7 +23,7 @@
 
 let
   cfg = config.steelbore.services.chromeRemoteDesktop;
-  crd = pkgs.callPackage ../../pkgs/chrome-remote-desktop/package.nix { };
+  crd = (import ../../pkgs { inherit pkgs; }).chrome-remote-desktop;
   crdDir = "/opt/google/chrome-remote-desktop";
 in
 {

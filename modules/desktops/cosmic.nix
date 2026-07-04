@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — COSMIC Desktop Environment (Wayland)
 {
+  primaryUser,
   config,
   lib,
   steelborePalette,
@@ -90,7 +91,7 @@ in
     # corner_radii / spacing / gaps / active_hint / is_frosted / window_hint /
     # primary_container_bg / secondary_container_bg are intentionally left to
     # defaults — they render correctly once the top-level colors below are set.
-    home-manager.users.mj.xdg.configFile = {
+    home-manager.users.${primaryUser}.xdg.configFile = {
       # Dark Builder — active at night via auto_switch.
       "${darkBuilderDir}/bg_color".text = bgColorDark;
       "${darkBuilderDir}/accent".text = someRgb rgb.moltenAmber;

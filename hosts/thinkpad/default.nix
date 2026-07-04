@@ -4,6 +4,7 @@
 # Per-machine config. Shared host settings live in ../common.nix; only the
 # machine-specific bits are set here.
 {
+  primaryUser,
   ...
 }:
 
@@ -26,7 +27,7 @@
   # One-time Google authorization is manual — see modules/services/chrome-remote-desktop.nix.
   steelbore.services.chromeRemoteDesktop = {
     enable = true;
-    user = "mj";
+    user = primaryUser;
   };
 
   # i7-8665U is x86-64-v3 (AVX2/BMI2/FMA) but has NO AVX-512, so v4 would

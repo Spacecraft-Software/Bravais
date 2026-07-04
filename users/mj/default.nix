@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — User System Configuration
-{ pkgs, ... }:
+{ pkgs, primaryUser, ... }:
 
 {
-  users.users.mj = {
+  users.users.${primaryUser} = {
     isNormalUser = true;
     description = "Mohamed Hammad";
     extraGroups = [
