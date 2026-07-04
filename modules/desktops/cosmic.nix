@@ -3,47 +3,54 @@
 {
   config,
   lib,
+  steelborePalette,
   ...
 }:
 
 let
-  # cosmic-theme stores colors as Srgba with 0.0–1.0 floats. Pre-converted
-  # from the canonical Steelbore palette (Standard §8). Eight-digit
-  # precision matches what cosmic-settings writes itself, so user-facing
-  # diffs stay clean.
-  rgb = {
-    voidNavy = "(red: 0.0, green: 0.0, blue: 0.15294118)"; # #000027
-    moltenAmber = "(red: 0.85098039, green: 0.55686275, blue: 0.19607843)"; # #D98E32
-    steelBlue = "(red: 0.29411765, green: 0.49411765, blue: 0.69019608)"; # #4B7EB0
-    radiumGreen = "(red: 0.31372549, green: 0.98039216, blue: 0.48235294)"; # #50FA7B
-    redOxide = "(red: 1.0, green: 0.36078431, blue: 0.36078431)"; # #FF5C5C
-    liquidCool = "(red: 0.54509804, green: 0.91372549, blue: 0.99215686)"; # #8BE9FD
+  # cosmic-theme stores colors as Srgba with 0.0–1.0 floats. Derived from the
+  # canonical palette via lib/colors.nix `convert.srgbaFloat` — the converter
+  # reproduces cosmic-settings' own eight-digit formatting, so user-facing
+  # diffs stay clean and the values can never drift from the palette.
+  toRgb = steelborePalette.convert.srgbaFloat;
 
-    # Light-mode-only derived shades — NOT in Spacecraft Software Standard §8.
-    # Scoped to cosmic.nix; do not propagate to flake.nix steelborePalette,
-    # lib/default.nix, or modules/theme. Promote in the Standard first if
-    # they ever need to become canonical.
-    paper = "(red: 0.94117647, green: 0.94901961, blue: 0.97254902)"; # #F0F2F8 — Light bg
-    radiumGreenDeep = "(red: 0.18039216, green: 0.67058824, blue: 0.32941176)"; # #2EAB54 — success on Paper
-    redOxideDeep = "(red: 0.83921569, green: 0.21960784, blue: 0.21960784)"; # #D63838 — destructive on Paper
+  # Light-mode-only derived shades — NOT in Spacecraft Software Standard §8.
+  # Scoped to cosmic.nix; do not propagate to lib/colors.nix or
+  # modules/theme. Promote in the Standard first if they ever need to
+  # become canonical.
+  paperHex = "#F0F2F8"; # Light bg
+  radiumGreenDeepHex = "#2EAB54"; # success on Paper
+  redOxideDeepHex = "#D63838"; # destructive on Paper
+
+  rgb = {
+    voidNavy = toRgb steelborePalette.voidNavy;
+    moltenAmber = toRgb steelborePalette.moltenAmber;
+    steelBlue = toRgb steelborePalette.steelBlue;
+    radiumGreen = toRgb steelborePalette.radiumGreen;
+    redOxide = toRgb steelborePalette.redOxide;
+    liquidCool = toRgb steelborePalette.liquidCool;
+    paper = toRgb paperHex;
+    radiumGreenDeep = toRgb radiumGreenDeepHex;
+    redOxideDeep = toRgb redOxideDeepHex;
   };
 
   # bg_color is the only Builder field that carries an alpha channel.
-  bgColorDark = ''
-    Some((
-        red: 0.0,
-        green: 0.0,
-        blue: 0.15294118,
-        alpha: 1.0,
-    ))'';
+  mkBgColor =
+    hex:
+    let
+      ch = steelborePalette.convert.srgbaChannels hex;
+    in
+    ''
+      Some((
+          red: ${ch.red},
+          green: ${ch.green},
+          blue: ${ch.blue},
+          alpha: 1.0,
+      ))'';
 
-  bgColorLight = ''
-    Some((
-        red: 0.94117647,
-        green: 0.94901961,
-        blue: 0.97254902,
-        alpha: 1.0,
-    ))'';
+  bgColorDark = mkBgColor steelborePalette.voidNavy;
+
+  bgColorLight = mkBgColor paperHex;
 
   someRgb = body: "Some(${body})";
 

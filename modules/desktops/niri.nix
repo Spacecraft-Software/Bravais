@@ -130,7 +130,8 @@
       # Status bar / launcher / notifications / wallpaper / lock are likewise
       # configured at the home-manager level. Eww config lives in
       # users/mj/home.nix (xdg.configFile."eww/..."); dunst remains at
-      # /etc/dunst/dunstrc (set in modules/desktops/leftwm.nix).
+      # /etc/dunst/dunstrc (set in modules/desktops/shared.nix — shared with
+      # LeftWM so disabling either WM can't strip the other's config).
     }
   );
 }
