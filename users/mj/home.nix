@@ -761,40 +761,7 @@ in
           };
           size = 10.0;
         };
-        colors = {
-          primary = {
-            background = steelborePalette.voidNavy;
-            foreground = steelborePalette.moltenAmber;
-          };
-          cursor = {
-            text = steelborePalette.voidNavy;
-            cursor = steelborePalette.moltenAmber;
-          };
-          selection = {
-            text = steelborePalette.voidNavy;
-            background = steelborePalette.steelBlue;
-          };
-          normal = {
-            black = steelborePalette.voidNavy;
-            red = steelborePalette.redOxide;
-            green = steelborePalette.radiumGreen;
-            yellow = steelborePalette.moltenAmber;
-            blue = steelborePalette.steelBlue;
-            magenta = steelborePalette.steelBlue;
-            cyan = steelborePalette.liquidCool;
-            white = steelborePalette.moltenAmber;
-          };
-          bright = {
-            black = steelborePalette.steelBlue;
-            red = steelborePalette.redOxide;
-            green = steelborePalette.radiumGreen;
-            yellow = steelborePalette.moltenAmber;
-            blue = steelborePalette.liquidCool;
-            magenta = steelborePalette.liquidCool;
-            cyan = steelborePalette.liquidCool;
-            white = steelborePalette.moltenAmber;
-          };
-        };
+        colors = tt.alacrittyColors;
       };
     };
   };
@@ -1481,68 +1448,9 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # RIO — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    "rio/config.toml".text = ''
-      # Steelbore Rio User Configuration
-
-      [window]
-      opacity = 0.95
-
-      [fonts]
-      size = 14
-
-      [fonts.regular]
-      family = "JetBrainsMono Nerd Font Mono"
-      weight = 400
-
-      [fonts.bold]
-      family = "JetBrainsMono Nerd Font Mono"
-      weight = 700
-
-      [fonts.italic]
-      family = "JetBrainsMono Nerd Font Mono"
-      weight = 400
-
-      [fonts.bold-italic]
-      family = "JetBrainsMono Nerd Font Mono"
-      weight = 700
-
-      [[fonts.extras]]
-      family = "Symbols Nerd Font"
-
-      [[fonts.extras]]
-      family = "Symbols Nerd Font Mono"
-
-      [colors]
-      background = '${steelborePalette.voidNavy}'
-      foreground = '${steelborePalette.moltenAmber}'
-      cursor = '${steelborePalette.moltenAmber}'
-      selection-background = '${steelborePalette.steelBlue}'
-      selection-foreground = '${steelborePalette.voidNavy}'
-
-      [colors.regular]
-      black = '${steelborePalette.voidNavy}'
-      red = '${steelborePalette.redOxide}'
-      green = '${steelborePalette.radiumGreen}'
-      yellow = '${steelborePalette.moltenAmber}'
-      blue = '${steelborePalette.steelBlue}'
-      magenta = '${steelborePalette.steelBlue}'
-      cyan = '${steelborePalette.liquidCool}'
-      white = '${steelborePalette.moltenAmber}'
-
-      [colors.bright]
-      black = '${steelborePalette.steelBlue}'
-      red = '${steelborePalette.redOxide}'
-      green = '${steelborePalette.radiumGreen}'
-      yellow = '${steelborePalette.moltenAmber}'
-      blue = '${steelborePalette.liquidCool}'
-      magenta = '${steelborePalette.liquidCool}'
-      cyan = '${steelborePalette.liquidCool}'
-      white = '${steelborePalette.moltenAmber}'
-
-      [shell]
-      program = "${pkgs.nushell}/bin/nu"
-      args = []
-    '';
+    "rio/config.toml".text = tt.rioToml {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # GHOSTTY — User configuration
@@ -1970,24 +1878,7 @@ in
     };
     "org/gnome/Ptyxis/Profiles/steelbore" = {
       label = "Steelbore";
-      palette = [
-        steelborePalette.voidNavy # black
-        steelborePalette.redOxide # red
-        steelborePalette.radiumGreen # green
-        steelborePalette.moltenAmber # yellow
-        steelborePalette.steelBlue # blue
-        steelborePalette.steelBlue # magenta
-        steelborePalette.liquidCool # cyan
-        steelborePalette.moltenAmber # white
-        steelborePalette.steelBlue # bright black
-        steelborePalette.redOxide # bright red
-        steelborePalette.radiumGreen # bright green
-        steelborePalette.moltenAmber # bright yellow
-        steelborePalette.liquidCool # bright blue
-        steelborePalette.liquidCool # bright magenta
-        steelborePalette.liquidCool # bright cyan
-        steelborePalette.moltenAmber # bright white
-      ];
+      palette = tt.ansi16;
       background-color = steelborePalette.voidNavy;
       foreground-color = steelborePalette.moltenAmber;
       use-theme-colors = false;

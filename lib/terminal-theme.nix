@@ -124,6 +124,10 @@ in
 {
   inherit theme;
 
+  # Flat 16-entry ANSI list (normal ++ bright) for list-shaped consumers
+  # (Ptyxis dconf palette, etc.).
+  ansi16 = theme.ansi.normal ++ theme.ansi.bright;
+
   # ── foot (INI; bare hex, no '#') ─────────────────────────────────────────
   # header: the leading comment line; shell: absolute path to the shell.
   foot =
@@ -479,4 +483,87 @@ in
       };
     };
   };
+
+  # ── Alacritty (HM settings attrset; named-color records) ────────────────
+  alacrittyColors =
+    let
+      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+      group = list: builtins.listToAttrs (builtins.genList (i: {
+        name = at names i;
+        value = at list i;
+      }) 8);
+    in
+    {
+      primary = {
+        background = theme.background;
+        foreground = theme.foreground;
+      };
+      cursor = {
+        text = theme.cursor.text;
+        cursor = theme.cursor.cursor;
+      };
+      selection = {
+        text = theme.selection.text;
+        background = theme.selection.background;
+      };
+      normal = group theme.ansi.normal;
+      bright = group theme.ansi.bright;
+    };
+
+  # ── Rio (TOML; Mono font variant + Symbols fallback, constraint #11) ────
+  rioToml =
+    { shell }:
+    let
+      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+      row = list: i: "${at names i} = '${at list i}'";
+      rows = list: builtins.concatStringsSep "\n" (builtins.genList (row list) 8);
+    in
+    ''
+      # Steelbore Rio User Configuration
+
+      [window]
+      opacity = ${theme.opacity}
+
+      [fonts]
+      size = 14
+
+      [fonts.regular]
+      family = "${theme.font} Mono"
+      weight = 400
+
+      [fonts.bold]
+      family = "${theme.font} Mono"
+      weight = 700
+
+      [fonts.italic]
+      family = "${theme.font} Mono"
+      weight = 400
+
+      [fonts.bold-italic]
+      family = "${theme.font} Mono"
+      weight = 700
+
+      [[fonts.extras]]
+      family = "Symbols Nerd Font"
+
+      [[fonts.extras]]
+      family = "Symbols Nerd Font Mono"
+
+      [colors]
+      background = '${theme.background}'
+      foreground = '${theme.foreground}'
+      cursor = '${theme.cursor.cursor}'
+      selection-background = '${theme.selection.background}'
+      selection-foreground = '${theme.selection.text}'
+
+      [colors.regular]
+      ${rows theme.ansi.normal}
+
+      [colors.bright]
+      ${rows theme.ansi.bright}
+
+      [shell]
+      program = "${shell}"
+      args = []
+    '';
 }
