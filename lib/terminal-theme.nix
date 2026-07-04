@@ -61,7 +61,10 @@ let
     scrollback = 10000;
   };
 
-  at = list: i: builtins.elemAt list i;
+  at = builtins.elemAt;
+
+  # Canonical ANSI slot names, shared by every named-color emitter.
+  ansiNames = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
 
   konsoleColorschemeWith =
     withPaletteComment:
@@ -240,13 +243,13 @@ in
 
   # ── Ghostty (key-value; full hex) ────────────────────────────────────────
   ghostty =
-    { shell }:
+    { header, shell }:
     let
       c = i: at theme.ansi.normal i;
       cb = i: at theme.ansi.bright i;
     in
     ''
-      # Steelbore Ghostty Configuration
+      # ${header}
 
       font-family = ${theme.font}
       font-size = 12
@@ -290,8 +293,7 @@ in
   # ── Warp (YAML; full hex, single-quoted) ─────────────────────────────────
   warpYaml =
     let
-      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
-      row = list: i: "    ${at names i}: '${at list i}'";
+      row = list: i: "    ${at ansiNames i}: '${at list i}'";
       rows = list: builtins.concatStringsSep "\n" (builtins.genList (row list) 8);
     in
     ''
@@ -420,7 +422,9 @@ in
       ronGroup =
         list:
         let
-          names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+          names = ansiNames;
+          # First line bare (inherits the interpolation site's literal
+          # prefix after ''-dedent); continuations carry the rendered indent.
           row = i: (if i == 0 then "" else "            ") + "${at names i}: \"${at list i}\",";
         in
         builtins.concatStringsSep "\n" (builtins.genList row 8);
@@ -487,7 +491,7 @@ in
   # ── Alacritty (HM settings attrset; named-color records) ────────────────
   alacrittyColors =
     let
-      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+      names = ansiNames;
       group = list: builtins.listToAttrs (builtins.genList (i: {
         name = at names i;
         value = at list i;
@@ -514,7 +518,7 @@ in
   rioToml =
     { shell }:
     let
-      names = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+      names = ansiNames;
       row = list: i: "${at names i} = '${at list i}'";
       rows = list: builtins.concatStringsSep "\n" (builtins.genList (row list) 8);
     in
@@ -566,4 +570,91 @@ in
       program = "${shell}"
       args = []
     '';
+
+  # ── Alacritty system TOML (/etc fallback; the HM copy uses
+  # alacrittyColors attrs). vi_mode/search accents are Alacritty-specific
+  # theme extensions, kept here with palette tokens. ───────────────────────
+  alacrittyToml =
+    { shell }:
+    let
+      group =
+        list:
+        builtins.concatStringsSep "\n" (
+          builtins.genList (i: "${at ansiNames i} = \"${at list i}\"") 8
+        );
+    in
+    ''
+      # Steelbore Alacritty Configuration
+
+      [window]
+      padding = { x = 10, y = 10 }
+      dynamic_title = true
+      opacity = ${theme.opacity}
+      decorations = "full"
+
+      [font]
+      normal = { family = "${theme.font}", style = "Regular" }
+      bold = { family = "${theme.font}", style = "Bold" }
+      italic = { family = "${theme.font}", style = "Italic" }
+      size = 10.0
+
+      [colors.primary]
+      background = "${theme.background}"
+      foreground = "${theme.foreground}"
+
+      [colors.cursor]
+      text = "${theme.cursor.text}"
+      cursor = "${theme.cursor.cursor}"
+
+      [colors.vi_mode_cursor]
+      text = "${theme.cursor.text}"
+      cursor = "${p.radiumGreen}"
+
+      [colors.selection]
+      text = "${theme.selection.text}"
+      background = "${theme.selection.background}"
+
+      [colors.search.matches]
+      foreground = "${theme.cursor.text}"
+      background = "${p.liquidCool}"
+
+      [colors.search.focused_match]
+      foreground = "${theme.cursor.text}"
+      background = "${p.radiumGreen}"
+
+      [colors.normal]
+      ${group theme.ansi.normal}
+
+      [colors.bright]
+      ${group theme.ansi.bright}
+
+      [terminal.shell]
+      program = "${shell}"
+    '';
+
+  # ── XTerm attrset twin of `xresources` (HM xresources.properties) ──────
+  xresourcesProps =
+    let
+      color = i: {
+        name = "XTerm*color${toString i}";
+        value = if i < 8 then at theme.ansi.normal i else at theme.ansi.bright (i - 8);
+      };
+    in
+    {
+      "XTerm*termName" = "xterm-256color";
+      "XTerm*faceName" = theme.font;
+      "XTerm*faceSize" = 12;
+      "XTerm*loginShell" = true;
+      "XTerm*scrollBar" = false;
+      "XTerm*saveLines" = theme.scrollback;
+      "XTerm*bellIsUrgent" = true;
+      "XTerm*internalBorder" = 10;
+      "XTerm*background" = theme.background;
+      "XTerm*foreground" = theme.foreground;
+      "XTerm*cursorColor" = theme.cursor.cursor;
+      "XTerm*pointerColorBackground" = theme.background;
+      "XTerm*pointerColorForeground" = theme.foreground;
+      "XTerm*highlightColor" = theme.selection.background;
+    }
+    // builtins.listToAttrs (builtins.genList color 16);
 }

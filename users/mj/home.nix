@@ -13,8 +13,6 @@
 
 let
   # Foot requires hex colors without the '#' prefix
-  h = steelborePalette.convert.bareHex;
-  t = steelborePalette.convert.rgbTriple; # Konsole INI decimal R,G,B
   x256 = steelborePalette.convert.x256; # xterm-256 indices (tiny IRC)
   # Shared terminal-theme record + per-format emitters (plan item 1.2)
   tt = import ../../lib/terminal-theme.nix steelborePalette;
@@ -1455,43 +1453,10 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # GHOSTTY — User configuration
     # ═══════════════════════════════════════════════════════════════════════════
-    "ghostty/config".text = ''
-      # Steelbore Ghostty User Configuration
-
-      font-family = JetBrainsMono Nerd Font
-      font-size = 12
-
-      background-opacity = 0.95
-      window-padding-x = 10
-      window-padding-y = 10
-
-      background = ${steelborePalette.voidNavy}
-      foreground = ${steelborePalette.moltenAmber}
-      cursor-color = ${steelborePalette.moltenAmber}
-      cursor-text = ${steelborePalette.voidNavy}
-      selection-background = ${steelborePalette.steelBlue}
-      selection-foreground = ${steelborePalette.voidNavy}
-
-      palette = 0=${steelborePalette.voidNavy}
-      palette = 1=${steelborePalette.redOxide}
-      palette = 2=${steelborePalette.radiumGreen}
-      palette = 3=${steelborePalette.moltenAmber}
-      palette = 4=${steelborePalette.steelBlue}
-      palette = 5=${steelborePalette.steelBlue}
-      palette = 6=${steelborePalette.liquidCool}
-      palette = 7=${steelborePalette.moltenAmber}
-      palette = 8=${steelborePalette.steelBlue}
-      palette = 9=${steelborePalette.redOxide}
-      palette = 10=${steelborePalette.radiumGreen}
-      palette = 11=${steelborePalette.moltenAmber}
-      palette = 12=${steelborePalette.liquidCool}
-      palette = 13=${steelborePalette.liquidCool}
-      palette = 14=${steelborePalette.liquidCool}
-      palette = 15=${steelborePalette.moltenAmber}
-
-      # Shell — launches nushell (starship integrated via nushell config)
-      command = ${pkgs.nushell}/bin/nu
-    '';
+    "ghostty/config".text = tt.ghostty {
+      header = "Steelbore Ghostty User Configuration";
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # FOOT — User configuration
@@ -1817,38 +1782,7 @@ in
   };
 
   # XTerm Xresources (loaded by xrdb on X session start)
-  xresources.properties = {
-    "XTerm*termName" = "xterm-256color";
-    "XTerm*faceName" = "JetBrainsMono Nerd Font";
-    "XTerm*faceSize" = 12;
-    "XTerm*loginShell" = true;
-    "XTerm*scrollBar" = false;
-    "XTerm*saveLines" = 10000;
-    "XTerm*bellIsUrgent" = true;
-    "XTerm*internalBorder" = 10;
-    "XTerm*background" = steelborePalette.voidNavy;
-    "XTerm*foreground" = steelborePalette.moltenAmber;
-    "XTerm*cursorColor" = steelborePalette.moltenAmber;
-    "XTerm*pointerColorBackground" = steelborePalette.voidNavy;
-    "XTerm*pointerColorForeground" = steelborePalette.moltenAmber;
-    "XTerm*highlightColor" = steelborePalette.steelBlue;
-    "XTerm*color0" = steelborePalette.voidNavy;
-    "XTerm*color1" = steelborePalette.redOxide;
-    "XTerm*color2" = steelborePalette.radiumGreen;
-    "XTerm*color3" = steelborePalette.moltenAmber;
-    "XTerm*color4" = steelborePalette.steelBlue;
-    "XTerm*color5" = steelborePalette.steelBlue;
-    "XTerm*color6" = steelborePalette.liquidCool;
-    "XTerm*color7" = steelborePalette.moltenAmber;
-    "XTerm*color8" = steelborePalette.steelBlue;
-    "XTerm*color9" = steelborePalette.redOxide;
-    "XTerm*color10" = steelborePalette.radiumGreen;
-    "XTerm*color11" = steelborePalette.moltenAmber;
-    "XTerm*color12" = steelborePalette.liquidCool;
-    "XTerm*color13" = steelborePalette.liquidCool;
-    "XTerm*color14" = steelborePalette.liquidCool;
-    "XTerm*color15" = steelborePalette.moltenAmber;
-  };
+  xresources.properties = tt.xresourcesProps;
 
   # dconf settings for GNOME-based terminals (Ptyxis, GNOME Console) +
   # system-wide dark-mode keys read by HM's gtk module, by Qt's adwaita

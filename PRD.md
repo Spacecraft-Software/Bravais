@@ -259,7 +259,7 @@ path in `modules/packages/ai.nix`.
 
 Two font roles, both defined in `modules/theme/fonts.nix` (source of truth).
 **To change a font, follow the "Changing fonts" runbook in `CLAUDE.md`** — the
-family string is repeated across ~15 terminal configs and the exact Nerd Font
+family string for terminals lives once in `lib/terminal-theme.nix` (`theme.font`; all terminal configs are generated from it) and the exact Nerd Font
 family name must be read from the package, not guessed.
 
 | Role                | Font                  | License | Fallback             |
@@ -703,7 +703,7 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 |----------------|--------------------------------------------------|---------|
 | Alacritty      | `/etc/alacritty/alacritty.toml`                  | TOML    |
 | WezTerm        | `/etc/wezterm/wezterm.lua`                       | Lua     |
-| Rio            | `/etc/rio/config.toml`                           | TOML    |
+| Rio            | `~/.config/rio/config.toml` (user-level only)     | TOML    |
 | Ghostty        | `/etc/ghostty/config`                            | Custom  |
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/syntax_theme_dark` | Text |
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/color_schemes_dark` | RON |
@@ -712,7 +712,7 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 | COSMIC Term    | `~/.config/cosmic/com.system76.CosmicTerm/v1/{profiles,default_profile}` (HM, `force`; the layer that actually applies — cosmic-config user keys win over `/etc`) | RON |
 | Ptyxis/VTE     | `/etc/gtk-4.0/gtk.css`                           | CSS     |
 | WaveTerm       | `/etc/waveterm/config.json`                      | JSON    |
-| Warp           | `/etc/warp/themes/spacecraft.yaml`                | YAML    |
+| Warp           | `/etc/warp/themes/steelbore.yaml`                | YAML    |
 | Konsole        | `/etc/xdg/konsole/Steelbore.colorscheme`         | INI     |
 | Konsole        | `/etc/xdg/konsole/Steelbore.profile`             | INI     |
 | Konsole        | `/etc/xdg/konsolerc`                             | INI     |
@@ -728,7 +728,7 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 - **Padding:** 10px
 - **System shell:** Nushell (via `${pkgs.nushell}/bin/nu`)
 - **User shell:** Nushell (via `${pkgs.nushell}/bin/nu` in home.nix configs)
-- **Foot quirk:** Uses hex colors without `#` prefix (handled by helper `h = c: builtins.substring 1 (builtins.stringLength c - 1) c`)
+- **Foot quirk:** Uses hex colors without `#` prefix (handled inside the `tt.foot` emitter via `convert.bareHex` from `lib/colors.nix`)
 - **Rio font config:** Uses `weight = N` integers (400 regular, 700 bold) -- no `style` key
 - **Konsole:** Full colorscheme with Normal/Faint/Intense variants, profile with 160x48 geometry, blinking cursor
 - **Yakuake:** Height 50%, width 100%, no keep-open, no animation, inherits Konsole Steelbore profile

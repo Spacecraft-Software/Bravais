@@ -9,10 +9,8 @@
 }:
 
 let
-  # Palette format converters from lib/colors.nix (single source, Standard §11)
-  h = steelborePalette.convert.bareHex; # Foot needs hex without the '#'
-  t = steelborePalette.convert.rgbTriple; # Konsole INI needs decimal R,G,B
-  # Shared terminal-theme record + per-format emitters (plan item 1.2)
+  # Shared terminal-theme record + per-format emitters (plan item 1.2);
+  # all per-format color conversion happens inside the emitters.
   tt = import ../../lib/terminal-theme.nix steelborePalette;
 in
 
@@ -57,68 +55,9 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # ALACRITTY — Rust-based GPU-accelerated terminal
     # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."alacritty/alacritty.toml".text = ''
-      # Steelbore Alacritty Configuration
-
-      [window]
-      padding = { x = 10, y = 10 }
-      dynamic_title = true
-      opacity = 0.95
-      decorations = "full"
-
-      [font]
-      normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
-      bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
-      italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
-      size = 10.0
-
-      [colors.primary]
-      background = "${steelborePalette.voidNavy}"
-      foreground = "${steelborePalette.moltenAmber}"
-
-      [colors.cursor]
-      text = "${steelborePalette.voidNavy}"
-      cursor = "${steelborePalette.moltenAmber}"
-
-      [colors.vi_mode_cursor]
-      text = "${steelborePalette.voidNavy}"
-      cursor = "${steelborePalette.radiumGreen}"
-
-      [colors.selection]
-      text = "${steelborePalette.voidNavy}"
-      background = "${steelborePalette.steelBlue}"
-
-      [colors.search.matches]
-      foreground = "${steelborePalette.voidNavy}"
-      background = "${steelborePalette.liquidCool}"
-
-      [colors.search.focused_match]
-      foreground = "${steelborePalette.voidNavy}"
-      background = "${steelborePalette.radiumGreen}"
-
-      [colors.normal]
-      black = "${steelborePalette.voidNavy}"
-      red = "${steelborePalette.redOxide}"
-      green = "${steelborePalette.radiumGreen}"
-      yellow = "${steelborePalette.moltenAmber}"
-      blue = "${steelborePalette.steelBlue}"
-      magenta = "${steelborePalette.steelBlue}"
-      cyan = "${steelborePalette.liquidCool}"
-      white = "${steelborePalette.moltenAmber}"
-
-      [colors.bright]
-      black = "${steelborePalette.steelBlue}"
-      red = "${steelborePalette.redOxide}"
-      green = "${steelborePalette.radiumGreen}"
-      yellow = "${steelborePalette.moltenAmber}"
-      blue = "${steelborePalette.liquidCool}"
-      magenta = "${steelborePalette.liquidCool}"
-      cyan = "${steelborePalette.liquidCool}"
-      white = "${steelborePalette.moltenAmber}"
-
-      [terminal.shell]
-      program = "${pkgs.nushell}/bin/nu"
-    '';
+    environment.etc."alacritty/alacritty.toml".text = tt.alacrittyToml {
+      shell = "${pkgs.nushell}/bin/nu";
+    };
 
     # ═══════════════════════════════════════════════════════════════════════════
     # WEZTERM — Rust-based GPU-accelerated terminal with Lua config
@@ -132,6 +71,7 @@ in
     # GHOSTTY — Zig-based GPU-accelerated terminal (memory-safe)
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."ghostty/config".text = tt.ghostty {
+      header = "Steelbore Ghostty Configuration";
       shell = "${pkgs.nushell}/bin/nu";
     };
 
