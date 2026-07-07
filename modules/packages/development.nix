@@ -5,6 +5,7 @@
   lib,
   pkgs,
   unstablePkgs,
+  nil,
   ...
 }:
 
@@ -68,6 +69,7 @@
         nodejs # JavaScript runtime (Node 24 LTS — provides node/npm/npx)
 
         # Nix Ecosystem
+        nil.packages.${pkgs.stdenv.hostPlatform.system}.default # Rust — Nix LSP (from flake input)
         nixfmt # Rust — Nix formatter
         cachix
         nix

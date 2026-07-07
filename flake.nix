@@ -65,6 +65,12 @@
     # package; the `agy` CLI stays out-of-band (upstream install script).
     antigravity-nix.url = "github:UnbreakableMJ/antigravity-nix";
     antigravity-nix.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # nil — Nix language server (Rust). Fork by UnbreakableMJ; flake outputs
+    # are identical to upstream oxalica/nil. Installed system-wide via
+    # modules/packages/development.nix and used in the devShell below.
+    nil.url = "github:UnbreakableMJ/nil";
+    nil.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -79,6 +85,7 @@
       construct,
       rapg,
       antigravity-nix,
+      nil,
       ...
     }:
     let
@@ -155,6 +162,7 @@
               rapg
               unstablePkgs
               antigravity-nix
+              nil
               ;
           };
           modules = [
@@ -194,6 +202,7 @@
                   rapg
                   unstablePkgs
                   antigravity-nix
+                  nil
                   ;
               };
               home-manager.users.${primaryUser} = import ./users/mj/home.nix;
@@ -234,12 +243,14 @@
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
 
       devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
-        packages = with nixpkgs.legacyPackages.${system}; [
-          nil # Nix language server
+        packages = [
+          nil.packages.${system}.default # Nix language server (from flake input)
+        ]
+        ++ (with nixpkgs.legacyPackages.${system}; [
           nixfmt # Nix formatter (RFC-style; canonical attr on 26.05)
           statix # Nix linter / antipattern checker
           deadnix # dead-code (unused binding) finder
-        ];
+        ]);
       };
 
       # `nix flake check` evaluates *and* builds both real machine configs

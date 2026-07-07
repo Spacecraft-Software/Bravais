@@ -139,6 +139,26 @@
         "type": "github"
       }
     },
+    "nil": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1765326831,
+        "narHash": "sha256-18j8X2Nbe0Wg1+7YrWRlYzmjZ5Wq0NCVwJHJlBIw/dc=",
+        "owner": "UnbreakableMJ",
+        "repo": "nil",
+        "rev": "504599f7e555a249d6754698473124018b80d121",
+        "type": "github"
+      },
+      "original": {
+        "owner": "UnbreakableMJ",
+        "repo": "nil",
+        "type": "github"
+      }
+    },
     "nix-flatpak": {
       "locked": {
         "lastModified": 1777402031,
@@ -209,6 +229,7 @@
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
+        "nil": "nil",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
