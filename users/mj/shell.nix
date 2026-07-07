@@ -453,7 +453,7 @@ in
           # Monthly vendored-binary reminder (elegance plan 5.1): claude-desktop,
           # chrome-remote-desktop, ollama, and BrowserOS pin upstream binaries
           # that `nix flake update` cannot bump.
-          let stamp = ($nu.home-path | path join ".cache" "bravais-vendored-check")
+          let stamp = ($nu.home-dir | path join ".cache" "bravais-vendored-check")
           let stale = (not ($stamp | path exists)) or ((date now) - (ls $stamp | get 0.modified) > 30day)
           if $stale {
             print $"(ansi yellow)vendored binaries unchecked for 30+ days — run: nu pkgs/update-vendored.nu --check(ansi reset)"
