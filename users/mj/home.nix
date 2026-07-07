@@ -17,6 +17,7 @@
     ./git.nix
     ./shell.nix
     ./terminals.nix
+    ./eww.nix
     ./niri.nix
     ./desktop-theme.nix
     ./apps.nix
@@ -38,6 +39,7 @@
       ".codex/skills"
       ".copilot/skills"
       ".opencode/skills"
+      ".openclaude/skills"
     ];
   };
 

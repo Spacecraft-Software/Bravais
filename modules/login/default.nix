@@ -155,7 +155,7 @@ let
   leftwm-session-inner = pkgs.writeShellScript "leftwm-session-inner" ''
     ${pkgs.picom}/bin/picom &
     ${pkgs.dunst}/bin/dunst &
-    ${pkgs.eww}/bin/eww open bar &
+    ${pkgs.eww}/bin/eww open bar --config $HOME/.config/eww-leftwm &
     ${pkgs.numlockx}/bin/numlockx on &
     ${
       gitway.packages.${pkgs.stdenv.hostPlatform.system}.default

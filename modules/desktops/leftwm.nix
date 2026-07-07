@@ -23,6 +23,30 @@
       # (observed: "Global up script failed: IO error: No such file or
       # directory"). Ship the theme as one nix-store derivation and expose
       # it via a single xdg.configFile symlink.
+      # Liquid template rendered by `leftwm-state -w 0 -n -t <path>` into
+      # Eww yuck widget DSL. Each tag becomes a clickable button that calls
+      # `leftwm-command 'SendWorkspaceToTag 0 <index>'` to switch tags.
+      # The four CSS classes match tag states from LeftWM's DisplayState JSON:
+      #   mine    — tag is owned by the active display AND focused
+      #   visible — tag is shown on some display but not focused
+      #   busy    — tag has windows but is not shown on any display
+      #   (else)  — tag is empty and not shown
+      workspaceTemplate = pkgs.writeText "leftwm-workspace-template.liquid" ''
+        (box :orientation "h" :class "workspaces" :space-evenly true
+        {% for tag in workspace.tags %}
+        {% if tag.mine %}
+          (button :class "ws-button-mine" :onclick "leftwm-command 'SendWorkspaceToTag 0 {{tag.index}}'" " {{ tag.name }} ")
+        {% elsif tag.visible %}
+          (button :class "ws-button-visible" :onclick "leftwm-command 'SendWorkspaceToTag 0 {{tag.index}}'" " {{ tag.name }} ")
+        {% elsif tag.busy %}
+          (button :class "ws-button-busy" :onclick "leftwm-command 'SendWorkspaceToTag 0 {{tag.index}}'" " {{ tag.name }} ")
+        {% else %}
+          (button :class "ws-button" :onclick "leftwm-command 'SendWorkspaceToTag 0 {{tag.index}}'" " {{ tag.name }} ")
+        {% endif %}
+        {% endfor %}
+        )
+      '';
+
       steelboreTheme = pkgs.linkFarm "leftwm-steelbore-theme" [
         # up/down are stubs: actual session bring-up happens in
         # `leftwm-xinitrc` (see modules/login/default.nix). leftwm-theme
@@ -235,6 +259,172 @@
         # LeftWM theme — single symlink to a nix-store directory containing
         # all theme files. See the steelboreTheme let-binding above.
         "leftwm/themes/current".source = steelboreTheme;
+
+        # ═══════════════════════════════════════════════════════════════════════════
+        # EWW — LeftWM (X11) status bar.
+        # Lives under eww-leftwm/ (a separate Eww config directory) so it
+        # doesn't collide with the Niri Eww config in users/mj/eww.nix.
+        # Launched via `eww open bar --config ~/.config/eww-leftwm` from
+        # the LeftWM session startup script (modules/login/default.nix).
+        # ═══════════════════════════════════════════════════════════════════════════
+        "eww-leftwm/eww.yuck".text = ''
+          ;; Steelbore Eww — LeftWM bar widget
+
+          (defpoll time    :interval "1s"  "date '+%Y-%m-%d %H:%M:%S'")
+          (defpoll cpu     :interval "3s"  "top -bn1 -d 0.1 | awk '/^%Cpu/ {printf \"%d\", $2 + $4}'")
+          (defpoll memory  :interval "5s"  "free | awk '/^Mem/ {printf \"%d\", $3 / $2 * 100}'")
+          (defpoll battery :interval "30s" "cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo --")
+
+          ;; Bluetooth radio state. `rfkill list bluetooth` "Soft blocked: yes"
+          ;; means the radio is OFF; empty/missing output (no BT hardware or rfkill
+          ;; unavailable) is also treated as off. The `bt` defpoll emits the Nerd
+          ;; Font mdi-bluetooth glyph (U+F293) via printf with explicit UTF-8 bytes
+          ;; — eww yuck string literals don't interpret \uXXXX escapes, so the
+          ;; glyph has to arrive from the shell. `bt_state` keeps the on/off word
+          ;; for the CSS class selector. 5 s; rfkill changes are user-initiated.
+          (defpoll bt       :interval "5s" "printf '\\xEF\\x8A\\x93'")
+          (defpoll bt_state :interval "5s"
+            "rfkill list bluetooth 2>/dev/null | grep -q 'Soft blocked: yes' && echo off || echo on")
+
+          ;; Network up/down. Scans /sys/class/net/* (skipping lo) for the first
+          ;; interface whose operstate is "up" — works on any host without
+          ;; hardcoding ifnames. `net` emits a Nerd Font glyph at the shell level:
+          ;; mdi-wifi (U+F2A7) when the up iface is wireless (wl*/wlan*), mdi-
+          ;; ethernet (U+F299) for a wired one, mdi-lan-disconnect (U+F2D3) when
+          ;; none. `net_state` gives "up"/"down" for the CSS class. 5 s; reads
+          ;; operstate which the kernel updates on link events.
+          (defpoll net :interval "5s"
+            "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] || continue; IFACE=\"$(basename \"\''${IF}\")\"; case \"\''${IFACE}\" in wl*|wlan*) printf '\\xEF\\x8A\\xA7';; *) printf '\\xEF\\x8A\\x99';; esac; exit 0; done; printf '\\xEF\\x8B\\x93'")
+          (defpoll net_state :interval "5s"
+            "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] && { echo up; exit 0; }; done; echo down")
+
+          ;; LeftWM IPC — event-driven workspace and window-title updates via
+          ;; `leftwm-state`, which streams JSON from LeftWM's Unix domain socket
+          ;; ($XDG_RUNTIME_DIR/leftwm/current_state.sock). `deflisten` reads
+          ;; each new line, updating the variable instantly on every state change
+          ;; (no polling). The `-n` flag preserves newlines in the Liquid template
+          ;; output so the `literal` widget can parse the rendered yuck.
+          (deflisten leftwm-ws "${pkgs.leftwm}/bin/leftwm-state -w 0 -n -t ${workspaceTemplate}")
+          (deflisten window-title "${pkgs.leftwm}/bin/leftwm-state -w 0 -s '{{ window_title }}'")
+
+          (defwidget bar []
+            (centerbox :orientation "h"
+              (box :orientation "h" :spacing 8 :halign "start"
+                (literal :content leftwm-ws)
+                (label :class {window-title == "" ? "title" : "window-title"} :halign "start" :text {window-title == "" ? "STEELBORE OS :: BRAVAIS" : window-title}))
+              (label :class "clock" :text time)
+              (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
+                ;; Bluetooth — glyph from `bt`, color from bt_state. Click handling
+                ;; not wired (per user choice); XF86Bluetooth key still toggles radio.
+                (label :class {bt_state == "on" ? "bt-on" : "bt-off"} :text bt)
+                ;; Network — glyph from `net`, color from net_state.
+                (label :class {net_state == "down" ? "net-down" : "net-up"} :text net)
+                ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
+                ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
+                ;; neutral. See .metric-warn / .metric-crit in eww.scss.
+                (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "CPU ''${cpu}%")
+                (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "RAM ''${memory}%")
+                (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "BAT ''${battery}%")
+                ;; System tray — SNI/D-Bus protocol. Works natively on X11
+                ;; (LeftWM); known issues on Wayland (not used here).
+                (systray :class "tray" :icon-size 16 :spacing 4 :space-evenly false :prepend-new true))))
+
+          (defwindow bar
+            :monitor 0
+            :geometry (geometry :x      "0"
+                                :y      "0"
+                                :width  "100%"
+                                :height "32px"
+                                :anchor "top center")
+            :stacking    "fg"
+            :reserve     (struts :distance "34px" :side "top")
+            :windowtype  "dock"
+            :wm-ignore   false
+            (bar))
+        '';
+
+        "eww-leftwm/eww.scss".text = ''
+          $voidNavy:    ${steelborePalette.voidNavy};
+          $moltenAmber: ${steelborePalette.moltenAmber};
+          $steelBlue:   ${steelborePalette.steelBlue};
+          $radiumGreen: ${steelborePalette.radiumGreen};
+          $liquidCool:  ${steelborePalette.liquidCool};
+          $redOxide:    ${steelborePalette.redOxide};
+
+          * {
+              font-family: "JetBrainsMono Nerd Font", monospace;
+              font-size: 13px;
+              font-weight: bold;
+          }
+
+          window {
+              background-color: $voidNavy;
+              color: $moltenAmber;
+              border-bottom: 2px solid $steelBlue;
+              padding: 0 12px;
+          }
+
+          .title  { color: $moltenAmber; }
+          .clock  { color: $liquidCool; }
+          .metrics { padding-right: 12px; }
+          .metric      { color: $radiumGreen; }  // normal
+          .metric-warn { color: $moltenAmber; }  // >=75% cpu/ram, <=30% battery
+          .metric-crit { color: $redOxide; }     // >=90% cpu/ram, <=15% battery
+
+          // Radio / network indicators — on = radium green, off = dim steel blue,
+          // network-down = red oxide (warning). Glyphs come from the Nerd Font
+          // codepoints in eww.yuck; classes here only color them.
+          .bt-on  { color: $radiumGreen; }
+          .bt-off { color: $steelBlue; }
+          .net-up   { color: $radiumGreen; }
+          .net-down { color: $redOxide; }
+
+          // ── LeftWM workspace buttons ──────────────────────────────────────
+          // mine    = active/focused tag on the current display
+          // visible = shown on some display but not focused
+          // busy    = has windows but not shown on any display
+          // (else)  = empty tag
+          .workspaces {
+              padding: 0 4px;
+          }
+
+          .ws-button-mine {
+              color: $moltenAmber;
+              border-bottom: 2px solid $moltenAmber;
+              padding: 0 4px;
+          }
+
+          .ws-button-visible {
+              color: $liquidCool;
+              border-bottom: 2px solid $liquidCool;
+              padding: 0 4px;
+          }
+
+          .ws-button-busy {
+              color: $steelBlue;
+              padding: 0 4px;
+          }
+
+          .ws-button {
+              color: $steelBlue;
+              opacity: 0.5;
+              padding: 0 4px;
+          }
+
+          // ── Focused window title ──────────────────────────────────────────
+          .window-title {
+              color: $moltenAmber;
+              max-width: 400px;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              white-space: nowrap;
+          }
+
+          // ── System tray ───────────────────────────────────────────────────
+          .tray {
+              padding: 0 4px;
+          }
+        '';
       };
 
     }
