@@ -251,6 +251,29 @@
 
                 // Scratchpad
                 (command: ToggleScratchPad, value: "Terminal", modifier: ["modkey"], key: "grave"),
+
+                // Multimedia + hardware hotkeys (mirror Niri). lefthk-core
+                // has no `allow-when-locked` analog — these will not fire
+                // while gtklock is engaged (the X locker grabs the keyboard).
+                // swayosd is Wayland-only (wlr-layer-shell), so volume +
+                // brightness route through steelbore-osd (a dunstify-based
+                // progress-bar popup) instead. Radio toggles + kbd-backlight
+                // cycle use the same shared wrappers as Niri.
+                (command: Execute, value: "steelbore-osd volume-up",      modifier: [], key: "XF86AudioRaiseVolume"),
+                (command: Execute, value: "steelbore-osd volume-down",    modifier: [], key: "XF86AudioLowerVolume"),
+                (command: Execute, value: "steelbore-osd volume-mute",    modifier: [], key: "XF86AudioMute"),
+                (command: Execute, value: "steelbore-osd mic-mute",       modifier: [], key: "XF86AudioMicMute"),
+                (command: Execute, value: "playerctl play-pause",        modifier: [], key: "XF86AudioPlay"),
+                (command: Execute, value: "playerctl next",              modifier: [], key: "XF86AudioNext"),
+                (command: Execute, value: "playerctl previous",          modifier: [], key: "XF86AudioPrev"),
+                (command: Execute, value: "steelbore-osd brightness-up",   modifier: [], key: "XF86MonBrightnessUp"),
+                (command: Execute, value: "steelbore-osd brightness-down", modifier: [], key: "XF86MonBrightnessDown"),
+                (command: Execute, value: "steelbore-kbd-light-cycle",    modifier: [], key: "XF86KbdLightOnOff"),
+                (command: Execute, value: "steelbore-bt-toggle",         modifier: [], key: "XF86Bluetooth"),
+                (command: Execute, value: "steelbore-airplane-toggle",    modifier: [], key: "XF86RFKill"),
+                // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
+                // Pipes a HM-rendered keybind summary through rofi -dmenu.
+                (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
             ],
             state_path: None,
         )
@@ -259,6 +282,63 @@
         # LeftWM theme — single symlink to a nix-store directory containing
         # all theme files. See the steelboreTheme let-binding above.
         "leftwm/themes/current".source = steelboreTheme;
+
+        # Keybinding help text — piped through `rofi -dmenu` by the
+        # Mod+Shift+Slash bind above. Kept manually in sync with the
+        # keybind array (lefthk-core has no introspection API to generate
+        # this automatically). One line per bind; rofi -markup-rows
+        # renders the leading `<b>...</b>` as bold.
+        "leftwm/keybinds.txt".text = ''
+        <b>Session</b>
+        Mod+Shift+E           Exit LeftWM
+        Ctrl+Alt+L            Lock screen (gtklock)
+
+        <b>Applications</b>
+        Mod+Return            Terminal (alacritty)
+        Mod+D                 Launcher (rlaunch)
+        Mod+Shift+D           Launcher (rofi)
+
+        <b>Window management</b>
+        Mod+Q                 Close focused window
+        Mod+F                 Toggle fullscreen
+        Mod+Shift+F           Toggle floating
+        Mod+K / Mod+Up        Focus window up
+        Mod+J / Mod+Down      Focus window down
+        Mod+Shift+K           Move window up
+        Mod+Shift+J           Move window down
+
+        <b>Layouts</b>
+        Mod+Space             Next layout
+        Mod+Shift+Space       Previous layout
+
+        <b>Workspaces</b>
+        Mod+1..9              Switch to workspace 1-9
+        Mod+Shift+1..9        Move window to workspace 1-9
+
+        <b>Resize</b>
+        Mod+Equal             Increase main width
+        Mod+Minus             Decrease main width
+
+        <b>Scratchpad</b>
+        Mod+Grave             Toggle terminal scratchpad
+
+        <b>Multimedia / hardware keys</b>
+        XF86AudioRaiseVolume  Volume up (steelbore-osd)
+        XF86AudioLowerVolume  Volume down (steelbore-osd)
+        XF86AudioMute         Mute toggle (steelbore-osd)
+        XF86AudioMicMute      Mic mute toggle (steelbore-osd)
+        XF86AudioPlay         Play/pause (playerctl)
+        XF86AudioNext         Next track (playerctl)
+        XF86AudioPrev         Previous track (playerctl)
+        XF86MonBrightnessUp   Brightness up (steelbore-osd)
+        XF86MonBrightnessDown Brightness down (steelbore-osd)
+        XF86KbdLightOnOff     Keyboard backlight cycle
+        XF86Bluetooth          Bluetooth toggle (rfkill)
+        XF86RFKill             Airplane mode toggle (rfkill)
+
+        <b>Help</b>
+        Mod+Shift+Slash        Show this keybinding help (rofi)
+        '';
 
         # ═══════════════════════════════════════════════════════════════════════════
         # EWW — LeftWM (X11) status bar.

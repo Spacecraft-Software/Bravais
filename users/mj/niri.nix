@@ -279,82 +279,29 @@ in
           XF86AudioRaiseVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "raise"; }
           XF86AudioLowerVolume  allow-when-locked=true { spawn "swayosd-client" "--output-volume" "lower"; }
           XF86AudioMute         allow-when-locked=true { spawn "swayosd-client" "--output-volume" "mute-toggle"; }
-          XF86AudioMicMute      allow-when-locked=true { spawn "swayosd-client" "--input-volume" "mute-toggle"; }
+          // Mic mute — wpctl performs the actual toggle. swayosd's
+          // --input-volume mute-toggle is a no-op on this PipeWire build
+          // (exits 0 without flipping source mute; verified 2026-07-07),
+          // so we still call it just to pop the OSD bar. The
+          // steelbore-audio-led daemon watches PipeWire mute state and
+          // lights platform::micmute automatically once wpctl flips it.
+          XF86AudioMicMute      allow-when-locked=true { spawn "sh" "-c" "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && swayosd-client --input-volume mute-toggle"; }
           // Media (MPRIS) — playerctl, no OSD
           XF86AudioPlay { spawn "playerctl" "play-pause"; }
           XF86AudioNext { spawn "playerctl" "next"; }
           XF86AudioPrev { spawn "playerctl" "previous"; }
           XF86AudioStop { spawn "playerctl" "stop"; }
-          // Keyboard backlight — brightnessctl (tpacpi led, levels 0–2)
+          // Keyboard backlight — the ThinkPad T490s F11 hotkey emits
+          // XF86KbdLightOnOff (a single toggle key, not separate +/- keys).
+          // steelbore-kbd-light-cycle wraps the 0→1→2→0 cycle.
+          // XF86KbdBrightnessUp/Down remain for keyboards with separate keys.
+          XF86KbdLightOnOff     allow-when-locked=true { spawn "steelbore-kbd-light-cycle"; }
           XF86KbdBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "+1"; }
           XF86KbdBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--device=tpacpi::kbd_backlight" "set" "1-"; }
-          // Radios — rfkill toggles with dunst feedback (wrappers in niri.nix)
+          // Radios — rfkill toggles with dunst feedback (wrappers in shared.nix)
           XF86Bluetooth allow-when-locked=true { spawn "steelbore-bt-toggle"; }
           XF86RFKill    allow-when-locked=true { spawn "steelbore-airplane-toggle"; }
-      }
-    '';
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # IRONBAR — Wayland status bar
-    # ═══════════════════════════════════════════════════════════════════════════
-    "ironbar/config.yaml".text = ''
-      anchor_to_edges: true
-      position: top
-      height: 32
-
-      start:
-        - type: workspaces
-        - type: focused
-
-      center:
-        - type: clock
-          format: "%H:%M:%S :: %Y-%m-%d"
-
-      end:
-        - type: sys_info
-          interval: 1
-          format:
-            - "CPU: {cpu_percent}%"
-            - "RAM: {memory_percent}%"
-        - type: tray
-    '';
-
-    "ironbar/style.css".text = ''
-      * {
-          font-family: "JetBrainsMono Nerd Font", monospace;
-          font-size: 14px;
-          transition: none;
-      }
-
-      window {
-          background-color: ${steelborePalette.voidNavy};
-          color: ${steelborePalette.moltenAmber};
-          border-bottom: 2px solid ${steelborePalette.steelBlue};
-      }
-
-      .widget {
-          padding: 0 10px;
-          border-left: 1px solid ${steelborePalette.steelBlue};
-      }
-
-      .workspaces button {
-          color: ${steelborePalette.steelBlue};
-          border-bottom: 2px solid transparent;
-      }
-
-      .workspaces button.active {
-          color: ${steelborePalette.moltenAmber};
-          border-bottom: 2px solid ${steelborePalette.moltenAmber};
-      }
-
-      .clock {
-          color: ${steelborePalette.moltenAmber};
-          font-weight: bold;
-      }
-
-      .sys_info {
-          color: ${steelborePalette.radiumGreen};
-      }
-    '';
+       }
+     '';
   };
 }

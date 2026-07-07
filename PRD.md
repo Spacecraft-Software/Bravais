@@ -601,22 +601,9 @@ Key bindings (Mod = Super):
   - Display brightness `XF86MonBrightnessUp/Down` → `swayosd-client --brightness` (OSD)
   - Volume `XF86AudioRaiseVolume/LowerVolume/Mute` + mic `XF86AudioMicMute` → `swayosd-client --output-volume/--input-volume` (OSD, capped at 100%)
   - Media `XF86AudioPlay/Next/Prev/Stop` → `playerctl`
-  - Keyboard backlight `XF86KbdBrightnessUp/Down` → `brightnessctl --device=tpacpi::kbd_backlight`
+  - Keyboard backlight `XF86KbdLightOnOff` → `steelbore-kbd-light-cycle` (ThinkPad T490s F11 hotkey, cycles tpacpi::kbd_backlight 0→1→2→0); `XF86KbdBrightnessUp/Down` → `brightnessctl` (keyboards with separate +/- keys)
   - Radios `XF86Bluetooth` / `XF86RFKill` → `steelbore-bt-toggle` / `steelbore-airplane-toggle` (rfkill, rootless via `/dev/rfkill` uaccess ACL, dunst feedback)
   - **OSD:** `swayosd-server` (spawned at startup) renders Steelbore-themed bars; config at `~/.config/swayosd/{config.toml,style.css}` (Void Navy / Molten Amber). Backlight is rootless via brightnessctl's udev rules (`services.udev.packages`; groups `video`/`input`). Added packages: `swayosd`, `brightnessctl`, `playerctl`.
-
-**Ironbar Configuration** (`/etc/ironbar/config.yaml`):
-- Position: top, height 32, anchor to edges
-- Start: workspaces, focused window
-- Center: clock (`%H:%M:%S :: %Y-%m-%d`)
-- End: sys_info (CPU%/RAM%, 1s interval), tray
-
-**Ironbar Stylesheet** (`/etc/ironbar/style.css`):
-- Font: Share Tech Mono / JetBrains Mono, 14px
-- Window: Void Navy background, Molten Amber text, Steel Blue bottom border
-- Workspaces: Steel Blue buttons, Molten Amber active with underline
-- Clock: Molten Amber bold
-- Sys info: Radium Green
 
 ### 9.5 LeftWM (X11 -- Tiling WM)
 
@@ -645,6 +632,13 @@ Key bindings:
 - **Workspaces:** `Mod+1-9` goto, `Mod+Shift+1-9` move
 - **Resize:** `Mod+Equal/Minus` +/-5
 - **Scratchpad:** `Mod+Grave` toggle terminal
+- **Multimedia / hardware keys** (mirror Niri; no `allow-when-locked` — lefthk-core has no analog; swayosd is Wayland-only, so OSD uses `steelbore-osd` dunstify popups):
+  - Volume `XF86AudioRaiseVolume/LowerVolume/Mute` + mic `XF86AudioMicMute` → `steelbore-osd`
+  - Brightness `XF86MonBrightnessUp/Down` → `steelbore-osd`
+  - Keyboard backlight `XF86KbdLightOnOff` → `steelbore-kbd-light-cycle`
+  - Media `XF86AudioPlay/Next/Prev` → `playerctl`
+  - Radios `XF86Bluetooth` / `XF86RFKill` → `steelbore-bt-toggle` / `steelbore-airplane-toggle`
+  - Keybinding help `Mod+Shift+Slash` → `rofi -dmenu` over `~/.config/leftwm/keybinds.txt`
 
 **Theme** (`/etc/leftwm/themes/current/theme.ron`):
 - Border width: 2, margin: 8, workspace margin: 8
@@ -654,9 +648,11 @@ Key bindings:
 lives in `modules/login/default.nix` (`leftwm-session-inner`: picom, dunst,
 eww bar, numlockx, SSH-key load, theme load + Void Navy root).
 
-**Status bar:** the shared eww bar (same widget as Niri; see `users/mj/niri.nix`).
-Polybar was removed in Phase E of the elegance plan — it was configured but
-never launched by any session script.
+**Status bar:** `eww open bar --config ~/.config/eww-leftwm` — a LeftWM-specific
+eww config (workspace tags via leftwm-state IPC, window title, BT/network
+glyphs, CPU/RAM/BAT metrics, systray). Lives in `modules/desktops/leftwm.nix`
+under `eww-leftwm/` so it doesn't collide with the Niri eww config in
+`users/mj/eww.nix`.
 
 **Picom** (`picom.conf`): GLX backend, vsync, inactive opacity 0.95, fading (delta 5), no shadows, no rounded corners.
 

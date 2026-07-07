@@ -20,47 +20,6 @@
       # (The daemon is spawned from the Niri config in users/mj/home.nix,
       # which derives its own wallpaperBin; here we only install the package.)
       wallpaperPkg = pkgs.awww or pkgs.swww;
-
-      # Radio toggles for the dedicated Bluetooth / airplane-mode keys.
-      # rfkill works rootless here: /dev/rfkill carries a systemd `uaccess`
-      # ACL for the active-session user. Feedback goes through dunstify
-      # (dunst is already in the package set below), since swayosd has no
-      # OSD for radio state. `-r` reuses a fixed notification id so repeated
-      # presses replace rather than stack.
-      btToggle = pkgs.writeShellScriptBin "steelbore-bt-toggle" ''
-        ${pkgs.util-linux}/bin/rfkill toggle bluetooth
-        if ${pkgs.util-linux}/bin/rfkill list bluetooth | grep -q "Soft blocked: yes"; then
-          ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-disabled "Bluetooth Off"
-        else
-          ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-active "Bluetooth On"
-        fi
-      '';
-      airplaneToggle = pkgs.writeShellScriptBin "steelbore-airplane-toggle" ''
-        ${pkgs.util-linux}/bin/rfkill toggle all
-        if ${pkgs.util-linux}/bin/rfkill list wlan | grep -q "Soft blocked: yes"; then
-          ${pkgs.dunst}/bin/dunstify -a Airplane -r 9912 -i airplane-mode "Airplane Mode On"
-        else
-          ${pkgs.dunst}/bin/dunstify -a Airplane -r 9912 -i network-wireless "Airplane Mode Off"
-        fi
-      '';
-
-      # Caffeine — toggle the swayidle idle daemon (auto lock + screen-off,
-      # configured in users/mj/home.nix). SIGSTOP pauses swayidle so its idle
-      # timers stop advancing (the machine stays awake); SIGCONT resumes
-      # normal idle behaviour. State tracked by a runtime-dir flag; dunstify
-      # reports the new state. Bound to Mod+Shift+C in the Niri config.
-      caffeineToggle = pkgs.writeShellScriptBin "steelbore-caffeine" ''
-        state="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active"
-        if [ -e "$state" ]; then
-          ${pkgs.procps}/bin/pkill -CONT -x swayidle || true
-          rm -f "$state"
-          ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
-        else
-          ${pkgs.procps}/bin/pkill -STOP -x swayidle || true
-          : > "$state"
-          ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-full "Caffeine on — staying awake"
-        fi
-      '';
     in
     {
       # Enable Niri
@@ -95,43 +54,32 @@
 
           # Dedicated/multimedia key handling (Niri has no built-in daemon for
           # XF86 keys, unlike GNOME/Plasma/COSMIC). The binds that drive these
-          # live in the Niri config in users/mj/home.nix.
+          # live in the Niri config in users/mj/niri.nix.
           swayosd # On-screen-display bars for brightness/volume
-          brightnessctl # C — display + keyboard backlight control
-          playerctl # MPRIS media control (was only transitive)
         ])
         ++ [
           # Wallpaper daemon — awww (renamed from swww upstream).
           wallpaperPkg
-          # Radio-toggle wrappers for the Bluetooth / airplane-mode keys.
-          btToggle
-          airplaneToggle
-          # Caffeine toggle (pauses/resumes swayidle) — bound to Mod+Shift+C.
-          caffeineToggle
         ];
 
-      # brightnessctl ships udev rules that make /sys/class/backlight (group
-      # `video`) and /sys/class/leds (group `input`) group-writable, so the
-      # display + keyboard backlight are controllable rootless. User `mj` is
-      # in both groups. swayosd-server's brightness backend also relies on
-      # the backlight being `video`-writable.
-      services.udev.packages = [ pkgs.brightnessctl ];
-
       # The Niri config itself is the SINGLE SOURCE at the user level:
-      # users/mj/home.nix → xdg.configFile."niri/config.kdl". niri reads
+      # users/mj/niri.nix → xdg.configFile."niri/config.kdl". niri reads
       # ~/.config/niri/config.kdl in preference to /etc/niri/config.kdl, so a
       # second copy here would be dead (and previously drifted — brightness
       # binds added here never took effect). Layout, startup (incl.
       # swayosd-server), and all key binds — including the XF86 keys that call
-      # the packages and wrapper scripts above — live in home.nix. This module
-      # only enables Niri, installs companion packages, ships the backlight
-      # udev rule, and provides the rfkill toggle wrappers.
+      # the packages and wrapper scripts above — live in niri.nix. This module
+      # only enables Niri, installs companion packages, and ships the
+      # wallpaper daemon.
+      #
+      # rfkill toggles, caffeine, keyboard-backlight cycle, X11 OSD wrapper,
+      # brightnessctl udev rule, and dunst config live in
+      # modules/desktops/shared.nix — shared with LeftWM so disabling either
+      # WM can't strip the other's config.
       #
       # Status bar / launcher / notifications / wallpaper / lock are likewise
       # configured at the home-manager level. Eww config lives in
-      # users/mj/home.nix (xdg.configFile."eww/..."); dunst remains at
-      # /etc/dunst/dunstrc (set in modules/desktops/shared.nix — shared with
-      # LeftWM so disabling either WM can't strip the other's config).
+      # users/mj/eww.nix (xdg.configFile."eww/...").
     }
   );
 }
