@@ -16,18 +16,43 @@
 }:
 
 let
+  # Bluetooth state detector — emits one of `off | on | connected` so the
+  # Eww bar (bt/bt_state defpolls) and the toggle OSD share one truth
+  # source. `off` = rfkill soft-blocked; `on` = radio up but no device
+  # reports Connected: yes; `connected` = at least one paired device is
+  # linked right now. Iterating `bluetoothctl info` per device is the
+  # portable BlueZ way — there is no single built-in "is anything
+  # connected?" query. Heavier than a pure rfkill check, but only the
+  # known-device list (typically 1–3 entries) is walked every 5 s.
+  btState = pkgs.writeShellScriptBin "steelbore-bt-state" ''
+    set -eu
+    if ${pkgs.util-linux}/bin/rfkill list bluetooth 2>/dev/null | grep -q "Soft blocked: yes"; then
+      echo off
+      exit 0
+    fi
+    for addr in $(${pkgs.bluez}/bin/bluetoothctl devices 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $2}'); do
+      if ${pkgs.bluez}/bin/bluetoothctl info "$addr" 2>/dev/null | grep -q "Connected: yes"; then
+        echo connected
+        exit 0
+      fi
+    done
+    echo on
+  '';
+
   # Radio toggles for the dedicated Bluetooth / airplane-mode keys.
   # rfkill works rootless: /dev/rfkill carries a systemd `uaccess` ACL for
   # the active-session user. Feedback goes through dunstify (dunst is
   # spawned by both sessions), since swayosd has no OSD for radio state.
   # `-r` reuses a fixed notification id so repeated presses replace
-  # rather than stack.
+  # rather than stack. The off branch uses critical urgency so dunst
+  # renders it in red oxide (the dunstrc urgency_critical palette) — the
+  # toggle-off event is now as unmistakable as the toggle-on one.
   btToggle = pkgs.writeShellScriptBin "steelbore-bt-toggle" ''
     ${pkgs.util-linux}/bin/rfkill toggle bluetooth
     if ${pkgs.util-linux}/bin/rfkill list bluetooth | grep -q "Soft blocked: yes"; then
-      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-disabled "Bluetooth Off"
+      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u critical "Bluetooth Off"
     else
-      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -i bluetooth-active "Bluetooth On"
+      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u normal "Bluetooth On"
     fi
   '';
   airplaneToggle = pkgs.writeShellScriptBin "steelbore-airplane-toggle" ''
@@ -189,6 +214,7 @@ in
         # are enabled. Both Niri and LeftWM binds reference these by
         # bare name (they land on PATH via environment.systemPackages).
         environment.systemPackages = [
+          btState
           btToggle
           airplaneToggle
           caffeineToggle

@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `modules/desktops/shared.nix` (gated on `niri.enable || leftwm.enable`)
   so both WMs get them. `brightnessctl` udev rule also moved here so
   LeftWM gets the same rootless backlight ACL as Niri.
+- **steelbore-bt-state** — single source of truth for the Bluetooth
+  indicator. Emits `off | on | connected` by combining the rfkill
+  soft-block check with a `bluetoothctl info` walk of paired devices.
+  Consumed by both Eww bars (the `bt`/`bt_state` defpolls) and the
+  toggle OSD so the icon, color, and notification stay consistent.
 - **nix-ld enabled** (`programs.nix-ld.enable = true` in
   `modules/packages/development.nix`) — allows running unpatched dynamic
   binaries (npm packages, Python wheels with native extensions, VS Code
@@ -39,6 +44,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Adit flake input placeholder** in `flake.nix` — commented-out `adit`
   input with activation checklist for when Adit (Spacecraft Software's
   universal SSH_ASKPASS helper) ships its flake.
+
+### Changed
+
+- **Eww indicator icons overhauled (Niri + LeftWM)** — all status-bar
+  glyphs now resolved from the installed JetBrainsMono Nerd Font v3.4.0
+  cmap (verified codepoints, not guessed):
+  - **Bluetooth** — three-state: `nf-md-bluetooth_off` (red) when
+    soft-blocked, `nf-fa-bluetooth` (dim steel blue) when on but idle,
+    `nf-md-bluetooth_connect` (green) when a paired device is linked.
+    The old single `mdi-bluetooth` glyph is gone; the CSS grew a
+    `bt-connected` class.
+  - **Network** — `nf-fa-wifi` (wireless), `nf-fa-ethernet` (wired),
+    `nf-fa-plane` (red when down). Replaces the v2-era `mdi-wifi` /
+    `mdi-ethernet` / `mdi-lan-disconnect` codepoints, which point at
+    the wrong glyphs under Nerd Font v3.
+  - **Caffeine indicator** — new bar widget mirroring the
+    `steelbore-caffeine` toggle: `nf-md-coffee_outline` (green) when
+    staying awake, `nf-md-coffee_off` (red) when idle. Reads the
+    `XDG_RUNTIME_DIR/steelbore-caffeine.active` flag file every 3 s.
+  - **Metric labels** — the `CPU` / `RAM` / `BAT` words are replaced by
+    `nf-oct-cpu`, `nf-fa-memory`, and `nf-md-battery` glyphs (the
+    percentage text and amber/red threshold colors are unchanged).
+- **Bluetooth toggle OSD** — the toggle-off branch now fires with
+  `dunstify -u critical`, so dunst renders "Bluetooth Off" in the red
+  oxide urgency palette (frame + foreground) just as prominently as the
+  toggle-on message. The off event is no longer a quiet blue notification.
 
 ### Fixed
 

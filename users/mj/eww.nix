@@ -22,45 +22,75 @@
       (defpoll memory  :interval "5s"  "free | awk '/^Mem/ {printf \"%d\", $3 / $2 * 100}'")
       (defpoll battery :interval "30s" "cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo --")
 
-      ;; Bluetooth radio state. `rfkill list bluetooth` "Soft blocked: yes"
-      ;; means the radio is OFF; empty/missing output (no BT hardware or rfkill
-      ;; unavailable) is also treated as off. The `bt` defpoll emits the Nerd
-      ;; Font mdi-bluetooth glyph (U+F293) via printf with explicit UTF-8 bytes
-      ;; — eww yuck string literals don't interpret \uXXXX escapes, so the
-      ;; glyph has to arrive from the shell. `bt_state` keeps the on/off word
-      ;; for the CSS class selector. 5 s; rfkill changes are user-initiated.
-      (defpoll bt       :interval "5s" "printf '\\xEF\\x8A\\x93'")
-      (defpoll bt_state :interval "5s"
-        "rfkill list bluetooth 2>/dev/null | grep -q 'Soft blocked: yes' && echo off || echo on")
+      ;; Bluetooth — three-state via the shared `steelbore-bt-state`
+      ;; helper (modules/desktops/shared.nix): off = rfkill soft-blocked,
+      ;; on = radio up but no device linked, connected = a paired device
+      ;; reports Connected: yes. `bt` emits the matching Nerd Font glyph
+      ;; from the shell (yuck literals don't parse \uXXXX): nf-md-
+      ;; bluetooth_off (U+F00B2) for off, nf-fa-bluetooth (U+F293) for on,
+      ;; nf-md-bluetooth_connect (U+F00B1) for connected. `bt_state`
+      ;; carries the word for the CSS class (bt-off=red, bt-on=dim steel
+      ;; blue, bt-connected=green). 5 s; radio + link changes are user-
+      ;; initiated and cheap to re-check.
+      (defpoll bt :interval "5s"
+        "case $(steelbore-bt-state) in off) printf '\\xF3\\xB0\\x82\\xB2';; connected) printf '\\xF3\\xB0\\x82\\xB1';; *) printf '\\xEF\\x8A\\x93';; esac")
+      (defpoll bt_state :interval "5s" "steelbore-bt-state")
 
-      ;; Network up/down. Scans /sys/class/net/* (skipping lo) for the first
-      ;; interface whose operstate is "up" — works on any host without
-      ;; hardcoding ifnames. `net` emits a Nerd Font glyph at the shell level:
-      ;; mdi-wifi (U+F2A7) when the up iface is wireless (wl*/wlan*), mdi-
-      ;; ethernet (U+F299) for a wired one, mdi-lan-disconnect (U+F2D3) when
-      ;; none. `net_state` gives "up"/"down" for the CSS class. 5 s; reads
-      ;; operstate which the kernel updates on link events.
+      ;; Network up/down. Scans /sys/class/net/* (skipping lo) for the
+      ;; first interface whose operstate is "up" — works on any host
+      ;; without hardcoding ifnames. `net` emits a Nerd Font glyph at the
+      ;; shell level: nf-fa-wifi (U+F1EB) when the up iface is wireless
+      ;; (wl*/wlan*), nf-fa-ethernet (U+EF44) for a wired one, nf-fa-plane
+      ;; (U+F072) when none. `net_state` gives "up"/"down" for the CSS
+      ;; class (net-up = green, net-down = red). 5 s; reads operstate which
+      ;; the kernel updates on link events.
       (defpoll net :interval "5s"
-        "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] || continue; IFACE=\"$(basename \"\''${IF}\")\"; case \"\''${IFACE}\" in wl*|wlan*) printf '\\xEF\\x8A\\xA7';; *) printf '\\xEF\\x8A\\x99';; esac; exit 0; done; printf '\\xEF\\x8B\\x93'")
+        "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] || continue; IFACE=\"$(basename \"\''${IF}\")\"; case \"\''${IFACE}\" in wl*|wlan*) printf '\\xEF\\x87\\xAB';; *) printf '\\xEE\\xBD\\x84';; esac; exit 0; done; printf '\\xEF\\x81\\xB2'")
       (defpoll net_state :interval "5s"
         "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] && { echo up; exit 0; }; done; echo down")
+
+      ;; Caffeine — mirrors the `steelbore-caffeine` toggle (SIGSTOP/
+      ;; SIGCONT of swayidle). State is a flag file under XDG_RUNTIME_DIR
+      ;; so the bar can read it rootless. `caf` emits nf-md-coffee_outline
+      ;; (U+F06CA) when active (staying awake) or nf-md-coffee_off
+      ;; (U+F0FAA) when idle; `caf_state` selects the CSS class (caf-on =
+      ;; green, caf-off = red). 3 s so the indicator flips within a blink
+      ;; of the Mod+Shift+C toggle.
+      (defpoll caf :interval "3s"
+        "if [ -e \"\''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ]; then printf '\\xF3\\xB0\\x9B\\x8A'; else printf '\\xF3\\xB0\\xBE\\xAA'; fi")
+      (defpoll caf_state :interval "3s"
+        "[ -e \"\''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ] && echo on || echo off")
+
+      ;; Static metric glyphs — emitted once (the icon never changes),
+      ;; polled on a long interval so eww re-evaluates the constant only
+      ;; hourly. nf-oct-cpu (U+F4BC), nf-fa-memory (U+EFC5), nf-md-battery
+      ;; (U+F0079). Shell printf carries the UTF-8 bytes for the same
+      ;; reason as the dynamic glyphs above.
+      (defpoll cpu-icon :interval "3600s" "printf '\\xEF\\x92\\xBC'")
+      (defpoll ram-icon :interval "3600s" "printf '\\xEE\\xBF\\x85'")
+      (defpoll bat-icon :interval "3600s" "printf '\\xF3\\xB0\\x81\\xB9'")
 
       (defwidget bar []
         (centerbox :orientation "h"
           (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
-            ;; Bluetooth — glyph from `bt`, color from bt_state. Click handling
-            ;; not wired (per user choice); XF86Bluetooth key still toggles radio.
-            (label :class {bt_state == "on" ? "bt-on" : "bt-off"} :text bt)
+            ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
+            ;; off=red, on=dim steel blue, connected=green). Click handling
+            ;; not wired; XF86Bluetooth key still toggles the radio.
+            (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt)
             ;; Network — glyph from `net`, color from net_state.
             (label :class {net_state == "down" ? "net-down" : "net-up"} :text net)
+            ;; Caffeine — glyph from `caf`, color from caf_state (on=green,
+            ;; off=red). Toggled by Mod+Shift+C → steelbore-caffeine.
+            (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
             ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
             ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
-            ;; neutral. See .metric-warn / .metric-crit in eww.scss.
-            (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "CPU ''${cpu}%")
-            (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "RAM ''${memory}%")
-            (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "BAT ''${battery}%"))))
+            ;; neutral. The label word is replaced by its Nerd Font glyph
+            ;; (cpu-icon/ram-icon/bat-icon); only the percentage stays as text.
+            (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%")
+            (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
+            (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon} ''${battery}%"))))
 
       (defwindow bar
         :monitor 0
@@ -102,13 +132,19 @@
       .metric-warn { color: $moltenAmber; }  // >=75% cpu/ram, <=30% battery
       .metric-crit { color: $redOxide; }     // >=90% cpu/ram, <=15% battery
 
-      // Radio / network indicators — on = radium green, off = dim steel blue,
-      // network-down = red oxide (warning). Glyphs come from the Nerd Font
-      // codepoints in eww.yuck; classes here only color them.
-      .bt-on  { color: $radiumGreen; }
-      .bt-off { color: $steelBlue; }
+      // Radio / network / mode indicators — colors only (glyphs come from
+      // the Nerd Font codepoints emitted in eww.yuck). Bluetooth is
+      // three-state: off = red oxide (disabled), on = dim steel blue
+      // (radio up, nothing linked), connected = radium green (active
+      // link). Network stays two-state: up = green, down = red. Caffeine
+      // mirrors the toggle: on = green (staying awake), off = red.
+      .bt-off       { color: $redOxide; }
+      .bt-on        { color: $steelBlue; }
+      .bt-connected { color: $radiumGreen; }
       .net-up   { color: $radiumGreen; }
       .net-down { color: $redOxide; }
+      .caf-on  { color: $radiumGreen; }
+      .caf-off { color: $redOxide; }
     '';
   };
 }
