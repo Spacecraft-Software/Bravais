@@ -76,13 +76,15 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/share
+    mkdir -p $out/bin $out/lib $out/share
 
     # Main launcher binary + credential helper
     cp usr/bin/github $out/bin/
     cp usr/bin/git-credential-copilot $out/bin/
 
-    # App bundle (Tauri runtime, native plugins, terminal integration, .so libs)
+    # App bundle (Tauri runtime, native plugins, terminal integration, .so libs).
+    # `cp -r src dest/` where dest already exists copies src *inside* dest, so
+    # the result is $out/lib/GitHub Copilot/ (preserving the upstream layout).
     cp -r "usr/lib/GitHub Copilot" $out/lib/
 
     # Icons
@@ -103,9 +105,13 @@ stdenv.mkDerivation (finalAttrs: {
     # `GDK_BACKEND=wayland` ensures GTK renders under Wayland (Niri).
     # gappsWrapperArgs sets GSETTINGS_SCHEMAS_DIR (GLib schemas),
     # GDK_PIXBUF_MODULE_FILE (pixbuf loaders), and XDG_DATA_DIRS.
+    # Prefix LD_LIBRARY_PATH with BOTH $out/lib (bundled .sos resolved here
+    # by autoPatchelfHook RPATH) AND the "GitHub Copilot" subdir (original
+    # upstream layout — the Tauri runtime may dlopen from there at runtime).
     makeWrapper $out/bin/github $out/bin/github-copilot \
+      --prefix LD_LIBRARY_PATH : "$out/lib/GitHub Copilot" \
       --prefix LD_LIBRARY_PATH : $out/lib \
-      --set-default GDK_BACKEND wayland \
+      --set-default WEBKIT_DISABLE_DMABUF_RENDERER 1 \
       "''${gappsWrapperArgs[@]}"
     # The upstream desktop file ships with Exec=github (the unwrapped
     # binary). Point it to the wrapper so LD_LIBRARY_PATH and the GTK
