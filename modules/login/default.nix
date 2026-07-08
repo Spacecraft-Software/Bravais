@@ -149,13 +149,9 @@ let
   # Why GDK_BACKEND=x11: forces eww/dunst onto X11 without probing
   # Wayland (we're under leftwm, X11-only).
   #
-  # leftwm's own `themes/current/up` is left as an `exit 0` stub
-  # (modules/desktops/leftwm.nix); session bring-up runs here, not
-  # there.
+  # leftwm's own `themes/current/up` handles picom, dunst, and eww
+  # (modules/desktops/leftwm.nix); session bring-up here is minimal.
   leftwm-session-inner = pkgs.writeShellScript "leftwm-session-inner" ''
-    ${pkgs.picom}/bin/picom &
-    ${pkgs.dunst}/bin/dunst &
-    ${pkgs.eww}/bin/eww open bar --config $HOME/.config/eww-leftwm &
     ${pkgs.numlockx}/bin/numlockx on &
     ${
       gitway.packages.${pkgs.stdenv.hostPlatform.system}.default
