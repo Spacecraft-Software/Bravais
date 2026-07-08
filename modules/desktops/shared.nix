@@ -30,7 +30,9 @@ let
       echo off
       exit 0
     fi
-    for addr in $(${pkgs.bluez}/bin/bluetoothctl devices 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $2}'); do
+    devices=$(${pkgs.bluez}/bin/bluetoothctl devices 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $2}')
+    for addr in $devices; do
+      if [ -z "$addr" ]; then continue; fi
       if ${pkgs.bluez}/bin/bluetoothctl info "$addr" 2>/dev/null | grep -q "Connected: yes"; then
         echo connected
         exit 0
