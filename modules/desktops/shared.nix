@@ -26,11 +26,22 @@ let
   # known-device list (typically 1–3 entries) is walked every 5 s.
   btState = pkgs.writeShellScriptBin "steelbore-bt-state" ''
     set -eu
-    if ${pkgs.util-linux}/bin/rfkill list bluetooth 2>/dev/null | grep -q "Soft blocked: yes"; then
+    # Check both Soft and Hard blocked (XanMod kernel may report Hard).
+    # If rfkill has no bluetooth entry, fall through to bluetoothctl.
+    rfkill_out=$(${pkgs.util-linux}/bin/rfkill list bluetooth 2>/dev/null || true)
+    if echo "$rfkill_out" | grep -qE "(Soft|Hard) blocked: yes"; then
       echo off
       exit 0
     fi
-    devices=$(${pkgs.bluez}/bin/bluetoothctl devices 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $2}')
+    # rfkill may have no bluetooth entry at all (uncommon but observed).
+    # Fall back to bluetoothctl D-Bus adapter power state.
+    if [ -z "$rfkill_out" ]; then
+      if ! ${pkgs.bluez}/bin/bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
+        echo off
+        exit 0
+      fi
+    fi
+    devices=$(${pkgs.bluez}/bin/bluetoothctl devices 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $2}' || true)
     for addr in $devices; do
       if [ -z "$addr" ]; then continue; fi
       if ${pkgs.bluez}/bin/bluetoothctl info "$addr" 2>/dev/null | grep -q "Connected: yes"; then
@@ -51,7 +62,10 @@ let
   # toggle-off event is now as unmistakable as the toggle-on one.
   btToggle = pkgs.writeShellScriptBin "steelbore-bt-toggle" ''
     ${pkgs.util-linux}/bin/rfkill toggle bluetooth
-    if ${pkgs.util-linux}/bin/rfkill list bluetooth | grep -q "Soft blocked: yes"; then
+    # Settle delay ensures the check below reads the *post*-toggle state.
+    sleep 0.3
+    rfkill_out=$(${pkgs.util-linux}/bin/rfkill list bluetooth 2>/dev/null || true)
+    if echo "$rfkill_out" | grep -qE "(Soft|Hard) blocked: yes"; then
       ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u critical "Bluetooth Off"
     else
       ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u normal "Bluetooth On"
