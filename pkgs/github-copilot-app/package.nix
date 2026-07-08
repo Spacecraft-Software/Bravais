@@ -12,6 +12,7 @@
   dpkg,
   autoPatchelfHook,
   makeWrapper,
+  wrapGAppsHook3,
   # GTK / webkit2gtk stack (Tauri runtime)
   alsa-lib,
   atk,
@@ -43,6 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
     dpkg
     autoPatchelfHook
     makeWrapper
+    wrapGAppsHook3
   ];
 
   buildInputs = [
@@ -61,6 +63,7 @@ stdenv.mkDerivation (finalAttrs: {
     webkitgtk_4_1
   ];
 
+  dontWrapGApps = true;
   dontConfigure = true;
   dontBuild = true;
 
@@ -98,9 +101,17 @@ stdenv.mkDerivation (finalAttrs: {
     # library path — the main binary links against webkit2gtk from nixpkgs
     # while the bundled libonnxruntime etc. are vendored.
     # `GDK_BACKEND=wayland` ensures GTK renders under Wayland (Niri).
+    # gappsWrapperArgs sets GSETTINGS_SCHEMAS_DIR (GLib schemas),
+    # GDK_PIXBUF_MODULE_FILE (pixbuf loaders), and XDG_DATA_DIRS.
     makeWrapper $out/bin/github $out/bin/github-copilot \
       --prefix LD_LIBRARY_PATH : $out/lib \
-      --set-default GDK_BACKEND wayland
+      --set-default GDK_BACKEND wayland \
+      "''${gappsWrapperArgs[@]}"
+    # The upstream desktop file ships with Exec=github (the unwrapped
+    # binary). Point it to the wrapper so LD_LIBRARY_PATH and the GTK
+    # environment are set when launched from the app menu.
+    substituteInPlace $out/share/applications/github-copilot.desktop \
+      --replace-fail "Exec=github" "Exec=github-copilot"
   '';
 
   meta = {
