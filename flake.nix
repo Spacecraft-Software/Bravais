@@ -99,6 +99,16 @@
       # directory name is a stable path, not a duplicate of this fact.
       primaryUser = "mj";
 
+      # ── Dev tooling pkgs ──────────────────────────────────────────────────
+      # A nixpkgs instance with the nixfmt-rfc-style alias suppressed, used by
+      # the flake formatter and devShell below. The alias fires a
+      # `warnOnInstantiate` during any access; the overlay replaces it with a
+      # direct pointer so the warning never fires from devShell / formatter
+      # evaluation.
+      devPkgs = nixpkgs.legacyPackages.${system}.extend (_final: prev: {
+        nixfmt-rfc-style = prev.nixfmt;
+      });
+
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
       channels = {
@@ -239,18 +249,17 @@
 
       # ── Developer tooling ────────────────────────────────────────────────
       # Quality-of-life outputs for `nix fmt`, `nix develop`, `nix flake check`.
-      # These use the stable channel's package set for the host system.
-      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
+      # Uses devPkgs (nixpkgs + nixfmt-rfc-style overlay) so the deprecation
+      # alias warning never fires from devShell / formatter evaluation.
+      formatter.${system} = devPkgs.nixfmt;
 
-      devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
+      devShells.${system}.default = devPkgs.mkShell {
         packages = [
           nil.packages.${system}.default # Nix language server (from flake input)
-        ]
-        ++ (with nixpkgs.legacyPackages.${system}; [
-          nixfmt # Nix formatter (RFC-style; canonical attr on 26.05)
-          statix # Nix linter / antipattern checker
-          deadnix # dead-code (unused binding) finder
-        ]);
+          devPkgs.nixfmt # Nix formatter (RFC-style; canonical attr)
+          devPkgs.statix # Nix linter / antipattern checker
+          devPkgs.deadnix # dead-code (unused binding) finder
+        ];
       };
 
       # `nix flake check` evaluates *and* builds both real machine configs

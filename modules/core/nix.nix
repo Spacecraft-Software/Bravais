@@ -37,7 +37,7 @@
   # independent of the flake and only ever fetched the wrong release.
   nix.channel.enable = false;
 
-  # Allow unfree packages
+  # Allow unfree packages.
   nixpkgs.config.allowUnfree = true;
 
   # envfs — FUSE filesystem that provides /usr/bin/env so shebang scripts
@@ -64,6 +64,16 @@
       sequoia-wot = prev.sequoia-wot.overrideAttrs (_old: {
         doCheck = false;
       });
+
+      # Silence the "nixfmt-rfc-style is now the same as pkgs.nixfmt" alias
+      # warning (nixpkgs 26.05, aliases.nix:1555). `nixfmt-rfc-style` is a
+      # `lib.warnOnInstantiate` wrapper around `nixfmt`; any access prints
+      # the warning. Bravais uses the canonical `nixfmt` attr everywhere
+      # (flake.nix formatter/devShell + development.nix), but a flake input
+      # (gitway, following nixpkgs-unstable) still references the old name.
+      # This overlay replaces the warned alias with a direct pointer so the
+      # warning never fires.
+      nixfmt-rfc-style = prev.nixfmt;
     })
   ];
 }
