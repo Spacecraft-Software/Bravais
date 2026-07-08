@@ -276,7 +276,7 @@ in
             --remember \
             --remember-session \
             --asterisks \
-            --greeting "STEELBORE :: BRAVAIS" \
+            --greeting "STEELBORE OS :: BRAVAIS" \
             --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions:${config.services.displayManager.sessionData.desktops}/share/xsessions
         '';
         user = "greeter";

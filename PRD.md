@@ -474,7 +474,7 @@ tuigreet \
   --remember \
   --remember-session \
   --asterisks \
-  --greeting "STEELBORE :: BRAVAIS" \
+  --greeting "STEELBORE OS :: BRAVAIS" \
   --sessions <sessionData>/share/wayland-sessions:<sessionData>/share/xsessions
 ```
 
