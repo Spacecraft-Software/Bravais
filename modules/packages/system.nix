@@ -36,7 +36,6 @@
         yazi # Rust — TUI file manager
         broot # Rust — Tree navigator
         superfile # Go — TUI file manager
-        spacedrive # Rust — Cross-platform explorer
         fclones # Rust — Duplicate finder
         kondo # Rust — Project cleaner
         pipe-rename # Rust — Interactive rename
@@ -127,7 +126,8 @@
       ])
       ++ (with unstablePkgs; [
         steam-run # FHS environment for running Linux binaries
-      ]);
+      ])
+      ++ (lib.optional (!(pkgs.spacedrive.meta.broken or false)) pkgs.spacedrive);
 
     # Non-package concerns live in their own modules (this module installs
     # packages only):

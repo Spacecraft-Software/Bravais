@@ -159,6 +159,11 @@
           unstablePkgs = import nixpkgs-unstable {
             inherit system;
             config.allowUnfree = true;
+            overlays = [
+              (_final: prev: {
+                nixfmt-rfc-style = prev.nixfmt;
+              })
+            ];
           };
         in
         ch.pkgs.lib.nixosSystem {
