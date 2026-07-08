@@ -179,6 +179,14 @@ let
 
   leftwm-xinitrc = pkgs.writeShellScript "leftwm-xinitrc" ''
     export GDK_BACKEND=x11
+    # Chromium-family Flatpaks (Chrome, Brave, Opera) and Electron apps read
+    # XDG_SESSION_TYPE to choose the ozone backend. Without this they probe
+    # WAYLAND_DISPLAY and crash because there is no Wayland compositor under
+    # LeftWM. ELECTRON_OZONE_PLATFORM_HINT covers Electron 28+.
+    export XDG_SESSION_TYPE=x11
+    export ELECTRON_OZONE_PLATFORM_HINT=x11
+    # Silence AT-SPI D-Bus errors in X11-only sessions (no a11y bridge running).
+    export NO_AT_BRIDGE=1
     export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gitway-agent.sock"
     # XDG_CURRENT_DESKTOP routes xdg-desktop-portal's per-DE config to
     # the GTK appearance backend (see xdg.portal.config.leftwm in
