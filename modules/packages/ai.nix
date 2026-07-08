@@ -58,6 +58,10 @@
       # Claude Desktop — official Anthropic Linux beta, repackaged from the .deb
       # (no nixpkgs package). Derivation + version/hash-bump notes live in
       # pkgs/claude-desktop/. Unfree; allowUnfree is set in modules/core/nix.nix.
-      ++ [ (import ../../pkgs { inherit pkgs; }).claude-desktop ];
+      ++ [ (import ../../pkgs { inherit pkgs; }).claude-desktop ]
+      # GitHub Copilot Desktop — official GitHub Tauri app, repackaged from the
+      # .deb. Derivation + version/hash-bump notes live in pkgs/github-copilot-app/.
+      # Unfree; same allowUnfree gate as claude-desktop.
+      ++ [ (import ../../pkgs { inherit pkgs; }).github-copilot-app ];
   };
 }
