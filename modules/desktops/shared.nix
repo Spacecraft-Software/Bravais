@@ -64,11 +64,10 @@ let
     ${pkgs.util-linux}/bin/rfkill toggle bluetooth
     # Settle delay ensures the check below reads the *post*-toggle state.
     sleep 0.3
-    rfkill_out=$(${pkgs.util-linux}/bin/rfkill list bluetooth 2>/dev/null || true)
-    if echo "$rfkill_out" | grep -qE "(Soft|Hard) blocked: yes"; then
-      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u critical "Bluetooth Off"
+    if [ "$(${btState}/bin/steelbore-bt-state)" = "off" ]; then
+      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u critical -i bluetooth-disabled "Bluetooth Off"
     else
-      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u normal "Bluetooth On"
+      ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u normal -i bluetooth "Bluetooth On"
     fi
   '';
   airplaneToggle = pkgs.writeShellScriptBin "steelbore-airplane-toggle" ''

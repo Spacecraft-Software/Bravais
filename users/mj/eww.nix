@@ -33,7 +33,7 @@
       ;; blue, bt-connected=green). 5 s; radio + link changes are user-
       ;; initiated and cheap to re-check.
       (defpoll bt :interval "5s"
-        "case $(steelbore-bt-state) in off) printf '\\xF3\\xB0\\x82\\xB2';; connected) printf '\\xF3\\xB0\\x82\\xB1';; *) printf '\\xEF\\x8A\\x93';; esac")
+        "case $(steelbore-bt-state) in off) printf '\\xF3\\xB0\\x82\\xB2';; connected) printf '\\xF3\\xB0\\x82\\xB1';; *) printf '\\xF3\\xB0\\x82\\xAF';; esac")
       (defpoll bt_state :interval "5s" "steelbore-bt-state")
 
       ;; Network up/down. Scans /sys/class/net/* (skipping lo) for the
@@ -45,9 +45,9 @@
       ;; class (net-up = green, net-down = red). 5 s; reads operstate which
       ;; the kernel updates on link events.
       (defpoll net :interval "5s"
-        "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] || continue; IFACE=\"$(basename \"\''${IF}\")\"; case \"\''${IFACE}\" in wl*|wlan*) printf '\\xEF\\x87\\xAB';; *) printf '\\xEE\\xBD\\x84';; esac; exit 0; done; printf '\\xEF\\x81\\xB2'")
+        "for IF in /sys/class/net/*; do [ \"''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"''${IF}/operstate\" 2>/dev/null)\" = up ] || continue; IFACE=\"$(basename \"''${IF}\")\"; case \"''${IFACE}\" in wl*|wlan*) printf '\\xEF\\x87\\xAB';; *) printf '\\xEE\\xBD\\x84';; esac; exit 0; done; printf '\\xEF\\x81\\xB2'")
       (defpoll net_state :interval "5s"
-        "for IF in /sys/class/net/*; do [ \"\''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"\''${IF}/operstate\" 2>/dev/null)\" = up ] && { echo up; exit 0; }; done; echo down")
+        "for IF in /sys/class/net/*; do [ \"''${IF}\" = /sys/class/net/lo ] && continue; [ \"$(cat \"''${IF}/operstate\" 2>/dev/null)\" = up ] && { echo up; exit 0; }; done; echo down")
 
       ;; Caffeine — mirrors the `steelbore-caffeine` toggle (SIGSTOP/
       ;; SIGCONT of swayidle). State is a flag file under XDG_RUNTIME_DIR
@@ -57,9 +57,9 @@
       ;; green, caf-off = red). 3 s so the indicator flips within a blink
       ;; of the Mod+Shift+C toggle.
       (defpoll caf :interval "3s"
-        "if [ -e \"\''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ]; then printf '\\xF3\\xB0\\x9B\\x8A'; else printf '\\xF3\\xB0\\xBE\\xAA'; fi")
+        "if [ -e \"''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ]; then printf '\\xF3\\xB0\\x9B\\x8A'; else printf '\\xF3\\xB0\\xBE\\xAA'; fi")
       (defpoll caf_state :interval "3s"
-        "[ -e \"\''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ] && echo on || echo off")
+        "[ -e \"''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active\" ] && echo on || echo off")
 
       ;; Static metric glyphs — emitted once (the icon never changes),
       ;; polled on a long interval so eww re-evaluates the constant only
