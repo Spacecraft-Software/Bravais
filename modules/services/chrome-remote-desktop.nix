@@ -40,6 +40,10 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ crd ]; # provides `start-host` for the one-time authorization
 
+    systemd.tmpfiles.rules = [
+      "L+ /opt/google/chrome-remote-desktop - - - - ${crd}${crdDir}"
+    ];
+
     users.groups.chrome-remote-desktop = { };
     users.users.${cfg.user}.extraGroups = [ "chrome-remote-desktop" ];
 
