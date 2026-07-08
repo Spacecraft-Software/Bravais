@@ -57,8 +57,11 @@
           path = pkgs.writeShellScript "leftwm-steelbore-up" ''
             ${pkgs.picom}/bin/picom &
             ${pkgs.dunst}/bin/dunst &
-            ${pkgs.eww}/bin/eww open bar --config "$HOME/.config/eww-leftwm" &
-            wait
+            # Start eww daemon first, then open the bar. `eww daemon` forks
+            # into the background on its own; eww open waits until the daemon
+            # is ready before returning — no sleep/wait needed here.
+            ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" daemon
+            ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" open bar
           '';
         }
         {
