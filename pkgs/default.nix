@@ -9,4 +9,5 @@
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };
+  github-copilot-app = pkgs.callPackage ./github-copilot-app/package.nix { };
 }
