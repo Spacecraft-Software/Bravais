@@ -56,6 +56,11 @@
           # XF86 keys, unlike GNOME/Plasma/COSMIC). The binds that drive these
           # live in the Niri config in users/mj/niri.nix.
           swayosd # On-screen-display bars for brightness/volume
+
+          # Polkit authentication agent — shows auth dialogs for privileged
+          # operations (fingerprint enrollment, Flatpak installs, etc.).
+          # GNOME/Plasma start their own agent; Niri needs this explicitly.
+          polkit_gnome
         ])
         ++ [
           # Wallpaper daemon — awww (renamed from swww upstream).

@@ -125,6 +125,9 @@ in
       // DISPLAY/WAYLAND_DISPLAY set, gitway-add uses $SSH_ASKPASS
       // (ksshaskpass) automatically. Cached for 24 h per the agent TTL.
       spawn-at-startup "gitway-add" "/home/mj/.ssh/id_ed25519"
+      // Polkit authentication agent — shows password dialogs for privileged
+      // ops (fingerprint enrollment, Flatpak installs, etc.).
+      spawn-at-startup "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
 
       input {
           keyboard {
