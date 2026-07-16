@@ -87,9 +87,20 @@
       antigravity-nix,
       nil,
       ...
-    }:
+    } @ inputs:
     let
       system = "x86_64-linux";
+
+      # nil — Nix language server. Overridden to disable tests due to upstream
+      # Nix builtins documentation updates breaking tests.
+      nil = inputs.nil // {
+        packages = builtins.mapAttrs (sys: pkgs: pkgs // (builtins.mapAttrs (name: pkg:
+          if name == "default" || name == "nil" then
+            pkg.overrideAttrs (oldAttrs: { doCheck = false; })
+          else
+            pkg
+        ) pkgs)) inputs.nil.packages;
+      };
 
       # Steelbore color palette — single canonical source in lib/colors.nix.
       steelborePalette = import ./lib/colors.nix;

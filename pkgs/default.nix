@@ -10,4 +10,8 @@
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };
   github-copilot-app = pkgs.callPackage ./github-copilot-app/package.nix { };
+  bravais-mcp = pkgs.callPackage ./bravais-mcp/package.nix { };
+  opencode-desktop = pkgs.callPackage ./opencode-desktop/package.nix { };
+  goose-desktop = pkgs.callPackage ./goose-desktop/package.nix { };
 }
+

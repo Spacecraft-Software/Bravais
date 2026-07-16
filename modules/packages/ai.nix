@@ -45,7 +45,10 @@
         # Ollama moved to modules/services/ollama.nix (official prebuilt 0.31.1 —
         # nixpkgs' 0.24.0 is too old for current models).
       ])
+      # bravais-mcp: locally packaged first-party MCP utility
+      ++ [ (import ../../pkgs { inherit pkgs; }).bravais-mcp ]
       # mcp-nixos: always from nixpkgs-unstable via specialArgs threading.
+
       ++ (with unstablePkgs; [
         # claude-code intentionally disabled — installed out-of-band via the
         # official installer (npm `@anthropic-ai/claude-code` or the curl
@@ -62,6 +65,15 @@
       # GitHub Copilot Desktop — official GitHub Tauri app, repackaged from the
       # .deb. Derivation + version/hash-bump notes live in pkgs/github-copilot-app/.
       # Unfree; same allowUnfree gate as claude-desktop.
-      ++ [ (import ../../pkgs { inherit pkgs; }).github-copilot-app ];
+      ++ [ (import ../../pkgs { inherit pkgs; }).github-copilot-app ]
+      # OpenCode Desktop — official OpenCode agent app, repackaged from the
+      # .deb. Derivation + version/hash-bump notes live in pkgs/opencode-desktop/.
+      # MIT license.
+      ++ [ (import ../../pkgs { inherit pkgs; }).opencode-desktop ]
+      # Goose Desktop — official Block AI agent app, repackaged from the .deb
+      # (no Flathub listing yet — block/goose#6602 is open; revisit once
+      # published). Derivation + version/hash-bump notes live in
+      # pkgs/goose-desktop/. Apache-2.0 license.
+      ++ [ (import ../../pkgs { inherit pkgs; }).goose-desktop ];
   };
 }

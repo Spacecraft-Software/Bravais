@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[workspace]
+resolver = "2"
+members = [
+    "libbravais-mcp",
+    "bravais-mcp-server",
+    "bravais-mcp",
+]

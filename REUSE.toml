@@ -21,6 +21,8 @@ path = [
     "flake.lock",
     "flakes/rapg/flake.lock",
     "pkgs/steelbore-audio-led/Cargo.lock",
+    "bravais-mcp/Cargo.lock",
+    "bravais-mcp/.gitignore",
     "home.nix",
     "system.nix",
 ]
@@ -36,6 +38,8 @@ path = [
     "**/*.nix",
     "pkgs/steelbore-audio-led/src/**",
     "pkgs/steelbore-audio-led/Cargo.toml",
+    "bravais-mcp/**/*.rs",
+    "bravais-mcp/**/*.toml",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"

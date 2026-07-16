@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# mappings.toml — Canonical command mapping table for Bravais MCP
+
+schema_version = 1
+
+[[mappings]]
+legacy = "grep"
+preferred = "rg"
+language = "rust"
+category = "core-unix"
+notes = "Recursive by default, respects .gitignore"
+gotchas = "ripgrep search syntax and default flags differ from GNU grep. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "find"
+preferred = "fd"
+language = "rust"
+category = "core-unix"
+notes = "Regex, smart-case, parallel search"
+gotchas = "fd uses regex and ignores hidden files by default. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "ls"
+preferred = "eza"
+language = "rust"
+category = "core-unix"
+notes = "Modern replacement with color, tree format, and git integration"
+gotchas = "eza has custom styling and different tree/metadata flags. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "cat"
+preferred = "bat"
+language = "rust"
+category = "core-unix"
+notes = "Cat with syntax highlighting and Git integration. Use real cat for pipes"
+gotchas = "bat formats output for paging by default. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "du"
+preferred = "dust"
+language = "rust"
+category = "core-unix"
+notes = "Visual disk usage analyzer"
+gotchas = "dust outputs a visual tree diagram and calculates sizes concurrently. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "ps"
+preferred = "procs"
+language = "rust"
+category = "core-unix"
+notes = "Modern replacement for ps with TCP/UDP columns and trees"
+gotchas = "procs output headers and options differ. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "top"
+preferred = "bottom"
+language = "rust"
+category = "core-unix"
+notes = "Graphical system monitor with process controls"
+gotchas = "bottom (btm) is a full TUI utility with completely different flags. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "jq"
+preferred = "jaq"
+language = "rust"
+category = "core-unix"
+notes = "Fast JSON processor in Rust"
+gotchas = "jaq is a mostly compatible clone of jq but handles some edge-case filters differently. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "curl"
+preferred = "xh"
+language = "rust"
+category = "networking"
+notes = "HTTPie-style HTTP client; keep curl for scripting"
+gotchas = "xh has a completely different arguments layout than curl. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "ping"
+preferred = "gping"
+language = "rust"
+category = "networking"
+notes = "Ping with a visual graph output"
+gotchas = "gping displays a character-based graph in the terminal. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "dig"
+preferred = "dog"
+language = "rust"
+category = "networking"
+notes = "DNS query client with JSON support"
+gotchas = "dog flags are simplified compared to dig. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "sed"
+preferred = "sd"
+language = "rust"
+category = "core-unix"
+notes = "Intuitive find/replace tool"
+gotchas = "sd uses regex find/replace syntax instead of sed's s/find/replace/g. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "sudo"
+preferred = "sudo-rs"
+language = "rust"
+category = "security"
+notes = "Memory-safe implementation of sudo in Rust"
+gotchas = "sudo-rs is a drop-in replacement but supports only a subset of traditional sudo features. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+
+[[mappings]]
+legacy = "make"
+preferred = "just"
+language = "rust"
+category = "core-unix"
+notes = "Handy runner for project-specific commands"
+gotchas = "justfiles do not support make's implicit target rules. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
