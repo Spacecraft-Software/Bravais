@@ -92,11 +92,25 @@
       system = "x86_64-linux";
 
       # nil — Nix language server. Overridden to disable tests due to upstream
-      # Nix builtins documentation updates breaking tests.
+      # Nix builtins documentation updates breaking tests, and to replace
+      # upstream's own `CFG_DEFAULT_FORMATTER = lib.getExe nixfmt-rfc-style;`
+      # (oxalica/nil flake.nix, built from *its own* unoverlaid nixpkgs input)
+      # with canonical nixfmt. That line forces the deprecated alias the
+      # moment nil's derivation is instantiated — evaluating ANY nixosConfig
+      # that installs nil (dry-build, switch, flake check) always printed
+      # "nixfmt-rfc-style is now the same as pkgs.nixfmt which should be used
+      # instead.", regardless of the nixfmt-rfc-style overlay in
+      # modules/core/nix.nix (that overlay only covers our own pkgs
+      # instantiation, not nil's separate one). Overriding the attribute here
+      # replaces the lazy thunk before it's ever forced, so the original
+      # nixfmt-rfc-style reference is dead code and the warning never fires.
       nil = inputs.nil // {
         packages = builtins.mapAttrs (sys: pkgs: pkgs // (builtins.mapAttrs (name: pkg:
           if name == "default" || name == "nil" then
-            pkg.overrideAttrs (oldAttrs: { doCheck = false; })
+            pkg.overrideAttrs (oldAttrs: {
+              doCheck = false;
+              CFG_DEFAULT_FORMATTER = "${nixpkgs.legacyPackages.${sys}.nixfmt}/bin/nixfmt";
+            })
           else
             pkg
         ) pkgs)) inputs.nil.packages;
