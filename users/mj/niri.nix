@@ -132,7 +132,7 @@ in
       input {
           keyboard {
               xkb {
-                  layout "us,ar"
+                  layout "us,ara"
                   // grp:ctrl_space_toggle drives switching under X11/LeftWM, but
                   // is a no-op in Niri (Niri grabs keys for its own binds before
                   // xkbcommon's group-toggle action fires). The Mod+Space bind in
@@ -165,9 +165,14 @@ in
           // (Minus, Equal, Return) elsewhere in the bind table.
           Mod+Shift+Slash hotkey-overlay-title="Show Important Hotkeys" { show-hotkey-overlay; }
 
-          // Keyboard layout — toggle us ⇄ ar. Niri's native action (see the xkb
+          // Keyboard layout — toggle us ⇄ ara. Niri's native action (see the xkb
           // note above for why the grp: toggle alone doesn't switch here).
-          Mod+Space hotkey-overlay-title="Switch Keyboard Layout (us/ar)" { switch-layout "next"; }
+          Mod+Space hotkey-overlay-title="Switch Keyboard Layout (us/ara)" { switch-layout "next"; }
+
+          // Keyring unlock — see steelbore-keyring-unlock (modules/desktops/
+          // shared.nix) for why this is needed with fingerprint login enabled.
+          // (Mod+Shift+K is already move-window-up, so Unlock gets +U instead.)
+          Mod+Shift+U hotkey-overlay-title="Unlock Keyring" { spawn "steelbore-keyring-unlock"; }
 
           // Applications
           Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }

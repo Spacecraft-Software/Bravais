@@ -156,6 +156,7 @@
         maim # Screenshot
         xdotool # X11 automation
         numlockx # NumLock control
+        xkb-switch # Query/cycle live XKB layout group (eww lang indicator)
       ];
 
       # LeftWM configuration
@@ -202,6 +203,10 @@
                 // Session
                 (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
                 (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
+                // Keyring unlock — see steelbore-keyring-unlock
+                // (modules/desktops/shared.nix) for why this is needed
+                // with fingerprint login enabled.
+                (command: Execute, value: "steelbore-keyring-unlock", modifier: ["modkey", "Shift"], key: "u"),
 
                 // Applications
                 // Mod+Return launches alacritty — the default terminal across
@@ -301,6 +306,7 @@
         <b>Session</b>
         Mod+Shift+E           Exit LeftWM
         Ctrl+Alt+L            Lock screen (gtklock)
+        Mod+Shift+U           Unlock keyring
 
         <b>Applications</b>
         Mod+Return            Terminal (alacritty)
@@ -403,6 +409,15 @@
           (defpoll caf_state :interval "3s"
             "if [ -e \"$XDG_RUNTIME_DIR/steelbore-caffeine.active\" ] || [ -e \"/tmp/steelbore-caffeine.active\" ]; then echo on; else echo off; fi")
 
+          ;; Keyboard language indicator — active layout name from the shared
+          ;; `steelbore-layout-state` helper (modules/desktops/shared.nix),
+          ;; read live via xkb-switch on X11. `lang_state` carries a short
+          ;; code ("EN"/"AR") derived from the same string, used only for
+          ;; the CSS class. 1 s so it updates promptly after Ctrl+Space.
+          (defpoll lang :interval "1s" "steelbore-layout-state")
+          (defpoll lang_state :interval "1s"
+            "case $(steelbore-layout-state) in *Arabic*|*ara*) echo ar;; *) echo en;; esac")
+
           ;; Static metric glyphs — emitted once (the icon never changes),
           ;; polled on a long interval so eww re-evaluates the constant only
           ;; hourly. nf-oct-cpu (U+F4BC), nf-fa-memory (U+EFC5), nf-md-battery
@@ -428,7 +443,12 @@
                 (label :class "window-title" :halign "start" :text window-title))
               (label :class "clock" :text time)
               (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
-                ;; Caffeine — leftmost in the metrics group. Glyph from `caf`,
+                ;; Keyboard language — leftmost in the metrics group. Text
+                ;; from `lang`, color from `lang_state` (en=steel blue,
+                ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
+                (button :onclick "xkb-switch -n"
+                  :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
+                ;; Caffeine — glyph from `caf`,
                 ;; color from caf_state (on=green, off=red). Clickable toggles.
                 (button :onclick "steelbore-caffeine"
                   :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
@@ -507,6 +527,11 @@
           .net-down { color: $redOxide; }
           .caf-on  { color: $radiumGreen; }
           .caf-off { color: $redOxide; }
+
+          // Keyboard language — en = steel blue (default), ar = molten amber
+          // (secondary layout, draws the eye when active).
+          .lang-en { color: $steelBlue; }
+          .lang-ar { color: $moltenAmber; }
 
           // ── LeftWM workspace buttons ──────────────────────────────────────
           // mine    = active/focused tag on the current display

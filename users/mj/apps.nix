@@ -167,6 +167,19 @@ in
     $DRY_RUN_CMD install -Dm644 ${zellijConfigFile} "$HOME/.config/zellij/config.kdl"
   '';
 
+  # Default GUI file manager (COSMIC Files) and text editor (COSMIC Text
+  # Editor). A Home Manager option, not per-DE — it writes
+  # ~/.config/mimeapps.list, read by desktop-agnostic xdg-open/xdg-mime
+  # regardless of which of the five session DEs is active. Independent of
+  # EDITOR/VISUAL=msedit (shell.nix), which is the terminal editor.
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "inode/directory" = "com.system76.CosmicFiles.desktop";
+      "text/plain" = "com.system76.CosmicEdit.desktop";
+    };
+  };
+
   xdg.configFile = {
     "containers/containers.conf".text = ''
       [engine]

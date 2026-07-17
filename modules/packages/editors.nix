@@ -38,6 +38,7 @@
         lapce # Rust — Lightning fast
         neovide # Rust — Neovim GUI
         cosmic-edit # Rust — COSMIC editor
+        cosmic-files # Rust — COSMIC file manager
 
         # GUI Editors (Standard)
         emacs-pgtk # Emacs with pure GTK backend (Wayland-native)

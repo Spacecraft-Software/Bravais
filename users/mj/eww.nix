@@ -61,6 +61,15 @@
       (defpoll caf_state :interval "3s"
         "if [ -e \"$XDG_RUNTIME_DIR/steelbore-caffeine.active\" ] || [ -e \"/tmp/steelbore-caffeine.active\" ]; then echo on; else echo off; fi")
 
+      ;; Keyboard language indicator — active layout name from the shared
+      ;; `steelbore-layout-state` helper (modules/desktops/shared.nix),
+      ;; e.g. "English (US)" / "Arabic" on Niri. `lang_state` carries a
+      ;; short code ("EN"/"AR") derived from the same string, used only
+      ;; for the CSS class. 1 s so it updates promptly after Mod+Space.
+      (defpoll lang :interval "1s" "steelbore-layout-state")
+      (defpoll lang_state :interval "1s"
+        "case $(steelbore-layout-state) in *Arabic*|*ara*) echo ar;; *) echo en;; esac")
+
       ;; Static metric glyphs — emitted once (the icon never changes),
       ;; polled on a long interval so eww re-evaluates the constant only
       ;; hourly. nf-oct-cpu (U+F4BC), nf-fa-memory (U+EFC5), nf-md-battery
@@ -75,7 +84,10 @@
           (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
-            ;; Caffeine — leftmost in the metrics group. Glyph from `caf`,
+            ;; Keyboard language — leftmost in the metrics group. Text from
+            ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
+            (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
+            ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
             ;; Mod+Shift+C → steelbore-caffeine.
             (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
@@ -146,6 +158,11 @@
       .net-down { color: $redOxide; }
       .caf-on  { color: $radiumGreen; }
       .caf-off { color: $redOxide; }
+
+      // Keyboard language — en = steel blue (default), ar = molten amber
+      // (secondary layout, draws the eye when active).
+      .lang-en { color: $steelBlue; }
+      .lang-ar { color: $moltenAmber; }
     '';
   };
 }

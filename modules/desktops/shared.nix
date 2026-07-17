@@ -109,6 +109,45 @@ let
     echo $(( (cur + 1) % (max + 1) )) > "/sys/class/leds/$dev/brightness"
   '';
 
+  # Keyboard-layout state — emits the active layout's display name (e.g.
+  # "English (US)" / "Arabic" on Niri, or the xkb layout code on X11).
+  # Backs the Eww language indicator (both eww.nix and leftwm.nix).
+  # Niri: `niri msg --json keyboard-layouts` reports the configured layout
+  # names plus which index is active — parsed with jaq (already a system
+  # package, modules/packages/system.nix). LeftWM/X11: xkb toggle state
+  # lives in the X server itself, not a config file, so a *live* read needs
+  # xkb-switch (-p prints the active layout) rather than `setxkbmap -query`
+  # (which only echoes the static config, not which of the two is active).
+  layoutState = pkgs.writeShellScriptBin "steelbore-layout-state" ''
+    set -eu
+    if [ -n "''${NIRI_SOCKET:-}" ]; then
+      ${pkgs.niri}/bin/niri msg --json keyboard-layouts 2>/dev/null \
+        | ${pkgs.jaq}/bin/jaq -r '.names[.current_idx] // "??"' 2>/dev/null || echo "??"
+    else
+      ${pkgs.xkb-switch}/bin/xkb-switch -p 2>/dev/null || echo "??"
+    fi
+  '';
+
+  # Keyring unlock — the login keyring stays locked when signing in via
+  # fingerprint (pam_fprintd is `sufficient` ahead of pam_unix in the greetd
+  # PAM stack, so pam_gnome_keyring never receives a password to auto-unlock
+  # with — see modules/hardware/fingerprint.nix). This prompts once per
+  # session via a masked dmenu-style dialog and feeds the password straight
+  # into gnome-keyring-daemon, so apps that use libsecret (e.g. Chrome) keep
+  # sessions across restarts instead of falling back to unencrypted storage.
+  # No intermediate file; the password only ever lives in the pipe between
+  # the two processes.
+  keyringUnlock = pkgs.writeShellScriptBin "steelbore-keyring-unlock" ''
+    set -eu
+    if [ -n "''${NIRI_SOCKET:-}" ]; then
+      pw=$(${pkgs.fuzzel}/bin/fuzzel --dmenu --password -p "Unlock keyring: ")
+    else
+      pw=$(${pkgs.rofi}/bin/rofi -dmenu -password -p "Unlock keyring")
+    fi
+    printf '%s' "$pw" | ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --unlock --replace >/dev/null
+    ${pkgs.dunst}/bin/dunstify -a Keyring -r 9914 -i changes-prevent "Keyring unlocked"
+  '';
+
   # X11 OSD for LeftWM — swayosd is Wayland-only (wlr-layer-shell), so
   # LeftWM hotkeys route through this wrapper instead. Performs the
   # wpctl/brightnessctl action AND emits a dunstify progress-bar popup
@@ -235,6 +274,8 @@ in
           caffeineToggle
           kbdLightCycle
           osd
+          layoutState
+          keyringUnlock
           # Explicit on both sessions (already system-wide via core
           # audio, but listed here for clarity — LeftWM binds need them).
           pkgs.brightnessctl # C — display + keyboard backlight
