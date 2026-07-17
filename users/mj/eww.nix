@@ -83,7 +83,7 @@
         (centerbox :orientation "h"
           (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
           (label :class "clock" :text time)
-          (box :orientation "h" :spacing 8 :halign "end" :class "metrics"
+          (box :orientation "h" :spacing 8 :space-evenly false :halign "end" :class "metrics"
             ;; Keyboard language — leftmost in the metrics group. Text from
             ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
             (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
