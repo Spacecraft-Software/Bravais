@@ -83,18 +83,18 @@
         (centerbox :orientation "h"
           (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
           (label :class "clock" :text time)
-          (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
+          (box :orientation "h" :spacing 8 :halign "end" :class "metrics"
             ;; Keyboard language — leftmost in the metrics group. Text from
             ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
             (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
-            ;; Caffeine — glyph from `caf`,
-            ;; color from caf_state (on=green, off=red). Toggled by
-            ;; Mod+Shift+C → steelbore-caffeine.
-            (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
             ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
             ;; off=red, on=dim steel blue, connected=green). Click handling
             ;; not wired; XF86Bluetooth key still toggles the radio.
             (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt)
+            ;; Caffeine — glyph from `caf`,
+            ;; color from caf_state (on=green, off=red). Toggled by
+            ;; Mod+Shift+C → steelbore-caffeine.
+            (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
             ;; Network — glyph from `net`, color from net_state.
             (label :class {net_state == "down" ? "net-down" : "net-up"} :text net)
             ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
