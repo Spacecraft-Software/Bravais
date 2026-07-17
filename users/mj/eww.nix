@@ -101,7 +101,10 @@
             ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
             ;; neutral. The label word is replaced by its Nerd Font glyph
             ;; (cpu-icon/ram-icon/bat-icon); only the percentage stays as text.
-            (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%")
+            ;; "metric-group-start" adds a bit of breathing room ahead of the
+            ;; cpu/ram/battery trio, setting it visually apart from the
+            ;; radio/caffeine cluster (lang/bt/caf/net) to its left.
+            (label :class {"metric-group-start " + (cpu >= 90 ? "metric-crit" : cpu >= 75 ? "metric-warn" : "metric")} :text "''${cpu-icon} ''${cpu}%")
             (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
             (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon} ''${battery}%"))))
 
@@ -141,6 +144,7 @@
       .title  { color: $moltenAmber; }
       .clock  { color: $liquidCool; }
       .metrics { padding-right: 12px; }
+      .metric-group-start { margin-left: 10px; }
       .metric      { color: $radiumGreen; }  // normal
       .metric-warn { color: $moltenAmber; }  // >=75% cpu/ram, <=30% battery
       .metric-crit { color: $redOxide; }     // >=90% cpu/ram, <=15% battery
