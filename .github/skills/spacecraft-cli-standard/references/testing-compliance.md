@@ -217,7 +217,7 @@ Emit a structured compliance report on every CI run:
   "metadata": {
     "tool": "caliper",
     "version": "0.3.0",
-    "spec_version": "SFRS v1.0.0",
+    "spec_version": "the CLI Standard v1.0.0",
     "timestamp": "2026-04-10T14:30:00Z"
   },
   "data": {

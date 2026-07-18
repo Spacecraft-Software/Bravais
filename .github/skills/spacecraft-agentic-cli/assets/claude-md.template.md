@@ -8,7 +8,7 @@
   AGENTS.md content (either symlink or copy), then add the
   Claude-specific sections at the bottom.
 
-  Do NOT duplicate the SFRS here — those rules live in the
+  Do NOT duplicate the CLI Standard here — those rules live in the
   spacecraft-cli-standard and spacecraft-agentic-cli skills.
 -->
 
@@ -46,7 +46,7 @@ The following Spacecraft Software skills apply to this project. Claude should
 consult them when their triggers match:
 
 - `spacecraft-standard` — master Project Spacecraft Software Standard
-- `spacecraft-cli-standard` — structural CLI SFRS rules
+- `spacecraft-cli-standard` — structural CLI Standard rules
 - `spacecraft-agentic-cli` — agent-facing UX for the CLI
 - `spacecraft-brand-guidelines` — six-token color palette
 - `rust-guidelines` — Microsoft Pragmatic Rust Guidelines
@@ -79,6 +79,6 @@ sessions:
 
 ## Standards compliance
 
-This project follows the Spacecraft Software SFRS v1.0.0. The CLI Standard skills
+This project follows the CLI Standard v1.0.0. The CLI Standard skills
 are authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.

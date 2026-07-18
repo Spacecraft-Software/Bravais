@@ -7,7 +7,7 @@
   Replace every <PLACEHOLDER> below with project-specific content.
   Delete instruction comments before committing.
 
-  Do NOT dump the SFRS or general Spacecraft Software conventions here — those
+  Do NOT dump the CLI Standard or general Spacecraft Software conventions here — those
   live in the spacecraft-cli-standard and spacecraft-agentic-cli skills.
   This file is for PROJECT-SPECIFIC invariants only.
 -->
@@ -24,7 +24,7 @@ Spacecraft Software.
 - Test: `<EXACT-TEST-COMMAND>`
 - Lint: `<EXACT-LINT-COMMAND>`
 - Format check: `<EXACT-FORMAT-CHECK-COMMAND>`
-- SFRS audit: `<EXACT-AUDIT-COMMAND>` <!-- e.g., cargo run -p <name>-audit -- check . -->
+- CLI Standard audit: `<EXACT-AUDIT-COMMAND>` <!-- e.g., cargo run -p <name>-audit -- check . -->
 
 ## Architectural invariants
 
@@ -72,7 +72,7 @@ Spacecraft Software.
 
 ## Standards compliance
 
-This project follows the Spacecraft Software SFRS v1.0.0. The
+This project follows the CLI Standard v1.0.0. The
 `spacecraft-cli-standard` and `spacecraft-agentic-cli` skills are
 authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.

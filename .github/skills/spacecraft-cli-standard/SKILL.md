@@ -1,7 +1,7 @@
 ---
 name: spacecraft-cli-standard
 description: >
-  Enforces the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (SFRS v1.0.0)
+  Enforces the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
   on every CLI the AI writes or reviews. ALWAYS consult when working on ANY
   command-line interface — new binaries, sub-commands, clap wiring, --json or
   --format output, exit codes, structured errors to stderr, ratatui TUI,
@@ -24,9 +24,9 @@ website: https://Construct.SpacecraftSoftware.org/
 **Version:** 1.0.0 | **Spec Date:** 2026-04-10 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** (C) 2026 Mohamed Hammad | **License:** GPL-3.0-or-later
-**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software SFRS v1.0.0 — Dual-Mode Self-Documenting CLI Framework
+**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
 
-This skill encodes the Spacecraft Software SFRS so every CLI the AI writes for a
+This skill encodes the CLI Standard so every CLI the AI writes for a
 Spacecraft Software project ships with two co-equal output personalities: a
 **human-oriented mode** for interactive terminals (color, tables, TUI) and
 an **agent-native machine-readable mode** for LLM agents, automation
@@ -205,7 +205,7 @@ logic. Each step has a reference file to consult.
 ## §9 — Compliance Severity Levels
 
 When reviewing existing CLI code, categorize findings by severity. These
-come from SFRS §11.2 Compliance Matrix.
+come from the CLI Standard §11.2 Compliance Matrix.
 
 - **BLOCKER** — does not ship. Fix before merge.
   Missing ISO 8601 UTC timestamps, BOM in output, wrong exit codes, missing `--json` on a data command, missing `schema` / `describe`, unstructured errors in JSON mode.
@@ -228,5 +228,5 @@ Full matrix + verification methods: `references/testing-compliance.md`.
 
 ---
 
-*End of SKILL.md. Full normative spec: Spacecraft Software SFRS v1.0.0 "Dual-Mode
-Self-Documenting CLI Framework", 2026-04-10.*
+*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode
+Self-Documenting CLI Standard (v1.0.0), 2026-04-10.*

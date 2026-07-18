@@ -26,11 +26,11 @@ website: https://Construct.SpacecraftSoftware.org/
 **Version:** 1.0.0 | **Spec Date:** 2026-04-10 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** (C) 2026 Mohamed Hammad | **License:** GPL-3.0-or-later
-**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software SFRS v1.0.0 — Dual-Mode Self-Documenting CLI Framework
+**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
 
 This skill is the **agent-facing UX specialist** for Spacecraft Software CLIs. The
 companion skill `spacecraft-cli-standard` already encodes the structural
-SFRS rules (output cascade, exit codes, JSON envelope, schema sub-command,
+CLI-Standard rules (output cascade, exit codes, JSON envelope, schema sub-command,
 TUI graceful degradation, shell compat). This skill goes deeper on the
 disciplines that determine whether an AI agent can actually *use* the CLI
 well in practice:
@@ -43,7 +43,7 @@ well in practice:
 - Token-economy hygiene (`--fields`, `jsonl`, payload minimization)
 - The agent-invoked threat model (prompt injection, hallucinated args)
 
-If the SFRS structural rules conflict with anything in this skill, the SFRS
+If the CLI Standard's structural rules conflict with anything in this skill, the CLI Standard
 wins and `spacecraft-cli-standard` is authoritative. This skill never
 weakens the structural Standard; it only adds depth to the agent-facing
 surfaces.
@@ -89,7 +89,7 @@ repository root, on day one, before business logic:
 
 **Read `references/agents-md-authoring.md` before writing any of these
 files.** It contains canonical templates, the difference between AGENTS.md
-and CLAUDE.md content, and anti-patterns (e.g., dumping the SFRS verbatim
+and CLAUDE.md content, and anti-patterns (e.g., dumping the CLI Standard verbatim
 into AGENTS.md is wrong — agents already have the cli-standard skill;
 AGENTS.md is for *project-specific* invariants).
 
@@ -244,7 +244,7 @@ intent. When invoked by an agent, the agent may be:
 4. **Operating with elevated privileges** — running as the human's user
 
 The CLI is the last line of defense before the host system. The threat
-model in SFRS §7 is non-negotiable, and this skill operationalizes it:
+model in the CLI Standard §7 is non-negotiable, and this skill operationalizes it:
 
 - **Path arguments**: canonicalize, validate against allow-list, reject
   traversal sequences (`..`, encoded variants, symlink escapes)
@@ -341,7 +341,7 @@ Assets:
 This skill is the **agent-UX layer** in the Spacecraft Software CLI skill stack:
 
 - **`spacecraft-standard`** — master Standard. Master wins on conflict.
-- **`spacecraft-cli-standard`** — structural SFRS rules (what the CLI must
+- **`spacecraft-cli-standard`** — structural CLI-Standard rules (what the CLI must
   be). Authoritative on structure. This skill is subordinate; never
   weakens its rules. Both load together when a Spacecraft Software CLI is in scope.
 - **`spacecraft-cli-preference`** — picks which *external* CLI tools to
@@ -355,7 +355,7 @@ This skill is the **agent-UX layer** in the Spacecraft Software CLI skill stack:
 
 ---
 
-*End of SKILL.md. Full normative spec: Spacecraft Software SFRS v1.0.0 "Dual-Mode
-Self-Documenting CLI Framework", §3 (Eight Rules), §6 (Schema
+*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode
+Self-Documenting CLI Standard (v1.0.0), §3 (Eight Rules), §6 (Schema
 Introspection), §7 (Input Hardening), §9 (Agent Environment Detection),
 §10 (MCP Surface). Companion skill: `spacecraft-cli-standard`.*

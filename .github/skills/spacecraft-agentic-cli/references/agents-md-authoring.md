@@ -31,9 +31,9 @@ does NOT belong, and provides anti-pattern catalogs.
 | `CONTRIBUTING.md` | Human contributors | Read once during onboarding | Dev environment setup, PR conventions |
 
 **Critical principle:** AGENTS.md is for **project-specific** invariants
-that an agent cannot infer from the code itself. The Spacecraft Software SFRS rules
+that an agent cannot infer from the code itself. The CLI Standard's rules
 are NOT project-specific — they live in `spacecraft-cli-standard` and
-`spacecraft-agentic-cli` skills, not in AGENTS.md. Dumping the SFRS into
+`spacecraft-agentic-cli` skills, not in AGENTS.md. Dumping the CLI Standard into
 AGENTS.md duplicates skill content and wastes tokens.
 
 ---
@@ -88,7 +88,7 @@ Cargo workspace. It targets POSIX shell environments first and PowerShell
 - Test: `cargo test --workspace`
 - Lint: `cargo clippy --workspace --all-targets -- -D warnings`
 - Format check: `cargo fmt --all --check`
-- SFRS compliance check: `cargo run -p ferrocast-audit -- check .`
+- CLI Standard compliance check: `cargo run -p ferrocast-audit -- check .`
 
 ## Architectural invariants
 - Every sub-command returns `Result<Response<T>, AppError>`; never bare
@@ -133,7 +133,7 @@ copying AGENTS.md, then add Claude-specific sections:
 
 ## Skills referenced
 - `spacecraft-standard` — master Standard
-- `spacecraft-cli-standard` — structural SFRS
+- `spacecraft-cli-standard` — structural CLI Standard
 - `spacecraft-agentic-cli` — agent-facing UX
 - `spacecraft-brand-guidelines` — color palette
 - `rust-guidelines` — Microsoft Pragmatic Rust
@@ -230,7 +230,7 @@ that would waste agent tokens.
 
 ## §6 — Anti-patterns to avoid
 
-### Anti-pattern: dumping the SFRS verbatim
+### Anti-pattern: dumping the CLI Standard verbatim
 
 **Wrong:**
 ```markdown
@@ -242,7 +242,7 @@ that would waste agent tokens.
 [continues for 200 lines]
 ```
 
-**Why wrong:** the SFRS lives in `spacecraft-cli-standard`. Repeating it
+**Why wrong:** the CLI Standard lives in `spacecraft-cli-standard`. Repeating it
 in AGENTS.md duplicates the skill's content and wastes the agent's
 context window every session.
 
@@ -251,7 +251,7 @@ context window every session.
 # AGENTS.md
 
 ## Standards compliance
-This project follows the Spacecraft Software SFRS v1.0.0. The
+This project follows the CLI Standard v1.0.0. The
 `spacecraft-cli-standard` and `spacecraft-agentic-cli` skills are
 authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.
