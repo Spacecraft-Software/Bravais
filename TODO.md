@@ -301,6 +301,12 @@ This document tracks the implementation status of the Bravais NixOS distribution
   routing, `pkgs/update-vendored.nu` (vendored-binary bump automation, run monthly —
   `rebuild` nags after 30 days), and `rebuild` now updates `nixpkgs-unstable` +
   `home-manager-unstable` so `unstablePkgs` never lags stable.
+- [✓] `update-vendored.nu` covers all seven vendored binaries — `goose-desktop`,
+  `opencode-desktop` and `github-copilot-app` were shipped unregistered, so `--check`
+  silently never reported their releases (copilot had drifted 1.0.9 → 1.0.25). The four
+  GitHub-release packages now share one `up-github` helper taking a repo + asset-URL
+  closure; `claude-desktop`/`chrome-remote-desktop` (apt indexes) and `browseros`
+  (different version attr, not a flake package) keep their bespoke functions.
 
 ---
 

@@ -4,17 +4,20 @@
 #
 # Steelbore Bravais — vendored-binary updater (elegance plan 5.1).
 #
-# Four packages pin upstream binaries that `nix flake update` cannot bump;
+# Seven packages pin upstream binaries that `nix flake update` cannot bump;
 # this script reads each upstream source of truth, rewrites version + hash
 # in place, and builds the result:
 #
 #   claude-desktop         pkgs/claude-desktop/package.nix         Anthropic apt index
 #   chrome-remote-desktop  pkgs/chrome-remote-desktop/package.nix  Google apt index
 #   ollama                 pkgs/ollama/package.nix                 GitHub releases
+#   goose-desktop          pkgs/goose-desktop/package.nix          GitHub releases
+#   opencode-desktop       pkgs/opencode-desktop/package.nix       GitHub releases
+#   github-copilot-app     pkgs/github-copilot-app/package.nix     GitHub releases
 #   browseros              modules/packages/browsers.nix           GitHub releases
 #
 # Usage (any directory inside the repo):
-#   nu pkgs/update-vendored.nu              # bump all four + nix build each
+#   nu pkgs/update-vendored.nu              # bump all seven + nix build each
 #   nu pkgs/update-vendored.nu --check      # report only, change nothing
 #   nu pkgs/update-vendored.nu ollama       # single package
 #
@@ -115,19 +118,25 @@ def up-crd [check: bool] {
   } "chrome-remote-desktop"
 }
 
-def up-ollama [check: bool] {
-  let file = "pkgs/ollama/package.nix"
+# Every GitHub-release package here pins the same two strings — `version =
+# "X"` and an SRI `hash = "sha256-…"` — inside `pkgs/<name>/package.nix`, and
+# is exposed as flake attr <name>. So a bump differs only in the repo and the
+# asset URL: $asset receives the new version and returns the download URL.
+def up-github [
+  pkg: string, repo: string, asset: closure, check: bool,
+] {
+  let file = $"pkgs/($pkg)/package.nix"
   let cur = (extract $file 'version = "(?<x>[^"]+)"')
-  let latest = (github-latest "ollama/ollama")
-  update-one "ollama" $file $cur $latest $check {||
+  let latest = (github-latest $repo)
+  update-one $pkg $file $cur $latest $check {||
     [
       {from: $'version = "($cur)";', to: $'version = "($latest)";'}
       {
         from: (extract $file 'hash = "(?<x>sha256-[^"]+)"')
-        to: (prefetch-sri $"https://github.com/ollama/ollama/releases/download/v($latest)/ollama-linux-amd64.tar.zst")
+        to: (prefetch-sri (do $asset $latest))
       }
     ]
-  } "ollama"
+  } $pkg
 }
 
 def up-browseros [check: bool] {
@@ -153,7 +162,10 @@ def up-browseros [check: bool] {
 
 def main [package?: string, --check] {
   cd (git rev-parse --show-toplevel | str trim)
-  let known = ["claude-desktop" "chrome-remote-desktop" "ollama" "browseros"]
+  let known = [
+    "claude-desktop" "chrome-remote-desktop" "ollama"
+    "goose-desktop" "opencode-desktop" "github-copilot-app" "browseros"
+  ]
   let targets = if $package == null {
     $known
   } else if $package in $known {
@@ -167,7 +179,20 @@ def main [package?: string, --check] {
     match $t {
       "claude-desktop" => (up-claude $check)
       "chrome-remote-desktop" => (up-crd $check)
-      "ollama" => (up-ollama $check)
+      "ollama" => (up-github "ollama" "ollama/ollama" {|v|
+        $"https://github.com/ollama/ollama/releases/download/v($v)/ollama-linux-amd64.tar.zst"
+      } $check)
+      # block/goose was transferred to aaif-goose/goose; the old URLs still
+      # redirect, but query the canonical org so this keeps working when they stop.
+      "goose-desktop" => (up-github "goose-desktop" "aaif-goose/goose" {|v|
+        $"https://github.com/aaif-goose/goose/releases/download/v($v)/goose_($v)_amd64.deb"
+      } $check)
+      "opencode-desktop" => (up-github "opencode-desktop" "anomalyco/opencode" {|v|
+        $"https://github.com/anomalyco/opencode/releases/download/v($v)/opencode-desktop-linux-amd64.deb"
+      } $check)
+      "github-copilot-app" => (up-github "github-copilot-app" "github/app" {|v|
+        $"https://github.com/github/app/releases/download/v($v)/GitHub-Copilot-linux-x64.deb"
+      } $check)
       "browseros" => (up-browseros $check)
     }
   })

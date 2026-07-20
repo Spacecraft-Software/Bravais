@@ -883,9 +883,9 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **GUI:**
 * `claude-desktop` — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
-* `github-copilot-app` — official GitHub Tauri-based desktop application, repackaged from the official `.deb` in `pkgs/github-copilot-app/` (unfree).
-* `opencode-desktop` — official OpenCode desktop application, repackaged from the official `.deb` in `pkgs/opencode-desktop/` (MIT license, strips unused Musl binaries to build under glibc; wrapper puts libglvnd/libgbm/vulkan-loader on `LD_LIBRARY_PATH` so Chromium's bundled ANGLE can `dlopen` the native EGL).
-* `goose-desktop` — official Block AI agent desktop application, repackaged from the official `.deb` in `pkgs/goose-desktop/` (Apache-2.0 license; no Flathub listing yet — upstream request `block/goose#6602` is open).
+* `github-copilot-app` — official GitHub Tauri-based desktop application, repackaged from the official `.deb` in `pkgs/github-copilot-app/` (unfree). Bump per release with `nu pkgs/update-vendored.nu github-copilot-app`.
+* `opencode-desktop` — official OpenCode desktop application, repackaged from the official `.deb` in `pkgs/opencode-desktop/` (MIT license, strips unused Musl binaries to build under glibc; wrapper puts libglvnd/libgbm/vulkan-loader on `LD_LIBRARY_PATH` so Chromium's bundled ANGLE can `dlopen` the native EGL). Bump per release with `nu pkgs/update-vendored.nu opencode-desktop`.
+* `goose-desktop` — official Block AI agent desktop application, repackaged from the official `.deb` in `pkgs/goose-desktop/` (Apache-2.0 license; no Flathub listing — the `.flatpak` release asset is a self-contained bundle, not a Flathub app). Carries the same ANGLE/EGL `LD_LIBRARY_PATH` wrapper fix as `opencode-desktop`. Bump per release with `nu pkgs/update-vendored.nu goose-desktop`; note upstream moved `block/goose` → `aaif-goose/goose` (old URLs still redirect, but the updater queries the new org).
 
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
 
