@@ -259,7 +259,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install claude-code from channel-appropriate `pkgs` (stable on stable, unstable on unstable)
 - [✓] Install Claude Desktop (official Linux beta) — repackage the official `.deb` (`pkgs/claude-desktop/`, dpkg -x + `autoPatchelfHook` + Wayland/MCP wrapper); no nixpkgs package
 - [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries; `LD_LIBRARY_PATH` carries libglvnd/libgbm/vulkan-loader for ANGLE's native-EGL `dlopen`)
-- [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (`block/goose#6602` open), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
+- [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (upstream repo has since moved to `aaif-goose/goose`; the `block/goose` release URLs still redirect), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
+- [✓] Goose Desktop `LD_LIBRARY_PATH` prefix (libglvnd/libgbm/vulkan-loader) — bundled ANGLE `libEGL.so` dlopens `libEGL.so.1`, and `DT_RUNPATH` isn't transitive, so `runtimeDependencies` alone left the GPU process dying with "Could not dlopen native EGL". Same fix opencode-desktop already carried
 
 ### flatpak.nix
 
