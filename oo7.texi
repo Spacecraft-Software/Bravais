@@ -1,0 +1,513 @@
+\input texinfo   @c -*- texinfo -*-
+@c SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
+@c SPDX-License-Identifier: CC-BY-SA-4.0
+@c %**start of header
+@setfilename oo7.info
+@documentencoding UTF-8
+@documentlanguage en
+@settitle Migrating Bravais to oo7
+@c %**end of header
+
+@set UPDATED 2026-07-20
+@set VERSION 1.0
+
+@copying
+Migrating Bravais to oo7 --- a decision document for replacing
+@command{gnome-keyring-daemon} with the Rust Secret Service provider.
+
+Last updated @value{UPDATED}.
+
+Copyright @copyright{} 2026 Mohamed Hammad & Spacecraft Software.
+
+@quotation
+This work is licensed under the Creative Commons
+Attribution-ShareAlike 4.0 International License (CC-BY-SA-4.0). You are
+free to share and adapt this material for any purpose, provided you give
+appropriate credit and distribute your contributions under the same
+license.
+@end quotation
+@end copying
+
+@dircategory Spacecraft Software
+@direntry
+* oo7: (oo7).                   Migrating Bravais to the oo7 Secret Service.
+@end direntry
+
+@titlepage
+@title Migrating Bravais to oo7
+@subtitle Replacing gnome-keyring with a Rust Secret Service provider
+@subtitle Version @value{VERSION} --- @value{UPDATED}
+@author Mohamed Hammad
+@author @email{Mohamed.Hammad@@SpacecraftSoftware.org}
+@author @url{https://Bravais.SpacecraftSoftware.org/}
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top Migrating Bravais to oo7
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Context::                     Why this change is being considered.
+* Findings::                    What was verified, and against what.
+* Decisions::                   Three open decisions and their options.
+* Implementation::              The module design.
+* Verification::                How to prove it works.
+* Risks::                       Failure modes and rollback.
+@end menu
+
+
+@node Context
+@chapter Context
+
+Cursor and Opera were falling back to plaintext credential storage,
+surfacing as the dialog @samp{An OS keyring couldn't be identified for
+storing the encryption related data}. Investigation showed the keyring
+was never at fault: @command{gnome-keyring-daemon} owned
+@code{org.freedesktop.secrets} and a @command{secret-tool} store, lookup
+and clear round-trip succeeded.
+
+The actual defect was Chromium's credential-backend @emph{auto-detection}.
+Chromium reads @env{XDG_CURRENT_DESKTOP} to select a backend; under Niri
+and LeftWM that reads @samp{niri} or @samp{leftwm}, which Chromium maps to
+@code{DE_OTHER}, so it skips the Secret Service entirely. That was fixed
+in commit @code{458e4b0} by naming the backend explicitly for Nix-installed
+Electron applications and by overriding @env{XDG_CURRENT_DESKTOP} inside
+the sandbox for Flatpak ones.
+
+That fix closed the reported bug but raised a separate question. Bravais'
+Secret Service provider is @command{gnome-keyring}, written in C against
+GLib. The Steelbore Standard @sc{sec.}3 makes Stability Priority 1 and
+names memory safety as its primary lever, and this repository is
+Rust-first by convention --- @command{sudo-rs} over @command{sudo},
+Sequoia over GnuPG, Nushell over Bash. A C daemon holding every stored
+credential on the system is the conspicuous exception.
+
+@uref{https://github.com/linux-credentials/oo7, oo7} is a Rust
+implementation of the Secret Service API that upstream describes as a
+replacement for @command{gnome-keyring-daemon}. This document records what
+was verified about it, the three decisions that must be made before any
+code changes, and the implementation those decisions imply.
+
+@quotation Note
+Nothing in this document has been implemented. The Chromium backend fix
+(@code{458e4b0}) is live; the oo7 migration is not.
+@end quotation
+
+
+@node Findings
+@chapter Findings
+
+Every claim below was checked against the pinned sources in this
+repository's @file{flake.lock}, or against the running host. None of it is
+recalled from training data.
+
+@section Package layout
+
+The most important correction to the obvious assumption: @code{pkgs.oo7}
+is @strong{not} the daemon. It is the command-line client only --- a
+@command{secret-tool} replacement --- because its derivation sets
+@code{buildAndTestSubdir = "cli"}. The daemon, portal and @acronym{PAM}
+module are three further derivations that reuse the same source but build
+different subdirectories under Meson.
+
+@multitable @columnfractions .22 .30 .24 .24
+@headitem Attribute @tab Contents @tab In 26.05? @tab In unstable?
+@item @code{oo7}
+@tab @file{bin/oo7-cli}
+@tab Yes (0.6.0)
+@tab Yes (0.6.0)
+@item @code{oo7-server}
+@tab @file{libexec/oo7-daemon}, systemd user unit, D-Bus service
+@tab Yes (0.6.0)
+@tab Yes (0.6.0)
+@item @code{oo7-portal}
+@tab @file{libexec/oo7-portal}, @code{impl.portal.Secret}
+@tab Yes (0.6.0)
+@tab Yes (0.6.0)
+@item @code{oo7-pam}
+@tab @file{lib/security/pam_oo7.so}
+@tab @strong{No}
+@tab Yes (0.6.0)
+@end multitable
+
+The @code{services.oo7} NixOS module likewise exists only on unstable, at
+@file{nixos/modules/services/desktops/oo7.nix}. On 26.05 there is neither a
+@acronym{PAM} package nor a module, so the migration must hand-roll both.
+
+@section Channel mixing is safe here
+
+Because @code{oo7-pam} is unstable-only, a @acronym{PAM} module built
+against unstable must be loaded by a 26.05 system. That is the one place
+where an @acronym{ABI} mismatch could bite. It does not apply:
+
+@multitable @columnfractions .30 .35 .35
+@headitem Component @tab nixpkgs (26.05) @tab nixpkgs-unstable
+@item glibc @tab 2.42 @tab 2.42
+@item linux-pam @tab 1.7.1 @tab 1.7.2
+@end multitable
+
+Identical glibc, and a patch-level @acronym{PAM} difference. The existing
+@code{unstablePkgs} convention already threads unstable packages into this
+configuration, so no new mechanism is needed.
+
+@section Existing secrets survive
+
+oo7's file backend writes the same magic header as gnome-keyring
+(@code{GnomeKeyring\n\r\0\n}), reads the legacy v0 format from
+@file{~/.local/share/keyrings/}, and maps the @samp{login} collection alias
+to @samp{default} with an explicit compatibility comment in
+@file{server/src/service/mod.rs}. The daemon discovers both generations at
+startup: @file{keyrings/v1} first, then the v0 files beside it.
+
+@section There is no runtime unlock
+
+This is the finding that most shapes the design. Upstream documents
+exactly two unlock paths, both of which act at daemon @emph{start}:
+
+@table @asis
+@item @option{--login}
+Reads the password from standard input, or prompts if attached to a
+@acronym{TTY}.
+@item systemd credential
+The daemon loads a credential named
+@code{oo7.keyring-encryption-password}, which requires systemd 258 or
+newer. The host runs systemd 260, so this is available.
+@end table
+
+There is @strong{no} D-Bus unlock call and @strong{no} @command{oo7-cli}
+unlock subcommand. The current @command{steelbore-keyring-unlock} script
+works by piping a password into
+@code{gnome-keyring-daemon --unlock --replace}; that has no direct
+equivalent, so the script cannot survive unchanged.
+
+@section gnome-keyring is enabled transitively
+
+@file{hosts/common.nix} enables all five desktop modules, and nixpkgs'
+GNOME module sets @code{services.gnome.gnome-keyring.enable = true} on its
+own. Both daemons claim @code{org.freedesktop.secrets}, so the name would
+be contested unless gnome-keyring is forced off.
+
+@quotation Correction
+The comment presently at @file{modules/core/keyring.nix} lines 26--28,
+which claims @samp{nothing else pulls this in}, is wrong. GNOME does. It
+should be corrected regardless of which option below is chosen.
+@end quotation
+
+
+@node Decisions
+@chapter Decisions
+
+Three decisions must be made before implementation. Each is presented with
+its options, the tradeoff, and a recommendation.
+
+@menu
+* Unlock path::                 How the keyring gets unlocked.
+* gnome-keyring disposition::   How far to remove the incumbent.
+* Rollout::                     How the change lands.
+@end menu
+
+
+@node Unlock path
+@section Decision 1 --- Unlock path
+
+Because oo7 unlocks only at daemon start (@pxref{Findings}), the
+fingerprint-login path needs explicit thought. Today
+@code{pam_fprintd} is @samp{sufficient} ahead of @code{pam_unix} in the
+greetd stack, so a successful fingerprint scan means no password token
+ever reaches the keyring's @acronym{PAM} module --- which is precisely why
+@kbd{Mod+Shift+U} exists.
+
+@table @strong
+@item (a) PAM plus a rewritten @kbd{Mod+Shift+U}
+Inject @file{pam_oo7.so} into greetd's auth, session and password stacks,
+mirroring today's @code{enableGnomeKeyring}. Fingerprint logins still leave
+the keyring locked, so @command{steelbore-keyring-unlock} is rewritten to
+stop the daemon and restart it with @option{--login} on standard input.
+
+@emph{Closest to current behaviour. Introduces no new secret at rest.}
+
+@item (b) systemd credential, @acronym{TPM}-sealed
+Store the password once with @command{systemd-creds encrypt --user
+--name=oo7.keyring-encryption-password}. The daemon loads it at start, so
+the keyring auto-unlocks on @emph{every} login including fingerprint,
+retiring the @kbd{Mod+Shift+U} workaround entirely.
+
+@emph{Fixes a real gap in today's setup. But upstream states plainly that
+any user who can read the blob and reach the @acronym{TPM} --- root, for
+instance --- can decrypt it.}
+
+@item (c) Both
+@acronym{PAM} primary, credential as the fingerprint fallback. Retires the
+workaround while keeping normal logins off the credstore path.
+
+@emph{Carries option (b)'s exposure anyway, and leaves two unlock paths to
+reason about.}
+@end table
+
+@subheading Recommendation
+
+Option @strong{(a)} for the first landing. It changes one variable rather
+than two, and keeps the secret-at-rest posture identical to today. Option
+(b) is a genuine improvement on the current fingerprint gap and is worth
+revisiting once oo7 has proven itself on this machine --- but it should not
+ride along with the daemon swap, because if something misbehaves you want
+to know which change caused it.
+
+
+@node gnome-keyring disposition
+@section Decision 2 --- gnome-keyring disposition
+
+Both daemons claim @code{org.freedesktop.secrets}. The name must be
+uncontested, which means @code{lib.mkForce false} at minimum --- a plain
+@code{false} will not survive GNOME's transitive enable.
+
+@table @strong
+@item (a) Force off, keep installed
+Set @code{services.gnome.gnome-keyring.enable = lib.mkForce false}, but
+leave the package in @code{systemPackages} so
+@code{gnome-keyring-daemon --unlock} remains available for manual recovery.
+Both daemons read the same store, so nothing is stranded.
+
+@item (b) Full removal
+Force off @emph{and} drop @code{gnome-keyring} and @code{seahorse} from
+@code{systemPackages}. Cleanest end state, with no ambiguity about which
+daemon is live --- at the cost of the recovery tool, should oo7 fail to
+read an existing keyring.
+@end table
+
+@subheading Recommendation
+
+Option @strong{(a)}. Priority 1 asks for graceful degradation, and keeping
+the incumbent reader on disk is close to free. It is the only in-place
+recovery path that does not require a rebuild.
+
+
+@node Rollout
+@section Decision 3 --- Rollout
+
+A malformed greetd @acronym{PAM} stack does not degrade gracefully. It
+means no login at all.
+
+@table @strong
+@item (a) Cut over @code{bravais-thinkpad}
+Apply directly to the stable configuration. Rollback is the previous NixOS
+generation from the bootloader, which is reliable --- but recovery costs a
+reboot.
+
+@item (b) Trial on @code{bravais-thinkpad-unstable} first
+Land it there, boot that generation, verify login and keyring, then
+promote to stable. Slower, but the stable generation stays known-good
+throughout.
+
+@item (c) Cut over with a @acronym{TTY} escape hatch
+Apply to stable, but first confirm that an unmodified @acronym{PAM} service
+or a root @acronym{TTY} autologin exists, so a broken greetd stack does not
+require a reboot to fix.
+@end table
+
+@subheading Recommendation
+
+Option @strong{(c)}. It costs one verification step and converts the
+failure mode from @samp{reboot into an older generation} to @samp{switch
+virtual terminal}. Option (b) is the conservative fallback if the escape
+hatch cannot be confirmed.
+
+
+@node Implementation
+@chapter Implementation
+
+Contingent on the decisions above. The shape below assumes the
+recommended options (a), (a), (c).
+
+@section The module
+
+Rewrite @file{modules/core/keyring.nix} to reproduce what unstable's
+@code{services.oo7} module does, but with 26.05 option names and
+@code{unstablePkgs} for all four components. Taking all four from unstable
+avoids a split @emph{within} oo7 itself, and unstable's @code{oo7-server}
+carries a @code{postFixup} that rewrites the unit's @code{ExecStart} to
+@file{/run/wrappers/bin/oo7-daemon} --- which is why the setcap wrapper
+below is mandatory rather than optional.
+
+@verbatim
+services.gnome.gnome-keyring.enable = lib.mkForce false;  # GNOME sets it transitively
+
+services.dbus.packages = [ unstablePkgs.oo7-server ];
+systemd.packages       = [ unstablePkgs.oo7-server ];
+systemd.user.services.oo7-daemon.wantedBy = [ "default.target" ];
+
+security.wrappers.oo7-daemon = {
+  owner = "root";
+  group = "root";
+  capabilities = "cap_ipc_lock=ep";                       # mlock secrets out of swap
+  source = "${unstablePkgs.oo7-server}/libexec/oo7-daemon";
+};
+
+xdg.portal.extraPortals = [ unstablePkgs.oo7-portal ];
+@end verbatim
+
+@section PAM
+
+26.05's @file{pam.nix} has no @code{oo7} option, so the module must be
+injected by hand through
+@code{security.pam.services.greetd.rules.@{auth,session,password@}} using
+@code{unstablePkgs.oo7-pam}. Mirror the @code{gnome_keyring} rules already
+in 26.05's @file{pam.nix} (lines 1255, 1468 and 1686) for control and
+ordering: @code{optional} throughout, @code{use_authtok} on password,
+@code{auto_start} on session.
+
+Note that upstream's own module wires only @code{security.pam.services.login}.
+Bravais logs in through greetd, so that stack is ours to configure.
+
+@section Portal
+
+oo7's @file{.portal} file declares @code{UseIn=gnome}. Under Niri and
+LeftWM the Secret portal will therefore not resolve unless a
+@file{portals.conf} names it explicitly:
+
+@verbatim
+[preferred]
+org.freedesktop.impl.portal.Secret=oo7-portal;
+@end verbatim
+
+@section Other edits
+
+@table @file
+@item modules/login/default.nix
+Drop @code{security.pam.services.greetd.enableGnomeKeyring} (line 339).
+
+@item modules/desktops/shared.nix
+Rewrite @command{steelbore-keyring-unlock} (lines 131--149) to stop the
+daemon and restart it with @option{--login}. Under Decision 1(b) the script
+and its keybindings would instead be deleted --- @file{users/mj/niri.nix}
+line 175, @file{modules/desktops/leftwm.nix} line 209, and the cheatsheet
+entry at line 309.
+
+@item users/mj/desktop-theme.nix
+The @file{gnome-keyring-ssh.desktop} suppression (lines 84--94) becomes
+dead once gnome-keyring is off, since oo7 ships no SSH agent. Remove it,
+then confirm @env{SSH_AUTH_SOCK} still resolves to gitway-agent.
+
+@item modules/core/security.nix
+@code{services.gnome.gcr-ssh-agent.enable = false} stays. @acronym{GCR} is
+independent of the Secret Service provider.
+@end table
+
+@section What does not change
+
+These target the Secret Service @emph{interface} rather than its
+implementation, and are expected to keep working untouched:
+
+@itemize @bullet
+@item
+@code{steelbore.keyring.chromiumFlag} and its four editor wrappers.
+@item
+The eight Flatpak @env{XDG_CURRENT_DESKTOP} overrides.
+@item
+@code{libsecret} and @command{secret-tool}.
+@item
+The three shells' @env{SSH_AUTH_SOCK} overrides --- those defend against
+@acronym{PAM}, not against the daemon.
+@end itemize
+
+
+@node Verification
+@chapter Verification
+
+@section Build time
+
+@verbatim
+makeinfo --no-split oo7.texi          # this document: zero errors, zero warnings
+git add -A
+nix build --no-link --print-out-paths \
+  '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
+@end verbatim
+
+@section Before switching
+
+The login-lockout guard. Inspect the generated stack in the built closure
+@emph{before} activating it:
+
+@verbatim
+rg -n 'pam_oo7|pam_gnome_keyring' <closure>/etc/pam.d/greetd
+@end verbatim
+
+@section After switching
+
+@verbatim
+busctl --user list | rg 'org.freedesktop.secrets'   # must be oo7-daemon, not gnome-keyring
+systemctl --user status oo7-daemon
+
+echo hunter2 | secret-tool store --label=oo7-test test oo7
+secret-tool lookup test oo7 && secret-tool clear test oo7
+@end verbatim
+
+@section End to end
+
+None of the above proves the user-visible goal. These do:
+
+@enumerate
+@item
+Log out and back in @emph{with a password}; the keyring should unlock with
+no prompt.
+@item
+Log in @emph{with a fingerprint}; the Decision 1 unlock path should behave
+as designed.
+@item
+Launch Cursor. The @samp{OS keyring couldn't be identified} dialog must not
+appear.
+@item
+Launch Opera (Flatpak) and confirm saved passwords persist across a
+restart.
+@item
+Confirm pre-existing secrets from @file{~/.local/share/keyrings/} are still
+readable.
+@end enumerate
+
+
+@node Risks
+@chapter Risks
+
+@table @strong
+@item Login lockout
+A malformed greetd @acronym{PAM} stack blocks every login. Mitigated by
+Decision 3 and by inspecting the generated @file{/etc/pam.d/greetd} before
+switching.
+
+@item Maturity
+oo7 0.6.0 is a 0.x daemon replacing a mature one, on a channel that does
+not officially support it. Priority 1 names memory safety as its primary
+lever, but the same section also requires test-verified stability and
+graceful degradation. The staged rollout and the retained gnome-keyring
+binary are the concession to that tension --- it is a real tension, not a
+reason to abandon the migration.
+
+@item Keyring format
+oo7 reads the legacy v0 files but writes its own v1 format. Once a keyring
+has been written as v1, gnome-keyring can no longer read it, which means
+the rollback path degrades after first write. @strong{Back up
+@file{~/.local/share/keyrings/} before the first switch.}
+
+@item Unstable drift
+Taking four packages from @code{nixpkgs-unstable} means the @command{rebuild}
+routine's unstable bump can move oo7 underneath the configuration. This is
+consistent with the existing @code{unstablePkgs} convention, but deserves a
+note in @file{PRD.md}.
+@end table
+
+@section Documents to update afterwards
+
+@file{PRD.md} section 5.6 (rewrite the Keyring section), @file{TODO.md}
+lines 45--50 (the keyring checklist), and the known-constraints list in
+@file{CLAUDE.md} if the stable/unstable split needs recording.
+
+@bye
