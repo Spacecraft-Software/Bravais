@@ -230,5 +230,30 @@
       # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
       # { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
     ];
+
+    # ── Keyring: Chromium credential backend ────────────────────────────────
+    # Same root cause as the Nix-side wrappers in modules/packages/editors.nix:
+    # Chromium reads XDG_CURRENT_DESKTOP to pick a credential backend, sees
+    # "niri"/"leftwm", maps it to DE_OTHER, and falls back to plaintext storage
+    # instead of the Secret Service. These apps' Flathub launchers are `exec
+    # cobalt "$@"`-style wrappers with no flags.conf support, so the flag route
+    # used on the Nix side isn't available — override the variable the detection
+    # actually reads instead.
+    #
+    # Scoped to the sandbox, so unlike setting this session-wide it cannot
+    # perturb host portal-backend selection or GTK app-menu behaviour. These are
+    # all Chromium apps that draw their own chrome, so claiming GNOME inside the
+    # sandbox costs nothing. Each already carries `org.freedesktop.secrets=talk`
+    # in its Flathub manifest, so no extra bus permission is needed.
+    services.flatpak.overrides.settings = lib.genAttrs [
+      "com.google.Chrome"
+      "com.microsoft.Edge"
+      "com.opera.Opera"
+      "com.brave.Browser"
+      "com.discordapp.Discord"
+      "io.wavebox.Wavebox"
+      "com.visualstudio.code"
+      "io.github.shiftey.Desktop"
+    ] (_: { Environment.XDG_CURRENT_DESKTOP = "GNOME"; });
   };
 }

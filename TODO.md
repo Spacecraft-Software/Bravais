@@ -44,6 +44,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`security.nix`**: Enable polkit
 - [✓] **`security.nix`**: Enable SSH agent, disable GNOME keyring SSH agent
 - [✓] **`security.nix`**: Configure tmpfiles rules (`/tmp`, `/var/tmp`)
+- [✓] **`keyring.nix`**: Pin `services.gnome.gnome-keyring.enable` (Niri/LeftWM pull in no DE that would)
+- [✓] **`keyring.nix`**: Install `libsecret` (`secret-tool`) + `seahorse`
+- [✓] **`keyring.nix`**: Expose `steelbore.keyring.chromiumFlag` (`--password-store=gnome-libsecret`)
+- [✓] **`editors.nix`**: Wrap Cursor / Kiro / Antigravity Desktop + IDE with the Chromium keyring flag
+- [✓] **`flatpak.nix`**: Sandbox-scoped `XDG_CURRENT_DESKTOP=GNOME` override for Chromium-family Flatpaks (Opera, Chrome, Edge, Brave, Discord, Wavebox, VS Code, GitHub Desktop)
 - [✓] **`dns.nix`**: Enable `systemd-resolved` with DNS-over-TLS and DNSSEC enforced
 - [✓] **`dns.nix`**: Cloudflare malware-block primary (`1.1.1.2` / `1.0.0.2` + v6, SNI `security.cloudflare-dns.com`)
 - [✓] **`dns.nix`**: Plain Cloudflare fallback (`1.1.1.1` / `1.0.0.1` + v6, SNI `cloudflare-dns.com`)

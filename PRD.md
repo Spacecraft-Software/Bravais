@@ -337,7 +337,16 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **SSH agent:** `programs.ssh.startAgent = true`, GNOME keyring SSH agent disabled
 - **Tmpfiles rules:** `/tmp 1777`, `/var/tmp 1777`
 
-### 5.6 DNS (`modules/core/dns.nix`)
+### 5.6 Keyring (`modules/core/keyring.nix`)
+
+- **Secret Service provider:** `services.gnome.gnome-keyring.enable = true` — pinned here rather than inherited from a DE, since Niri and LeftWM are window managers and pull in nothing
+- **Unlock paths:** `security.pam.services.greetd.enableGnomeKeyring` (password login, `modules/login/`); `steelbore-keyring-unlock` bound to `Mod+Shift+U` (fingerprint login, `modules/desktops/shared.nix`)
+- **Tools:** `libsecret` (`secret-tool` — store/lookup/clear round-trip is the "is the bus up?" diagnostic), `seahorse` (GUI manager)
+- **Chromium/Electron backend pinning:** Chromium reads `XDG_CURRENT_DESKTOP` to select a credential backend; under Niri/LeftWM it reads `niri`/`leftwm` → `DE_OTHER` → plaintext fallback ("An OS keyring couldn't be identified…"). Two routes, one cause:
+  - **Nix-installed** (Cursor, Kiro, Antigravity Desktop + IDE): wrapped with `steelbore.keyring.chromiumFlag` = `--password-store=gnome-libsecret` (`modules/packages/editors.nix`)
+  - **Flatpak** (Chrome, Edge, Opera, Brave, Discord, Wavebox, VS Code, GitHub Desktop): Flathub launchers accept no flags file, so `services.flatpak.overrides.settings.<app>.Environment.XDG_CURRENT_DESKTOP = "GNOME"` — scoped to the sandbox, so host portal-backend selection is untouched (`modules/packages/flatpak.nix`)
+
+### 5.7 DNS (`modules/core/dns.nix`)
 
 - **Resolver:** `systemd-resolved` (NetworkManager → `dns = "systemd-resolved"`)
 - **Primary:** Cloudflare malware-blocking — `1.1.1.2` / `1.0.0.2` (+ v6) with TLS SNI `security.cloudflare-dns.com`

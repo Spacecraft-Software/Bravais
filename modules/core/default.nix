@@ -9,6 +9,7 @@
     ./locale.nix
     ./audio.nix
     ./security.nix
+    ./keyring.nix
     ./dns.nix
   ];
 }
