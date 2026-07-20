@@ -12,12 +12,23 @@ result-*
 # Agent context files (kept local, not version-controlled)
 CLAUDE.md
 AGENTS.md
+.mimocode/
 Chat.txt
 chat/
 chat/goose1.txt
 
 # Local-only design/spec documents (kept local, not version-controlled)
 docs-local/
+
+# Model review / praise transcripts (local scratch, one file per model)
+review/
+praises/
+*.info
+spacecraft-review-agent-prompt.md
+
+# Local rewrite drafts of the Bravais manual
+new-bravais*.md
+new-bravais*.texi
 
 # Scratch files
 *.txt

@@ -252,7 +252,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install task-master (npx wrapper; nixpkgs `task-master-ai` unfixable — see CLAUDE.md note 3)
 - [✓] Install claude-code from channel-appropriate `pkgs` (stable on stable, unstable on unstable)
 - [✓] Install Claude Desktop (official Linux beta) — repackage the official `.deb` (`pkgs/claude-desktop/`, dpkg -x + `autoPatchelfHook` + Wayland/MCP wrapper); no nixpkgs package
-- [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries)
+- [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries; `LD_LIBRARY_PATH` carries libglvnd/libgbm/vulkan-loader for ANGLE's native-EGL `dlopen`)
 - [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (`block/goose#6602` open), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
 
 ### flatpak.nix

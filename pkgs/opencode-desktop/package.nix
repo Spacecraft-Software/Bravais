@@ -41,6 +41,7 @@
   nss,
   pango,
   systemd,
+  vulkan-loader,
   wayland,
   libx11,
   libxcb,
@@ -158,8 +159,22 @@ stdenv.mkDerivation (finalAttrs: {
   postFixup = ''
     # autoPatchelfHook has already fixed the interpreter + rpaths of the bundled
     # Electron binaries at this point. Wrap the launcher.
+    # Chromium dlopen()s "libEGL.so.1" from the *bundled* ANGLE libEGL.so, not
+    # from the main binary. DT_RUNPATH isn't transitive, so the libglvnd entry
+    # runtimeDependencies added to the launcher's rpath is invisible to that
+    # dlopen -- hence "Could not dlopen native EGL". LD_LIBRARY_PATH is searched
+    # regardless of which object issues the dlopen, and is inherited by the
+    # re-exec'd GPU process. Expose only GLVND/Vulkan *dispatch* libs here; the
+    # vendor driver itself must keep coming from /run/opengl-driver.
     makeWrapper $out/lib/OpenCode/ai.opencode.desktop $out/bin/opencode-desktop \
       "''${gappsWrapperArgs[@]}" \
+      --prefix LD_LIBRARY_PATH : "${
+        lib.makeLibraryPath [
+          libGL
+          libgbm
+          vulkan-loader
+        ]
+      }" \
       --add-flags "--disable-setuid-sandbox" \
       --add-flags "--ozone-platform-hint=auto" \
       --add-flags "--enable-features=WaylandWindowDecorations"

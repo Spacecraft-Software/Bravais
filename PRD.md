@@ -869,7 +869,7 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 **GUI:**
 * `claude-desktop` — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
 * `github-copilot-app` — official GitHub Tauri-based desktop application, repackaged from the official `.deb` in `pkgs/github-copilot-app/` (unfree).
-* `opencode-desktop` — official OpenCode desktop application, repackaged from the official `.deb` in `pkgs/opencode-desktop/` (MIT license, strips unused Musl binaries to build under glibc).
+* `opencode-desktop` — official OpenCode desktop application, repackaged from the official `.deb` in `pkgs/opencode-desktop/` (MIT license, strips unused Musl binaries to build under glibc; wrapper puts libglvnd/libgbm/vulkan-loader on `LD_LIBRARY_PATH` so Chromium's bundled ANGLE can `dlopen` the native EGL).
 * `goose-desktop` — official Block AI agent desktop application, repackaged from the official `.deb` in `pkgs/goose-desktop/` (Apache-2.0 license; no Flathub listing yet — upstream request `block/goose#6602` is open).
 
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
