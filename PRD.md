@@ -862,7 +862,7 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Archiving:** p7zip, zip, unzip
 
-**ZFS:** zfs, antigravity-fhs (Rust — FHS variant)
+**ZFS:** zfs
 
 **Benchmarking:** phoronix-test-suite, perf
 

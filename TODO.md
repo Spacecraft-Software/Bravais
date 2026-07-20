@@ -236,7 +236,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install containers (steam-run, distrobox, boxbuddy, host-spawn, podman, runc, youki, oxker, qemu, flatpak, bubblewrap)
 - [✓] Install system management (topgrade, paru, doas, os-prober, kbd, numlockx, xremap, input-leap)
 - [✓] Install archiving (p7zip, zip, unzip)
-- [✓] Install ZFS tools and antigravity-fhs
+- [✓] Install ZFS tools
 - [✓] Install benchmarking (phoronix-test-suite, perf)
 - [✓] Enable Flatpak and AppImage (binfmt) services
 - [✓] Enable Podman with `dockerCompat`, runc + youki runtimes
