@@ -26,9 +26,12 @@ praises/
 *.info
 spacecraft-review-agent-prompt.md
 
-# Local rewrite drafts of the Bravais manual
+# Local drafts and generated renders of the Bravais manual
 new-bravais*.md
 new-bravais*.texi
+bravais-next.md
+bravais-next.texi
+bravais.html
 
 # Scratch files
 *.txt
