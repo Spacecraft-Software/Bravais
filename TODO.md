@@ -117,6 +117,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Write `/etc/ironbar/config.yaml` and `/etc/ironbar/style.css`
 - [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → alacritty (default terminal)
 - [✓] Configure workspaces 1-5
+- [✓] Global `window-rule { open-maximized false; }` — Chrome/Cursor/Electron clients persist their own "was maximized" state and re-request it every launch, overriding `default-column-width`. `open-fullscreen` left unset so media players can still launch fullscreen.
 - [✓] Configure startup applications (swaybg, ironbar, wired)
 - [✓] Idle management: swayidle (auto gtklock + screen-off via `niri msg action power-off-monitors`, lock before-sleep) + Caffeine toggle `Mod+Shift+C` (`steelbore-caffeine` SIGSTOP/SIGCONTs swayidle)
 - [✓] Configure input (keyboard `us,ar` with `grp:ctrl_space_toggle`, touchpad)

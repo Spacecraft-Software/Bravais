@@ -107,6 +107,16 @@ in
           center-focused-column "on-overflow"
       }
 
+      // Clients (Chrome, Cursor, other Electron apps) persist their own
+      // "was maximized" state and re-request it on every launch, which
+      // overrides default-column-width above — resizing by hand never sticks.
+      // Refuse the request globally so windows always open at the configured
+      // proportion. open-fullscreen is deliberately left alone so media
+      // players and presentations can still launch fullscreen.
+      window-rule {
+          open-maximized false
+      }
+
       // Startup. The wallpaper daemon needs to bind its IPC socket before
       // any client command; the inline sleep gives it a moment before the
       // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
