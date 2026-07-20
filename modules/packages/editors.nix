@@ -51,6 +51,10 @@
         # vscode-fhs → Flatpak: com.visualstudio.code
       ])
       ++ [
+        # Antigravity 2.0 Desktop app — the standalone, agent-orchestration
+        # app (antigravity-hub), distinct from the IDE below. No IDE required.
+        antigravity-nix.packages.${pkgs.stdenv.hostPlatform.system}.google-antigravity-desktop
+
         # Antigravity IDE only — the `agy` CLI is installed out-of-band via the
         # upstream install script and must NOT come from Nix. Use the IDE-only
         # package (not -with-cli) so the two stay separate.

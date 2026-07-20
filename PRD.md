@@ -750,6 +750,12 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 
 **GUI Editors (Standard):** emacs-pgtk, vscode-fhs, gedit
 
+**Antigravity** (from the `antigravity-nix` flake input, not nixpkgs):
+`google-antigravity-desktop` (the standalone agent-orchestration app,
+antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
+`agy` CLI is installed out-of-band via the upstream installer, so the
+`-with-cli` variants are deliberately not used.
+
 ### 11.3 Development (`modules/packages/development.nix`)
 
 **Git & VCS:** git, gitui (Rust), delta (Rust), jujutsu/jj (Rust), gh (Go), github-desktop
