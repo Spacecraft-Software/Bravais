@@ -285,6 +285,15 @@
                 (command: Execute, value: "steelbore-kbd-light-cycle",    modifier: [], key: "XF86KbdLightOnOff"),
                 (command: Execute, value: "steelbore-bt-toggle",         modifier: [], key: "XF86Bluetooth"),
                 (command: Execute, value: "steelbore-airplane-toggle",    modifier: [], key: "XF86RFKill"),
+                // Screenshots (mirror Niri's Print / Mod+Print; maim is the
+                // X11 grabber — grim is Wayland-only). Print drag-selects a
+                // region (maim -s); Mod+Print grabs the whole screen. `&&`
+                // chaining means a cancelled selection (maim exits non-zero)
+                // writes no empty file and skips the clipboard. tee-free: maim
+                // writes $f directly, then xclip loads it into the clipboard as
+                // image/png. $HOME (not ~) so the shell always expands it.
+                (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -s $f && xclip -selection clipboard -t image/png $f", modifier: [], key: "Print"),
+                (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
                 // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
                 // Pipes a HM-rendered keybind summary through rofi -dmenu.
                 (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
@@ -337,6 +346,10 @@
         <b>Scratchpad</b>
         Mod+Grave             Toggle terminal scratchpad
 
+        <b>Screenshots</b>
+        Print                 Region select → file + clipboard (maim -s)
+        Mod+Print             Full screen → file + clipboard (maim)
+
         <b>Multimedia / hardware keys</b>
         XF86AudioRaiseVolume  Volume up (steelbore-osd)
         XF86AudioLowerVolume  Volume down (steelbore-osd)
@@ -353,6 +366,67 @@
 
         <b>Help</b>
         Mod+Shift+Slash        Show this keybinding help (rofi)
+        '';
+
+        # ═══════════════════════════════════════════════════════════════════════════
+        # ROFI — keybinding-help theme (Steelbore palette).
+        # Consumed by the Mod+Shift+Slash bind above:
+        #   rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < keybinds.txt
+        # Without this file rofi aborts with "Failed to open theme". Colors come
+        # from steelborePalette (already #RRGGBB); font matches the bars. The
+        # window centers by default (no `location`), so nothing hardcodes it.
+        # ═══════════════════════════════════════════════════════════════════════════
+        "rofi/keybinds.rasi".text = ''
+          * {
+              bg:      ${steelborePalette.voidNavy};
+              fg:      ${steelborePalette.moltenAmber};
+              accent:  ${steelborePalette.steelBlue};
+              background-color: transparent;
+              text-color:       @fg;
+              font: "JetBrainsMono Nerd Font 12";
+          }
+
+          window {
+              background-color: @bg;
+              border:           2px;
+              border-color:     @accent;
+              border-radius:    8px;
+              padding:          16px;
+              width:            46%;
+          }
+
+          mainbox { spacing: 10px; children: [ inputbar, listview ]; }
+
+          inputbar {
+              children:     [ prompt, entry ];
+              spacing:      8px;
+              padding:      0px 0px 8px 0px;
+              border:       0px 0px 2px 0px;
+              border-color: @accent;
+          }
+          prompt { text-color: @accent; }
+          entry  { placeholder: "Filter keybindings…"; placeholder-color: @accent; }
+
+          listview {
+              lines:     16;
+              scrollbar: false;
+              spacing:   2px;
+          }
+
+          element {
+              padding:          3px 6px;
+              border-radius:    4px;
+              background-color: transparent;
+              text-color:       @fg;
+          }
+          element selected {
+              background-color: @accent;
+              text-color:       @bg;
+          }
+          element-text {
+              markup:           true;
+              background-color: transparent;
+          }
         '';
 
         # ═══════════════════════════════════════════════════════════════════════════
@@ -447,24 +521,20 @@
                 ;; from `lang`, color from `lang_state` (en=steel blue,
                 ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
                 (button :onclick "xkb-switch -n"
-                  :class {lang_state == "ar" ? "lang-ar" : "lang-en"}
-                  (label :text lang))
+                  (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
                 ;; Caffeine — glyph from `caf`,
                 ;; color from caf_state (on=green, off=red). Clickable toggles.
                 (button :onclick "steelbore-caffeine"
-                  :class {caf_state == "on" ? "caf-on" : "caf-off"}
-                  (label :text caf))
+                  (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
                 ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
                 ;; off=red, on=dim steel blue, connected=green). Clickable
                 ;; toggles radio state, same as the XF86Bluetooth key.
                 (button :onclick "steelbore-bt-toggle"
-                  :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"}
-                  (label :text bt))
+                  (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
                 ;; Network — glyph from `net`, color from net_state. Clickable
                 ;; opens NetworkManager TUI for connection management.
                 (button :onclick "alacritty -e nmtui"
-                  :class {net_state == "down" ? "net-down" : "net-up"}
-                  (label :text net))
+                  (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
                 ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
                 ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
                 ;; neutral. The label word is replaced by its Nerd Font glyph
@@ -513,6 +583,23 @@
               color: $moltenAmber;
               border-bottom: 2px solid $steelBlue;
               padding: 0 12px;
+          }
+
+          // Clickable indicators (lang/caffeine/bluetooth/network) are GTK
+          // buttons. Strip Adwaita's relief/background/padding so they read as
+          // flat colored glyphs like the Niri bar's plain labels. The state
+          // color lives on the child label (eww.yuck: (label :class ...)), so
+          // it is never overridden by button chrome or the theme's button fg.
+          button {
+              background-color: transparent;
+              background-image: none;
+              border: none;
+              box-shadow: none;
+              outline: none;
+              padding: 0;
+              margin: 0;
+              min-height: 0;
+              min-width: 0;
           }
 
           .title  { color: $moltenAmber; }
