@@ -111,10 +111,17 @@ in
       // "was maximized" state and re-request it on every launch, which
       // overrides default-column-width above — resizing by hand never sticks.
       // Refuse the request globally so windows always open at the configured
-      // proportion. open-fullscreen is deliberately left alone so media
-      // players and presentations can still launch fullscreen.
+      // proportion. Since niri 25.11 a client's set_maximized maps to the
+      // "maximized to edges" state, refused only by open-maximized-to-edges
+      // false — open-maximized false merely declines the full-width column
+      // (already the default) and lets the client request through (verified
+      // against niri v26.04 src/handlers/xdg_shell.rs). Keep both so older
+      // niri, where open-maximized was the blocker, stays covered.
+      // open-fullscreen is deliberately left alone so media players and
+      // presentations can still launch fullscreen.
       window-rule {
           open-maximized false
+          open-maximized-to-edges false
       }
 
       // Startup. The wallpaper daemon needs to bind its IPC socket before

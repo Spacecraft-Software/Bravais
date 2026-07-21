@@ -235,10 +235,10 @@
     # Same root cause as the Nix-side wrappers in modules/packages/editors.nix:
     # Chromium reads XDG_CURRENT_DESKTOP to pick a credential backend, sees
     # "niri"/"leftwm", maps it to DE_OTHER, and falls back to plaintext storage
-    # instead of the Secret Service. These apps' Flathub launchers are `exec
-    # cobalt "$@"`-style wrappers with no flags.conf support, so the flag route
-    # used on the Nix side isn't available — override the variable the detection
-    # actually reads instead.
+    # instead of the Secret Service. These apps' Flathub `cobalt` launchers do
+    # read an imperative per-app ~/.var/app/<id>/config/<name>-flags.conf, but
+    # that file is mutable user state outside Nix — override the variable the
+    # detection actually reads instead, which stays declarative.
     #
     # Scoped to the sandbox, so unlike setting this session-wide it cannot
     # perturb host portal-backend selection or GTK app-menu behaviour. These are

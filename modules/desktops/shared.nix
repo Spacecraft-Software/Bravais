@@ -145,7 +145,25 @@ let
       pw=$(${pkgs.rofi}/bin/rofi -dmenu -password -p "Unlock keyring")
     fi
     printf '%s' "$pw" | ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --unlock --replace >/dev/null
-    ${pkgs.dunst}/bin/dunstify -a Keyring -r 9914 -i changes-prevent "Keyring unlocked"
+    # --unlock opens only the LOGIN keyring. Chromium-family Safe Storage
+    # keys are resolved through the *default* collection alias — if that
+    # alias points at any other keyring (e.g. a stray "Default Keyring"),
+    # browsers still cannot reach their cookie-encryption key after this
+    # unlock and silently drop the user's sessions. Detect and say so
+    # instead of reporting success.
+    default_coll=$(${pkgs.systemd}/bin/busctl --user call org.freedesktop.secrets \
+      /org/freedesktop/secrets org.freedesktop.Secret.Service ReadAlias s default \
+      | ${pkgs.coreutils}/bin/cut -d'"' -f2 || true)
+    locked=$(${pkgs.systemd}/bin/busctl --user get-property org.freedesktop.secrets \
+      "$default_coll" org.freedesktop.Secret.Collection Locked 2>/dev/null \
+      | ${pkgs.coreutils}/bin/cut -d' ' -f2 || true)
+    if [ "$locked" = "true" ]; then
+      ${pkgs.dunst}/bin/dunstify -a Keyring -u critical -r 9914 -i dialog-warning \
+        "Keyring: default collection still locked" \
+        "Browsers cannot reach their Safe Storage keys. Make Login the default keyring (Seahorse) and migrate items into it."
+    else
+      ${pkgs.dunst}/bin/dunstify -a Keyring -r 9914 -i changes-prevent "Keyring unlocked"
+    fi
   '';
 
   # X11 OSD for LeftWM — swayosd is Wayland-only (wlr-layer-shell), so

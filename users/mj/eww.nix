@@ -101,12 +101,17 @@
             ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
             ;; neutral. The label word is replaced by its Nerd Font glyph
             ;; (cpu-icon/ram-icon/bat-icon); only the percentage stays as text.
+            ;; Battery alone omits the literal space before its value:
+            ;; md-battery's ink sits inside its 600-unit advance (RSB +50),
+            ;; while oct-cpu/fa-memory overflow theirs (RSB -400/-438) into
+            ;; the following space — so a spaced battery label shows a ~3x
+            ;; wider visible gap than cpu/ram. No space = matching gaps.
             ;; "metric-group-start" adds a bit of breathing room ahead of the
             ;; cpu/ram/battery trio, setting it visually apart from the
             ;; radio/caffeine cluster (lang/bt/caf/net) to its left.
             (label :class {"metric-group-start " + (cpu >= 90 ? "metric-crit" : cpu >= 75 ? "metric-warn" : "metric")} :text "''${cpu-icon} ''${cpu}%")
             (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
-            (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon} ''${battery}%"))))
+            (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%"))))
 
       (defwindow bar
         :monitor 0

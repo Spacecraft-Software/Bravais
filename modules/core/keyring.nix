@@ -24,8 +24,10 @@
 
   config = {
     # The Secret Service provider. Bravais' primary sessions (Niri, LeftWM) are
-    # window managers, not desktop environments, so nothing else pulls this in —
-    # pin it here rather than inheriting it from whichever DE happens to be on.
+    # window managers, not desktop environments. GNOME's own module *does*
+    # enable this transitively when that desktop is installed (oo7 decision
+    # doc, Findings), so this pin is about being explicit and DE-independent,
+    # not about being the only enabler.
     # Pairs with `security.pam.services.greetd.enableGnomeKeyring` (modules/login)
     # for auto-unlock on password login, and with `steelbore-keyring-unlock`
     # (modules/desktops/shared.nix) for the fingerprint-login path.

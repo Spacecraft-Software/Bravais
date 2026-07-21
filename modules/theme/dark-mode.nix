@@ -64,6 +64,15 @@
   xdg.portal = {
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-    config.leftwm.default = [ "gtk" ];
+    config.leftwm = {
+      default = [ "gtk" ];
+      # Secret portal backend (Flatpak Chromium browsers probe it for their
+      # cookie-encryption key). Upstream nixpkgs wires this for niri
+      # (niri-portals.conf: Secret=gnome-keyring); leftwm ships no upstream
+      # module, and gnome-keyring's .portal file declares UseIn=gnome only —
+      # without this explicit entry the Secret portal has NO backend under
+      # LeftWM and sandboxed apps fail their portal key init outright.
+      "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+    };
   };
 }

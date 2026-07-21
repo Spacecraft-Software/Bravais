@@ -447,27 +447,35 @@
                 ;; from `lang`, color from `lang_state` (en=steel blue,
                 ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
                 (button :onclick "xkb-switch -n"
-                  :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
+                  :class {lang_state == "ar" ? "lang-ar" : "lang-en"}
+                  (label :text lang))
                 ;; Caffeine — glyph from `caf`,
                 ;; color from caf_state (on=green, off=red). Clickable toggles.
                 (button :onclick "steelbore-caffeine"
-                  :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
+                  :class {caf_state == "on" ? "caf-on" : "caf-off"}
+                  (label :text caf))
                 ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
                 ;; off=red, on=dim steel blue, connected=green). Clickable
                 ;; toggles radio state, same as the XF86Bluetooth key.
                 (button :onclick "steelbore-bt-toggle"
-                  :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt)
+                  :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"}
+                  (label :text bt))
                 ;; Network — glyph from `net`, color from net_state. Clickable
                 ;; opens NetworkManager TUI for connection management.
                 (button :onclick "alacritty -e nmtui"
-                  :class {net_state == "down" ? "net-down" : "net-up"} :text net)
+                  :class {net_state == "down" ? "net-down" : "net-up"}
+                  (label :text net))
                 ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
                 ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
                 ;; neutral. The label word is replaced by its Nerd Font glyph
                 ;; (cpu-icon/ram-icon/bat-icon); only the percentage stays as text.
+                ;; Battery alone omits the literal space before its value:
+                ;; md-battery's ink sits inside its 600-unit advance (RSB +50),
+                ;; while oct-cpu/fa-memory overflow theirs (RSB -400/-438) into
+                ;; the following space — matches the Niri bar (users/mj/eww.nix).
                 (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%")
                 (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
-                (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon} ''${battery}%")
+                (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%")
                 ;; System tray — SNI/D-Bus protocol. Works natively on X11
                 ;; (LeftWM); known issues on Wayland (not used here).
                 (systray :class "tray" :icon-size 16 :spacing 4 :space-evenly false :prepend-new true))))
