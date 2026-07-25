@@ -63,6 +63,7 @@ bravais/
 |   |   +-- cosmic.nix             # COSMIC DE on Wayland
 |   |   +-- plasma.nix             # KDE Plasma 6 on Wayland
 |   |   +-- niri.nix               # Niri + Ironbar on Wayland
+|   |   +-- niri-unmax.nix         # steelbore-niri-unmax: revert post-open self-maximize (Chrome)
 |   |   +-- leftwm.nix             # LeftWM + eww bar on X11
 |   |   +-- shared.nix             # Shared bare-WM config (dunst; gated on niri || leftwm)
 |   +-- login/                     # Display/login managers
@@ -86,7 +87,7 @@ bravais/
 |       +-- default.nix            # System-level user config
 |       +-- home.nix               # HM core: identity + imports (Phase D split)
 |       +-- {git,shell,terminals,niri,desktop-theme,apps}.nix  # one-concern HM modules
-+-- pkgs/                          # In-tree packages (audio-led, claude-desktop, CRD, ollama)
++-- pkgs/                          # In-tree packages (audio-led, niri-unmax, claude-desktop, CRD, ollama)
 ```
 
 (Overlays are defined inline in `modules/core/nix.nix`; the former `overlays/`
@@ -591,6 +592,8 @@ niri, swaybg, xwayland-satellite, ironbar, waybar, anyrun, onagre, wired, swaylo
 **Niri Configuration** (`~/.config/niri/config.kdl`, single source via `users/mj/home.nix` — niri reads the user config in preference to `/etc/niri`, so the config lives only at the user level; `modules/desktops/niri.nix` just enables Niri, installs packages, and ships the backlight udev rule + rfkill wrappers):
 
 Layout: gaps 8, focus-ring width 2 (active: Molten Amber, inactive: Steel Blue), borders off, default column width 50%, center-focused-column on-overflow.
+
+**Self-maximizing clients** (`modules/desktops/niri-unmax.nix`): the global `window-rule { open-maximized false; open-maximized-to-edges false }` is map-time only — Chrome maps at tile size, then requests maximize ~0.5–1 s later (measured 2026-07-25: 756x816 → 1536x832), which niri honours; `max-width` doesn't cap the maximized-to-edges state either (tested live). Ships **steelbore-niri-unmax** (`pkgs/steelbore-niri-unmax/`; Rust + serde_json, GPL-3.0): an event-driven daemon, run as a systemd **user** service bound to `graphical-session.target`, that watches the niri IPC event stream and toggles maximized-to-edges back off — only for windows inside a 3 s post-open grace window (200 ms settle + fresh re-confirm, since the action is a toggle), so a maximize the user performs later is never touched (verified live). Detection is geometric (tile width == output logical width; requires `gaps > 0`); fullscreen is exempt so media players can still launch fullscreen. Exits 0 under non-niri sessions (probes the socket first) and holds a per-session single-instance lock (abstract unix socket) so a duplicate can never double-toggle.
 
 Startup: swaybg (Void Navy solid color), ironbar, wired.
 

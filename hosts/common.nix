@@ -56,6 +56,7 @@
     desktops.cosmic.enable = true; # stable pkgs (nixos-26.05)
     desktops.plasma.enable = true;
     desktops.niri.enable = true;
+    desktops.niriUnmax.enable = true; # revert Chrome-style post-open self-maximize
     desktops.leftwm.enable = true;
 
     # Package bundles

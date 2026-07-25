@@ -7,6 +7,7 @@
     ./plasma.nix
     ./shared.nix
     ./niri.nix
+    ./niri-unmax.nix
     ./leftwm.nix
     ./assertions.nix
   ];

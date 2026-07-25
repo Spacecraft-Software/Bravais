@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "steelbore-niri-unmax"
+version = "0.1.0"
+edition = "2021"
+description = "Un-maximize windows that open maximized-to-edges under the niri compositor."
+license = "GPL-3.0-or-later"
+authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
+
+[dependencies]
+anyhow = "1"
+serde_json = "1"
+
+# Release tuning (Standard §3.2.1). LTO + a single codegen unit shrink this tiny
+# binary with no downside. `-C target-cpu=native` is deliberately NOT set: it
+# would break Nix build reproducibility and binary-cache reuse, and Stability
+# (Priority 1) outranks a negligible perf gain for an idle event-loop daemon.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
