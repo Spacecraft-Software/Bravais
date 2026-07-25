@@ -157,10 +157,38 @@ let
     locked=$(${pkgs.systemd}/bin/busctl --user get-property org.freedesktop.secrets \
       "$default_coll" org.freedesktop.Secret.Collection Locked 2>/dev/null \
       | ${pkgs.coreutils}/bin/cut -d' ' -f2 || true)
+
+    # A correct alias pointing at an unlocked collection is NOT sufficient. A
+    # collection can *index* an item that no longer materialises on the bus;
+    # every lookup that would match it then fails with "No such secret item at
+    # path: ..." rather than returning a result. Chromium-family browsers read
+    # that failure as "no key exists", mint a fresh Safe Storage key, and
+    # silently invalidate every stored cookie and password. Both checks above
+    # stayed green through exactly that failure on 2026-07-25, so probe the
+    # lookups the browsers themselves perform.
+    #
+    # A browser that has simply never run yields no match and no error — only
+    # the dangling case writes that message to stderr, so match on it rather
+    # than on the exit status.
+    broken=""
+    for probe in "application chrome" "application brave" "application chromium" \
+                 "app_id com.google.Chrome" "app_id com.brave.Browser" \
+                 "app_id com.opera.Opera" "app_id com.microsoft.Edge"; do
+      # shellcheck disable=SC2086 -- probe is an attribute/value pair, split intentionally
+      err=$(${pkgs.libsecret}/bin/secret-tool search --all $probe 2>&1 >/dev/null || true)
+      case "$err" in
+        *"No such secret item at path"*) broken="$broken ''${probe#* }" ;;
+      esac
+    done
+
     if [ "$locked" = "true" ]; then
       ${pkgs.dunst}/bin/dunstify -a Keyring -u critical -r 9914 -i dialog-warning \
         "Keyring: default collection still locked" \
         "Browsers cannot reach their Safe Storage keys. Make Login the default keyring (Seahorse) and migrate items into it."
+    elif [ -n "$broken" ]; then
+      ${pkgs.dunst}/bin/dunstify -a Keyring -u critical -r 9914 -i dialog-warning \
+        "Keyring: dangling item(s) —''${broken}" \
+        "These lookups fail with 'No such secret item'. Affected browsers will mint a NEW Safe Storage key on next launch and drop every saved login. Rebuild the login keyring before starting them."
     else
       ${pkgs.dunst}/bin/dunstify -a Keyring -r 9914 -i changes-prevent "Keyring unlocked"
     fi

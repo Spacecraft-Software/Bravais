@@ -44,9 +44,20 @@
     security.pam.services.sudo.fprintAuth = true;
     security.pam.services.sudo-i.fprintAuth = true;
 
-    # Gate the greetd TUI login (tuigreet) with a fingerprint prompt. greetd
-    # defines its own PAM service and does NOT inherit the `login` service's
-    # fprintAuth default, so this must be set explicitly.
-    security.pam.services.greetd.fprintAuth = true;
+    # Fingerprint is deliberately NOT enabled for the greetd TUI login
+    # (tuigreet). pam_fprintd is `sufficient` at PAM order 11400, ahead of
+    # pam_gnome_keyring at 12200, so a fingerprint login short-circuits `auth`
+    # before the keyring module ever receives a password. The login keyring then
+    # stays locked, and Chromium-family browsers — finding no reachable Safe
+    # Storage key — silently mint a fresh random one and lose every saved
+    # session (this is what logged Opera out on 2026-07-21 and Chrome on
+    # 2026-07-25). A typed password at greetd is what makes
+    # `security.pam.services.greetd.enableGnomeKeyring` (modules/login/default.nix)
+    # actually do anything. sudo / sudo -i above keep fingerprint.
+    #
+    # greetd defines its own PAM service and does NOT inherit the `login`
+    # service's fprintAuth default, so this is stated explicitly rather than
+    # left to the default.
+    security.pam.services.greetd.fprintAuth = false;
   };
 }

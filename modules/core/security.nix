@@ -23,9 +23,17 @@
   # gtklock package ships its own `etc/pam.d/gtklock` (auth include login)
   # but NixOS doesn't link package PAM files into /etc/pam.d/ — without
   # this declaration the service is unknown to PAM and gtklock rejects
-  # every password. Empty attrset = NixOS defaults (pam_unix), which is
-  # what `auth include login` resolves to here.
-  security.pam.services.gtklock = { };
+  # every password.
+  #
+  # enableGnomeKeyring re-unlocks the login keyring on screen unlock. Without
+  # it, anything that locks the keyring mid-session leaves it locked for the
+  # rest of the session, and Chromium-family browsers started afterwards mint a
+  # fresh Safe Storage key rather than reaching the existing one — silently
+  # dropping every saved login. Same failure mode the greetd path guards against
+  # (modules/hardware/fingerprint.nix).
+  security.pam.services.gtklock = {
+    enableGnomeKeyring = true;
+  };
 
   # SSH agent — provided by gitway-agent (NixOS module from the gitway flake;
   # imported in flake.nix). Disable system OpenSSH ssh-agent.service so it
