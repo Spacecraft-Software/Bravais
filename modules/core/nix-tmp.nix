@@ -14,6 +14,11 @@
 # and builds fall back to the system disk transparently. With the
 # drive plugged in, the same path resolves to the loop ext4.
 #
+# The path unit triggers on a DIRECTORY existing, which does not imply
+# anything is mounted there — so the service verifies the mount itself
+# before creating an 80 GiB image. See the guard in ExecStart: without
+# it, a stale udisks mountpoint puts the whole build scratch in RAM.
+#
 # Mode is 0755 root:root (NOT 1777). Nix 2.31+ refuses a world-writable
 # `build-dir` for security; only nix-daemon (root) needs to write here,
 # and it creates per-build subdirs as the nixbld* sandbox users itself.
@@ -55,12 +60,64 @@ in
       RemainAfterExit = true;
       ExecStart = pkgs.writeShellScript "nix-tmp-loop-up" ''
         set -eu
+        drive="/run/media/${primaryUser}/Expansion"
+
+        # ── Guard: the drive must actually be MOUNTED ────────────────────
+        # PathExists is satisfied by a leftover empty DIRECTORY just as
+        # readily as by a real mount. udisks2 leaves the mountpoint behind
+        # after an unclean removal, and on the next plug-in it finds that
+        # name taken and mounts the drive at "Expansion1" instead — so the
+        # decoy can outlive the drive indefinitely.
+        #
+        # Unguarded, the image below is then created on whatever backs that
+        # path, which is /run: a tmpfs, i.e. RAM. That is not hypothetical —
+        # it filled /run to 100%, drove the machine into OOM, and left the
+        # loop ext4 with an aborted journal remounted read-only, which fails
+        # every subsequent build with "Read-only file system".
+        #
+        # udisks creates the directory a moment before it mounts, so wait
+        # briefly rather than racing it.
+        for _ in $(${pkgs.coreutils}/bin/seq 1 20); do
+          ${pkgs.util-linux}/bin/mountpoint -q "$drive" && break
+          ${pkgs.coreutils}/bin/sleep 0.5
+        done
+
+        if ! ${pkgs.util-linux}/bin/mountpoint -q "$drive"; then
+          echo "nix-tmp: $drive exists but nothing is mounted there." >&2
+          echo "nix-tmp: refusing to create the build image — it would land on" >&2
+          echo "nix-tmp: the tmpfs backing /run (RAM). Builds fall back to /." >&2
+          echo "nix-tmp: check for a stale mountpoint (the drive may be at" >&2
+          echo "nix-tmp: ''${drive}1); remove the empty decoy dir and replug." >&2
+          exit 1
+        fi
+
+        # Belt and braces: a real mount must still not be memory-backed.
+        fstype="$(${pkgs.util-linux}/bin/findmnt -no FSTYPE "$drive")"
+        case "$fstype" in
+          tmpfs | ramfs | devtmpfs)
+            echo "nix-tmp: $drive is $fstype (memory-backed) — refusing." >&2
+            exit 1
+            ;;
+        esac
+
+        # ── Image ────────────────────────────────────────────────────────
+        # Only ever creates ${imgPath}. Nothing else on the drive is read,
+        # moved or removed.
         if [ ! -f "${imgPath}" ]; then
           ${pkgs.coreutils}/bin/truncate -s ${imgSize} "${imgPath}"
           ${pkgs.e2fsprogs}/bin/mkfs.ext4 -F "${imgPath}"
         fi
-        ${pkgs.util-linux}/bin/mountpoint -q "${mountAt}" || \
+
+        if ! ${pkgs.util-linux}/bin/mountpoint -q "${mountAt}"; then
+          # Preen the scratch image before mounting. An aborted journal
+          # (what a full backing store leaves behind) otherwise remounts
+          # read-only on first write and every build fails until it is
+          # repaired by hand. Scoped to our own image file; exit codes 1/2
+          # mean "fixed", so only a genuine failure is worth reporting.
+          ${pkgs.e2fsprogs}/bin/e2fsck -p "${imgPath}" || \
+            echo "nix-tmp: e2fsck returned $? for ${imgPath}; mounting anyway" >&2
           ${pkgs.util-linux}/bin/mount -o loop "${imgPath}" "${mountAt}"
+        fi
         ${pkgs.coreutils}/bin/chmod 0755 "${mountAt}"
       '';
       ExecStop = pkgs.writeShellScript "nix-tmp-loop-down" ''
