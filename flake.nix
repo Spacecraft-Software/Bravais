@@ -132,7 +132,7 @@
       #   steelbore-matrixgreen          steelbore-navywhite (light canvas)
       #   tokyonight
       #   …and a <slug>-high-contrast sibling of each (§11.1.1)
-      defaultPalette = "steelbore-classic";
+      defaultPalette = "steelbore";
 
       mkPalette =
         slug:

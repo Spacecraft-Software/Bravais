@@ -14,10 +14,15 @@
   # Environment variables for theme-aware applications
   environment.variables = {
     SPACECRAFT_BACKGROUND = steelborePalette.background;
+    SPACECRAFT_SURFACE = steelborePalette.surface;
     SPACECRAFT_TEXT = steelborePalette.foreground;
     SPACECRAFT_ACCENT = steelborePalette.accent;
+    SPACECRAFT_STRUCTURE = steelborePalette.structure;
     SPACECRAFT_SUCCESS = steelborePalette.success;
-    SPACECRAFT_WARNING = steelborePalette.error;
+    # WARNING used to carry the error color — a six-token palette had no
+    # distinct warning, so the two shared one. They are separate roles now.
+    SPACECRAFT_ERROR = steelborePalette.error;
+    SPACECRAFT_WARNING = steelborePalette.warning;
     SPACECRAFT_INFO = steelborePalette.info;
   };
 

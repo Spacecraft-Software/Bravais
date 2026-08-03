@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Palette is now the Standard §11 family, and switchable** — Standard v1.35
+  turned §11 from a single palette into a family of seven adoptable palettes
+  and renamed the six-token palette Bravais shipped to *Steelbore Classic*.
+  Bravais named those colors by brand (`steelborePalette.moltenAmber`) in 428
+  places, so changing palette meant editing all 428. §11.1 requires references
+  to go through *role* tokens precisely so the palette can be swapped without
+  touching consumers; that indirection now exists. `lib/colors.nix` became
+  `lib/palette.nix`, which selects a member by slug and resolves it to a
+  complete role record, reading values out of the canonical `steelbore.toml`
+  shipped by the `construct` input rather than restating them (§11.4). Roles a
+  palette omits resolve through a fallback chain (`info` → `structure`,
+  `surface` → `background`, `warning` → `error`, `focus` → `success`), so
+  consumers never branch on which palette is active. Switching the whole
+  system — ~15 terminals, both bars, every WM, the TTY console, greetd — is one
+  word in `flake.nix`.
+
+- **Adopted Steelbore Modern** (`steelbore`, the Standard default) in place of
+  Classic. Text moves from Molten Amber to Platinum Mist on the same Void Navy
+  canvas, with Plasma Orange accents, Pulse Violet structure and a real
+  Plasma Magenta warning role distinct from Mars Red error. `SPACECRAFT_WARNING`
+  had been carrying the *error* color — a six-token palette had no separate
+  warning — and is now correct, with `SPACECRAFT_ERROR`, `SPACECRAFT_SURFACE`
+  and `SPACECRAFT_STRUCTURE` added.
+
+- **16-color ANSI mapping is derived, not hand-collapsed.** It also existed
+  twice — in `lib/terminal-theme.nix` and `modules/theme/default.nix` — kept in
+  step by hand; it is single-sourced in `lib/palette.nix` now. `red` and `green`
+  stay pinned to the error and success roles (every terminal reads them that
+  way), and the remaining color slots go to whichever role token sits nearest
+  the slot's canonical hue. A fixed role→slot table could only ever be
+  hue-correct for one palette — Classic's `accent` is Steel Blue where Modern's
+  is Plasma Orange — so the assignment is measured per palette instead. Slots
+  still collide where a palette genuinely lacks a hue (Modern has no cyan), but
+  nothing is collapsed by hand. Applied to Classic the derivation reproduces the
+  previous hand-written mapping exactly.
+
+- Bumped `actions/checkout@v4` → `@v5` in all four workflows; v4 targets the
+  deprecated Node 20 and was annotating every run.
+
 ### Added
 
 - **nil Nix LSP** — `github:UnbreakableMJ/nil` flake input (fork of

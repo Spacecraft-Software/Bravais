@@ -110,9 +110,26 @@ All modules use the `steelbore.*` namespace with `lib.mkEnableOption`:
 }
 ```
 
-The canonical Steelbore palette lives in `lib/colors.nix` (imported by `flake.nix` as
-`steelborePalette`). The former `lib/default.nix` (a duplicate palette + an unused
-`mkSteelboreModule` helper) was removed.
+The palette lives in `lib/palette.nix` (imported by `flake.nix` as `steelborePalette`).
+The former `lib/default.nix` (a duplicate palette + an unused `mkSteelboreModule`
+helper) was removed.
+
+Standard §11 is a *family* of seven adoptable palettes, not one palette. `lib/palette.nix`
+selects a member by slug and resolves it to the §11.1 role tokens (`background`,
+`surface`, `surface-alt`, `foreground`, `accent`, `structure`, `success`, `error`,
+`warning`, `info`, `focus`, `border`). Consumers name roles only — a brand name like
+`moltenAmber` appears nowhere, which is what makes the palette swappable:
+
+```nix
+defaultPalette = "steelbore";   # flake.nix — switches the entire system
+```
+
+Values are read from `steelbore.toml` in the `construct` input via `builtins.fromTOML`,
+never retyped (§11.4). Palettes bind different role sets — Modern eleven, Classic six —
+so roles a palette omits resolve through a documented fallback chain (`info` →
+`structure` → `accent`, `surface` → `background`, `warning` → `error`,
+`focus` → `success`). Unknown slugs, §11.5 fidelity palettes and `steelbore-mono` are
+rejected at eval time.
 
 ### 2.3 Host Configuration Pattern
 
@@ -729,7 +746,7 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 - **Padding:** 10px
 - **System shell:** Nushell (via `${pkgs.nushell}/bin/nu`)
 - **User shell:** Nushell (via `${pkgs.nushell}/bin/nu` in home.nix configs)
-- **Foot quirk:** Uses hex colors without `#` prefix (handled inside the `tt.foot` emitter via `convert.bareHex` from `lib/colors.nix`)
+- **Foot quirk:** Uses hex colors without `#` prefix (handled inside the `tt.foot` emitter via `convert.bareHex` from `lib/palette.nix`)
 - **Rio font config:** Uses `weight = N` integers (400 regular, 700 bold) -- no `style` key
 - **Konsole:** Full colorscheme with Normal/Faint/Intense variants, profile with 160x48 geometry, blinking cursor
 - **Yakuake:** Height 50%, width 100%, no keep-open, no animation, inherits Konsole Steelbore profile

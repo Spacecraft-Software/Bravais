@@ -295,7 +295,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **Tier 2 (S8) split**: `marchLevel` + all compiler/linker flags moved to
   `modules/platform/x86-64.nix` under `steelbore.platform.x86_64`; `intel.nix` is now
   vendor-only (`kvm-intel`, microcode). New sibling modules `modules/services/` (podman,
-  S13) and `modules/compat/` (appimage, S13); palette single-sourced in `lib/colors.nix`
+  S13) and `modules/compat/` (appimage, S13); palette single-sourced in `lib/palette.nix`
   (S9); desktop guard assertions in `modules/desktops/assertions.nix` (S11).
 - [✓] **Phase F (robustness)**: session-prerequisite assertions (niri/cosmic → greetd;
   gnome → greetd|gdm; plasma → greetd|sddm; audioLed → PipeWire), Plasma portal

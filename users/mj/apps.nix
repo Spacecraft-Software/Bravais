@@ -354,16 +354,13 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # TINY — Rust + crossterm multi-server IRC client (TUI)
     # ═══════════════════════════════════════════════════════════════════════════
-    # Tiny is 256-color only (no truecolor), so palette colors are mapped
-    # to their nearest xterm-256 indices:
-    #   Void Navy      #000027 → 17  (#00005f)   [also use `default` for bg]
-    #   Molten Amber   #D98E32 → 172 (#d78700)
-    #   Steel Blue     #4B7EB0 → 67  (#5f87af)
-    #   Radium Green   #50FA7B → 84  (#5fff87)
-    #   Red Oxide      #FF5C5C → 203 (#ff5f5f)
-    #   Liquid Coolant #8BE9FD → 123 (#87ffff)
-    # `bg: default` inherits the host terminal's background — which on
-    # Bravais is already Void Navy.
+    # Tiny is 256-color only (no truecolor), so role tokens come through
+    # `convert.x256`, which derives each index from the active palette's hex
+    # (6×6×6 cube + gray ramp). Classic's six hand-curated hue-preserving
+    # picks are kept as a by-hex override in lib/palette.nix, so switching
+    # back to Classic reproduces its original indices exactly.
+    # `bg: default` inherits the host terminal's background — which is
+    # whatever the active palette's canvas is.
     "tiny/config.yml".text = ''
       # Steelbore Tiny configuration
 

@@ -10,7 +10,7 @@ The design of Bravais is guided by four primary tenets:
 
 2. **Opt-in Modularity:** Every feature, hardware profile, and application set is structurally siloed inside its own module using Nix's `lib.mkEnableOption`. Hosts boot only exactly what they explicitly declare via the `steelbore.*` namespace.
 
-3. **The Steelbore Telemetry Palette:** Color is treated as telemetry, not just decoration. A strict, universal 6-color *Steelbore Color Palette* acts as a system-wide visual identity unifying the interface—extending from desktop environments down to TTY consoles.
+3. **The Steelbore Telemetry Palette:** Color is treated as telemetry, not just decoration. A single Standard §11 palette — *Steelbore Modern* by default, swappable for any member of the palette family — acts as a system-wide visual identity unifying the interface, extending from desktop environments down to TTY consoles.
 
 4. **Self-Sufficient Configuration:** Built with determinism and reproducibility at the forefront. Features minimal external dependencies beyond `nixpkgs`, ensuring your host builds identically every time.
 
@@ -71,18 +71,43 @@ bravais/
 └── v0/                            # Frozen v0-era configurations (archive)
 ```
 
-## Spacecraft Software Color Palette
+## Color Palette
 
-| Token          | Hex       | Role                           |
-|----------------|-----------|--------------------------------|
-| Void Navy      | `#000027` | Background / Canvas            |
-| Molten Amber   | `#D98E32` | Primary Text / Active Readout  |
-| Steel Blue     | `#4B7EB0` | Primary Accent / Structural    |
-| Radium Green   | `#50FA7B` | Success / Safe Status          |
-| Red Oxide      | `#FF5C5C` | Warning / Error Status         |
-| Liquid Coolant | `#8BE9FD` | Info / Links                   |
+**Declared palette: `steelbore` (Steelbore Modern)** — the Standard §11 default.
+Per §11.4 a project adopts exactly one palette and never mixes tokens across
+palettes.
 
-**`#000027` (Void Navy) is the mandatory background for ALL Spacecraft Software surfaces.**
+| §11.1 role    | Token          | Hex       | Use                             |
+|---------------|----------------|-----------|---------------------------------|
+| `background`  | Void Navy      | `#000027` | Canvas — every surface          |
+| `surface`     | Quantum Blue   | `#0E2A47` | Elevated panels / cards         |
+| `surface-alt` | Deep Matrix    | `#0B1A12` | Code blocks / terminal wells    |
+| `foreground`  | Platinum Mist  | `#D9DEE5` | Body text / default readout     |
+| `accent`      | Plasma Orange  | `#FF5E00` | Primary accent / active readout |
+| `structure`   | Pulse Violet   | `#8A6CFF` | Structure / links / borders     |
+| `success`     | Acid Lime      | `#B4FF00` | Success / safe status / focus   |
+| `error`       | Mars Red       | `#FF3B3B` | Error status                    |
+| `warning`     | Plasma Magenta | `#E445FF` | Warning / attention             |
+
+**`#000027` (Void Navy) is the mandatory canvas under Steelbore Modern.**
+Surface tokens are fills placed *on* the canvas, never replacements for it and
+never text colors (§11.0.1) — Quantum Blue is only 1.40:1 against the canvas.
+
+### Switching palettes
+
+Nothing in this repo names a brand color; every consumer reads a §11.1 role
+token, so the whole system — all ~15 terminals, both bars, every WM, the TTY
+console and greetd — follows one word in `flake.nix`:
+
+```nix
+defaultPalette = "steelbore";   # -> steelbore-classic, tokyonight, …
+```
+
+Values are read from the canonical `steelbore.toml` shipped by the `construct`
+input, never retyped (§11.4). Selectable: `steelbore`, `steelbore-classic`,
+`steelbore-blue`, `steelbore-blackpinkpanther`, `steelbore-matrixgreen`,
+`steelbore-navywhite`, `tokyonight`, plus a `<slug>-high-contrast` sibling of
+each (§11.1.1).
 
 ## Desktop Environments
 

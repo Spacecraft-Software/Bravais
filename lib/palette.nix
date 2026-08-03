@@ -204,6 +204,90 @@ let
   grayVal = i: 8 + 10 * i;
 
   sq = n: n * n;
+  max2 = a: b: if a > b then a else b;
+  min2 = a: b: if a < b then a else b;
+  abs = n: if n < 0 then -n else n;
+
+  # ---------------------------------------------------------------------
+  # Hue, for the 16-color ANSI mapping.
+  # ---------------------------------------------------------------------
+  # ANSI slots are named by HUE ("red", "cyan"); role tokens are named by
+  # FUNCTION ("error", "structure"). The two do not correspond: Classic's
+  # `accent` is Steel Blue, Modern's is Plasma Orange, so any fixed
+  # role -> slot table is hue-correct for exactly one palette and wrong for
+  # the rest. Assigning by measured hue instead keeps every palette's
+  # terminal honest, which is the whole point of a switchable family.
+  #
+  # `chroma` doubles as the achromatic guard — a near-gray token has no
+  # meaningful hue and must never win a color slot.
+  chromaOf =
+    hex:
+    let
+      c = channels hex;
+    in
+    max2 c.r (max2 c.g c.b) - min2 c.r (min2 c.g c.b);
+
+  hueOf =
+    hex:
+    let
+      c = channels hex;
+      mx = max2 c.r (max2 c.g c.b);
+      d = chromaOf hex;
+      h =
+        if mx == c.r then
+          (60 * (c.g - c.b)) / d
+        else if mx == c.g then
+          120 + (60 * (c.b - c.r)) / d
+        else
+          240 + (60 * (c.r - c.g)) / d;
+    in
+    if h < 0 then h + 360 else h;
+
+  hueDist =
+    a: b:
+    let
+      x = abs (a - b);
+    in
+    min2 x (360 - x);
+
+  # `red` and `green` are not hue decisions — every terminal in existence
+  # reads them as error and success, and a status color that disagrees with
+  # its slot is worse than one that is a few degrees off. They are pinned;
+  # only the remaining four slots are matched by hue, over the tokens those
+  # two did not take.
+  #
+  # `foreground` is a candidate because in some palettes it carries the
+  # brand hue (Classic's Molten Amber is the yellow slot). The chroma floor
+  # drops it where it is a near-neutral that would win a color slot on a
+  # technicality — Modern's Platinum Mist (chroma 12) and Tokyo Night's
+  # #C0CAF5 (53), the latter of which otherwise out-competes the actual
+  # blue accent for the blue slot by eleven degrees.
+  #
+  # Roles that fell back onto `error` or `success` (Classic binds no
+  # `warning`, so it resolves to `error`) are dropped too: those hexes are
+  # already spoken for by the pinned slots, and letting them back in is how
+  # `yellow` ends up identical to `green`.
+  hueCandidates = builtins.filter (
+    hex: chromaOf hex >= 80 && hex != error && hex != success
+  ) [
+    accent
+    structure
+    warning
+    info
+    focus
+    foreground
+  ];
+
+  # Nearest candidate to a canonical ANSI hue; falls back to `foreground`
+  # only if the palette is entirely achromatic.
+  nearestHue =
+    target:
+    if hueCandidates == [ ] then
+      foreground
+    else
+      builtins.head (
+        builtins.sort (a: b: hueDist (hueOf a) target < hueDist (hueOf b) target) hueCandidates
+      );
 
   x256Of =
     hex:
@@ -256,28 +340,34 @@ in
   # terminal theme (lib/terminal-theme.nix) and the TTY console
   # (modules/theme/default.nix), which used to carry duplicate copies.
   #
-  # Brand-collapsed: magenta repeats blue and the bright row folds
-  # blue/magenta/cyan onto one color — a six-token palette has no distinct
-  # hue for them. Palettes that bind the full eleven roles do; see M4.
+  # Each color slot goes to whichever role token sits nearest its canonical
+  # hue, so the mapping stays honest under every palette instead of being
+  # tuned to one. Slots may still collide where a palette genuinely has no
+  # such hue — Modern has no cyan — but nothing is collapsed by hand.
   ansi = {
     normal = [
       background # black
       error # red
       success # green
-      foreground # yellow
-      accent # blue
-      accent # magenta
-      info # cyan
+      (nearestHue 60) # yellow
+      (nearestHue 240) # blue
+      (nearestHue 300) # magenta
+      (nearestHue 180) # cyan
       foreground # white
     ];
+    # Bright black is the conventional "dim text" slot (comments, inactive
+    # UI), so it must stay legible: `structure` is 5.51:1 on Modern's canvas.
+    # Not `surface`, tempting as an elevated dark is here — §11.0.1 forbids
+    # surface tokens as text colors outright (Quantum Blue is 1.40:1), and
+    # every ANSI slot is a text color.
     bright = [
-      accent # black
+      structure # black
       error # red
       success # green
-      foreground # yellow
-      info # blue
-      info # magenta
-      info # cyan
+      (nearestHue 60) # yellow
+      (nearestHue 240) # blue
+      (nearestHue 300) # magenta
+      (nearestHue 180) # cyan
       foreground # white
     ];
   };
