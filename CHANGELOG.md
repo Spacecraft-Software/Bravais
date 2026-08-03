@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`mcpctl` is now a declared flake input** — `mcp-servers`
+  (`git+file:///spacecraft-software/mcp-servers`), installed into
+  `home.packages`. It was previously installed imperatively via
+  `nix profile install`, which a fresh machine would not reproduce, and
+  `rebuild`'s MCP drift probe compensated by hunting for it on `PATH` and
+  falling back to a `cargo build --release` artifact. That probe now calls it
+  by store path, so the fallback and the "mcpctl not built" branch are gone;
+  a failing probe reports its stderr instead of being silently skipped.
+  - `git+file:` rather than `path:` deliberately: a path input is
+    content-addressed and drifts its NAR hash on every source edit (constraint
+    #10 — the reason the five local Rust-app path inputs were dropped). A git
+    input pins a rev, so the working tree can change freely and only
+    `nix flake update mcp-servers` moves it. The trade-off is that `git+file:`
+    sees **committed** content only, so an mcpctl change must be committed
+    before a Bravais rebuild picks it up.
+  - **Action required once:** `nix profile remove mcpctl`. `~/.nix-profile/bin`
+    precedes `/etc/profiles/per-user/mj/bin` on `PATH`, so until the imperative
+    copy is gone it shadows the declarative one for interactive use.
+
 - **`theme.nix`, local themes, and a `theme` command** — the palette was already
   swappable, but not conveniently: the knob sat at line 135 of a 380-line
   `flake.nix`, trying a theme meant editing a tracked file, and every palette

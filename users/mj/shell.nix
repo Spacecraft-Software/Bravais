@@ -5,6 +5,7 @@
   lib,
   pkgs,
   steelborePalette,
+  mcp-servers,
   ...
 }:
 
@@ -34,6 +35,12 @@ let
   # /run/user/$UID/keyring/ssh at session start; gitway-agent owns the real
   # socket (CLAUDE.md constraint #8), so every interactive shell re-points it.
   gitwaySockPosix = "/run/user/$(id -u)/gitway-agent.sock";
+
+  # mcpctl from the `mcp-servers` flake input (constraint #7: flake-input
+  # package consumed by attr-path, threaded via extraSpecialArgs). Referenced
+  # by store path rather than name so `rebuild`'s drift probe does not depend
+  # on PATH ordering or on the package still being in home.packages.
+  mcpctl = "${mcp-servers.packages.${pkgs.stdenv.hostPlatform.system}.mcpctl}/bin/mcpctl";
 in
 {
   # Session variables
@@ -599,26 +606,28 @@ in
             # agent session — so an auto-deploy would silently skip ~/.claude.json,
             # the file most likely to be stale, while reporting success. Surfacing
             # the skip is the useful half; the write stays a deliberate step.
+            # mcpctl comes from the `mcp-servers` flake input, so it is always
+            # present — no PATH probe, and no cargo-artifact fallback. Note the
+            # input is `git+file:`, which sees COMMITTED content only: this
+            # binary is the manifest logic as of the rev in flake.lock, so an
+            # uncommitted mcpctl change is not what runs here.
             let mcp_repo = "/spacecraft-software/mcp-servers"
             if ($mcp_repo | path exists) {
-              let mcp_bin = (if (which mcpctl | is-not-empty) { "mcpctl" } else { $mcp_repo | path join "mcpctl" "target" "release" "mcpctl" })
-              if (($mcp_bin == "mcpctl") or ($mcp_bin | path exists)) {
-                # --dry-run --json is read-only; it never writes to $HOME.
-                let probe = (^$mcp_bin deploy --dry-run --json --repo $mcp_repo | complete)
-                if $probe.exit_code == 0 {
-                  let report = ($probe.stdout | from json | get data)
-                  let drifted = ($report.files | where dirty | length)
-                  if $drifted > 0 {
-                    print $"(ansi yellow)($drifted) MCP host config\(s\) drifted from the manifest — run: mcpctl deploy --yes(ansi reset)"
-                  }
-                  if ($report.blocked | length) > 0 {
-                    print $"(ansi yellow)MCP deploy would skip a running host — close it and re-run mcpctl deploy:(ansi reset)"
-                    # `for`, not `each`: `each` returns a list and Nushell renders it.
-                    for entry in $report.blocked { print $"  ($entry)" }
-                  }
+              # --dry-run --json is read-only; it never writes to $HOME.
+              let probe = (^${mcpctl} deploy --dry-run --json --repo $mcp_repo | complete)
+              if $probe.exit_code == 0 {
+                let report = ($probe.stdout | from json | get data)
+                let drifted = ($report.files | where dirty | length)
+                if $drifted > 0 {
+                  print $"(ansi yellow)($drifted) MCP host config\(s\) drifted from the manifest — run: mcpctl deploy --yes(ansi reset)"
+                }
+                if ($report.blocked | length) > 0 {
+                  print $"(ansi yellow)MCP deploy would skip a running host — close it and re-run mcpctl deploy:(ansi reset)"
+                  # `for`, not `each`: `each` returns a list and Nushell renders it.
+                  for entry in $report.blocked { print $"  ($entry)" }
                 }
               } else {
-                print $"(ansi yellow)mcpctl not built — MCP config drift unchecked; run: cd ($mcp_repo); cargo build --release --manifest-path mcpctl/Cargo.toml(ansi reset)"
+                print $"(ansi yellow)mcpctl drift probe failed:(ansi reset)"; print $probe.stderr
               }
             }
           }

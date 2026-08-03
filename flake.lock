@@ -139,6 +139,26 @@
         "type": "github"
       }
     },
+    "mcp-servers": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785780579,
+        "narHash": "sha256-LGxs3qE11DczxZP9nbYAXqa0eKAcWm/yeIJBFO8OC6g=",
+        "ref": "refs/heads/main",
+        "rev": "94e74d3a38197849d50c3ccd3295bd6fa5510b67",
+        "revCount": 40,
+        "type": "git",
+        "url": "file:///spacecraft-software/mcp-servers"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///spacecraft-software/mcp-servers"
+      }
+    },
     "nil": {
       "inputs": {
         "nixpkgs": [
@@ -229,6 +249,7 @@
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
+        "mcp-servers": "mcp-servers",
         "nil": "nil",
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",

@@ -71,6 +71,19 @@
     # modules/packages/development.nix and used in the devShell below.
     nil.url = "github:UnbreakableMJ/nil";
     nil.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # mcp-servers — `mcpctl`, which generates each MCP host's config from that
+    # repo's mcp.toml and deploys it. Local clone, so `git+file:` rather than a
+    # `path:` input: a path input is content-addressed and drifts its NAR hash
+    # on every source edit (constraint #10, the reason the five local Rust-app
+    # path inputs were dropped). A git input is pinned to a rev instead, so the
+    # tree can change freely and only `nix flake update mcp-servers` moves it.
+    #
+    # Consequence: `git+file:` sees COMMITTED content only. An mcpctl change
+    # must be committed in /spacecraft-software/mcp-servers before a Bravais
+    # rebuild can pick it up.
+    mcp-servers.url = "git+file:///spacecraft-software/mcp-servers";
+    mcp-servers.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -86,6 +99,7 @@
       rapg,
       antigravity-nix,
       nil,
+      mcp-servers,
       ...
     } @ inputs:
     let
@@ -244,6 +258,7 @@
               unstablePkgs
               antigravity-nix
               nil
+              mcp-servers
               ;
           };
           modules = [
@@ -284,6 +299,7 @@
                   unstablePkgs
                   antigravity-nix
                   nil
+                  mcp-servers
                   ;
               };
               home-manager.users.${primaryUser} = import ./users/mj/home.nix;

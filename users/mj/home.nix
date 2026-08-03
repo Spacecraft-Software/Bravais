@@ -4,6 +4,7 @@
   config,
   pkgs,
   construct,
+  mcp-servers,
   unstablePkgs,
   primaryUser,
   ...
@@ -74,6 +75,18 @@
       # `construct` skills CLI from the Construct flake input (constraint #7:
       # flake-input package consumed by attr-path, threaded via extraSpecialArgs).
       construct.packages.${pkgs.stdenv.hostPlatform.system}.construct
+
+      # `mcpctl` — generates each MCP host's config from mcp-servers/mcp.toml
+      # and deploys it. User-scoped rather than system-wide because it writes
+      # into $HOME (~/.claude.json and friends), not /etc.
+      #
+      # It was previously installed imperatively (`nix profile install`), which
+      # a fresh machine would not reproduce. That copy must be removed:
+      #   nix profile remove mcpctl
+      # — because ~/.nix-profile/bin precedes /etc/profiles/per-user/mj/bin on
+      # PATH, so the stale imperative build shadows this one until it is gone.
+      # (`rebuild`'s drift probe is unaffected: it calls mcpctl by store path.)
+      mcp-servers.packages.${pkgs.stdenv.hostPlatform.system}.mcpctl
 
       # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
       # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
