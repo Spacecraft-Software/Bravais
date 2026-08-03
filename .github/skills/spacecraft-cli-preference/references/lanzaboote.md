@@ -1,6 +1,6 @@
 # lanzaboote
 
-**Replaces:** `sbctl`, systemd-boot without signing | **Language:** 🦀 Rust | **Install:** NixOS flake module
+**Replaces:** `sbctl`, systemd-boot without signing | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (NixOS flake module)
 
 ## Purpose
 UEFI Secure Boot for NixOS. Builds and signs bootloader + kernel images with your own Secure Boot keys. Used in Bravais.

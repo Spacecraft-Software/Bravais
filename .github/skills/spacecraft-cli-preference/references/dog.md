@@ -1,6 +1,6 @@
 # dog
 
-**Replaces:** `dig`, `nslookup` | **Language:** 🦀 Rust | **Install:** `cargo install dog` / distro repo
+**Replaces:** `dig`, `nslookup` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `dog`; also distro-provided)
 
 ## Purpose
 User-friendly DNS lookup with colourised output, JSON mode, native DoT/DoH support.

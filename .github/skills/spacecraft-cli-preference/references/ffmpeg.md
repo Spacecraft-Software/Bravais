@@ -1,6 +1,6 @@
 # ffmpeg
 
-**Replaces:** — (Spacecraft Software-sanctioned toolkit) | **Language:** ⚠️ C | **Install:** distro repo
+**Replaces:** — (Spacecraft Software-sanctioned toolkit) | **Language:** ⚠️ C | **Install:** via `spacecraft-missing-pkg` (distro-provided)
 
 ## Purpose
 The multimedia swiss-army knife. No Rust replacement comes close — keep `ffmpeg`. Pair it with `rav1e` / `gifski` / `oxipng` where specific output formats benefit.

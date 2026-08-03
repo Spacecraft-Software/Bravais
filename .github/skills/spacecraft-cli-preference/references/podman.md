@@ -1,6 +1,6 @@
 # podman
 
-**Replaces:** `docker` | **Language:** 🐹 Go | **Install:** distro repo
+**Replaces:** `docker` | **Language:** 🐹 Go | **Install:** via `spacecraft-missing-pkg` (distro-provided)
 
 ## Purpose
 Daemonless, rootless, Docker-CLI-compatible container engine. Runs OCI containers/pods without a privileged daemon. Spacecraft Software-sanctioned for container workflows.

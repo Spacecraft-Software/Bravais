@@ -1,6 +1,10 @@
 # fclones
 
-**Replaces:** `fdupes`, `rmlint` | **Language:** 🦀 Rust | **Install:** `cargo install fclones`
+**Replaces:** `fdupes`, `rmlint` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `fclones`)
+
+> **`fclones group` is safe; `fclones remove` deletes files.** Stop at the
+> group report, show it, and get consent before any `remove`/`link`/`dedupe`
+> pass. See [local-execution.md](local-execution.md).
 
 ## Purpose
 Parallel duplicate-file finder; can also deduplicate in place via hard/symlinks or reflinks.

@@ -1,6 +1,6 @@
 # gping
 
-**Replaces:** `ping` (visual) | **Language:** 🦀 Rust | **Install:** `cargo install gping`
+**Replaces:** `ping` (visual) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gping`)
 
 ## Purpose
 Ping with a live graph. Multiple hosts plotted concurrently; can even graph exit latency of shell commands.

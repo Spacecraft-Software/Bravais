@@ -1,6 +1,6 @@
 # jaq
 
-**Replaces:** `jq` | **Language:** 🦀 Rust | **Install:** `cargo install jaq`
+**Replaces:** `jq` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `jaq`)
 
 ## Purpose
 Faster, near drop-in `jq` clone. Compatible with most `jq` filters, written in safe Rust.

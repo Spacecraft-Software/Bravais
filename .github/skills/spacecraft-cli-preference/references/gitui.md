@@ -1,6 +1,6 @@
 # gitui
 
-**Replaces:** `git` (interactive) | **Language:** 🦀 Rust | **Install:** `cargo install gitui`
+**Replaces:** `git` (interactive) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gitui`)
 
 ## Purpose
 Blazing-fast, keyboard-driven terminal UI for git. Stage hunks, view diffs, manage branches/stashes, resolve conflicts — without leaving the terminal.

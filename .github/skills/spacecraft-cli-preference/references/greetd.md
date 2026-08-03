@@ -1,6 +1,6 @@
 # greetd
 
-**Replaces:** `getty` + `agetty`, LightDM/SDDM (minimal alternative) | **Language:** 🦀 Rust | **Install:** distro repo (`greetd`)
+**Replaces:** `getty` + `agetty`, LightDM/SDDM (minimal alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (distro package: `greetd`)
 
 ## Purpose
 Minimal, generic login daemon that delegates the UI to a separate greeter (e.g. `tuigreet`, `gtkgreet`, `regreet`).

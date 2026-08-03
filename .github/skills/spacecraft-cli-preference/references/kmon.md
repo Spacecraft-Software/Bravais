@@ -1,6 +1,6 @@
 # kmon
 
-**Replaces:** `lsmod`, `modinfo`, `modprobe` (browsing) | **Language:** 🦀 Rust | **Install:** `cargo install kmon`
+**Replaces:** `lsmod`, `modinfo`, `modprobe` (browsing) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `kmon`)
 
 ## Purpose
 TUI for Linux kernel module inspection and management. Load, unload, inspect parameters, browse kernel logs.

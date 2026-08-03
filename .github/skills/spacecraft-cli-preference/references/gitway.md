@@ -1,6 +1,6 @@
 # gitway
 
-**Replaces:** `ssh` (for Git transport to GitHub/GHE) | **Language:** 🦀 Rust | **Install:** Spacecraft Software default; `cargo install --path gitway-cli` from `github.com/Spacecraft-Software/Gitway`
+**Replaces:** `ssh` (for Git transport to GitHub/GHE) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (Spacecraft Software default; built from `gitway-cli` in `github.com/Spacecraft-Software/Gitway`)
 
 ## Purpose
 Purpose-built SSH transport client for Git operations against GitHub and GitHub

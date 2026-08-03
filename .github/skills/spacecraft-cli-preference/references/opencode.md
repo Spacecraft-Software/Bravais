@@ -1,6 +1,6 @@
 # opencode
 
-**Replaces:** closed-source AI coding agents | **Language:** 🐹 Go | **Install:** upstream installer
+**Replaces:** closed-source AI coding agents | **Language:** 🐹 Go | **Install:** via `spacecraft-missing-pkg` (upstream installer)
 
 ## Purpose
 Open-source AI coding assistant. Bring-your-own-model (OpenAI, Anthropic, local). Configurable agent loop.

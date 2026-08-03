@@ -1,6 +1,6 @@
 # xdg-desktop-portal-cosmic
 
-**Replaces:** other XDG portal backends (on COSMIC) | **Language:** 🦀 Rust | **Install:** distro repo (`xdg-desktop-portal-cosmic`)
+**Replaces:** other XDG portal backends (on COSMIC) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (distro package: `xdg-desktop-portal-cosmic`)
 
 ## Purpose
 Wayland XDG portal backend for the COSMIC desktop. Provides screenshot, screencast, file-chooser, and settings interfaces for sandboxed apps (Flatpak, browsers).

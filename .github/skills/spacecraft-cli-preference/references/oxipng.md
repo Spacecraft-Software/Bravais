@@ -1,6 +1,6 @@
 # oxipng
 
-**Replaces:** `optipng`, `pngcrush` | **Language:** 🦀 Rust | **Install:** `cargo install oxipng`
+**Replaces:** `optipng`, `pngcrush` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `oxipng`)
 
 ## Purpose
 Multithreaded, lossless PNG optimiser. Strips metadata, tries multiple filter/deflate strategies.

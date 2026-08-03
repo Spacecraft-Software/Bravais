@@ -1,6 +1,6 @@
 # dotter
 
-**Replaces:** `stow`, `chezmoi`, `yadm` | **Language:** 🦀 Rust | **Install:** `cargo install dotter`
+**Replaces:** `stow`, `chezmoi`, `yadm` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `dotter`)
 
 ## Purpose
 Dotfile manager with templating (Handlebars), per-package toggling, and symlink/copy deployment.

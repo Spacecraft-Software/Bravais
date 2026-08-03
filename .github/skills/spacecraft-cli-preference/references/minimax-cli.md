@@ -1,6 +1,6 @@
 # minimax-cli (minimax)
 
-**Replaces:** vendor-specific coding agents | **Language:** 🦀 Rust | **Install:** upstream
+**Replaces:** vendor-specific coding agents | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream)
 
 ## Purpose
 Terminal-native AI coding assistant powered by MiniMax models.

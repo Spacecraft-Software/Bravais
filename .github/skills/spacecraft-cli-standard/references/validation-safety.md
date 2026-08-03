@@ -70,8 +70,8 @@ dangerous. The **Wizard Fallback pattern**:
 1. **In TTY mode with stdin-is-a-TTY**, the tool MAY prompt for missing
    required arguments. Prompts go to stderr.
 
-2. **In non-TTY mode** (stdout piped OR stdin not a TTY OR `AI_AGENT=1` OR
-   `AGENT=1` OR `CI=true`), the tool MUST NOT prompt. Instead, emit a
+2. **In non-TTY mode** (stdout piped OR stdin not a TTY OR `AI_AGENT`/`AGENT`
+   set OR `CI` truthy), the tool MUST NOT prompt. Instead, emit a
    structured error with `MISSING_ARGUMENT`:
 
    ```json
@@ -175,7 +175,7 @@ side effects when retried.
 
 - Passing user strings to `sh -c "..."`. Classic injection.
 - Skipping canonicalization because "my code just opens the file". Path traversal doesn't need you to execute it — the file read itself is the breach.
-- Prompting for a missing arg when `AI_AGENT=1` is set. Agent hang / silent failure.
+- Prompting for a missing arg when `AI_AGENT` is set (any value). Agent hang / silent failure.
 - Defaulting destructive prompts to "yes". One stray pipe command = data loss.
 - Creating a new resource on every retry because the tool is not idempotent. Causes duplicate state on flaky networks.
 - `delete` on a missing resource returning exit 3 (`NOT_FOUND`). Breaks idempotent retries. Return 0.

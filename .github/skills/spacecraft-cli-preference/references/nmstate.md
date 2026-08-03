@@ -1,6 +1,6 @@
 # nmstate
 
-**Replaces:** `nmcli`, `ip`, raw NetworkManager config | **Language:** 🦀 Rust (core lib) | **Install:** distro repo (`nmstate`)
+**Replaces:** `nmcli`, `ip`, raw NetworkManager config | **Language:** 🦀 Rust (core lib) | **Install:** via `spacecraft-missing-pkg` (distro package: `nmstate`)
 
 ## Purpose
 Declarative network state management. Describe desired state in YAML/JSON, apply idempotently. Integrates with NetworkManager.

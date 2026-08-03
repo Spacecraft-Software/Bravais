@@ -1,6 +1,10 @@
 # gptman
 
-**Replaces:** `gdisk`, `sgdisk` | **Language:** 🦀 Rust | **Install:** `cargo install gptman`
+**Replaces:** `gdisk`, `sgdisk` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gptman`)
+
+> **Never run unprompted.** Writing a partition table on the wrong device
+> destroys everything on it. The agent may run read-only inspection; every
+> write is a hand-off to the user. See [local-execution.md](local-execution.md).
 
 ## Purpose
 Scriptable GPT partition table manipulation. Create, modify, clone partitions non-interactively.

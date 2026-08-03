@@ -37,22 +37,36 @@ Tests MUST verify the output mode cascade:
 - Invoked with a PTY → human mode (ANSI escape codes present).
 - Invoked with a pipe → machine mode (no ANSI, JSON envelope emitted).
 - Invoked with `--json` explicitly → machine mode regardless of TTY.
-- Invoked with `AI_AGENT=1` → machine mode regardless of TTY.
+- Invoked with `AI_AGENT` set to a **descriptive string** (the real harness form) → machine mode regardless of TTY.
 
 Rust test harness: `assert_cmd` + `portable-pty` for the PTY case.
 
 ### 4. Agent Environment Tests
 
-Tests MUST verify correct behavior with each agent env var set:
+Tests MUST verify correct behavior with each agent env var set. **Use the
+value real harnesses actually export — a descriptive string, not `1`.** A
+value-matching implementation (`AI_AGENT == "1"`) passes a `=1` test while
+failing under production Claude Code (`AI_AGENT=claude-code_2-1-218_agent`), so
+a fixture of `1` gives false confidence. Probe the host's live value first
+(`references/local-host-authoring.md`) and include it, alongside `1` for
+coverage.
 
 | Env | Expected effect |
 |-----|-----------------|
-| `AI_AGENT=1` | `--json` output, no color, no TUI, Wizard Fallback active |
-| `AGENT=1` | Same as `AI_AGENT=1` |
-| `CI=true` | `--json` output, no color, no interactive prompts |
+| `AI_AGENT=claude-code_2-1-218_agent` (real string) | `--json` output, no color, no TUI, Wizard Fallback active |
+| `AI_AGENT=1` (trivial value — must also work) | Same as above |
+| `AGENT=<any non-empty>` | Same as `AI_AGENT` |
+| `CI=true` / `CI=1` | `--json` output, no color, no interactive prompts |
+| `CI=false` / `CI=0` | **Not** CI — normal cascade |
 | `NO_COLOR=1` | No ANSI escape codes in output |
 | `FORCE_COLOR=1` + `NO_COLOR=1` | Color enabled (FORCE_COLOR wins in human mode; still suppressed in machine mode) |
 | `TERM=dumb` | No color, no TUI, no cursor movement |
+
+Detection is **presence-based** for the agent vars (see
+`references/output-modes.md` and `is_agent_env` in
+`references/rust-implementation.md`); verify it by **running the binary** under
+these values and observing the mode, not by reading the detection source —
+a source read is exactly what misses a `== "1"` regression.
 
 ### 5. Idempotency Tests
 
@@ -140,20 +154,18 @@ release), **MAJOR** (fix before next minor release).
 | 6 | `describe` sub-command present | `<tool> describe` → exit 0; output carries all required fields | BLOCKER |
 | 7 | Structured error on stderr in `--json` mode on non-zero exit | Induce error, capture stderr, parse as JSON, validate schema | BLOCKER |
 | 8 | stdout contains only data payload in machine mode | Capture stdout during error path; assert no content on error, no ANSI escapes, no log lines | BLOCKER |
-<!-- REUSE-IgnoreStart -->
 | 9 | GPL-3.0-or-later + SPDX header in every source file | Lint: `rg -L 'SPDX-License-Identifier: GPL-3.0-or-later' src/` → must be empty | BLOCKER |
-<!-- REUSE-IgnoreEnd -->
 | 10 | `NO_COLOR` suppresses ANSI | Set `NO_COLOR=1`, capture stdout+stderr, assert absence of `\x1B[` | CRITICAL |
 | 11 | `FORCE_COLOR` enables ANSI (human mode) | Set `FORCE_COLOR=1` with piped stdout → human mode with ANSI | CRITICAL |
 | 12 | `--dry-run` on every write / delete / destructive command | Iterate sub-commands via schema; assert `supports_dry_run == true` for write commands | CRITICAL |
-| 13 | Agent env var detection | `AI_AGENT=1 <tool> <noun> list` → JSON output, no ANSI | CRITICAL |
+| 13 | Agent env var detection (presence-based) | `AI_AGENT=claude-code_2-1-218_agent <tool> <noun> list` → JSON output, no ANSI. Use a descriptive string, not `1` — a `=1`-only test passes a broken `== "1"` implementation. | CRITICAL |
 | 14 | POSIX-first default output parseable by grep/awk/cut | Test: pipe default output through `awk '{print $1}'` and assert non-empty expected result | CRITICAL |
 | 15 | Wizard Fallback: missing arg in non-TTY → structured error | Invoke without required arg in pipe mode → exit 2, `MISSING_ARGUMENT`, hint contains the full invocation | CRITICAL |
 | 16 | Idempotency of state-mutating commands | Run twice; assert no duplicate side effects | CRITICAL |
 | 17 | Path traversal rejection | Invoke with `--path ../../<restricted>` → exit 4 | CRITICAL |
 | 18 | Control character rejection | Invoke with argument containing `\x00` → exit 2 | CRITICAL |
 | 19 | TUI falls back when stdout not TTY | `<tool> list --format explore \| cat` → `--format json` fallback + stderr warning | MAJOR |
-| 20 | TUI falls back when `AI_AGENT=1` | `AI_AGENT=1 <tool> list --format explore` → `--format json` fallback | MAJOR |
+| 20 | TUI falls back when `AI_AGENT` set | `AI_AGENT=claude-code_2-1-218_agent <tool> list --format explore` → `--format json` fallback | MAJOR |
 | 21 | `SKILL.md` / `CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING.md` at repo root | File existence check in CI | MAJOR |
 | 22 | Cross-shell roundtrip: jaq / from json / ConvertFrom-Json | Three-way pipe test per sub-command | MAJOR |
 | 23 | Windows console code page 65001 set | Windows-specific test: `chcp` query after tool start | MAJOR |
@@ -217,7 +229,7 @@ Emit a structured compliance report on every CI run:
   "metadata": {
     "tool": "caliper",
     "version": "0.3.0",
-    "spec_version": "the CLI Standard v1.0.0",
+    "spec_version": "v1.0.0",
     "timestamp": "2026-04-10T14:30:00Z"
   },
   "data": {

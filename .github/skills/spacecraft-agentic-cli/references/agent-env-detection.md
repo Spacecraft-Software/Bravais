@@ -28,8 +28,8 @@ adaptations**.
 Priority   Signal                         Effect on mode
 ─────────  ────────────────────────────── ──────────────────────────────
 1 (top)    --format / --json flag         Sets format unconditionally
-2          AI_AGENT=1 / AGENT=1           Sets format=json + agent profile
-3          CI=true                        Sets format=json + ci profile
+2          AI_AGENT set / AGENT set       Sets format=json + agent profile
+3          CI truthy                      Sets format=json + ci profile
 4          stdout is not a TTY            Sets format=json (ant pattern)
 5 (bot)    stdout is a TTY                Sets format=human
 
@@ -39,11 +39,28 @@ NO_COLOR=<non-empty>                      Disable ANSI color
 FORCE_COLOR=<non-empty>                   Enable ANSI color (overrides NO_COLOR)
 CLICOLOR=0                                Disable ANSI color
 TERM=dumb                                 Disable color + TUI
-CLAUDECODE=1                              Set metadata.invoking_agent="claude-code"
-CURSOR_AGENT=1                            Set metadata.invoking_agent="cursor"
-GEMINI_CLI=1                              Set metadata.invoking_agent="gemini-cli"
-TRAE_AI_SHELL_ID=<any>                    Set metadata.invoking_agent="trae"
+CLAUDECODE set                            Set metadata.invoking_agent="claude-code"
+CURSOR_AGENT set                          Set metadata.invoking_agent="cursor"
+GEMINI_CLI set                            Set metadata.invoking_agent="gemini-cli"
+TRAE_AI_SHELL_ID set                      Set metadata.invoking_agent="trae"
 ```
+
+**Detection is presence-based, not value-based.** The signal for every
+agent-presence variable is *that it is set to a non-empty value* — **not** that
+it equals `1`. Real harnesses set descriptive strings, not `1`. Measured in a
+live Claude Code session:
+
+```
+AI_AGENT=claude-code_2-1-218_agent
+CLAUDECODE=1
+```
+
+A detector that checks `AI_AGENT == "1"` returns **false** here and fails to
+recognise the very agent it is running under. Test `is_present` (set and
+non-empty). `CI` is the one exception — it carries a genuine truthy/falsy value
+(`true`, `1`, `false`, `0`) — so it uses a value predicate, not mere presence.
+See [local-host-authoring.md](local-host-authoring.md) for the probe that
+grounds this against the running environment.
 
 **Key invariant:** once the format is determined, the adaptations layer
 on top. A user invoking with `--format human FORCE_COLOR=1 NO_COLOR=1`
@@ -54,9 +71,10 @@ still gets human mode (flag wins) with FORCE_COLOR overriding NO_COLOR
 
 ## §2 — Per-variable behavioral changes
 
-### `AI_AGENT=1` — full agent profile
+### `AI_AGENT` set — full agent profile
 
-When detected, simultaneously:
+Triggered by `AI_AGENT` being **set to any non-empty value** — `1`,
+`claude-code_2-1-218_agent`, `true`, anything. When detected, simultaneously:
 
 - Output format defaults to json (compact, not pretty-printed)
 - ANSI color suppressed unconditionally (NO_COLOR-equivalent)
@@ -68,15 +86,18 @@ When detected, simultaneously:
 - Pagination defaults to page-size 50 (matches typical context budgets)
 - `metadata.invoking_agent` set to "agent" if no more specific signal
 
-### `AGENT=1` — equivalent fallback
+### `AGENT` set — equivalent fallback
 
-`AGENT=1` triggers exactly the same profile as `AI_AGENT=1`. Both are
-recognized because the community has not fully converged; supporting both
-costs nothing and avoids breaking either ecosystem.
+`AGENT` (set to any non-empty value) triggers exactly the same profile as
+`AI_AGENT`. Both are recognized because the community has not fully converged;
+supporting both costs nothing and avoids breaking either ecosystem.
 
-### `CI=true` — CI profile (subtly different)
+### `CI` truthy — CI profile (subtly different)
 
-CI is not necessarily an agent — it may be a deterministic build script.
+CI is not necessarily an agent — it may be a deterministic build script. Unlike
+the agent-presence vars, `CI` carries a **value**: it is truthy when set and
+not one of `""`, `0`, `false` (GitHub Actions sets `CI=true`; other runners set
+`CI=1`). Treat `CI=false` / `CI=0` as *not* CI.
 The CI profile differs from the agent profile in two ways:
 
 - Verbosity stays at "normal" (CI logs benefit from progress info on
@@ -85,17 +106,17 @@ The CI profile differs from the agent profile in two ways:
 
 Otherwise identical: json format, no color, no TUI, non-interactive.
 
-### `CLAUDECODE=1`, `CURSOR_AGENT=1`, `GEMINI_CLI=1`, `TRAE_AI_SHELL_ID`
+### `CLAUDECODE`, `CURSOR_AGENT`, `GEMINI_CLI`, `TRAE_AI_SHELL_ID` set
 
-**Informational only.** These do NOT change the output format on their
-own — they require `AI_AGENT=1` or `AGENT=1` to also be set for full
-agent profile. They serve only to populate
-`metadata.invoking_agent` for telemetry and post-hoc analysis.
+**Informational only**, and also **presence-based** — set to any non-empty
+value. These do NOT change the output format on their own; they require
+`AI_AGENT` or `AGENT` to also be set for the full agent profile. They serve
+only to populate `metadata.invoking_agent` for telemetry and post-hoc analysis.
 
-If an agent harness sets `CLAUDECODE=1` without setting `AI_AGENT=1`,
-that's a harness bug — but the CLI still benefits from recording the
-specific agent for diagnostics. Don't over-correct: respect the harness
-even when it forgets to set the generic flag.
+If an agent harness sets `CLAUDECODE` without setting `AI_AGENT`, that's a
+harness bug — but the CLI still benefits from recording the specific agent for
+diagnostics. Don't over-correct: respect the harness even when it forgets to
+set the generic flag.
 
 ### `TERM=dumb` — terminal capability signal
 
@@ -178,9 +199,11 @@ impl OutputMode {
         verbose_flag: bool,
         quiet_flag: bool,
     ) -> Self {
-        // Priority cascade for format
-        let env_agent = is_truthy("AI_AGENT") || is_truthy("AGENT");
-        let env_ci = env::var("CI").as_deref() == Ok("true");
+        // Priority cascade for format.
+        // Agent-presence vars are presence-based (any non-empty value);
+        // CI carries a truthy/falsy value.
+        let env_agent = is_present("AI_AGENT") || is_present("AGENT");
+        let env_ci = is_truthy_value("CI");
         let stdout_tty = std::io::stdout().is_terminal();
 
         let (format, profile) = match format_flag {
@@ -218,8 +241,23 @@ impl OutputMode {
     }
 }
 
-fn is_truthy(var: &str) -> bool {
-    matches!(env::var(var).as_deref(), Ok("1") | Ok("true"))
+/// Agent-presence signal: set to any non-empty value.
+///
+/// Real harnesses set descriptive strings, NOT `1` — a live Claude Code
+/// session exports `AI_AGENT=claude-code_2-1-218_agent`. Matching `== "1"`
+/// would miss it entirely. Presence is the signal.
+fn is_present(var: &str) -> bool {
+    matches!(env::var(var), Ok(v) if !v.is_empty())
+}
+
+/// Truthy *value* signal, for `CI` and similar: set and not falsy.
+/// GitHub Actions sets `CI=true`; other runners set `CI=1`; `CI=false`
+/// and `CI=0` mean "not CI".
+fn is_truthy_value(var: &str) -> bool {
+    match env::var(var).as_deref() {
+        Ok("") | Ok("0") | Ok("false") | Err(_) => false,
+        Ok(_) => true,
+    }
 }
 
 fn agent_profile(env_agent: bool, env_ci: bool) -> AgentProfile {
@@ -229,10 +267,10 @@ fn agent_profile(env_agent: bool, env_ci: bool) -> AgentProfile {
 }
 
 fn detect_invoking_agent(profile: AgentProfile) -> InvokingAgent {
-    if is_truthy("CLAUDECODE") { return InvokingAgent::ClaudeCode; }
-    if is_truthy("CURSOR_AGENT") { return InvokingAgent::Cursor; }
-    if is_truthy("GEMINI_CLI") { return InvokingAgent::GeminiCli; }
-    if env::var("TRAE_AI_SHELL_ID").is_ok() { return InvokingAgent::Trae; }
+    if is_present("CLAUDECODE") { return InvokingAgent::ClaudeCode; }
+    if is_present("CURSOR_AGENT") { return InvokingAgent::Cursor; }
+    if is_present("GEMINI_CLI") { return InvokingAgent::GeminiCli; }
+    if is_present("TRAE_AI_SHELL_ID") { return InvokingAgent::Trae; }
     match profile {
         AgentProfile::Agent => InvokingAgent::Agent,
         AgentProfile::Ci => InvokingAgent::Ci,
@@ -276,6 +314,32 @@ fn default_color(stdout_tty: bool, profile: AgentProfile) -> bool {
 
 This computes `OutputMode` once and threads it through every sub-command
 via a context struct. Sub-commands NEVER recompute the mode.
+
+### Worked trace against a real environment
+
+The environment a live Claude Code session actually exports:
+
+```
+AI_AGENT=claude-code_2-1-218_agent
+CLAUDECODE=1
+CI                                 (unset)
+stdout                             (not a TTY)
+```
+
+Through the corrected cascade:
+
+- `is_present("AI_AGENT")` → `"claude-code_2-1-218_agent"` is non-empty → **true**
+  → `env_agent = true`
+- format/profile match → `(Json, AgentProfile::Agent)` — the full agent profile
+- `detect_invoking_agent` → `is_present("CLAUDECODE")` → **true** →
+  `InvokingAgent::ClaudeCode`
+
+Result: `format=json`, `profile=Agent`, `invoking_agent="claude-code"`,
+`quiet=true`. The **old** `is_truthy` code returned `false` for the
+string-valued `AI_AGENT`, so `env_agent` was `false` and the profile fell
+through to `None`; the CLI still emitted JSON (via the non-TTY branch) but
+skipped quiet mode, agent pagination, and confirmation friction-reduction —
+silently degraded, with no error to signal it.
 
 ---
 
@@ -367,11 +431,27 @@ startup. Do NOT call `detect()` again inside a sub-command — env vars
 might have changed (a child process modified them) and the result will
 be inconsistent with what was already emitted.
 
+### Anti-pattern: value-matching an agent-presence variable
+
+```rust
+// WRONG — misses every harness that sets a descriptive string
+if env::var("AI_AGENT").as_deref() == Ok("1") { /* agent */ }
+matches!(env::var("AI_AGENT").as_deref(), Ok("1") | Ok("true"));
+```
+
+`AI_AGENT`, `AGENT`, `CLAUDECODE`, `CURSOR_AGENT`, `GEMINI_CLI`, and
+`TRAE_AI_SHELL_ID` are **presence** signals: a harness sets them to whatever it
+likes (`claude-code_2-1-218_agent`, a session id, `1`). Match on
+*set-and-non-empty* (`is_present`), never on a specific value. `CI` is the sole
+exception — it has real truthy/falsy semantics — and uses `is_truthy_value`.
+This is the single most common way a CLI silently fails to recognise the agent
+driving it; see [local-host-authoring.md](local-host-authoring.md).
+
 ### Anti-pattern: using CLAUDECODE alone as a profile signal
 
 ```rust
 // WRONG
-if is_truthy("CLAUDECODE") {
+if is_present("CLAUDECODE") {
     profile = AgentProfile::Agent;
 }
 ```

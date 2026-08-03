@@ -1,6 +1,6 @@
 # cpx
 
-**Replaces:** competitive-programming helper scripts | **Language:** 🦀 Rust | **Install:** `cargo install cpx`
+**Replaces:** competitive-programming helper scripts | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `cpx`)
 
 ## Purpose
 Scaffolds competitive-programming contest directories, fetches problem statements/test cases from judges, runs/tests your solutions locally.
@@ -19,5 +19,6 @@ Scaffolds competitive-programming contest directories, fetches problem statement
 3. Switch to Rust template: `cpx lang rust`
 
 ## Gotchas
-- Judge-specific scraping can break when sites change HTML — keep cpx updated (`cargo install-update cpx`).
+- Judge-specific scraping can break when sites change HTML — keep cpx updated
+  through whatever provisioned it (see `spacecraft-missing-pkg`).
 - Authentication cookies/credentials live in a plain config file; secure the directory.

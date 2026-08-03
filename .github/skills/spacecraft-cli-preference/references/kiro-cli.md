@@ -1,6 +1,6 @@
 # kiro-cli (kiro)
 
-**Replaces:** general developer automation CLIs | **Language:** ⚠️ | **Install:** upstream
+**Replaces:** general developer automation CLIs | **Language:** ⚠️ | **Install:** via `spacecraft-missing-pkg` (upstream)
 
 ## Purpose
 AI-native CLI designed to supercharge developer workflows — scaffolding, command generation, repo navigation.

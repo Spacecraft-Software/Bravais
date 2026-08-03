@@ -1,6 +1,6 @@
 # sequoia (sq)
 
-**Replaces:** `gpg` (native, non-drop-in) | **Language:** 🦀 Rust | **Install:** `cargo install sequoia-sq`
+**Replaces:** `gpg` (native, non-drop-in) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `sequoia-sq`)
 
 ## Purpose
 Modern OpenPGP implementation. For interoperable signing/encryption/verification where you control the toolchain. Use `sequoia-chameleon` if you need drop-in `gpg` compatibility.

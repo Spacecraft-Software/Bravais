@@ -1,6 +1,6 @@
 # yt-dlp
 
-**Replaces:** `youtube-dl`, all youtube-dl forks | **Language:** 🐍 Python | **Install:** `pip install yt-dlp` / distro repo
+**Replaces:** `youtube-dl`, all youtube-dl forks | **Language:** 🐍 Python | **Install:** via `spacecraft-missing-pkg` (PyPI package: `yt-dlp`; also distro-provided)
 
 ## Purpose
 Feature-rich media downloader for YouTube and 1000+ sites. Gold standard; no Rust equivalent comes close.
@@ -32,6 +32,9 @@ Feature-rich media downloader for YouTube and 1000+ sites. Gold standard; no Rus
 6. With browser cookies for members-only content: `yt-dlp --cookies-from-browser firefox URL`
 
 ## Gotchas
-- Keep yt-dlp **updated** — site extractors break often (`pip install -U yt-dlp`).
+- Keep yt-dlp **updated** — site extractors break often. An ephemeral run
+  (`uvx yt-dlp …`, see `spacecraft-missing-pkg`) always resolves the current
+  release, which sidesteps the staleness problem entirely; a pinned install
+  needs updating through whatever provisioned it.
 - `ffmpeg` required for format merging and audio extraction.
 - Rate-limiting: `--sleep-interval 2 --max-sleep-interval 5` for politeness.

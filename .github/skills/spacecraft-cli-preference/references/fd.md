@@ -1,6 +1,6 @@
 # fd
 
-**Replaces:** `find` | **Language:** 🦀 Rust | **Install:** `cargo install fd-find` / distro repo
+**Replaces:** `find` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `fd-find`; also distro-provided)
 
 ## Purpose
 User-friendly `find` replacement. Smart-case, regex, respects `.gitignore` and hidden-file rules by default, parallel execution.

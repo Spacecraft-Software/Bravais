@@ -30,6 +30,21 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
+# Vendored Construct skills (see pkgs/sync-skills.nu). Most of the ~200 files
+# carry no inline header and fall back to the stanza above; a handful do carry
+# one, and for those the file must win outright. `aggregate` would bolt
+# "GPL-3.0-or-later, (C) Mohamed Hammad" onto
+# microsoft-rust-guidelines/references/*.md — flattening their upstream
+# "GPL-3.0-or-later OR MIT" into an AND and crediting the wrong holder for
+# Microsoft's prose (Standard §4.2: third-party-derived artifacts preserve
+# their upstream license). `closest` defers to the file where it speaks.
+# Must stay after the blanket .github/** stanza — last matching annotation wins.
+[[annotations]]
+path = [".github/skills/**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
 # Hand-written sources carry SPDX-License-Identifier inline; this stanza
 # supplies the copyright holder for them (aggregate = merged with the
 # in-file license tag), avoiding a 50-file header churn.

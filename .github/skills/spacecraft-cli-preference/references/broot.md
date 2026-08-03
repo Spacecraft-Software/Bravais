@@ -1,6 +1,6 @@
 # broot (br)
 
-**Replaces:** `tree`, `ranger` | **Language:** 🦀 Rust | **Install:** `cargo install broot`
+**Replaces:** `tree`, `ranger` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `broot`)
 
 ## Purpose
 Tree-oriented file navigator with incremental filter-as-you-type and shell integration that updates your parent shell's `cwd`.

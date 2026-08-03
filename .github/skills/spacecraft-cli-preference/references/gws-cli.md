@@ -1,6 +1,6 @@
 # gws-cli (gws)
 
-**Replaces:** `gcloud`-based Google Workspace scripts | **Language:** 🦀 Rust | **Install:** `cargo install gws-cli`
+**Replaces:** `gcloud`-based Google Workspace scripts | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gws-cli`)
 
 ## Purpose
 Unified Google Workspace CLI built to be equally usable by humans and AI agents. Drive, Docs, Sheets, Calendar, Gmail in one tool.

@@ -1,6 +1,6 @@
 # mpv
 
-**Replaces:** — (Spacecraft Software-sanctioned player) | **Language:** ⚠️ C | **Install:** distro repo
+**Replaces:** — (Spacecraft Software-sanctioned player) | **Language:** ⚠️ C | **Install:** via `spacecraft-missing-pkg` (distro-provided)
 
 ## Purpose
 Versatile, high-quality command-line media player. No Rust replacement is as capable; keep `mpv`.

@@ -1,6 +1,6 @@
 # yazi
 
-**Replaces:** `ranger`, `nnn`, `mc` | **Language:** 🦀 Rust | **Install:** `cargo install yazi-fm yazi-cli`
+**Replaces:** `ranger`, `nnn`, `mc` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crates: `yazi-fm` + `yazi-cli`)
 
 ## Purpose
 Blazing-fast async terminal file manager with image previews, plugin system, and vim-like keybindings. Spacecraft Software's preferred TUI file manager.

@@ -3,7 +3,7 @@
 **Scope.** Concrete Rust scaffolds for every piece of the Spacecraft Software CLI
 Standard. Copy-pasteable code for the envelope, error type, output mode
 detection, clap wiring, path validation, TUI bootstrap, MCP server, and
-the test harness. Paired with `rust-guidelines` (Microsoft Pragmatic Rust
+the test harness. Paired with `microsoft-rust-guidelines` (Microsoft Pragmatic Rust
 Guidelines) — consult both.
 
 ---
@@ -37,7 +37,7 @@ Pin these as your starting point. Every crate below is MSL-priority
 
 | Purpose | Crate |
 |---------|-------|
-| MCP server SDK | Current Spacecraft Software-recommended MCP Rust SDK (consult `rust-guidelines` references for the specific crate name at time of writing). Alternative: hand-roll over `jsonrpc-core` for stdio transport. |
+| MCP server SDK | Current Spacecraft Software-recommended MCP Rust SDK (consult `microsoft-rust-guidelines` references for the specific crate name at time of writing). Alternative: hand-roll over `jsonrpc-core` for stdio transport. |
 
 ### Testing
 
@@ -180,7 +180,7 @@ impl AppError {
     pub fn emit_human(&self) {
         use owo_colors::OwoColorize;
         eprintln!("{}: {}", "error".red().bold(), self.message.red());
-        eprintln!("       {}: {}", "hint".color(owo_colors::Rgb(217, 142, 50)), self.hint);
+        eprintln!("       {}: {}", "hint".color(owo_colors::Rgb(255, 94, 0)), self.hint);
     }
 }
 
@@ -301,6 +301,13 @@ fn resolve_explore(cli: &Cli) -> OutputMode {
     OutputMode::Explore
 }
 
+// Presence-based on purpose: an agent is signalled by AI_AGENT/AGENT being
+// SET to any non-empty (non-"0"/"false") value, NOT by it equalling "1".
+// Real harnesses export descriptive strings — Claude Code sets
+// AI_AGENT=claude-code_2-1-218_agent. Matching `== "1"` would miss every such
+// session. Do not "simplify" this to a value comparison; the spec prose and
+// the compliance tests are aligned to this behaviour. See
+// local-host-authoring.md and spacecraft-agentic-cli's §7 anti-pattern.
 fn is_agent_env() -> bool {
     for v in ["AI_AGENT", "AGENT"] {
         if let Ok(val) = std::env::var(v) {
@@ -601,12 +608,18 @@ fn utf8_no_bom() {
 
 #[test]
 fn ai_agent_env_forces_json() {
-    Command::cargo_bin("caliper").unwrap()
-        .env("AI_AGENT", "1")
-        .args(["trace", "list"])
-        .assert()
-        .stdout(predicate::str::contains("\"metadata\""))
-        .stdout(predicate::str::contains("\"data\""));
+    // The load-bearing case: a real harness value, NOT "1". Claude Code
+    // exports AI_AGENT=claude-code_<ver>_agent. A value-matching
+    // implementation (`== "1"`) passes a `="1"` test but fails here — so
+    // this string fixture is what actually guards against that regression.
+    for value in ["claude-code_2-1-218_agent", "1", "true"] {
+        Command::cargo_bin("caliper").unwrap()
+            .env("AI_AGENT", value)
+            .args(["trace", "list"])
+            .assert()
+            .stdout(predicate::str::contains("\"metadata\""))
+            .stdout(predicate::str::contains("\"data\""));
+    }
 }
 
 #[test]
@@ -654,5 +667,5 @@ fn schema_output_validates_against_draft_2020_12_meta_schema() {
 ---
 
 *See also: every other file in this directory for the requirements these
-patterns satisfy. Consult `rust-guidelines` for MSL and Microsoft
+patterns satisfy. Consult `microsoft-rust-guidelines` for MSL and Microsoft
 Pragmatic Rust Guidelines rules that layer on top.*

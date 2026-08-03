@@ -1,6 +1,6 @@
 # iwd / iwctl
 
-**Replaces:** `wpa_supplicant` | **Language:** ⚠️ C (Intel) | **Install:** distro repo (`iwd`)
+**Replaces:** `wpa_supplicant` | **Language:** ⚠️ C (Intel) | **Install:** via `spacecraft-missing-pkg` (distro package: `iwd`)
 
 ## Purpose
 Modern Wi-Fi daemon by Intel, smaller and faster than wpa_supplicant. `iwctl` is its interactive CLI.

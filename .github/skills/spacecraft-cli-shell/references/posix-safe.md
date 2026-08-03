@@ -11,7 +11,11 @@ Spec reference: POSIX.1-2017 Shell Command Language (<https://pubs.opengroup.org
 set -eu
 ```
 
-- `/bin/sh` is the POSIX shell (on Linux usually `dash`, on macOS usually `bash --posix`, on BSDs usually `ash` or similar).
+- `/bin/sh` is *whatever the system points it at* — **not reliably a strict POSIX shell**. Debian/Ubuntu use `dash`, Alpine uses busybox `ash`, macOS uses `bash --posix`, and NixOS and several others point it straight at **bash**. Check before trusting it:
+  ```sh
+  readlink -f /bin/sh
+  ```
+  This matters: when `/bin/sh` is bash, a `#!/bin/sh` script runs every bashism happily, so **a successful local run is not evidence of portability**. See [local-shells.md](local-shells.md).
 - `set -e` exits on error; `set -u` errors on unset variables. Both are POSIX.
 - `set -o pipefail` is **not POSIX** (ksh/bash extension); omit for strict portability or document the dependency.
 
@@ -226,6 +230,14 @@ printf '%s' "no newline"
 
 Run `shellcheck` over any POSIX script (`shellcheck -s sh script.sh`). It catches most bashisms automatically and is the fastest feedback loop for portability.
 
+`shellcheck` is frequently **not installed**. Run it ephemerally rather than
+installing it durably (see `spacecraft-missing-pkg`):
+
+```sh
+nix run nixpkgs#shellcheck -- -s sh script.sh
+guix shell shellcheck -- shellcheck -s sh script.sh
+```
+
 ## Minimal portability checklist
 
 Before marking a script as POSIX:
@@ -235,5 +247,5 @@ Before marking a script as POSIX:
 3. No arrays.
 4. No `function` keyword.
 5. All expansions are quoted.
-6. `shellcheck -s sh` passes.
+6. `shellcheck -s sh` passes (ephemerally if it isn't installed).
 7. Optionally test under `dash` — it catches bashisms that `bash` silently accepts.

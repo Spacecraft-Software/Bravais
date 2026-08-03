@@ -1,12 +1,14 @@
 # lorri
 
-**Replaces:** manual `nix-shell` invocations | **Language:** 🦀 Rust | **Install:** via nix, or `cargo install lorri`
+**Replaces:** manual `nix-shell` invocations | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (nixpkgs: `lorri`; upstream crate: `lorri`)
 
 ## Purpose
 Daemon that watches `shell.nix` / `default.nix` and keeps a cached build environment hot. Integrates with `direnv` for automatic per-directory shell activation.
 
 ## Setup
-1. Install: `nix-env -iA nixpkgs.lorri` (or cargo).
+1. Provision it via `spacecraft-missing-pkg` — on a declaratively managed host
+   that means `home.packages = [ pkgs.lorri ];` (or the `services.lorri` module),
+   not an imperative profile install.
 2. Start the daemon: `systemctl --user enable --now lorri.service` (or use the launchd/OpenRC unit).
 3. In each project: `echo "eval \"\$(lorri direnv)\"" > .envrc && direnv allow`
 

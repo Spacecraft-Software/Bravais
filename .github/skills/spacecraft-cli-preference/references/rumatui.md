@@ -1,6 +1,6 @@
 # rumatui
 
-**Replaces:** Matrix TUI alternative | **Language:** 🦀 Rust | **Install:** `cargo install rumatui`
+**Replaces:** Matrix TUI alternative | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rumatui`)
 
 ## Purpose
 Alternative terminal Matrix client with a simpler, non-modal UI.

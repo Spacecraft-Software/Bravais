@@ -1,6 +1,6 @@
 # amp
 
-**Replaces:** `vim` (minimal alternative) | **Language:** 🦀 Rust | **Install:** `cargo install amp`
+**Replaces:** `vim` (minimal alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `amp`)
 
 ## Purpose
 Vi-inspired terminal editor. Smaller footprint than Helix, simpler than Vim, no plugin system.

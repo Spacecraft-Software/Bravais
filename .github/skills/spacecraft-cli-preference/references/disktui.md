@@ -1,6 +1,10 @@
 # disktui
 
-**Replaces:** `cfdisk`, `fdisk` (interactive) | **Language:** 🦀 Rust | **Install:** `cargo install disktui`
+**Replaces:** `cfdisk`, `fdisk` (interactive) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `disktui`)
+
+> **TTY-class and destructive — always a hand-off.** It needs a terminal the
+> agent doesn't have, and it edits partition tables. Give the user the command
+> and stop. See [local-execution.md](local-execution.md).
 
 ## Purpose
 Interactive partition manager TUI with MBR/GPT support.

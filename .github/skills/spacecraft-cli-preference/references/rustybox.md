@@ -1,6 +1,6 @@
 # rustybox
 
-**Replaces:** `busybox` | **Language:** 🦀 Rust | **Install:** `cargo install rustybox`
+**Replaces:** `busybox` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rustybox`)
 
 ## Purpose
 100% Rust reimplementation of BusyBox — a single multicall binary providing tiny versions of common Unix tools. Suited for embedded / minimal container images where you want memory-safe primitives.

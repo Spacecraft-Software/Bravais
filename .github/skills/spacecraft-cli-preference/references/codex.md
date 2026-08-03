@@ -1,6 +1,6 @@
 # codex (OpenAI Codex CLI)
 
-**Replaces:** manual OpenAI API calls | **Language:** ⚠️ TypeScript | **Install:** `npm install -g @openai/codex`
+**Replaces:** manual OpenAI API calls | **Language:** ⚠️ TypeScript | **Install:** via `spacecraft-missing-pkg` (npm package: `@openai/codex`)
 
 ## Purpose
 OpenAI's official local coding agent with MCP support. Slot in Mohamed's clean-room pipeline as the ChatGPT Pro / Codex agent.

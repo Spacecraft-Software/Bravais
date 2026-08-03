@@ -1,6 +1,6 @@
 # procs
 
-**Replaces:** `ps` | **Language:** 🦀 Rust | **Install:** `cargo install procs`
+**Replaces:** `ps` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `procs`)
 
 ## Purpose
 Modern `ps` with colour, tree view, additional columns (TCP/UDP ports, Docker, read/write throughput), and keyword filtering.

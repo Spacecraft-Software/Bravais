@@ -1,6 +1,6 @@
 # radio-browser-rust
 
-**Replaces:** — (dedicated internet radio CLI) | **Language:** 🦀 Rust | **Install:** `cargo install radio-browser`
+**Replaces:** — (dedicated internet radio CLI) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `radio-browser`)
 
 ## Purpose
 CLI to search and play internet radio stations from the radio-browser.info community database.

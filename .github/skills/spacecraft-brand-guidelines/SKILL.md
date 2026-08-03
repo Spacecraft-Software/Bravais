@@ -9,27 +9,53 @@ website: https://Construct.SpacecraftSoftware.org/
 # Spacecraft Software Brand Guidelines
 
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
-**Copyright:** (C) 2026 Mohamed Hammad | **License:** GPL-3.0-or-later
+**Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
 
-> **Source of truth:** The Steelbore Standard v1.9 (§9 Colors, §10 Typography).
-> All values here are canonical. Do not use any other color or font values for Spacecraft Software artifacts.
+> **Source of truth:** The Steelbore Standard (§11 Colour Palettes, §12 Typography), v1.39.
+>
+> **§11 is a palette family.** The tables below are **Steelbore Modern**, the
+> default — use it unless the project declares an alternate in its `README.md`
+> (§11.4). Also registered: `steelbore-classic`, `steelbore-blue`,
+> `steelbore-blackpinkpanther`, `steelbore-matrixgreen`, `steelbore-navywhite`
+> (light canvas), and `tokyonight`. Two **fidelity palettes** — `solarized-dark`
+> and `solarized-light` — are registered verbatim but are **non-conforming**
+> (§11.5) and may not be adopted as a project palette. All values live in the
+> `steelbore-color-palette` skill's `assets/steelbore.toml`. A project uses one
+> palette; never mix.
+> All values here are canonical **Steelbore 2** generation tokens. Do not use any other
+> color or font values for Spacecraft Software artifacts. The five v1.33 foreground
+> tokens (Molten Amber, Steel Blue, Radium Green, Red Oxide, Liquid Coolant) and the
+> old `#7FAEDC`/`#FF8080` lifts now belong to **Steelbore Classic** (§11.2), which is
+> preserved as a family member — they are valid only inside that palette.
+> Hex values are canonically served by the `steelbore-color-palette` skill.
 
-## Color Palette (WCAG 2.1 AA Compliant)
+## Color Palette — Steelbore 2 (WCAG 2.2 AA Compliant)
 
-All colors are verified for contrast against the Void Navy (`#000027`) background.
+All foreground colors are verified for contrast against the Void Navy (`#000027`)
+background *and* against both surface tokens (see the §11.0.2 matrix in the Standard).
 
-| Token          | Hex       | RGB                | Role                          |
-|----------------|-----------|--------------------|-------------------------------|
-| Void Navy      | `#000027` | RGB(0, 0, 39)      | **Background / Canvas**       |
-| Molten Amber   | `#D98E32` | RGB(217, 142, 50)  | Primary Text / Active Readout |
-| Steel Blue     | `#4B7EB0` | RGB(75, 126, 176)  | Primary Accent / Structural   |
-| Radium Green   | `#50FA7B` | RGB(80, 250, 123)  | Success / Safe Status         |
-| Red Oxide      | `#FF5C5C` | RGB(255, 92, 92)   | Warning / Error Status        |
-| Liquid Coolant | `#8BE9FD` | RGB(139, 233, 253) | Info / Links                  |
+| Token          | Hex       | RGB                | Class      | Role                            |
+|----------------|-----------|--------------------|------------|---------------------------------|
+| Void Navy      | `#000027` | RGB(0, 0, 39)      | Canvas     | **Background — all surfaces**   |
+| Quantum Blue   | `#0E2A47` | RGB(14, 42, 71)    | Surface    | Elevated panels / cards         |
+| Deep Matrix    | `#0B1A12` | RGB(11, 26, 18)    | Surface    | Code blocks / terminal wells    |
+| Platinum Mist  | `#D9DEE5` | RGB(217, 222, 229) | Foreground | Body text / default readout     |
+| Plasma Orange  | `#FF5E00` | RGB(255, 94, 0)    | Foreground | Primary accent / active readout |
+| Pulse Violet   | `#8A6CFF` | RGB(138, 108, 255) | Foreground | Structure / links / borders     |
+| Acid Lime      | `#B4FF00` | RGB(180, 255, 0)   | Foreground | Success / safe status / focus   |
+| Mars Red       | `#FF3B3B` | RGB(255, 59, 59)   | Foreground | Error status                    |
+| Plasma Magenta | `#E445FF` | RGB(228, 69, 255)  | Foreground | Warning / attention             |
 
-**`#000027` (Void Navy) is the mandatory background for ALL Spacecraft Software surfaces** —
+**`#000027` (Void Navy) is the mandatory canvas under Steelbore Modern**, the default palette —
 documents, terminals, editor themes, application UIs. No alternative background is permitted.
+Surface tokens are fills *placed on* Void Navy, never replacements for it, and are
+**never text colors** (Quantum Blue 1.40:1, Deep Matrix 1.14:1 — illegible as foregrounds).
+
+**Restricted pairings (§11.0.2 †):** on Quantum Blue surfaces, Mars Red (4.12:1) and
+Pulse Violet (3.93:1) are limited to large text, icons, and non-text UI. Normal-size
+error prose on a surface is Platinum Mist with the `[ERROR]` tag; Mars Red is border
+or icon accent only. All other matrix pairings pass 4.5:1.
 
 ## Typography
 
@@ -50,16 +76,20 @@ Quick reference:
 
 - **Page background:** `#000027` (Void Navy) — mandatory, non-negotiable
 - **Page size:** ISO A4 (210 × 297 mm)
-- **Body text:** Inconsolata, 11 pt, Molten Amber `#D98E32`
-- **H1:** Share Tech Mono, 16 pt, bold, Steel Blue `#4B7EB0`
-- **H2:** Share Tech Mono, 14 pt, bold, Radium Green `#50FA7B`
-- **H3:** Share Tech Mono, default size, italic, Liquid Coolant `#8BE9FD`
-- **Links:** Liquid Coolant `#8BE9FD` (unvisited), Steel Blue `#4B7EB0` (visited)
+- **Body text:** Inconsolata, 11 pt, Platinum Mist `#D9DEE5`
+- **H1:** Share Tech Mono, 16 pt, bold, Plasma Orange `#FF5E00`
+- **H2:** Share Tech Mono, 14 pt, bold, Acid Lime `#B4FF00`
+- **H3:** Share Tech Mono, default size, italic, Pulse Violet `#8A6CFF`
+- **Links:** Pulse Violet `#8A6CFF` (unvisited), Plasma Orange `#FF5E00` (visited)
+- **Code blocks:** Deep Matrix `#0B1A12` fill, Platinum Mist text
+- **Callout panels:** Quantum Blue `#0E2A47` fill, Pulse Violet border, Platinum Mist text
 
 ## UI / Visual Design
 
+- **Steelbore Theme Standard:** When implementing colors and themes, always opt to create a named theme called `Steelbore` (Snake case `steelbore` for file/module names) that bundles these colors, rather than hardcoding hex values directly in UI/styling logic. This allows users to easily swap or customize themes by registering a new named theme without modifying application logic (Standard §11.1). The full role-token contract (including `surface`, `surface-alt`, `focus`, and `border`) is defined in §11.1.
+- **Focus indicator:** Acid Lime `#B4FF00` (16.75:1) — satisfies WCAG 2.2 §2.4.11 on every background.
 - Apply the palette to Material Design components (the required UI system for Spacecraft Software GUIs).
-- All new color pairings must pass WCAG 2.1 Level AA contrast verification before adoption.
+- All new color pairings must pass WCAG 2.2 Level AA contrast verification before adoption, stating which pairing was measured (§13).
 - For IDE and terminal themes, load the `spacecraft-theme-factory` skill.
 
 *— Built by Spacecraft Software —*

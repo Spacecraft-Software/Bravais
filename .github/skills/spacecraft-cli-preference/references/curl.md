@@ -1,6 +1,6 @@
 # curl
 
-**Replaces:** — (the standard itself) | **Language:** ⚠️ C | **Install:** distro repo (universally available)
+**Replaces:** — (the standard itself) | **Language:** ⚠️ C | **Install:** via `spacecraft-missing-pkg` (distro-provided (universally available))
 
 ## Purpose
 The gold standard for HTTP/FTP/SMTP/etc. data transfer. Keep `curl` whenever a command must run portably across systems without Rust toolchain installed. Prefer `xh` for interactive/one-off API calls.

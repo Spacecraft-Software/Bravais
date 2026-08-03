@@ -1,6 +1,6 @@
 # jujutsu (jj)
 
-**Replaces:** `git` (alternative VCS front-end) | **Language:** 🦀 Rust | **Install:** `cargo install --locked jj-cli`
+**Replaces:** `git` (alternative VCS front-end) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `jj-cli` (build locked))
 
 ## Purpose
 Git-compatible distributed VCS with first-class conflict handling, anonymous branches, and reversible operations. Works against existing git repos (colocated or standalone backend).

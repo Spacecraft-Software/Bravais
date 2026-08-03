@@ -1,6 +1,6 @@
 # gifski
 
-**Replaces:** `ffmpeg`-based GIF pipelines, `convert` (ImageMagick) for GIF | **Language:** 🦀 Rust | **Install:** `cargo install gifski`
+**Replaces:** `ffmpeg`-based GIF pipelines, `convert` (ImageMagick) for GIF | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gifski`)
 
 ## Purpose
 High-quality GIF encoder based on the pngquant palette generator. Produces smaller, better-looking GIFs from video or PNG frames.

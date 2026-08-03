@@ -1,6 +1,6 @@
 # viu
 
-**Replaces:** image viewers in terminal (feh in-terminal fallback) | **Language:** 🦀 Rust | **Install:** `cargo install viu`
+**Replaces:** image viewers in terminal (feh in-terminal fallback) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `viu`)
 
 ## Purpose
 View images directly in the terminal using kitty/iTerm2/sixel graphics protocols, or falls back to half-block Unicode.

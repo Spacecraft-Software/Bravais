@@ -1,6 +1,6 @@
 # disrust
 
-**Replaces:** Discord desktop client (TUI alternative) | **Language:** 🦀 Rust | **Install:** `cargo install disrust`
+**Replaces:** Discord desktop client (TUI alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `disrust`)
 
 ## Purpose
 Terminal-based Discord client.

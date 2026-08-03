@@ -1,9 +1,22 @@
-# Flatpak (Flathub) — mostly GUI apps
+# Flatpak (Flathub) — mostly GUI apps (Band B, tier 6)
 
 Permanent, user-local install (no sudo with `--user`). Flathub is the
 default remote. **Strongly biased toward GUI applications** — most
 CLI tools are not on Flathub. Only use Flatpak when a confirmed app-id
 exists for the tool you need.
+
+> **Consent gate.** This is a durable change to the user's machine — an app
+> plus, often, a multi-hundred-megabyte runtime. Propose it: the command, the
+> install path (`~/.local/share/flatpak/`), the download size if you know it,
+> the removal command (`flatpak uninstall --user <app-id>`), and any needed
+> sandbox override. Then **wait for the go-ahead**.
+>
+> **Always pass `-y`.** The agent's shell has no TTY, so an unattended
+> `flatpak install` hangs on its confirmation prompt.
+>
+> **Declarative equivalent:** `services.flatpak` / the Home Manager Flatpak
+> module can declare the app-id in the host config. See
+> [declarative.md](declarative.md).
 
 ## Syntax
 
@@ -97,4 +110,5 @@ flatpak uninstall --user --unused
 ```
 
 Tell the user what was installed and how to remove it — Flatpak is a
-permanent manager (tier 5 in the priority chain).
+permanent manager (Band B in the priority chain; AppImage and Snap rank
+below it).

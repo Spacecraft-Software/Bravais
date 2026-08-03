@@ -1,18 +1,20 @@
 ---
 name: spacecraft-cli-preference
 description: >
-  Enforces Spacecraft Software's CLI tool preferences. Whenever an agent is about to
-  generate, run, or recommend a shell command — in any context, including
-  bash snippets, scripts, CI, docs, or agentic tool use — the agent must first
-  check the command-mapping table in this skill and substitute the preferred
-  alternative for any legacy tool that has one. Examples: `eza` instead of
-  `ls`, `bat` for `cat`, `rg` for `grep`, `fd` for `find`, `jaq` for `jq`,
-  `xh` for `curl`, `dog` for `dig`, `procs` for `ps`, `bottom` for `top`.
-  Trigger on any mention of shell commands, terminal use, scripting, file
-  search, process inspection, network diagnostics, archive handling, text
-  editing, git, package management, or system monitoring. When invoking a
-  specific alternative, first consult the matching reference file in the
-  references directory for correct flag syntax.
+  Enforces Spacecraft Software's CLI tool preferences. Whenever an agent is
+  about to generate, run, or recommend a shell command — bash snippets,
+  scripts, CI, docs, or agentic tool use — check this skill's command-mapping
+  table first and substitute the preferred alternative for any legacy tool
+  that has one: `eza` for `ls`, `bat` for `cat`, `rg` for `grep`, `fd` for
+  `find`, `jaq` for `jq`, `xh` for `curl`, `dog` for `dig`, `procs` for `ps`,
+  `bottom` for `top`. Trigger on any mention of shell commands, scripting,
+  file search, process inspection, network diagnostics, archive handling,
+  text editing, git, package management, or system monitoring. Consult the
+  matching reference file for flag syntax before invoking.
+  Substitution is conditional on the local host: substitute only when the
+  preferred tool is installed, fall back to the legacy tool with a note when
+  it is not, never launch a TUI in the agent's TTY-less shell, and get
+  consent before any command that mutates or deletes.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
@@ -20,9 +22,9 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # Spacecraft Software CLI Preference — Modern Alternatives over Legacy Tools
 
-**Version:** 1.0 | **Date:** 2026-05-18 | **Author:** Mohamed Hammad
+**Version:** 1.1 | **Date:** 2026-07-24 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
-**Copyright:** (C) 2026 Mohamed Hammad | **License:** GPL-3.0-or-later
+**Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
 
 This skill makes the agent default to the Spacecraft Software-preferred CLI/TUI stack
@@ -45,12 +47,92 @@ a command appears.
 If §3 has no specific row for the legacy tool, apply the cascading fallback in
 §1.5 (`uutils` for GNU coreutils, Brush for Bash-only scripts).
 
-### Shell-syntax awareness
+**This runs on the user's own machine.** The preference stack below is
+unchanged, but on a real host a substitution is only correct if the tool is
+actually installed, the agent's shell can actually execute it, and the command
+does not silently change or delete something. §1.1–§1.3 are those three gates;
+apply them before emitting anything.
 
-Mohamed's primary shells are **Nushell** and **Ion**. Some command patterns
-(piping into `xargs`, command substitution `$(…)`, `&&`/`||` chaining) behave
-differently in those shells. When in doubt, prefer the portable POSIX form,
-but flag it if the user is clearly working inside a specific non-Bash shell.
+### §1.0 — Substitution depends on the target
+
+The same mapping table serves three audiences that need different behaviour:
+
+| Target | Rule |
+|---|---|
+| A command **the agent runs** in its own shell | Substitute only if the tool is present (§1.1), the command is headless-safe (§1.2), and it is non-destructive (§1.2). The agent's shell is a non-interactive Bash with no TTY — regardless of the user's interactive shell. |
+| A command **written into the user's repo** — script, CI job, `Justfile`, docs | Substitute only if the repo's own environment guarantees the tool: a devShell, a documented prerequisite, a CI image that ships it. Otherwise keep the portable form and add `# preferred: <tool>`. A committed `eza` breaks the build for every contributor without it. |
+| A command **suggested for the user to run** interactively | Full preference applies, TUIs included — this is where `gitui`, `yazi`, `bottom`, and `helix` belong. Hand it over with the `!` prefix rather than running it. |
+
+### §1.1 — Check availability before substituting
+
+A substitution to a tool that isn't installed is worse than no substitution:
+it turns a working command into `command not found`. Probe first, then route:
+
+| Preferred | Legacy | Action |
+|---|---|---|
+| present | — | **Substitute.** The happy path. |
+| present | absent | **Substitute** — it is the only option (e.g. `jaq` where `jq` was never installed). |
+| absent | present | **Use the legacy tool** and append `# preferred: <tool> — see references/<tool>.md`. Do not fail, do not silently install. |
+| absent | absent | **Route to `spacecraft-missing-pkg`** for an ephemeral run (`nix run nixpkgs#<pkg> -- …`). Neither form exists, so provisioning is the only way through. |
+
+```sh
+command -v eza >/dev/null 2>&1 && echo substitute || echo fall-back
+```
+
+Probe once per session and reuse the answer — don't re-check before every
+command. `command -v` alone under-reports: Nushell `def`s, Bash functions, and
+non-default bin directories hide installed tools from it. Use
+`spacecraft-missing-pkg`'s Step 0 checklist rather than restating it here.
+
+### §1.2 — Execution classes
+
+Every tool in §3 falls into one of four classes. Detail, per-tool headless
+alternatives, and the destructive-flag catalogue are in
+**[references/local-execution.md](references/local-execution.md)**.
+
+**Headless-safe — the agent may run these directly.**
+`eza`, `bat`, `fd`, `rg`, `sd`, `dust`, `procs`, `jaq`, `ouch`, `delta`,
+`just`, `tokei`, `uutils`, `xh`, `wget2`, `dog`, `monolith`, `lychee`,
+`macchina`, `oxipng`, `gifski`, `rav1e`, `viu`, `yt-dlp`, `jj`, `tokei`,
+`dua` (non-interactive form), `fclones group`.
+
+**Needs a TTY — hand off, or use the headless sibling.** Never launch these in
+the agent's shell; they hang, garble the transcript, or exit with a terminal
+error. Prefer the alternative when the goal is information, hand off when the
+goal is interaction:
+
+`bottom` → `procs` · `dua i` → `dua` · `gitui` → `git` / `jj` ·
+`yazi` / `broot` / `superfile` → `fd` / `eza` · `trip` → `trip --mode report` ·
+`gping` → `ping` · `atuin` TUI → `atuin search` · `zellij`, `kmon`, `impala`,
+`linutil`, editors (`hx`, `amp`, `rsvim`, `msedit`), chat TUIs (`iamb`,
+`rumatui`, `disrust`, `rivetui`), media TUIs (`ncspot`, `termusic`,
+`radio-browser`), `t-rec`, and the agent REPLs → hand off.
+
+**System-mutating or destructive — get consent, or hand off.** State what will
+change and wait:
+
+`topgrade`, `paru`, `omni`, `zap`, `am`, `rustup`, `cargo-update`, `gptman`,
+`disktui`, `nmstate`, `lanzaboote`, `greetd` / `lemurs` / `tuigreet`,
+`xremap`, `iwd`, `dotter`, `podman`. Two have destructive *defaults* worth
+naming: **`kondo -a` deletes build artifacts with no confirmation** and
+**`fclones remove` deletes files**. **`sudo-rs` is never run by the agent** —
+same rule as `sudo`; hand it over.
+
+**Shell-integration — declarative config, never a hand-edited rc.** `zoxide`,
+`atuin`, `starship`, `broot --install`, `gitway --install` all work by writing
+init lines into the user's shell config. Do not edit `.bashrc` / `config.nu` /
+`.profile`. On a managed host these are `programs.<tool>.enable` in Home
+Manager — propose that edit and let the user apply it
+(`spacecraft-missing-pkg` Band C).
+
+### §1.3 — Shell syntax: whose shell?
+
+The target shell is decided by **who executes the command** — agent-run, handed
+to the user, or written to a file — and those three answers routinely differ.
+
+**`spacecraft-cli-shell` owns this routing** (its Step 0 host probe and Step 0.5
+executor table). Consult it rather than guessing at `^`-prefixes, `$(…)`, or
+`&&` behaviour per shell; this skill does not restate the rules.
 
 ---
 
@@ -61,13 +143,19 @@ tool that has no explicit row, or a context where a shell has to be chosen.
 In both cases apply the cascade below — **always go as far up the list as
 possible** before dropping to the next tier.
 
-### Shells (when the AI picks or emits shell syntax)
+### Shells (when the AI **authors** a script or code example for the user)
+
+This cascade governs what the agent *writes*, not what it *runs* — see §1.3.
+
 1. **Nushell** 🦀 or **Ion** 🦀 — both are Mohamed's primaries, both are Rust.
    Default to one of these for any new script, one-liner, or code example.
 2. **Brush** 🦀 — only when Bash-compatibility is strictly required (e.g. a
    script must run under a `bash` interpreter and Nushell/Ion aren't options).
 3. **Plain Bash / POSIX `sh`** — last resort, only when the target environment
    hard-requires it (CI runner defaults, portability to unknown systems).
+
+A script **committed to a repo** inverts this: portability wins, so POSIX `sh`
+is the default there unless the repo already standardises on another shell.
 
 ### GNU utilities (when substituting a legacy coreutils binary)
 1. **Specific Rust alternative from §3** — `rg`, `fd`, `eza`, `bat`, `sd`,
@@ -161,6 +249,17 @@ Read files with a plain file-view operation — each is short (typically 40–12
 | containers          | `podman` 🐹           | `references/podman.md`        | Daemonless, rootless, Docker-compat       |
 
 ### Package & system management
+
+> **Gate.** These rows say *which* manager is preferred, not that the agent may
+> run it. Provisioning policy belongs to **`spacecraft-missing-pkg`**: prefer
+> an ephemeral run, put persistent tools in the host's declarative config, and
+> get consent before any durable install. Never run a system-wide update
+> unprompted.
+>
+> **Host-appropriateness matters.** `paru` is Arch-only; `topgrade`, `omni`,
+> `zap`, and `am` fight a declaratively managed host (NixOS, Home Manager,
+> Guix) by installing outside its config. On such a host the answer is the
+> host's own manager, not a row from this table.
 
 | Use case            | Prefer                | Ref file                      | Notes                                     |
 |---------------------|-----------------------|-------------------------------|-------------------------------------------|
@@ -302,13 +401,39 @@ procs rustc
 xh https://api.github.com/repos/UnbreakableMJ/Understand-Anything
 ```
 
+### When the gates change the answer
+
+```bash
+# Preferred tool absent, legacy present → fall back and note it
+dig +short example.com A        # preferred: dog — see references/dog.md
+
+# Both absent → ephemeral run via spacecraft-missing-pkg, not a failing command
+nix run nixpkgs#dog -- example.com A
+
+# TTY-class tool, agent needs the information → headless sibling
+procs rustc                     # not `btm`, which needs a terminal
+
+# TTY-class tool, user wants the interaction → hand off
+! gitui
+
+# Destructive default → propose, don't run
+#   kondo -a would delete target/ and node_modules/ under ~/projects — confirm?
+```
+
 ---
 
 ## §5 — When NOT to Substitute
 
+- **The preferred tool isn't installed** (§1.1). Fall back to the legacy tool
+  with a note — never emit a command that will fail.
+- **The command would run in the agent's shell but needs a TTY** (§1.2). Use
+  the headless sibling, or hand the TUI to the user.
+- **The command mutates or deletes** (§1.2) and consent hasn't been given.
 - **Explicit user request** for the legacy tool ("show me the raw `grep` command").
 - **Portable scripts** the user will run on systems without the Rust stack
   installed (document the alternative as a comment but keep the portable form).
+  This includes anything **committed to a repo** whose environment doesn't
+  guarantee the tool.
 - **Compatibility-critical pipelines** where a specific tool's exact output
   format is required by downstream tooling.
 - **The legacy tool is already the Spacecraft Software-sanctioned choice** for that slot
@@ -325,7 +450,7 @@ Each file in `references/` follows this structure:
 ```markdown
 # <tool>
 
-**Replaces:** <legacy tool(s)> | **Language:** 🦀/⚡/🐹/🐍/(λ)/⚠️ | **Install:** <package hint>
+**Replaces:** <legacy tool(s)> | **Language:** 🦀/⚡/🐹/🐍/(λ)/⚠️ | **Install:** via `spacecraft-missing-pkg` (<upstream package identity>)
 
 ## Purpose
 <One paragraph — what it does and when to reach for it.>
@@ -343,6 +468,12 @@ Each file in `references/` follows this structure:
 - <edge cases, non-POSIX behaviour, config requirements, etc.>
 ```
 
+The `**Install:**` field names *what* the tool is published as — a crate, an
+npm package, a distro package, an upstream release — and defers the *how* to
+`spacecraft-missing-pkg`. It never carries a runnable install command:
+`cargo install`, `paru -S`, `npm install -g`, `pip install`, `nix-env`, and
+`nix profile install` are prohibited there, as they are everywhere else.
+
 ---
 
 ## §7 — Attribution
@@ -356,7 +487,7 @@ documentation. See `references/ATTRIBUTION.md` for per-tool sourcing.
 ## §8 — Spacecraft Software Compliance Note
 
 This skill itself is a Spacecraft Software artifact and conforms to the relevant parts
-of The Steelbore Standard (see `spacecraft-standard` skill):
+of The Steelbore Standard (see `spacecraft-standard-constitution` skill):
 
 - **§4** GPL-3.0-or-later license declared in frontmatter
 - **§12** ISO 8601 dates used throughout

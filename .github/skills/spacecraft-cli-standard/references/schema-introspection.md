@@ -238,6 +238,13 @@ coding agents read different filenames by convention — both must be
 present, and their content MUST be kept in sync. Treat them as two copies
 of the same document, not as agent-specific variants.
 
+**Scaffolding these onto the user's machine is no-clobber and consent-gated.**
+Writing a context file is a durable change to a real repo that often already
+has one carrying project-specific invariants. Read any existing file first,
+merge the template into it, and propose the diff — never overwrite wholesale.
+This is `spacecraft-missing-pkg`'s consent-before-durable principle applied to
+file creation; see `references/local-host-authoring.md`.
+
 | File | Purpose | Primary consumers (non-exhaustive) |
 |------|---------|-------------------------------------|
 | `CLAUDE.md` | AI coding-agent context: project invariants, build/test/lint commands, architectural constraints, forbidden patterns | Claude Code, Claude Desktop, Oh-My-ClaudeCode |

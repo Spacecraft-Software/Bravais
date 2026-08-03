@@ -1,6 +1,6 @@
 # grok-cli (grok)
 
-**Replaces:** xAI web UI | **Language:** ⚠️ TypeScript/Bun | **Install:** `bun install -g grok-cli`
+**Replaces:** xAI web UI | **Language:** ⚠️ TypeScript/Bun | **Install:** via `spacecraft-missing-pkg` (npm package: `grok-cli` (Bun-published))
 
 ## Purpose
 Open-source conversational AI agent for xAI's Grok models.

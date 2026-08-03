@@ -1,6 +1,6 @@
 # cosmic-session
 
-**Replaces:** `gnome-session`, `plasma-session` | **Language:** 🦀 Rust | **Install:** distro repo
+**Replaces:** `gnome-session`, `plasma-session` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (distro-provided)
 
 ## Purpose
 Session manager for COSMIC DE. Launched by your display manager when COSMIC is selected.

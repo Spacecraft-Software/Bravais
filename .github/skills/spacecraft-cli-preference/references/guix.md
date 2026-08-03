@@ -1,6 +1,6 @@
 # guix
 
-**Replaces:** — (alternative declarative PM) | **Language:** (λ) Guile Scheme | **Install:** https://guix.gnu.org/
+**Replaces:** — (alternative declarative PM) | **Language:** (λ) Guile Scheme | **Install:** via `spacecraft-missing-pkg` (upstream: <https://guix.gnu.org/>)
 
 ## Purpose
 Functional/declarative package manager and (optional) distro. Transactional upgrades, rollbacks, per-user profiles. Alternative to Nix with a Scheme-based language.

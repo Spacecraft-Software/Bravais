@@ -1,6 +1,6 @@
 # brush
 
-**Replaces:** `bash` (compatible) | **Language:** 🦀 Rust | **Install:** `cargo install brush-shell`
+**Replaces:** `bash` (compatible) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `brush-shell`)
 
 ## Purpose
 Memory-safe, Bash-compatible shell in Rust. Aims to run existing Bash scripts unmodified while being a daily interactive shell.

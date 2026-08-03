@@ -1,6 +1,6 @@
 # matrix-commander-rs
 
-**Replaces:** scripted Matrix interactions | **Language:** 🦀 Rust | **Install:** `cargo install matrix-commander-rs`
+**Replaces:** scripted Matrix interactions | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `matrix-commander-rs`)
 
 ## Purpose
 Scripting-oriented Matrix CLI. Send/receive messages, manage rooms, verify devices — pipe-friendly.

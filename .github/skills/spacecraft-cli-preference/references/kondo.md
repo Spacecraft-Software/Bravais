@@ -1,6 +1,12 @@
 # kondo
 
-**Replaces:** ad-hoc `rm -rf target/ node_modules/` | **Language:** 🦀 Rust | **Install:** `cargo install kondo`
+**Replaces:** ad-hoc `rm -rf target/ node_modules/` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `kondo`)
+
+> **Destructive — consent required.** This deletes real directories on the
+> user's machine, and `-a`/`--all` does it with **no confirmation**. Run it
+> with no flags first to produce the list, show what would be removed, and
+> wait for the go-ahead. Never pass `-a` unprompted.
+> See [local-execution.md](local-execution.md).
 
 ## Purpose
 Finds and deletes build/dependency artifacts from software projects (`target/`, `node_modules/`, `build/`, `dist/`, `.gradle/`, etc.) across many languages.

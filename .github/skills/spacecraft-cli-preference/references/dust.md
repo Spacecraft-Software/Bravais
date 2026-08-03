@@ -1,6 +1,6 @@
 # dust
 
-**Replaces:** `du` | **Language:** 🦀 Rust | **Install:** `cargo install du-dust`
+**Replaces:** `du` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `du-dust`)
 
 ## Purpose
 Intuitive disk-usage visualiser. Shows a reverse bar-chart tree of what's eating your disk.

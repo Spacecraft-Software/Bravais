@@ -1,6 +1,6 @@
 # helix (hx)
 
-**Replaces:** `vim`, `neovim` | **Language:** 🦀 Rust | **Install:** `cargo install --locked helix-term` / distro
+**Replaces:** `vim`, `neovim` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `helix-term` (build locked); also distro-provided)
 
 ## Purpose
 Post-modern modal editor with multiple cursors, tree-sitter syntax, and built-in LSP. No plugins needed for a full dev loop.

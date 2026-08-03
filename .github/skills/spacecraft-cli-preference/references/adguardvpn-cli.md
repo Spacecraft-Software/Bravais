@@ -1,6 +1,6 @@
 # AdGuard VPN CLI
 
-**Replaces:** manual VPN dial-up | **Language:** 🐹 Go | **Install:** AdGuard official installer
+**Replaces:** manual VPN dial-up | **Language:** 🐹 Go | **Install:** via `spacecraft-missing-pkg` (upstream installer (AdGuard official))
 
 ## Purpose
 Command-line client for AdGuard VPN. Manage connection, protocols, DNS, split-tunnel.

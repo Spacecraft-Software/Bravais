@@ -1,6 +1,6 @@
 # ouch
 
-**Replaces:** `tar`, `gzip`, `zip`/`unzip`, `7z`, `xz` | **Language:** 🦀 Rust | **Install:** `cargo install ouch`
+**Replaces:** `tar`, `gzip`, `zip`/`unzip`, `7z`, `xz` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `ouch`)
 
 ## Purpose
 One command for all archive formats. Format inferred from extension. Supports tar, zip, 7z, gz, bz2, xz, zstd, lz4, sz.

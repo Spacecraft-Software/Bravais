@@ -1,6 +1,6 @@
 # rsvim
 
-**Replaces:** `vim` | **Language:** 🦀 Rust | **Install:** `cargo install rsvim` (check upstream for status)
+**Replaces:** `vim` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rsvim` (check upstream for status))
 
 ## Purpose
 A Vim clone rebuilt from scratch in Rust. Aims at Vim-compatible keybindings and scripting while being memory-safe.

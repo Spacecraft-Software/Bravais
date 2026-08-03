@@ -1,6 +1,6 @@
 # xh
 
-**Replaces:** `curl` (interactive/API work) | **Language:** 🦀 Rust | **Install:** `cargo install xh`
+**Replaces:** `curl` (interactive/API work) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `xh`)
 
 ## Purpose
 Friendly, fast HTTP client with HTTPie-style syntax. For ad-hoc API probing, prefer `xh`; keep `curl` for cross-system shell scripts.

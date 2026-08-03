@@ -1,6 +1,6 @@
 # xremap
 
-**Replaces:** `xmodmap`, `setxkbmap` (partial), `kmonad` | **Language:** 🦀 Rust | **Install:** `cargo install xremap --features gnome` (or wlroots/x11/kde/hypr feature)
+**Replaces:** `xmodmap`, `setxkbmap` (partial), `kmonad` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `xremap` — build with the matching feature (`gnome`, `wlroots`, `x11`, `kde`, `hypr`))
 
 ## Purpose
 Dynamic key remapper for Linux. Supports X11 and Wayland compositors. Config in YAML with layers, app-specific bindings, macros.

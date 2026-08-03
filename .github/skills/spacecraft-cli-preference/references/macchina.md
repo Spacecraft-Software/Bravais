@@ -1,6 +1,6 @@
 # macchina
 
-**Replaces:** `neofetch`, `fastfetch` | **Language:** 🦀 Rust | **Install:** `cargo install macchina`
+**Replaces:** `neofetch`, `fastfetch` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `macchina`)
 
 ## Purpose
 Fast system-info fetcher. Customisable readouts, themes, ASCII art.

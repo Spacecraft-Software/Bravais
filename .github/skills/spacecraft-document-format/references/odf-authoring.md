@@ -2,7 +2,7 @@
 
 Reference for producing `.odt` (text), `.ods` (spreadsheet), and `.odp` (presentation) deliverables under the Spacecraft Software document-format skill. Load this **alongside** `markdown-companion.md` for any ODF task.
 
-The Spacecraft Software Standard §9/§10 palette and typography rules are summarised in SKILL.md §4 / §5 / §7 — this file focuses on how to **apply** them in ODF.
+The Steelbore Standard §11/§12 palette and typography rules are summarised in SKILL.md §4 / §5 / §7 — this file focuses on how to **apply** them in ODF.
 
 ## §A — Why ODF first
 
@@ -66,7 +66,7 @@ ODS has no per-page background by convention; the Void Navy mandate applies via 
 
 Reference `ce-void-navy` as the `table:style-name` on each `<table:table-cell>` (or apply via a default cell style for the sheet). For print, LibreOffice respects the cell fill; Excel honours the same on opening.
 
-Optionally also set the sheet tab colour to a Spacecraft Software accent via `<table:table-properties tableooo:tab-color="#4B7EB0"/>` — purely cosmetic in LibreOffice's sheet-tab strip.
+Optionally also set the sheet tab colour to a Spacecraft Software accent via `<table:table-properties tableooo:tab-color="#FF5E00"/>` — purely cosmetic in LibreOffice's sheet-tab strip.
 
 ### §C.3 — `.odp` (presentation)
 
@@ -131,20 +131,20 @@ Map paragraph styles:
   <style:text-properties style:font-name="Share Tech Mono"
                          fo:font-size="16pt"
                          fo:font-weight="bold"
-                         fo:color="#4B7EB0"/>
+                         fo:color="#FF5E00"/>
 </style:style>
 
 <style:style style:name="Heading_20_2" style:family="paragraph">
   <style:text-properties style:font-name="Share Tech Mono"
                          fo:font-size="14pt"
                          fo:font-weight="bold"
-                         fo:color="#50FA7B"/>
+                         fo:color="#B4FF00"/>
 </style:style>
 
 <style:style style:name="Default_20_Paragraph_20_Style" style:family="paragraph">
   <style:text-properties style:font-name="Inconsolata"
                          fo:font-size="11pt"
-                         fo:color="#D98E32"/>
+                         fo:color="#D9DEE5"/>
 </style:style>
 ```
 

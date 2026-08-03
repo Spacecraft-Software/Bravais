@@ -1,6 +1,6 @@
 # delta
 
-**Replaces:** `diff` pager for git | **Language:** 🦀 Rust | **Install:** `cargo install git-delta`
+**Replaces:** `diff` pager for git | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `git-delta`)
 
 ## Purpose
 Syntax-highlighted diffs for `git`, `diff`, `grep`. Side-by-side or unified view. Integrates via `.gitconfig`.

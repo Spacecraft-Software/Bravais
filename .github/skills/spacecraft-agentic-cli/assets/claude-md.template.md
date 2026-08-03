@@ -45,11 +45,11 @@
 The following Spacecraft Software skills apply to this project. Claude should
 consult them when their triggers match:
 
-- `spacecraft-standard` — master Project Spacecraft Software Standard
+- `spacecraft-standard-constitution` — master Steelbore Standard
 - `spacecraft-cli-standard` — structural CLI Standard rules
 - `spacecraft-agentic-cli` — agent-facing UX for the CLI
-- `spacecraft-brand-guidelines` — six-token color palette
-- `rust-guidelines` — Microsoft Pragmatic Rust Guidelines
+- `spacecraft-brand-guidelines` — Steelbore 2 color palette (values from `steelbore-color-palette`)
+- `microsoft-rust-guidelines` — Microsoft Pragmatic Rust Guidelines
 - `spacecraft-cli-preference` — preferred external CLI tools (rg, fd, bat)
 - `spacecraft-cli-shell` — shell syntax for generated commands
 - <ADD-PROJECT-SPECIFIC-SKILLS>
@@ -79,6 +79,6 @@ sessions:
 
 ## Standards compliance
 
-This project follows the CLI Standard v1.0.0. The CLI Standard skills
+This project follows the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0). The CLI Standard skills
 are authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.

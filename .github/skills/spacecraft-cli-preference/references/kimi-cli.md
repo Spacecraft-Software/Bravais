@@ -1,6 +1,6 @@
 # kimi-cli (kimi)
 
-**Replaces:** general-purpose coding assistants | **Language:** ⚠️ | **Install:** upstream
+**Replaces:** general-purpose coding assistants | **Language:** ⚠️ | **Install:** via `spacecraft-missing-pkg` (upstream)
 
 ## Purpose
 CLI for Moonshot AI. Long-context (≥200k token) specialisation — handy for large-codebase queries.

@@ -1,6 +1,6 @@
 # wget2
 
-**Replaces:** `wget` | **Language:** ⚠️ C | **Install:** distro repo
+**Replaces:** `wget` | **Language:** ⚠️ C | **Install:** via `spacecraft-missing-pkg` (distro-provided)
 
 ## Purpose
 Successor to wget. Multithreaded HTTP/2 downloader, better for large mirrors and batch fetches.

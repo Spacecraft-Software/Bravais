@@ -65,7 +65,7 @@ In `--json` mode, on any non-zero exit, the tool MUST emit a JSON object to
 - **Single-line JSON on stderr.** PowerShell wraps each stderr line as a separate `ErrorRecord`. Multi-line stderr JSON becomes unparseable in PowerShell. Serialize the error object without pretty-printing when writing to stderr.
 - **Always emit on non-zero exit in machine mode.** Missing error object = BLOCKER defect.
 - **Never emit an error object on stdout.** Stdout stays pure-data or empty.
-- **In human mode (TTY)**, the tool SHOULD still print the `hint` to stderr as colored text (Molten Amber for the hint, Red Oxide for the message) but MAY use prose formatting. The structured JSON object is only required in machine mode.
+- **In human mode (TTY)**, the tool SHOULD still print the `hint` to stderr as colored text (Plasma Orange for the hint, Mars Red for the message) but MAY use prose formatting. The structured JSON object is only required in machine mode.
 
 ---
 
@@ -169,11 +169,11 @@ error: Repository 'foo/bar' does not exist
        hint: Run 'mytool repo list' to see available repositories
 ```
 
-Colors (Spacecraft Software palette):
-- `error:` label — **Red Oxide** (`#FF5C5C`), bold.
-- Message — Red Oxide.
-- `hint:` label and hint text — **Molten Amber** (`#D98E32`).
-- Timestamp (if shown) — **Liquid Coolant** (`#8BE9FD`), dimmed.
+Colors (Spacecraft Software Steelbore 2 palette, Standard §11):
+- `error:` label — **Mars Red** (`#FF3B3B`), bold.
+- Message — Mars Red.
+- `hint:` label and hint text — **Plasma Orange** (`#FF5E00`).
+- Timestamp (if shown) — **Platinum Mist** (`#D9DEE5`), dimmed.
 
 The `--json` flag switches to the structured JSON form, unconditionally.
 

@@ -1,6 +1,6 @@
 # zap
 
-**Replaces:** `appimaged`, `am` | **Language:** 🦀 Rust | **Install:** GitHub release
+**Replaces:** `appimaged`, `am` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (GitHub release)
 
 ## Purpose
 High-performance AppImage manager: install, update, integrate (desktop entries + icons), remove.

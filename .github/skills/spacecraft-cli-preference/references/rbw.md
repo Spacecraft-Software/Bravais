@@ -1,6 +1,6 @@
 # rbw
 
-**Replaces:** official `bw` (Bitwarden CLI) | **Language:** 🦀 Rust | **Install:** `cargo install rbw`
+**Replaces:** official `bw` (Bitwarden CLI) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rbw`)
 
 ## Purpose
 Unofficial Bitwarden CLI with local encrypted cache; faster for interactive use than the official Node client.

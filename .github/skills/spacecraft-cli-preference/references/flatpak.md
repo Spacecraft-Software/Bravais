@@ -1,6 +1,6 @@
 # flatpak
 
-**Replaces:** native packages for sandboxed GUI apps | **Language:** ⚠️ C | **Install:** distro repo (`flatpak`)
+**Replaces:** native packages for sandboxed GUI apps | **Language:** ⚠️ C | **Install:** via `spacecraft-missing-pkg` (distro package: `flatpak`)
 
 ## Purpose
 Sandboxed universal app packaging with per-app permissions.

@@ -1,6 +1,6 @@
 # superfile (spf)
 
-**Replaces:** TUI file managers | **Language:** 🐹 Go | **Install:** upstream installer / distro
+**Replaces:** TUI file managers | **Language:** 🐹 Go | **Install:** via `spacecraft-missing-pkg` (upstream installer; also distro-provided)
 
 ## Purpose
 Visually rich TUI file manager with tabs, split panes, built-in image previews, and a modern look.

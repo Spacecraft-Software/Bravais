@@ -1,6 +1,6 @@
 # rage (age)
 
-**Replaces:** `gpg` (simple symmetric/asymmetric encryption) | **Language:** 🦀 Rust | **Install:** `cargo install rage`
+**Replaces:** `gpg` (simple symmetric/asymmetric encryption) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rage`)
 
 ## Purpose
 Rust implementation of the `age` encryption format. Simple, modern, small keys (X25519), no PGP web-of-trust complexity.

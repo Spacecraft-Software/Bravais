@@ -1,6 +1,6 @@
 # bat
 
-**Replaces:** `cat` (for viewing) | **Language:** 🦀 Rust | **Install:** `cargo install bat` / distro repo
+**Replaces:** `cat` (for viewing) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `bat`; also distro-provided)
 
 ## Purpose
 `cat` with syntax highlighting, line numbers, git diff gutter, and paging. For interactive viewing — **do not** pipe `bat` into other tools unless you pass `--plain`.

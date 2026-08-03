@@ -1,6 +1,6 @@
 # trippy (trip)
 
-**Replaces:** `traceroute`, `mtr` | **Language:** 🦀 Rust | **Install:** `cargo install trippy`
+**Replaces:** `traceroute`, `mtr` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `trippy`)
 
 ## Purpose
 Network diagnostic TUI combining `traceroute` and `mtr`. ICMP/UDP/TCP probes, geolocation, DNS, IPv4/6.

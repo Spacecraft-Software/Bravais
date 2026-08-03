@@ -1,6 +1,6 @@
 # msedit
 
-**Replaces:** `nano`, minimal terminal editors | **Language:** 🦀 Rust | **Install:** `cargo install msedit`
+**Replaces:** `nano`, minimal terminal editors | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `msedit`)
 
 ## Purpose
 Minimalist terminal text editor. Launch, type, save, quit — no modes, no configuration.

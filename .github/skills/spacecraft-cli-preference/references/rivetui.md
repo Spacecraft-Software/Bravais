@@ -1,6 +1,6 @@
 # RivetUI
 
-**Replaces:** Discord TUI alternative | **Language:** 🦀 Rust | **Install:** `cargo install rivetui`
+**Replaces:** Discord TUI alternative | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rivetui`)
 
 ## Purpose
 Alternative terminal Discord client with a richer UI than `disrust`.

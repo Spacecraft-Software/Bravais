@@ -1,6 +1,6 @@
 # impala
 
-**Replaces:** `iwctl` (interactive), `nmtui` for Wi-Fi | **Language:** 🦀 Rust | **Install:** `cargo install impala`
+**Replaces:** `iwctl` (interactive), `nmtui` for Wi-Fi | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `impala`)
 
 ## Purpose
 TUI front-end for `iwd`. Scan, connect, manage known networks without memorising `iwctl` subcommands.

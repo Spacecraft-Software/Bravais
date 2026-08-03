@@ -1,6 +1,6 @@
 # zellij
 
-**Replaces:** `tmux`, `screen` | **Language:** 🦀 Rust | **Install:** `cargo install zellij`
+**Replaces:** `tmux`, `screen` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `zellij`)
 
 ## Purpose
 User-friendly terminal multiplexer. Layouts, floating panes, plugins (WASM), session manager, discoverable keybindings always visible.

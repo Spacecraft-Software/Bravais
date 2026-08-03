@@ -25,12 +25,12 @@ website: https://Construct.SpacecraftSoftware.org/
 
 **Version:** 1.0.0 | **Spec Date:** 2026-04-10 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
-**Copyright:** (C) 2026 Mohamed Hammad | **License:** GPL-3.0-or-later
+**Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
 
 This skill is the **agent-facing UX specialist** for Spacecraft Software CLIs. The
 companion skill `spacecraft-cli-standard` already encodes the structural
-CLI-Standard rules (output cascade, exit codes, JSON envelope, schema sub-command,
+CLI Standard rules (output cascade, exit codes, JSON envelope, schema sub-command,
 TUI graceful degradation, shell compat). This skill goes deeper on the
 disciplines that determine whether an AI agent can actually *use* the CLI
 well in practice:
@@ -43,7 +43,7 @@ well in practice:
 - Token-economy hygiene (`--fields`, `jsonl`, payload minimization)
 - The agent-invoked threat model (prompt injection, hallucinated args)
 
-If the CLI Standard's structural rules conflict with anything in this skill, the CLI Standard
+If the CLI Standard structural rules conflict with anything in this skill, the CLI Standard
 wins and `spacecraft-cli-standard` is authoritative. This skill never
 weakens the structural Standard; it only adds depth to the agent-facing
 surfaces.
@@ -97,6 +97,14 @@ Drop-in templates live in `assets/agents-md.template.md` and
 `assets/claude-md.template.md`. Never copy them blindly — each file must be
 specialized for the project.
 
+**No-clobber: read before you write.** Scaffolding these files is the one
+durable change this skill triggers on the user's own machine, and a repo often
+already has an `AGENTS.md` or `CLAUDE.md` with real project context. **Read any
+existing context file first.** If it exists, propose a merge or a diff — never
+overwrite it wholesale. Treat a scaffold as a proposal, not a force-write; the
+consent-before-durable principle from `spacecraft-missing-pkg` applies here too.
+See `references/local-host-authoring.md`.
+
 ---
 
 ## §3 — Tips-Thinking: The Anti-Hallucination Discipline
@@ -148,13 +156,21 @@ simultaneously:
 
 | Variable | Output format | Color | TUI | Interactivity | Verbosity |
 |----------|---------------|-------|-----|---------------|-----------|
-| `AI_AGENT=1` | json | off | suppressed | non-interactive (--yes implicit) | minimal — failures only |
-| `AGENT=1` | json | off | suppressed | non-interactive | minimal |
-| `CI=true` | json | off | suppressed | non-interactive | normal |
-| `CLAUDECODE=1` | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
-| `CURSOR_AGENT=1` | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
-| `GEMINI_CLI=1` | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
+| `AI_AGENT` set | json | off | suppressed | non-interactive (--yes implicit) | minimal — failures only |
+| `AGENT` set | json | off | suppressed | non-interactive | minimal |
+| `CI` truthy | json | off | suppressed | non-interactive | normal |
+| `CLAUDECODE` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
+| `CURSOR_AGENT` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
+| `GEMINI_CLI` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
 | `TERM=dumb` | (per other rules) | off | suppressed | (per other rules) | (per other rules) |
+
+**Detection is presence-based.** "Set" means *set to any non-empty value* —
+**not** `=1`. Real harnesses export descriptive strings (a live Claude Code
+session sets `AI_AGENT=claude-code_2-1-218_agent`), so a detector that matches
+`AI_AGENT == "1"` fails to recognise the agent it runs under. `CI` is the lone
+value-carrying exception (truthy = set and not `false`/`0`). Full predicates
+and the grounding probe: `references/agent-env-detection.md` and
+`references/local-host-authoring.md`.
 
 `CLAUDECODE`, `CURSOR_AGENT`, and `GEMINI_CLI` are **informational only**.
 They MUST NOT override the output format on their own — `AI_AGENT` /
@@ -293,7 +309,13 @@ this checklist. Each item maps to a token-cost lever:
 
 When reviewing an existing Spacecraft Software CLI for agent-friendliness
 (complementary to the structural audit in `spacecraft-cli-standard` §9),
-walk this list:
+walk this list.
+
+**Audit by running, not by reading.** On the user's own machine you can invoke
+the CLI under the host's *actual* agent environment and observe the real output
+mode — which catches presence-vs-value detection bugs (item 6) that a source
+read sails past. Probe the live env first (`references/local-host-authoring.md`),
+then drive the CLI with those real values.
 
 | # | Check | Severity if missing |
 |---|-------|---------------------|
@@ -302,7 +324,7 @@ walk this list:
 | 3 | `SKILL.md` exists at repo root | MAJOR |
 | 4 | Every error response has a non-empty `hint` field | CRITICAL |
 | 5 | Hints are runnable commands, not prose | CRITICAL |
-| 6 | `AI_AGENT=1` triggers json + no-color + non-interactive | CRITICAL |
+| 6 | Setting the host's **actual** `AI_AGENT` value (a string, not necessarily `1`) makes `<tool> describe` report profile=agent + json + no-color + non-interactive — verified by running, not reading | CRITICAL |
 | 7 | `<tool> schema` output is valid JSON Schema Draft 2020-12 | BLOCKER |
 | 8 | `--fields` honored on every list/get | CRITICAL |
 | 9 | `--format jsonl` works for streaming-eligible commands | MAJOR |
@@ -328,6 +350,7 @@ Findings categorized as BLOCKER / CRITICAL / MAJOR per
 | `references/llm-tool-calling.md` | Shaping `<tool> schema` output for Anthropic / OpenAI / Gemini / MCP; provider-specific wrappers; required-field rules |
 | `references/token-economy.md` | MCP lazy loading; `--fields`; jsonl streaming; payload minimization; null-field omission |
 | `references/agent-threat-model.md` | Input validation; path canonicalization; control-character rejection; indirect prompt injection defenses |
+| `references/local-host-authoring.md` | Scaffolding or auditing a CLI on the user's own machine; probing the real agent env; presence-based detection; run-to-verify auditing; no-clobber scaffolding; agent-runnable hints |
 
 Assets:
 - `assets/agents-md.template.md` — drop-in AGENTS.md template
@@ -340,22 +363,57 @@ Assets:
 
 This skill is the **agent-UX layer** in the Spacecraft Software CLI skill stack:
 
-- **`spacecraft-standard`** — master Standard. Master wins on conflict.
-- **`spacecraft-cli-standard`** — structural CLI-Standard rules (what the CLI must
+- **`spacecraft-standard-constitution`** — master Standard. Master wins on conflict.
+- **`spacecraft-cli-standard`** — structural CLI Standard rules (what the CLI must
   be). Authoritative on structure. This skill is subordinate; never
   weakens its rules. Both load together when a Spacecraft Software CLI is in scope.
-- **`spacecraft-cli-preference`** — picks which *external* CLI tools to
-  invoke (e.g., `rg` over `grep`). Complementary.
-- **`spacecraft-cli-shell`** — shell syntax (Nushell / Ion / POSIX) in
-  generated commands. Complementary.
-- **`rust-guidelines`** — Microsoft Pragmatic Rust Guidelines. Consult
+- **`spacecraft-cli-preference`** — picks which *external* CLI tools the CLI
+  (and you, while building it) should invoke (e.g., `rg` over `grep`). Now
+  local-host aware: substitutes only when the tool is present.
+- **`spacecraft-cli-shell`** — shell syntax for any command you emit while
+  scaffolding, testing, or documenting the CLI. Now local-host aware: routes by
+  who executes the command (agent-run vs handed to the user vs written to a
+  file).
+- **`spacecraft-missing-pkg`** — provisioning. When building the CLI needs a
+  toolchain, linter, or interpreter that isn't installed, this owns getting it
+  — ephemeral-first, consent before any durable install.
+- **`microsoft-rust-guidelines`** — Microsoft Pragmatic Rust Guidelines. Consult
   when writing Rust.
-- **`spacecraft-brand-guidelines`** — six-token color palette source of
-  truth.
+- **`spacecraft-brand-guidelines`** — application rules for the nine-token
+  Steelbore 2 palette (Standard §11 v1.34); hex values are read from the
+  `steelbore-color-palette` skill.
+
+The three CLI/shell/provisioning siblings were all retargeted at the local
+host; route to them rather than restating their rules.
 
 ---
 
-*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode
-Self-Documenting CLI Standard (v1.0.0), §3 (Eight Rules), §6 (Schema
+## §12 — Authoring on the User's Machine
+
+Scaffolding and auditing a Spacecraft Software CLI happen on the user's real
+machine, not in a throwaway sandbox. Five rules follow; detail lives in
+**`references/local-host-authoring.md`**.
+
+1. **Detect agents by presence, not by `=1`.** `AI_AGENT`, `AGENT`,
+   `CLAUDECODE`, and the rest are set to whatever the harness likes — a live
+   Claude Code session exports `AI_AGENT=claude-code_2-1-218_agent`. Test
+   set-and-non-empty; only `CI` carries a truthy/falsy value. (§4.)
+2. **Probe the real environment before testing.** Read the agent env vars
+   actually present on the host and use their concrete values as fixtures —
+   don't assume `=1`.
+3. **Audit by running, not by reading.** Drive the CLI under those real values
+   and observe the output mode; a source read misses exactly the detection bug
+   in rule 1. (§9.)
+4. **Scaffolding is no-clobber.** Read existing context files first; propose a
+   merge, never overwrite. (§2.)
+5. **Emit agent-runnable hints.** A hint an agent cannot run without a TTY or
+   root — anything starting `sudo` — violates tips-thinking's own rule. Point
+   at a non-privileged path, or mark human-escalation explicitly. (§3,
+   `references/tips-thinking.md`.)
+
+---
+
+*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0) "Dual-Mode
+Self-Documenting CLI Framework", §3 (Eight Rules), §6 (Schema
 Introspection), §7 (Input Hardening), §9 (Agent Environment Detection),
 §10 (MCP Surface). Companion skill: `spacecraft-cli-standard`.*

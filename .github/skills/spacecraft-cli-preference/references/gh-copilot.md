@@ -1,6 +1,6 @@
 # gh-copilot (GitHub Copilot CLI)
 
-**Replaces:** — (official GitHub AI assistant) | **Language:** ⚠️ TypeScript | **Install:** `gh extension install github/gh-copilot`
+**Replaces:** — (official GitHub AI assistant) | **Language:** ⚠️ TypeScript | **Install:** via `spacecraft-missing-pkg` (gh extension: `github/gh-copilot`)
 
 ## Purpose
 GitHub's official AI terminal assistant. Provides `gh copilot suggest` and `gh copilot explain`.

@@ -1,9 +1,20 @@
-# Homebrew (`brew install`)
+# Homebrew (`brew install`) — Band B, tier 5
 
 Permanent install to a user-owned prefix (`/opt/homebrew` on macOS,
 `/home/linuxbrew/.linuxbrew` on Linux). No sudo required after initial
 Homebrew bootstrap. Large formula index (~7,000 CLI formulae plus macOS
 casks).
+
+> **Consent gate.** This is a durable change to the user's machine. Propose it
+> — the command, the prefix it installs into, the removal command
+> (`brew uninstall <formula>`), and the fact that it is untracked by any
+> declarative config — then **wait for the go-ahead**.
+>
+> **Declarative equivalent:** a `Brewfile` entry applied with `brew bundle`
+> keeps the install tracked and reproducible; on a Nix or Guix host, prefer
+> `home.packages` / a manifest instead. See
+> [declarative.md](declarative.md). For a one-off, use an ephemeral run
+> ([nix.md](nix.md), [guix.md](guix.md)) — no install at all.
 
 ## Syntax
 
@@ -94,4 +105,4 @@ brew uninstall <formula>
 ```
 
 Tell the user what was installed and how to remove it — Homebrew is a
-permanent manager (tier 4 in the priority chain).
+permanent manager (Band B in the priority chain).

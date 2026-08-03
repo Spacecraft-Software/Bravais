@@ -1,6 +1,6 @@
 # claude-code (Claude Code)
 
-**Replaces:** other AI coding agents | **Language:** ⚠️ TypeScript | **Install:** `npm install -g @anthropic-ai/claude-code` (Node.js 18+)
+**Replaces:** other AI coding agents | **Language:** ⚠️ TypeScript | **Install:** via `spacecraft-missing-pkg` (npm package: `@anthropic-ai/claude-code` (Node.js 18+))
 
 ## Purpose
 Anthropic's official command-line coding agent. Reads/edits/runs code in your terminal with MCP server integration. **Mohamed's primary agent; elevated role in the clean-room multi-agent pipeline.**

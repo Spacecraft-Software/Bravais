@@ -1,22 +1,23 @@
 ---
-name: rust-guidelines
+name: microsoft-rust-guidelines
 description: 
   ALWAYS invoke this skill BEFORE writing or modifying ANY Rust code (.rs files),
   even for simple Hello World programs. Enforces Microsoft Pragmatic Rust Guidelines,
   requires consulting the appropriate guideline files before any coding activity.
   This skill is MANDATORY for all Rust development.
 user-invocable: false
-license: MIT
+license: GPL-3.0-or-later OR MIT
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
 ---
 
 **Current compliance date: 2026-05-18**
 
-# Rust-Guidelines Skill
+# Microsoft-Rust-Guidelines Skill
 
 **Maintainer (Spacecraft Software adaptation):** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
+**License:** GPL-3.0-or-later OR MIT (dual; see [`LICENSE-GPL`](LICENSE-GPL), [`LICENSE-MIT`](LICENSE-MIT), [`CREDITS.md`](CREDITS.md))
 *(Base guidelines: Microsoft Pragmatic Rust Guidelines — MIT License)*
 
 This skill enforces structured, guideline-driven Rust development. It ensures all
@@ -162,10 +163,10 @@ Use when:
 
 ---
 
-## Spacecraft Software Standard Requirements (Rust)
+## Steelbore Standard Requirements (Rust)
 
 When writing Rust code for any Spacecraft Software project, these additional rules
-from [The Steelbore Standard](../spacecraft-standard/SKILL.md) apply on top of the
+from [The Steelbore Standard](../spacecraft-standard-constitution/SKILL.md) apply on top of the
 Microsoft Pragmatic Rust Guidelines above.
 
 ### §4 — SPDX License Header (mandatory)
@@ -181,11 +182,21 @@ are not manifests) are exempt; software source files are not.
 
 ### §3.2 — Performance
 
-- Concurrency must be **designed-in from the start**, never bolted on retroactively.
-- Release profiles must use `-C target-cpu=native` (or `RUSTFLAGS=-C target-cpu=native`),
-  LTO (`lto = true`), and PGO where the toolchain supports it.
-- Benchmarking is **mandatory** before and after any optimization work; regressions
-  must be documented and justified.
+- Concurrency is an **architecture-level concern** — designed in from the start, never
+  bolted on. Adopt it where it genuinely advances performance; where it would degrade
+  performance (synchronization overhead, lock contention, inherently serial or small
+  workloads) or compromise Stability (Priority 1), choose the simpler serial approach and
+  **document the trade-off**.
+- Release profiles should use `-C target-cpu=native` (or `RUSTFLAGS=-C target-cpu=native`),
+  LTO (`lto = true`), and PGO where the toolchain supports them reliably. **Note every
+  applied flag and every disabled flag (with its reason)** — a comment in `Cargo.toml` /
+  `build.rs` or a build-time message — so flag state is visible at compile time. Any flag
+  that breaks or destabilizes the build on a given platform/toolchain (e.g. LTO under some
+  NixOS, cross-compilation, or static-linking setups) MUST be disabled; Stability
+  (Priority 1) outranks Performance. See `spacecraft-standard-constitution` §3.2.1.
+- Benchmarking is **mandatory** before and after any optimization work; regressions must
+  be documented and justified — it is also the evidence for the concurrency-vs-serial
+  trade-off above.
 
 ### §3.3 — Security & Dependency Auditing
 
@@ -210,7 +221,7 @@ are not manifests) are exempt; software source files are not.
 
 ## Directory Structure
 ```
-rust-guidelines/
+microsoft-rust-guidelines/
 ├── SKILL.md
 └── references/
     ├── 01_ai_guidelines.md

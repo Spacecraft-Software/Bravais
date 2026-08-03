@@ -1,6 +1,6 @@
 # kilo
 
-**Replaces:** agentic engineering platforms | **Language:** ⚠️ TypeScript | **Install:** upstream
+**Replaces:** agentic engineering platforms | **Language:** ⚠️ TypeScript | **Install:** via `spacecraft-missing-pkg` (upstream)
 
 ## Purpose
 Agentic engineering platform CLI. Orchestrates multi-step software tasks.

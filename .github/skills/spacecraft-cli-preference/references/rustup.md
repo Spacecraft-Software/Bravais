@@ -1,6 +1,6 @@
 # rustup
 
-**Replaces:** manual Rust toolchain management | **Language:** 🦀 Rust | **Install:** https://rustup.rs
+**Replaces:** manual Rust toolchain management | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream: <https://rustup.rs>)
 
 ## Purpose
 Official Rust toolchain multiplexer. Manages stable/beta/nightly channels, targets, components (rustfmt, clippy, rust-analyzer).

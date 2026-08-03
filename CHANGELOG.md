@@ -73,6 +73,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Antigravity loading stale Construct skills** — `spacecraft.construct.agentPaths`
+  omitted Gemini entirely on the assumption that "Gemini reads `~/.agents/`
+  directly". That holds for Gemini CLI, but Antigravity scans
+  `~/.gemini/config/skills` (via the `~/.gemini/antigravity/skills` symlink),
+  which was an unmanaged hand-copy last refreshed 2026-05-27. Every one of its
+  16 skills had drifted, 26 skills were missing, and 2 removed ones
+  (`spacecraft-standard`, since renamed `spacecraft-standard-constitution`;
+  `android-intent-security`, moved into `android-skills/`) were still being
+  served — which is why Antigravity kept citing "SFRS", a term the Construct
+  repo replaced with "Dual-Mode Self-Documenting CLI Standard". Added
+  `.gemini/config/skills` to `agentPaths` so the activation script replaces the
+  stale directory with a symlink to `~/.agents/skills`.
+
+- **Copilot reading stale Construct skills** — `.github/skills/`, which the
+  GitHub Copilot coding agent, Copilot CLI and the VS Code agent mode all load,
+  was a hand-vendored copy last refreshed 2026-05-20. Eight of its ten skills
+  had drifted from Construct and two no longer existed upstream under those
+  names (`rust-guidelines`, since split into `microsoft-rust-guidelines` and
+  `spacecraft-rust-guidelines`; `spacecraft-standard`, renamed
+  `spacecraft-standard-constitution`). Same failure as the Antigravity entry
+  above, in the one place the `agentPaths` symlink cannot reach it: the cloud
+  agent gets a plain `git clone`, with no Nix store and no flake input to
+  resolve, so these skills genuinely have to be vendored. Replaced the hand-copy
+  with `pkgs/sync-skills.nu`, which materialises the directory from the
+  `construct` rev already pinned in `flake.lock` — the same rev Home Manager
+  installs into `~/.agents/skills`, so local and cloud agents now read
+  byte-identical skills — plus a `Skills Drift` workflow running its `--check`
+  mode, so a stale copy fails CI instead of quietly mis-instructing the agent.
+  The vendored set went 10 → 13: both orphans resolved to their upstream
+  successors, and `spacecraft-nix-guidelines`, `spacecraft-nu-guidelines` and
+  `spacecraft-rust-guidelines` were added — the three that match what actually
+  gets written in this repo.
+
+- **REUSE mis-crediting vendored Microsoft prose** — the blanket `.github/**`
+  annotation in `REUSE.toml` is `precedence = "aggregate"`, so once the
+  refreshed `microsoft-rust-guidelines` brought in files tagged
+  `GPL-3.0-or-later OR MIT` / `(C) Microsoft Corporation`, REUSE flattened that
+  `OR` into an aggregate and named Mohamed Hammad a copyright holder of
+  Microsoft's text — contrary to Standard §4.2, which requires
+  third-party-derived artifacts to preserve their upstream license. Added a
+  `.github/skills/**` stanza with `precedence = "closest"` so a vendored file's
+  own header wins wherever it has one, and `LICENSES/MIT.txt` for the MIT text
+  now in-tree. (`reuse lint` still reports one invalid expression in
+  `spacecraft-cli-standard/references/testing-compliance.md` — an upstream
+  Construct bug, a table cell quoting `rg -L 'SPDX-License-Identifier: …'` that
+  the scanner reads as a real tag. It predates this change.)
+
 - **Eww bar not rendering (both Niri and LeftWM)** — three yuck escaping
   bugs introduced during the Phase D split:
   1. `printf "%d"` → `printf \"%d\"` — bare inner quotes closed the yuck

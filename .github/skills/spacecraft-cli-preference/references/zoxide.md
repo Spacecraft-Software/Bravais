@@ -1,6 +1,6 @@
 # zoxide (z)
 
-**Replaces:** `cd` + shell history navigation | **Language:** 🦀 Rust | **Install:** `cargo install zoxide` + shell init
+**Replaces:** `cd` + shell history navigation | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `zoxide` — needs shell init; prefer `programs.zoxide.enable`, see local-execution.md)
 
 ## Purpose
 Smart directory jumper. Ranks visited directories by frequency+recency ("frecency"). Bound to `z` (or any alias you pick).

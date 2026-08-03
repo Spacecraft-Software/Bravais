@@ -1,8 +1,22 @@
-# Cargo (`cargo install`) — Rust crates only
+# Cargo (`cargo install`) — Rust crates only (Band B, tier 4)
 
 Permanent, user-local install to `~/.cargo/bin/`. No sudo required. **Only
 applicable to Rust crates** — skip Cargo for any non-Rust tool, even if
 `cargo` is installed.
+
+> **Consent gate.** This is a durable change to the user's machine. Propose it
+> — the command, the path it lands in (`~/.cargo/bin/<binary>`), the removal
+> command (`cargo uninstall <crate>`), and the fact that it is untracked by any
+> declarative config — then **wait for the go-ahead**. Do not install and
+> report afterward.
+>
+> **Prefer the alternatives first:** an ephemeral `nix run nixpkgs#<pkg>` /
+> `guix shell <pkg>` for a one-off ([nix.md](nix.md), [guix.md](guix.md)); a
+> devShell if the repo needs it repeatedly ([project-env.md](project-env.md));
+> a `home.packages` entry if the user wants it permanently
+> ([declarative.md](declarative.md) — most Rust CLIs are already in nixpkgs and
+> Guix, pre-built, so a declarative entry is faster than compiling here).
+> Cargo is the answer only when the crate is packaged nowhere else.
 
 ## Syntax
 
@@ -107,4 +121,4 @@ cargo uninstall <crate>
 ```
 
 Tell the user what was installed and how to remove it — Cargo is a permanent
-manager (tier 3 in the priority chain).
+manager (Band B in the priority chain).

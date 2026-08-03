@@ -1,6 +1,13 @@
 # paru
 
-**Replaces:** `yay`, raw `makepkg` | **Language:** 🦀 Rust | **Install:** Arch `pacman -S paru`
+**Replaces:** `yay`, raw `makepkg` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (Arch package: `paru`)
+
+> **Arch-only, and installs are consent-gated.** On any non-Arch host this row
+> does not apply; on a declaratively managed host it installs outside the
+> configuration and drifts it. Read-only queries (`paru -Qs`, `paru -Si`) are
+> fine; anything that installs or upgrades goes through
+> `spacecraft-missing-pkg` and needs the user's go-ahead — it also needs root,
+> so it is a hand-off. See [local-execution.md](local-execution.md).
 
 ## Purpose
 Feature-rich AUR helper for Arch and derivatives. `pacman`-compatible flags, with AUR search, PKGBUILD inspection, and upgrade workflows.

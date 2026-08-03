@@ -1,6 +1,6 @@
 # t-rec
 
-**Replaces:** `asciinema` (for GIF/MP4 output) | **Language:** 🦀 Rust | **Install:** `cargo install t-rec`
+**Replaces:** `asciinema` (for GIF/MP4 output) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `t-rec`)
 
 ## Purpose
 Terminal recorder that outputs animated GIF or MP4 directly — not just cast files. Records by screenshotting the terminal window.

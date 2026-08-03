@@ -1,6 +1,6 @@
 # sequoia-chameleon-gnupg
 
-**Replaces:** `gpg` (drop-in) | **Language:** 🦀 Rust | **Install:** `cargo install sequoia-chameleon-gnupg`
+**Replaces:** `gpg` (drop-in) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `sequoia-chameleon-gnupg`)
 
 ## Purpose
 GnuPG-compatible CLI built on Sequoia. Drop-in `gpg` replacement for git signing, package signing, any workflow that shells out to `gpg`. Mohamed's preferred signing stack across Git CLI, gh CLI, GitHub Desktop, VSCode, Antigravity IDE.

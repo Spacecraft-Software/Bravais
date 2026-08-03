@@ -1,6 +1,6 @@
 # omni
 
-**Replaces:** per-distro package managers (bridge) | **Language:** 🦀 Rust | **Install:** `cargo install omnicli` / GitHub release
+**Replaces:** per-distro package managers (bridge) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `omnicli`; or GitHub release)
 
 ## Purpose
 Universal package-manager front-end. Translates generic install/search/remove commands to the host's native PM (pacman, apt, dnf, brew, xbps, nix, flatpak, pkg, …).

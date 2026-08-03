@@ -1,6 +1,6 @@
 # termusic
 
-**Replaces:** `cmus`, `ncmpcpp` | **Language:** 🦀 Rust | **Install:** `cargo install termusic termusic-server`
+**Replaces:** `cmus`, `ncmpcpp` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crates: `termusic` + `termusic-server`)
 
 ## Purpose
 Local-file TUI music player with album art support, MPRIS, gapless playback. Client-server architecture.

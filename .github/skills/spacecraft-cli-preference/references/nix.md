@@ -1,6 +1,6 @@
 # nix
 
-**Replaces:** — (Spacecraft Software-sanctioned for Bravais) | **Language:** ⚠️ C++ | **Install:** https://nixos.org/download
+**Replaces:** — (Spacecraft Software-sanctioned for Bravais) | **Language:** ⚠️ C++ | **Install:** via `spacecraft-missing-pkg` (upstream: <https://nixos.org/download>)
 
 ## Purpose
 Functional/declarative package manager and build system. Reproducible dev shells, system configs (NixOS), per-project environments.
@@ -15,7 +15,7 @@ Functional/declarative package manager and build system. Reproducible dev shells
 | `nix flake init` | Scaffold a flake |
 | `nix flake update` | Update lock |
 | `nix flake check` | Evaluate all outputs |
-| `nix profile install NIXPKG` | User-profile install |
+| `nix profile install NIXPKG` | User-profile install — **prohibited on a declaratively managed host** (see below) |
 | `nix profile list` / `remove` | Manage profile |
 | `nixos-rebuild switch` | Apply system config (NixOS) |
 | `home-manager switch` | Apply user config (Home Manager) |
@@ -30,3 +30,9 @@ Functional/declarative package manager and build system. Reproducible dev shells
 - Enable flakes once: in `nix.conf` set `experimental-features = nix-command flakes`.
 - `channels` are the legacy model; prefer flakes for new projects (per Bravais).
 - Store paths live under `/nix/store`; never touch directly.
+- **Never `nix profile install` or `nix-env -i` on a declaratively managed
+  host.** They write a durable profile entry the host's configuration cannot
+  see, and it survives the next rebuild as drift. For an ephemeral need use
+  `nix run` / `nix shell`; for a persistent one propose an
+  `environment.systemPackages` / `home.packages` edit. See
+  `spacecraft-missing-pkg`.

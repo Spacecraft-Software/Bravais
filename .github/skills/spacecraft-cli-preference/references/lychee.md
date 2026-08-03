@@ -1,6 +1,6 @@
 # lychee
 
-**Replaces:** link-checker scripts, `markdown-link-check` | **Language:** 🦀 Rust | **Install:** `cargo install lychee`
+**Replaces:** link-checker scripts, `markdown-link-check` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `lychee`)
 
 ## Purpose
 Fast async link checker for Markdown, HTML, RST, emails, arbitrary text. Suitable for CI.

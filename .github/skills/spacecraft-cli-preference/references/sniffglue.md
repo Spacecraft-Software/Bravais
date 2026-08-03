@@ -1,6 +1,6 @@
 # sniffglue
 
-**Replaces:** `tcpdump` (partial) | **Language:** 🦀 Rust | **Install:** `cargo install sniffglue`
+**Replaces:** `tcpdump` (partial) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `sniffglue`)
 
 ## Purpose
 Secure, multithreaded packet sniffer. Parses common protocols (Ethernet, IPv4/6, TCP, UDP, DNS, TLS, HTTP) with sandboxed workers.

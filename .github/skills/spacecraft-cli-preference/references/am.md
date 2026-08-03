@@ -1,6 +1,6 @@
 # am (AppMan)
 
-**Replaces:** manual AppImage management | **Language:** ⚠️ Bash | **Install:** upstream install script
+**Replaces:** manual AppImage management | **Language:** ⚠️ Bash | **Install:** via `spacecraft-missing-pkg` (upstream install script)
 
 ## Purpose
 Bash-based AppImage manager. Lightweight, no daemon, extensive catalog. Secondary choice after `zap`.

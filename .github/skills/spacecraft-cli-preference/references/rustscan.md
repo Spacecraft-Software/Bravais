@@ -1,6 +1,6 @@
 # rustscan
 
-**Replaces:** `nmap` (fast-scan front-end) | **Language:** 🦀 Rust | **Install:** `cargo install rustscan`
+**Replaces:** `nmap` (fast-scan front-end) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rustscan`)
 
 ## Purpose
 Extremely fast TCP port scanner; typically pipes into `nmap` for deeper enumeration. **Only scan hosts you have explicit authorisation to test.**

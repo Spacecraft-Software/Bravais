@@ -1,6 +1,6 @@
 # nushell (nu)
 
-**Replaces:** `bash`, `zsh` (as interactive + scripting shell) | **Language:** 🦀 Rust | **Install:** `cargo install nu` / distro repo
+**Replaces:** `bash`, `zsh` (as interactive + scripting shell) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `nu`; also distro-provided)
 
 ## Purpose
 Data-oriented, object-pipeline shell. Structured data (tables, records, lists) flows between commands instead of bytestreams. **One of Mohamed's primary shells.**

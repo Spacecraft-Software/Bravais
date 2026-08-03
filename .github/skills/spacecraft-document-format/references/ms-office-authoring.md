@@ -23,7 +23,7 @@ Every MS Office deliverable still requires its GFM companion `.md` (see SKILL.md
 
 ## §B — Background recipe per MS Office shape
 
-The Void Navy `#000027` mandate (Standard §9) requires per-format care; the obvious property is necessary but not sufficient in any of the three formats.
+The Void Navy `#000027` mandate (Standard §11) requires per-format care; the obvious property is necessary but not sufficient in any of the three formats.
 
 ### §B.1 — `.docx` (Word)
 
@@ -71,7 +71,7 @@ Then reference fill index `1` in your cell `<xf>` styles. Every used cell gets t
 
 **Path 2 (legacy, don't use):** Set a 1×1 PNG of `#000027` as the sheet background image via `<sheetView>` → `<picture>`. This is the only way to colour the area *outside* the used cell range, but it doesn't print, isn't displayed in print preview, and Google Sheets ignores it. Skip.
 
-Also set the sheet tab colour to a Spacecraft Software accent (`#4B7EB0` Steel Blue is the default choice) via `<sheetPr><tabColor rgb="FF4B7EB0"/></sheetPr>` in each sheet's XML — cosmetic but matches the brand.
+Also set the sheet tab colour to a Spacecraft Software accent (`#FF5E00` Plasma Orange is the default choice) via `<sheetPr><tabColor rgb="FFFF5E00"/></sheetPr>` in each sheet's XML — cosmetic but matches the brand.
 
 ### §B.3 — `.pptx` (PowerPoint)
 
@@ -139,7 +139,7 @@ Then map paragraph styles in `word/styles.xml`:
   <w:rPr>
     <w:rFonts w:ascii="Share Tech Mono" w:hAnsi="Share Tech Mono"/>
     <w:b/>
-    <w:color w:val="4B7EB0"/>
+    <w:color w:val="FF5E00"/>
     <w:sz w:val="32"/>  <!-- OOXML uses half-points; 32 = 16pt -->
   </w:rPr>
 </w:style>
@@ -151,9 +151,9 @@ In `xl/styles.xml`, declare the fonts and reference them by index in `<xf>` cell
 
 ```xml
 <fonts count="3">
-  <font><sz val="11"/><name val="Inconsolata"/><color rgb="FFD98E32"/></font>
-  <font><sz val="16"/><b/><name val="Share Tech Mono"/><color rgb="FF4B7EB0"/></font>
-  <font><sz val="14"/><b/><name val="Share Tech Mono"/><color rgb="FF50FA7B"/></font>
+  <font><sz val="11"/><name val="Inconsolata"/><color rgb="FFD9DEE5"/></font>
+  <font><sz val="16"/><b/><name val="Share Tech Mono"/><color rgb="FFFF5E00"/></font>
+  <font><sz val="14"/><b/><name val="Share Tech Mono"/><color rgb="FFB4FF00"/></font>
 </fonts>
 ```
 

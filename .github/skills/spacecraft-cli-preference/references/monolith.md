@@ -1,6 +1,6 @@
 # monolith
 
-**Replaces:** `wget --page-requisites --convert-links`, browser "Save Page As" | **Language:** 🦀 Rust | **Install:** `cargo install monolith`
+**Replaces:** `wget --page-requisites --convert-links`, browser "Save Page As" | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `monolith`)
 
 ## Purpose
 Saves a complete web page as a single self-contained HTML file (CSS/JS/images/fonts inlined as data URIs).

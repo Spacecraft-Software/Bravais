@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Gate `.github/skills/` against the `construct` rev pinned in flake.lock.
+#
+# The vendored copy exists because the Copilot coding agent gets a plain clone
+# and cannot resolve the flake input (see pkgs/sync-skills.nu). Without this
+# job the copy drifts silently — it already did, for ~10 weeks, until the
+# agent was reading skills two renames out of date.
+name: "Skills Drift"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/skills/**
+      - .github/workflows/skills-drift.yml
+      - flake.lock
+      - pkgs/sync-skills.nu
+  pull_request:
+    paths:
+      - .github/skills/**
+      - .github/workflows/skills-drift.yml
+      - flake.lock
+      - pkgs/sync-skills.nu
+
+jobs:
+  skills-drift:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      # Fails with a per-skill table when the vendored tree no longer matches
+      # Construct. Fix: `nu pkgs/sync-skills.nu` locally, then commit.
+      - name: Check vendored skills against the pinned Construct rev
+        run: nix run nixpkgs#nushell -- pkgs/sync-skills.nu --check

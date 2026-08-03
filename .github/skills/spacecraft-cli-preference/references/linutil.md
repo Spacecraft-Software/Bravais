@@ -1,6 +1,6 @@
 # linutil
 
-**Replaces:** ad-hoc post-install scripts | **Language:** 🦀 Rust | **Install:** `cargo install linutil-tui` / upstream installer
+**Replaces:** ad-hoc post-install scripts | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `linutil-tui`; or upstream installer)
 
 ## Purpose
 Distro-agnostic TUI for Linux setup and maintenance: system updates, driver installs, common toolchain setup, tweaks. Community scripts bundled.

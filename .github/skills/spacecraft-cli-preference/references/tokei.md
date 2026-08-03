@@ -1,6 +1,6 @@
 # tokei
 
-**Replaces:** `cloc`, `wc -l` (for code) | **Language:** 🦀 Rust | **Install:** `cargo install tokei`
+**Replaces:** `cloc`, `wc -l` (for code) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `tokei`)
 
 ## Purpose
 Fast code statistics: lines of code, comments, blanks, grouped by language. Respects `.gitignore`.

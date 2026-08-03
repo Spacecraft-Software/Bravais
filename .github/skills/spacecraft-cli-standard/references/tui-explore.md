@@ -22,8 +22,9 @@ keybindings, the Spacecraft Software palette mapping, and implementation constra
    activate. Fall back to `--format json`, emit a warning to stderr, and
    serve the full data payload.
 
-2. **Agent environment.** If `AI_AGENT=1` or `AGENT=1` is set, the TUI MUST
-   NOT activate. Fall back to `--format json` and warn on stderr. This
+2. **Agent environment.** If `AI_AGENT` or `AGENT` is set (to any non-empty
+   value — not just `1`), the TUI MUST NOT activate. Fall back to `--format
+   json` and warn on stderr. This
    prevents agents from being trapped in an interactive render loop — a
    well-documented failure mode in the pre-Standard era.
 
@@ -75,7 +76,7 @@ The TUI MUST implement:
 | Help | F1 | `?` |
 
 Both binding sets MUST be live simultaneously — no mode toggle. This is the
-Spacecraft Software Standard dual-keybinding requirement.
+Steelbore Standard dual-keybinding requirement.
 
 ### Required interactions
 
@@ -88,18 +89,21 @@ Spacecraft Software Standard dual-keybinding requirement.
 
 ## §3 — Color Palette Mapping
 
-The TUI MUST use the Spacecraft Software six-token palette exclusively. No ad-hoc
-colors. Honor `NO_COLOR` — in that case, render monochromatic with attribute-
-based emphasis (bold, underline, reverse video) instead.
+The TUI MUST use the Spacecraft Software Steelbore 2 palette (Standard §11)
+exclusively. No ad-hoc colors. Honor `NO_COLOR` — in that case, render
+monochromatic with attribute-based emphasis (bold, underline, reverse video)
+instead.
 
 | Role | Token | Hex |
 |------|-------|-----|
 | Backgrounds, chrome fill | Void Navy | `#000027` |
-| Body data values | Molten Amber | `#D98E32` |
-| Borders, table headers, section dividers | Steel Blue | `#4B7EB0` |
-| Selected / active / success | Radium Green | `#50FA7B` |
-| Errors, invalid input | Red Oxide | `#FF5C5C` |
-| Metadata, type hints, dimmed text | Liquid Coolant | `#8BE9FD` |
+| Elevated panel / card fill (never text) | Quantum Blue | `#0E2A47` |
+| Body data values | Platinum Mist | `#D9DEE5` |
+| Borders, table headers, section dividers | Pulse Violet | `#8A6CFF` |
+| Selected / active / success | Acid Lime | `#B4FF00` |
+| Warnings | Plasma Magenta | `#E445FF` |
+| Errors, invalid input | Mars Red | `#FF3B3B` |
+| Metadata, type hints, dimmed text | Platinum Mist (dimmed) | `#D9DEE5` |
 
 Font choice is terminal-driven; the TUI does not specify typography.
 (Spacecraft Software's Share Tech Mono / Inconsolata preferences apply to the user's
@@ -197,7 +201,7 @@ navigable view.
 - Omitting the panic hook. A panic mid-TUI leaves the terminal in a broken state (cursor hidden, raw mode on).
 - Emitting TUI rendering to stdout instead of stderr / alt-screen. Breaks pipelines.
 - Using hard-coded colors instead of palette tokens. Violates the Spacecraft Software brand.
-- Activating the TUI when `AI_AGENT=1`. Agents get trapped.
+- Activating the TUI when `AI_AGENT` is set (any value). Agents get trapped.
 - Omitting the `tui` feature flag. Headless builds drag in `ratatui` + `crossterm` unnecessarily.
 - Making `e` (export) require interactive file-picker confirmation in non-TTY fallback mode. (It shouldn't even be reachable in non-TTY mode, but double-check.)
 

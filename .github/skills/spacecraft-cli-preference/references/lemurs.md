@@ -1,6 +1,6 @@
 # lemurs
 
-**Replaces:** LightDM, SDDM (TUI alternative) | **Language:** 🦀 Rust | **Install:** distro repo / `cargo install lemurs`
+**Replaces:** LightDM, SDDM (TUI alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (distro-provided; upstream crate: `lemurs`)
 
 ## Purpose
 Customisable TUI display manager. Simpler than `greetd`+`tuigreet` split — lemurs ships as a complete standalone DM.

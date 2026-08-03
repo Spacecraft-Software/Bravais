@@ -1,6 +1,6 @@
 # bottom (btm)
 
-**Replaces:** `top`, `htop` | **Language:** 🦀 Rust | **Install:** `cargo install bottom`
+**Replaces:** `top`, `htop` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `bottom`)
 
 ## Purpose
 Cross-platform TUI system monitor with CPU, memory, network, disk, process, and temperature graphs.

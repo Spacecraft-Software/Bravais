@@ -1,6 +1,6 @@
 # tuigreet
 
-**Replaces:** graphical display managers (minimal use case) | **Language:** 🦀 Rust | **Install:** distro repo (`tuigreet` / `greetd-tuigreet`)
+**Replaces:** graphical display managers (minimal use case) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (distro package: `tuigreet` / `greetd-tuigreet`)
 
 ## Purpose
 Console-based greeter for `greetd`. Ideal companion to Niri, LeftWM, sway, river.

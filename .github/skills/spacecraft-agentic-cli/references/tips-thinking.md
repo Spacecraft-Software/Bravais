@@ -112,14 +112,25 @@ command.
 }
 ```
 
-Filesystem permission case:
+Filesystem permission case — **point at a path the agent can actually use,
+not at `sudo`:**
 ```json
 {
   "code": "PERMISSION_DENIED",
   "message": "Cannot write to '/etc/ferrocast/config.toml': permission denied",
-  "hint": "sudo chown $USER /etc/ferrocast/config.toml"
+  "hint": "ferrocast config init --path \"${XDG_CONFIG_HOME:-$HOME/.config}/ferrocast/config.toml\""
 }
 ```
+
+**A hint an agent cannot run is a bad hint.** `sudo chown …` looks helpful but
+an agent has no TTY to answer the password prompt — it stalls, exactly the
+hallucination-loop this discipline exists to prevent. The runnable answer is a
+**non-privileged path** the agent owns (`$XDG_CONFIG_HOME`, `--config <path>`,
+a project-local file). If the operation genuinely requires root, don't dress it
+up as the agent's next command — surface it as a separate, explicitly labelled
+human-escalation step (`requires_human: true` in the envelope, or prose that
+names the privileged action). Never emit `sudo` inside `hint`. See
+[local-host-authoring.md](local-host-authoring.md).
 
 ### `CONFLICT` (exit 5)
 
@@ -174,16 +185,20 @@ log file.
 ### `MISSING_DEPENDENCY` (tool-specific)
 
 A required external tool is missing from PATH. The hint must show the
-install command preferred by `spacecraft-missing-pkg`.
+ephemeral run preferred by `spacecraft-missing-pkg` — a throwaway invocation
+that leaves nothing installed, never a durable `cargo install` / `apt` / `sudo`
+command.
 
-**Formula:** `nix-shell -p <pkg>` (preferred) or the discovery command.
+**Formula:** `nix run nixpkgs#<pkg> -- <args>` or `guix shell <pkg> -- <cmd>`
+(ephemeral, preferred) — matching the retargeted `spacecraft-missing-pkg`. Not
+`nix-shell -p` (superseded) and never a system-package-manager install.
 
 **Example:**
 ```json
 {
   "code": "MISSING_DEPENDENCY",
   "message": "Required tool 'rage' not found in PATH",
-  "hint": "nix-shell -p rage"
+  "hint": "nix run nixpkgs#rage -- --version"
 }
 ```
 

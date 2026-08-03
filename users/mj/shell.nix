@@ -422,6 +422,10 @@ in
         # Update the Construct skill flake input — thin alias to the construct
         # CLI (`construct skill sync`, flake-update-only). Run rebuild afterwards
         # to apply. The binary is on PATH via home.packages.
+        #
+        # This moves flake.lock, which also re-points the vendored Copilot
+        # skills in .github/skills/. Follow with `nu pkgs/sync-skills.nu` and
+        # commit both, or the Skills Drift workflow fails on the next push.
         def skills-sync [topic?: string] {
           if $topic == "help" { ^construct skill sync --help; return }
           if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: skills-sync help(ansi reset)"; return }
@@ -482,6 +486,40 @@ in
             # the build symlink, and agent-local context (.claude is gitignored).
             sudo rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
             print $"(ansi green)── disk after ──(ansi reset)"; df -h /
+
+            # MCP host configs are NOT part of this flake. They live in
+            # /spacecraft-software/mcp-servers, are generated from that repo's
+            # mcp.toml, and reach the machine only through `mcpctl deploy` — an
+            # imperative write into files that Claude Code, goose, Codex and the
+            # rest own. A rebuild cannot carry them along, so this only reports.
+            #
+            # Deliberately a warning and not an automatic deploy. `deploy` refuses
+            # a host whose process is running, and a rebuild is usually run from an
+            # agent session — so an auto-deploy would silently skip ~/.claude.json,
+            # the file most likely to be stale, while reporting success. Surfacing
+            # the skip is the useful half; the write stays a deliberate step.
+            let mcp_repo = "/spacecraft-software/mcp-servers"
+            if ($mcp_repo | path exists) {
+              let mcp_bin = (if (which mcpctl | is-not-empty) { "mcpctl" } else { $mcp_repo | path join "mcpctl" "target" "release" "mcpctl" })
+              if (($mcp_bin == "mcpctl") or ($mcp_bin | path exists)) {
+                # --dry-run --json is read-only; it never writes to $HOME.
+                let probe = (^$mcp_bin deploy --dry-run --json --repo $mcp_repo | complete)
+                if $probe.exit_code == 0 {
+                  let report = ($probe.stdout | from json | get data)
+                  let drifted = ($report.files | where dirty | length)
+                  if $drifted > 0 {
+                    print $"(ansi yellow)($drifted) MCP host config\(s\) drifted from the manifest — run: mcpctl deploy --yes(ansi reset)"
+                  }
+                  if ($report.blocked | length) > 0 {
+                    print $"(ansi yellow)MCP deploy would skip a running host — close it and re-run mcpctl deploy:(ansi reset)"
+                    # `for`, not `each`: `each` returns a list and Nushell renders it.
+                    for entry in $report.blocked { print $"  ($entry)" }
+                  }
+                }
+              } else {
+                print $"(ansi yellow)mcpctl not built — MCP config drift unchecked; run: cd ($mcp_repo); cargo build --release --manifest-path mcpctl/Cargo.toml(ansi reset)"
+              }
+            }
           }
         }
 

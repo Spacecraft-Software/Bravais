@@ -6,7 +6,7 @@ PDF is **not an authored format** in Spacecraft Software. Always render PDF from
 
 ## §A — Why PDF is export-only
 
-- Hand-authoring PDF (e.g. via `reportlab`, raw PDF op streams) loses the structural/style mapping that the source file enforces — embedded font references, accessibility tags, and the Standard §9 palette become decorative-only.
+- Hand-authoring PDF (e.g. via `reportlab`, raw PDF op streams) loses the structural/style mapping that the source file enforces — embedded font references, accessibility tags, and the Standard §11 palette become decorative-only.
 - LibreOffice's PDF exporter is mature: it preserves the page/slide background, embeds OFL fonts, supports PDF/A archival profiles, and produces tagged PDF for accessibility.
 - A regenerated PDF always traces back to a versionable source file (the `.odt`/`.ods`/`.odp` or its MS-Office equivalent). Hand-authored PDF has no clean re-edit path.
 

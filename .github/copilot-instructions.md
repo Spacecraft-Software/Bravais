@@ -183,20 +183,37 @@ Always run `nix flake check` before opening a PR. The CI workflow
 
 ## Skills
 
-Copilot skills for this repository live in `.github/skills/` and are imported from
-[Spacecraft-Software/Construct](https://github.com/Spacecraft-Software/Construct).
+Copilot skills for this repository live in `.github/skills/`. They are a
+**vendored mirror** of [Spacecraft-Software/Construct](https://github.com/Spacecraft-Software/Construct),
+pinned to the `construct` rev in `flake.lock` — the same rev Home Manager
+installs into `~/.agents/skills/`, so the cloud agent and the local agents read
+byte-identical skills.
 
-Available skills:
+**Never hand-edit a file under `.github/skills/`.** It is generated output: the
+next sync silently reverts it. Change the skill in Construct instead, then
+re-vendor here.
 
-| File | Description |
+```sh
+nu pkgs/sync-skills.nu           # re-vendor from the rev pinned in flake.lock
+nu pkgs/sync-skills.nu --check   # report drift only — this is what CI runs
+```
+
+The `Skills Drift` workflow fails the build when the vendored tree stops
+matching the pinned rev, so a stale copy cannot land. `pkgs/sync-skills.nu`
+holds the authoritative skill list; the table below tracks it.
+
+| Skill | Applies to |
 |---|---|
-| `rust-guidelines.skill` | Rust coding guidelines for Spacecraft Software projects |
-| `spacecraft-agentic-cli.skill` | Agentic CLI conventions |
-| `spacecraft-brand-guidelines.skill` | Brand & visual identity rules |
-| `spacecraft-cli-preference.skill` | CLI tool preferences |
-| `spacecraft-cli-shell.skill` | Shell usage conventions |
-| `spacecraft-cli-standard.skill` | CLI standard patterns |
-| `spacecraft-document-format.skill` | Document formatting conventions |
-| `spacecraft-missing-pkg.skill` | Guidance for adding missing packages |
-| `spacecraft-standard.skill` | Core Steelbore Standard reference |
-| `spacecraft-theme-factory.skill` | Theme generation conventions |
+| `microsoft-rust-guidelines` | Rust in `pkgs/steelbore-audio-led/`, `bravais-mcp/` (upstream Microsoft, dual GPL/MIT) |
+| `spacecraft-agentic-cli` | `AGENTS.md` / `CLAUDE.md` authoring, agent-facing docs |
+| `spacecraft-brand-guidelines` | Void Navy / Molten Amber identity, brand assets |
+| `spacecraft-cli-preference` | Tool substitutions — `rg` over `grep`, `eza` over `ls` |
+| `spacecraft-cli-shell` | Nushell vs POSIX syntax (user shell is Nushell) |
+| `spacecraft-cli-standard` | Dual-mode self-documenting CLI patterns |
+| `spacecraft-document-format` | Document deliverables |
+| `spacecraft-missing-pkg` | Packaging a dependency nixpkgs does not ship |
+| `spacecraft-nix-guidelines` | Every `.nix` file here — modules, flakes, derivations |
+| `spacecraft-nu-guidelines` | `users/mj/shell.nix` Nushell defs, `pkgs/*.nu` scripts |
+| `spacecraft-rust-guidelines` | House Rust style; pairs with the Microsoft set |
+| `spacecraft-standard-constitution` | The Steelbore Standard itself |
+| `spacecraft-theme-factory` | `lib/terminal-theme.nix` emitters, per-app theming |

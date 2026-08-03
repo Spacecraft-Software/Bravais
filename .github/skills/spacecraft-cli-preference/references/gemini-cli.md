@@ -1,6 +1,6 @@
 # gemini-cli (gemini)
 
-**Replaces:** Gemini via browser | **Language:** 🦀 Rust (or official TypeScript variant) | **Install:** `cargo install gemini-cli` or `npm install -g @google/gemini-cli`
+**Replaces:** Gemini via browser | **Language:** 🦀 Rust (or official TypeScript variant) | **Install:** via `spacecraft-missing-pkg` (upstream crate: `gemini-cli`; npm package: `@google/gemini-cli`)
 
 ## Purpose
 Command-line client for Google Gemini. Mohamed uses it within the Antigravity IDE and as a pipeline model for Nix config work.

@@ -1,7 +1,8 @@
-# Guix (`guix shell`) — preferred provisioner
+# Guix (`guix shell`) — preferred provisioner (Band A, tier 1)
 
 Ephemeral, no sudo, any tool in the Guix package set (~31,000 packages).
-Leaves no durable state on the host — the store is garbage-collected later.
+Leaves no durable state on the host — the store is garbage-collected later on
+the user's own schedule. **Run freely; no consent needed.**
 
 ## Syntax
 
@@ -21,6 +22,9 @@ guix shell pkg1 pkg2 pkg3 -- <command> <args>
   and globs need an explicit `sh -c '...'`.
 - Do not use the deprecated `guix environment --ad-hoc` form — it still
   works but is superseded.
+- **One invocation, one environment.** Each agent tool call is a fresh
+  process, so a `guix shell` environment does not survive to the next call —
+  wrap every command.
 
 ## Examples
 
@@ -80,6 +84,25 @@ guix shell --pure <pkg> -- <cmd>
 ```bash
 guix time-machine --commit=<git-commit> -- shell <pkg> -- <cmd>
 ```
+
+## Never do these
+
+- **`guix install <pkg>`** — imperative profile install. It writes a durable
+  entry into `~/.guix-profile`, outside any declarative home configuration, and
+  is exactly the drift this skill exists to prevent.
+- **`guix gc` as "cleanup"** — that collects the user's whole store, not just
+  what you pulled in. Not yours to run.
+
+If the tool should persist, it belongs in a manifest or the host's Guix Home
+configuration ([declarative.md](declarative.md)), or in the repo's `guix.scm`
+([project-env.md](project-env.md)) — never in an ad-hoc profile.
+
+## Related
+
+- Repo needs it repeatedly → `guix.scm` / `manifest.scm`:
+  [project-env.md](project-env.md)
+- User wants it permanently → Guix Home / `~/.config/guix/manifest.scm`:
+  [declarative.md](declarative.md)
 
 ## Lookup
 

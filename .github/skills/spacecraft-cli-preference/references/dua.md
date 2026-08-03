@@ -1,6 +1,6 @@
 # dua (dua-cli)
 
-**Replaces:** `du` / `ncdu` (interactive) | **Language:** 🦀 Rust | **Install:** `cargo install dua-cli`
+**Replaces:** `du` / `ncdu` (interactive) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `dua-cli`)
 
 ## Purpose
 Parallel disk-usage analyser with an interactive TUI mode for navigating and deleting large files.

@@ -1,6 +1,6 @@
 # ripgrep (rg)
 
-**Replaces:** `grep -r` | **Language:** 🦀 Rust | **Install:** `cargo install ripgrep` / distro repo
+**Replaces:** `grep -r` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `ripgrep`; also distro-provided)
 
 ## Purpose
 Fastest recursive search tool. Respects `.gitignore`, understands Unicode, parallel by default.

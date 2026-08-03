@@ -1,6 +1,6 @@
 # brew
 
-**Replaces:** — (cross-platform fallback) | **Language:** ⚠️ Ruby | **Install:** https://brew.sh
+**Replaces:** — (cross-platform fallback) | **Language:** ⚠️ Ruby | **Install:** via `spacecraft-missing-pkg` (upstream: <https://brew.sh>)
 
 ## Purpose
 Homebrew: macOS and Linux package manager. Cross-platform fallback when a tool isn't in your distro's repos.

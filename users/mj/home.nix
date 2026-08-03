@@ -27,7 +27,10 @@
   # github:Spacecraft-Software/Construct into ~/.agents/skills/ (Nix store)
   # and symlinks each agent harness to it. Run `skills-sync` then rebuild
   # to pull the latest skill set.
-  # .gemini intentionally omitted — Gemini reads ~/.agents/ directly.
+  # Gemini CLI reads ~/.agents/ directly, so ".gemini/skills" stays omitted.
+  # Antigravity does NOT — it scans ~/.gemini/config/skills (reached via the
+  # ~/.gemini/antigravity/skills symlink), so that path must be managed here
+  # or it silently keeps whatever was hand-copied into it.
   spacecraft.construct = {
     enable = true;
     enableGrok = true;
@@ -38,6 +41,7 @@
       ".claude/skills"
       ".codex/skills"
       ".copilot/skills"
+      ".gemini/config/skills"
       ".opencode/skills"
       ".openclaude/skills"
     ];

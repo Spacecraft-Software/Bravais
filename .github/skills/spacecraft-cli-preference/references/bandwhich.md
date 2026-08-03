@@ -1,6 +1,6 @@
 # bandwhich
 
-**Replaces:** `iftop`, `nethogs` | **Language:** 🦀 Rust | **Install:** `cargo install bandwhich`
+**Replaces:** `iftop`, `nethogs` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `bandwhich`)
 
 ## Purpose
 Per-process/per-connection bandwidth monitor. Shows which process is using how much in real time.

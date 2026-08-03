@@ -1,6 +1,6 @@
 # just
 
-**Replaces:** `make` (for task running) | **Language:** 🦀 Rust | **Install:** `cargo install just`
+**Replaces:** `make` (for task running) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `just`)
 
 ## Purpose
 Modern command runner. `Justfile` syntax is cleaner than Make's, no tab/space traps, first-class dependencies, `.env` support.

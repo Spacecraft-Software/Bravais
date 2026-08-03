@@ -1,6 +1,6 @@
 # cargo-update (cargo install-update)
 
-**Replaces:** manual `cargo install --force <each-binary>` | **Language:** 🦀 Rust | **Install:** `cargo install cargo-update`
+**Replaces:** manual `cargo install --force <each-binary>` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `cargo-update`)
 
 ## Purpose
 Subcommand that updates binaries installed via `cargo install` to their latest crates.io/git versions.

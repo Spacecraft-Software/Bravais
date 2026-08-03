@@ -1,6 +1,6 @@
 # ion
 
-**Replaces:** `bash` (system shell) | **Language:** 🦀 Rust | **Install:** `cargo install ion-shell` (or Redox repos)
+**Replaces:** `bash` (system shell) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `ion-shell`; also in Redox repos)
 
 ## Purpose
 Default shell of Redox OS. Faster than Bash, simpler than Nushell, with typed variables and first-class arrays/maps. **One of Mohamed's primary shells.**

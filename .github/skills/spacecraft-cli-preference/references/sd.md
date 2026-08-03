@@ -1,6 +1,6 @@
 # sd
 
-**Replaces:** `sed` (for simple find/replace) | **Language:** 🦀 Rust | **Install:** `cargo install sd`
+**Replaces:** `sed` (for simple find/replace) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `sd`)
 
 ## Purpose
 Intuitive find-and-replace. Regex by default, no `s/…/…/g` ceremony, in-place or streaming.

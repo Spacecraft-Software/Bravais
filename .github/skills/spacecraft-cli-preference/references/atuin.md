@@ -1,6 +1,6 @@
 # atuin
 
-**Replaces:** native shell history, `fc`, reverse-i-search (Ctrl+R) | **Language:** 🦀 Rust | **Install:** `cargo install atuin`
+**Replaces:** native shell history, `fc`, reverse-i-search (Ctrl+R) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `atuin`)
 
 ## Purpose
 SQLite-backed shell history with fuzzy full-text search, per-directory/host/session context, optional end-to-end encrypted sync across machines.

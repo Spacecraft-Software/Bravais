@@ -72,7 +72,7 @@ Spacecraft Software.
 
 ## Standards compliance
 
-This project follows the CLI Standard v1.0.0. The
+This project follows the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0). The
 `spacecraft-cli-standard` and `spacecraft-agentic-cli` skills are
 authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.

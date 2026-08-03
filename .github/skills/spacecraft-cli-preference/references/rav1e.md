@@ -1,6 +1,6 @@
 # rav1e
 
-**Replaces:** AV1 encoders (libaom, SVT-AV1 — alternative) | **Language:** 🦀 Rust | **Install:** `cargo install rav1e` / distro
+**Replaces:** AV1 encoders (libaom, SVT-AV1 — alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `rav1e`; also distro-provided)
 
 ## Purpose
 Fast, memory-safe AV1 video encoder. Outputs IVF or raw Annex-B. Pair with `ffmpeg` for container muxing.

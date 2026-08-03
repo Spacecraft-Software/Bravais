@@ -31,7 +31,7 @@ does NOT belong, and provides anti-pattern catalogs.
 | `CONTRIBUTING.md` | Human contributors | Read once during onboarding | Dev environment setup, PR conventions |
 
 **Critical principle:** AGENTS.md is for **project-specific** invariants
-that an agent cannot infer from the code itself. The CLI Standard's rules
+that an agent cannot infer from the code itself. The Spacecraft Software CLI Standard rules
 are NOT project-specific — they live in `spacecraft-cli-standard` and
 `spacecraft-agentic-cli` skills, not in AGENTS.md. Dumping the CLI Standard into
 AGENTS.md duplicates skill content and wastes tokens.
@@ -132,11 +132,11 @@ copying AGENTS.md, then add Claude-specific sections:
 <!-- All AGENTS.md content above -->
 
 ## Skills referenced
-- `spacecraft-standard` — master Standard
+- `spacecraft-standard-constitution` — master Standard
 - `spacecraft-cli-standard` — structural CLI Standard
 - `spacecraft-agentic-cli` — agent-facing UX
 - `spacecraft-brand-guidelines` — color palette
-- `rust-guidelines` — Microsoft Pragmatic Rust
+- `microsoft-rust-guidelines` — Microsoft Pragmatic Rust
 
 ## MCP servers expected
 - `<tool> mcp` — this project's own MCP surface
@@ -219,7 +219,7 @@ during normal operation. Standard sections:
 - Setup: dev environment, toolchain, optional tools
 - Workflow: branching strategy, PR checklist, commit conventions
 - Code review: what reviewers look for
-- Spacecraft Software Standard compliance: link to spec, audit command
+- Steelbore Standard compliance: link to spec, audit command
 - Reporting bugs / proposing changes
 
 Keep it human-focused. Repeating AGENTS.md content here is fine because
@@ -251,7 +251,7 @@ context window every session.
 # AGENTS.md
 
 ## Standards compliance
-This project follows the CLI Standard v1.0.0. The
+This project follows the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0). The
 `spacecraft-cli-standard` and `spacecraft-agentic-cli` skills are
 authoritative on structural and agentic conventions. This file
 documents project-specific deviations and supplements only.
@@ -316,7 +316,7 @@ needs them, mirroring the skill progressive-disclosure pattern.
 
 - Implementation details visible from reading the code (function names,
   module structure)
-- General-purpose Rust advice (it's in `rust-guidelines`)
+- General-purpose Rust advice (it's in `microsoft-rust-guidelines`)
 - General-purpose Spacecraft Software conventions (in the master Standard skill)
 - Marketing copy
 - Aspirational descriptions of features that don't exist yet

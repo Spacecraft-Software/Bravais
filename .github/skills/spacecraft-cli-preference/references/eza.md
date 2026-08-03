@@ -1,6 +1,6 @@
 # eza
 
-**Replaces:** `ls` | **Language:** 🦀 Rust | **Install:** `cargo install eza` / distro repo
+**Replaces:** `ls` | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `eza`; also distro-provided)
 
 ## Purpose
 Modern `ls` replacement with git status, tree view, icons, and hyperlinks. Maintained fork of the unmaintained `exa`.

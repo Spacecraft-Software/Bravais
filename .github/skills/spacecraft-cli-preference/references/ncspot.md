@@ -1,6 +1,6 @@
 # ncspot
 
-**Replaces:** Spotify GUI (terminal alternative) | **Language:** 🦀 Rust | **Install:** `cargo install ncspot`
+**Replaces:** Spotify GUI (terminal alternative) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `ncspot`)
 
 ## Purpose
 TUI Spotify client. Requires a Spotify Premium account.

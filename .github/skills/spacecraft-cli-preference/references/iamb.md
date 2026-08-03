@@ -1,6 +1,6 @@
 # iamb
 
-**Replaces:** Matrix clients (TUI, Vim-like) | **Language:** 🦀 Rust | **Install:** `cargo install iamb`
+**Replaces:** Matrix clients (TUI, Vim-like) | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `iamb`)
 
 ## Purpose
 Vim-like terminal Matrix client with multi-room support, modal editing, E2EE.

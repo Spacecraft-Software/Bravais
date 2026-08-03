@@ -1,6 +1,6 @@
 # aichat
 
-**Replaces:** multiple per-vendor LLM CLIs | **Language:** 🦀 Rust | **Install:** `cargo install aichat`
+**Replaces:** multiple per-vendor LLM CLIs | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `aichat`)
 
 ## Purpose
 Universal LLM REPL + CLI. One tool for OpenAI, Claude, Gemini, local Ollama, llama.cpp, Azure, Bedrock, and more. Supports RAG, agents, function-calling.

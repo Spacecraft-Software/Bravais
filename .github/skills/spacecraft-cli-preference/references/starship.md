@@ -1,6 +1,6 @@
 # starship
 
-**Replaces:** hand-rolled `PS1`, `oh-my-zsh` prompt themes | **Language:** 🦀 Rust | **Install:** `cargo install starship` / distro
+**Replaces:** hand-rolled `PS1`, `oh-my-zsh` prompt themes | **Language:** 🦀 Rust | **Install:** via `spacecraft-missing-pkg` (upstream crate: `starship`; also distro-provided)
 
 ## Purpose
 Minimal, fast, cross-shell prompt. Works in Bash, Zsh, Fish, PowerShell, Nushell, Ion, Elvish, and more.
