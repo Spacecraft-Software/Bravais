@@ -440,6 +440,107 @@ in
           ^construct skill ship
         }
 
+        # ── theme ─────────────────────────────────────────────────────────
+        # Discover and switch the system theme. Reads the resolved registry
+        # from the `theme-registry` flake output, which evaluates only the
+        # palette library — walking nixosConfigurations instead would cost
+        # about a minute per theme.
+        #
+        #   theme list          every theme, with swatches
+        #   theme show [slug]   role table for one (default: the active theme)
+        #   theme set <slug>    rewrite theme.nix (then rebuild)
+        #   theme try <slug>    build a theme WITHOUT touching theme.nix
+        def "theme registry" [] {
+          let repo = "/spacecraft-software/bravais"
+          let out = (do { ^nix build --no-link --print-out-paths $"($repo)#theme-registry" } | complete)
+          if $out.exit_code != 0 {
+            print $"(ansi red)could not evaluate the theme registry:(ansi reset)"
+            print $out.stderr
+            return null
+          }
+          open ($out.stdout | str trim)
+        }
+
+        # A truecolor block. Nushell's `ansi` builtin takes named colors, so
+        # the escape is built by hand from the registry's "R,G,B" triples.
+        def "theme swatch" [rgb: string] {
+          let c = ($rgb | str replace --all "," ";")
+          $"(ansi -e $'48;2;($c)m')  (ansi reset)"
+        }
+
+        def theme [action?: string, slug?: string] {
+          let reg = (theme registry)
+          if $reg == null { return }
+
+          match (if $action == null { "list" } else { $action }) {
+            # Printed, not a returned table: Nushell strips ANSI inside table
+            # cells, so swatches would silently vanish. `theme registry`
+            # remains the structured/pipeable view.
+            "list" => {
+              print $"(ansi dark_gray)* = active   swatches: bg fg accent structure success error warning(ansi reset)"
+              for t in $reg.themes {
+                let mark = (if $t.active { $"(ansi green)*(ansi reset)" } else { " " })
+                let sw = ([ background foreground accent structure success error warning ]
+                  | each { |r| theme swatch ($t.colors | get $r | get rgb) } | str join "")
+                print $"($mark) ($t.slug | fill -a l -w 40)($sw)  (ansi dark_gray)($t.source)(ansi reset)"
+              }
+            }
+            "show" => {
+              let want = (if $slug == null { $reg.active } else { $slug })
+              let hit = ($reg.themes | where slug == $want)
+              if ($hit | is-empty) {
+                print $"(ansi red)unknown theme '($want)' — try: theme list(ansi reset)"
+                return
+              }
+              let t = ($hit | first)
+              let mark = (if $t.active { " — active" } else { "" })
+              print $"(ansi cyan)($t.slug)(ansi reset)  [($t.source)]($mark)"
+              if not $t.hasSurfaceClass {
+                print $"(ansi yellow)legacy six-role contract — no surface class \(§11.2\); surface roles fall back to the canvas(ansi reset)"
+              }
+              for r in ($t.colors | transpose role color) {
+                print $"  (theme swatch $r.color.rgb)  ($r.role | fill -a l -w 12) ($r.color.hex)  (ansi dark_gray)x256 ($r.color.x256)(ansi reset)"
+              }
+            }
+            "set" => {
+              if $slug == null { print $"(ansi red)theme set needs a slug — try: theme list(ansi reset)"; return }
+              if ($reg.themes | where slug == $slug | is-empty) {
+                print $"(ansi red)unknown theme '($slug)' — try: theme list(ansi reset)"; return
+              }
+              if $slug == $reg.active { print $"(ansi green)already active: ($slug)(ansi reset)"; return }
+              let f = "/spacecraft-software/bravais/theme.nix"
+              # Anchored at the binding so the slug list in the file's comment
+              # block is never rewritten.
+              ^sd $'active = "($reg.active)"' $'active = "($slug)"' $f
+              print $"(ansi green)theme.nix: ($reg.active) → ($slug)(ansi reset)"
+              print $"run (ansi cyan)rebuild(ansi reset) to apply, or (ansi cyan)theme set ($reg.active)(ansi reset) to undo"
+            }
+            "try" => {
+              if $slug == null { print $"(ansi red)theme try needs a slug — try: theme list(ansi reset)"; return }
+              if ($reg.themes | where slug == $slug | is-empty) {
+                print $"(ansi red)unknown theme '($slug)' — try: theme list(ansi reset)"; return
+              }
+              print $"(ansi yellow)building ($slug) without touching theme.nix — `theme set ($slug)` to keep it(ansi reset)"
+              cd /spacecraft-software/bravais
+              # Built from `themeSystems`, not `nixosConfigurations`, so that
+              # `nix flake check` never has to evaluate 15 whole systems in one
+              # process (it OOMs). That costs us `nixos-rebuild --flake`, so
+              # activation is the same two steps nixos-rebuild does internally:
+              # point the system profile at the build, then switch to it.
+              let sys = (do { ^nix build --no-link --print-out-paths --option warn-dirty false $".#themeSystems.($nu.os-info.arch)-linux.($slug)" } | complete)
+              if $sys.exit_code != 0 {
+                print $"(ansi red)build failed:(ansi reset)"; print $sys.stderr; return
+              }
+              let out = ($sys.stdout | str trim)
+              sudo nix-env -p /nix/var/nix/profiles/system --set $out
+              sudo $"($out)/bin/switch-to-configuration" switch
+              print $"(ansi green)($slug) is live.(ansi reset) (ansi cyan)theme set ($slug)(ansi reset) to keep it across rebuilds, or (ansi cyan)rebuild(ansi reset) to go back to ($reg.active)"
+            }
+            "help" => { help theme }
+            _ => { print $"(ansi red)unknown action '($action)' — try: list, show, set, try, help(ansi reset)" }
+          }
+        }
+
         # Full system rebuild for bravais-thinkpad: load the signing key, bump
         # the tracked flake inputs (construct == skills-sync; nixpkgs-unstable +
         # home-manager-unstable so unstablePkgs never lags stable — elegance

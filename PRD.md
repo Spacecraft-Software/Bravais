@@ -121,8 +121,22 @@ selects a member by slug and resolves it to the §11.1 role tokens (`background`
 `moltenAmber` appears nowhere, which is what makes the palette swappable:
 
 ```nix
-defaultPalette = "steelbore";   # flake.nix — switches the entire system
+{ active = "steelbore"; }   # theme.nix — switches the entire system
 ```
+
+The active theme lives in `theme.nix` at the repo root, not in `flake.nix`.
+Local themes go in `themes/<slug>.nix` (filename is the slug) and may either
+derive from a registered palette via `base` or bind the roles outright; a local
+slug shadows a registered one of the same name. Every selectable theme also gets
+a buildable system at `themeSystems.<system>.<slug>`, so a theme can be applied
+without editing anything — this is what `theme try` uses. It is deliberately not
+a `nixosConfigurations` entry: `nix flake check` force-evaluates every one of
+those, at ~1.9 GB for the first full system and ~1.3 GB per additional one in
+the same evaluator, so fifteen variants OOM-killed the evaluator outright. As a
+non-standard output they stay lazy and the check skips them. The
+`theme-registry` package output resolves every theme to JSON (hex, RGB and
+xterm-256 per role) and is what the `theme` command reads; it evaluates only the
+palette library, never a system config.
 
 Values are read from `steelbore.toml` in the `construct` input via `builtins.fromTOML`,
 never retyped (§11.4). Palettes bind different role sets — Modern eleven, Classic six —

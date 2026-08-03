@@ -23,6 +23,7 @@
 {
   tomlFile,
   slug ? "steelbore",
+  localThemes ? { },
 }:
 
 let
@@ -47,12 +48,112 @@ let
     else
       slug;
 
-  selectable = builtins.filter (t: builtins.hasAttr t themes) (
+  registered = builtins.filter (t: builtins.hasAttr t themes) (
     family ++ (map (s: "${s}-high-contrast") family)
   );
+  localNames = builtins.attrNames localThemes;
+  selectable = localNames ++ (builtins.filter (s: !builtins.elem s localNames) registered);
+
+  # ---------------------------------------------------------------------
+  # Local themes (./themes/<slug>.nix).
+  # ---------------------------------------------------------------------
+  # A local theme either derives from a registered palette (`base`) or binds
+  # its roles outright. Either way it resolves through the same path as a
+  # registered palette below, so it inherits role completion, the hue-derived
+  # ANSI map and xterm-256 handling for free.
+  #
+  # These checks exist because the failure mode without them is awful: a
+  # typo'd role name is silently ignored (the theme just does not apply), and
+  # a malformed hex surfaces as an "attribute 'F' missing" deep inside the
+  # channel converter, naming neither the file nor the token.
+  roleNames = [
+    "background"
+    "surface"
+    "surface-alt"
+    "surfaceAlt"
+    "foreground"
+    "accent"
+    "structure"
+    "success"
+    "error"
+    "warning"
+    "info"
+    "focus"
+    "border"
+  ];
+  requiredRoles = [
+    "background"
+    "foreground"
+    "accent"
+    "success"
+    "error"
+  ];
+
+  isHex =
+    v:
+    builtins.isString v
+    && builtins.stringLength v == 7
+    && builtins.substring 0 1 v == "#"
+    && builtins.all (c: hexDigit ? ${c}) (
+      builtins.genList (i: builtins.substring (i + 1) 1 v) 6
+    );
+
+  # `base` resolves against the REGISTERED set only. A local theme deriving
+  # from another local theme would need cycle detection to be safe, and buys
+  # nothing a second `base` line cannot express.
+  baseTheme =
+    name: s:
+    if builtins.elem s registered then
+      themes.${s}
+    else
+      throw ''
+        Steelbore palette: themes/${name}.nix has `base = "${s}"`, which is not a
+        registered palette. Pick one of: ${builtins.concatStringsSep ", " registered}
+      '';
+
+  resolveLocal =
+    name: def:
+    let
+      inherited = if def ? base then baseTheme name def.base else { };
+      raw = builtins.removeAttrs def [ "base" ];
+
+      badKeys = builtins.filter (k: !builtins.elem k roleNames) (builtins.attrNames raw);
+      badHex = builtins.filter (k: !isHex raw.${k}) (builtins.attrNames raw);
+
+      # The TOML spells it `surface-alt`; accept the camelCase form consumers
+      # see and normalise, so it cannot be set-but-silently-ignored.
+      given =
+        if raw ? surfaceAlt then
+          (builtins.removeAttrs raw [ "surfaceAlt" ]) // { "surface-alt" = raw.surfaceAlt; }
+        else
+          raw;
+
+      merged = inherited // given;
+      missing = builtins.filter (r: !merged ? ${r}) requiredRoles;
+    in
+    if badKeys != [ ] then
+      throw ''
+        Steelbore palette: themes/${name}.nix sets unknown role(s): ${builtins.concatStringsSep ", " badKeys}
+        Valid roles: ${builtins.concatStringsSep ", " roleNames}
+      ''
+    else if badHex != [ ] then
+      throw ''
+        Steelbore palette: themes/${name}.nix has malformed color(s) for ${builtins.concatStringsSep ", " badHex}
+        Each must be a "#RRGGBB" string — a leading '#' and exactly six hex digits.
+      ''
+    else if missing != [ ] then
+      throw ''
+        Steelbore palette: themes/${name}.nix is missing required role(s): ${builtins.concatStringsSep ", " missing}
+        A theme without `base` must bind all of: ${builtins.concatStringsSep ", " requiredRoles}
+        Add `base = "steelbore";` to inherit them from a registered palette instead.
+      ''
+    else
+      merged;
 
   theme =
-    if builtins.elem baseSlug fidelity then
+    if localThemes ? ${slug} then
+      resolveLocal slug localThemes.${slug}
+    else if builtins.elem baseSlug fidelity then
       throw ''
         Steelbore palette: "${slug}" is a §11.5 fidelity palette — registered for
         reference, explicitly NOT adoptable. Pick one of: ${builtins.concatStringsSep ", " family}
@@ -66,6 +167,7 @@ let
     else if !builtins.elem baseSlug family then
       throw ''
         Steelbore palette: unknown slug "${slug}". Selectable: ${builtins.concatStringsSep ", " selectable}
+        Local themes live in ./themes/<slug>.nix.
       ''
     else
       themes.${slug};

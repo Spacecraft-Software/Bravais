@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`theme.nix`, local themes, and a `theme` command** — the palette was already
+  swappable, but not conveniently: the knob sat at line 135 of a 380-line
+  `flake.nix`, trying a theme meant editing a tracked file, and every palette
+  came from Construct's upstream TOML with nowhere to put your own.
+  - The active theme moved to **`theme.nix`** at the repo root — a four-line file
+    whose only job is naming it.
+  - **`themes/<slug>.nix`** adds local themes. Either derive from a registered
+    palette (`{ base = "steelbore"; accent = "#FF8A3D"; }`) or bind the roles
+    outright. They resolve through the same path as registered palettes, so they
+    inherit role completion, the hue-derived ANSI map and xterm-256 handling.
+    Unknown role names, malformed hex, missing required roles and unknown `base`
+    slugs are all rejected at eval time — previously a typo'd role was silently
+    ignored and a bad hex failed deep inside the color converter naming neither
+    the file nor the token.
+  - Every selectable theme gets a buildable system at
+    **`themeSystems.<system>.<slug>`**, so a theme can be applied with nothing in
+    the repo changing. These are deliberately *not* `nixosConfigurations`
+    entries: `nix flake check` force-evaluates every one of those, and a full
+    system costs ~1.9 GB in the evaluator plus ~1.3 GB for each additional one
+    held alongside it — fifteen variants needed ~23 GB and were OOM-killed on a
+    31 GB machine, taking an unrelated process with them. As a non-standard
+    output they stay lazy: the check skips them with a warning (3.4 GB peak,
+    ~100s) and only the theme you build is ever evaluated. `theme try`
+    consequently activates the way `nixos-rebuild` does internally — set the
+    system profile, then `switch-to-configuration switch`.
+  - **`theme list` / `show` / `set` / `try`** (Nushell, beside `rebuild`). Reads
+    a new `theme-registry` package output — every theme resolved to JSON — which
+    evaluates only the palette library, so `theme list` is instant where walking
+    `nixosConfigurations` costs about a minute per theme. `list`/`show` print
+    truecolor swatches rather than returning a table, because Nushell strips ANSI
+    inside table cells; `theme registry` remains the structured, pipeable view.
+  - The `bravais` alias now points at `nixosConfigurations.bravais-thinkpad`
+    instead of calling `mkBravais` a second time, dropping a full duplicate
+    evaluation from `nix flake check`.
+
 ### Changed
 
 - **Palette is now the Standard §11 family, and switchable** — Standard v1.35

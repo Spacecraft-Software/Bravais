@@ -93,21 +93,64 @@ palettes.
 Surface tokens are fills placed *on* the canvas, never replacements for it and
 never text colors (§11.0.1) — Quantum Blue is only 1.40:1 against the canvas.
 
-### Switching palettes
+### Switching themes
 
 Nothing in this repo names a brand color; every consumer reads a §11.1 role
 token, so the whole system — all ~15 terminals, both bars, every WM, the TTY
-console and greetd — follows one word in `flake.nix`:
+console and greetd — follows one word in **`theme.nix`**:
 
 ```nix
-defaultPalette = "steelbore";   # -> steelbore-classic, tokyonight, …
+{ active = "steelbore"; }   # -> steelbore-classic, tokyonight, …
 ```
 
-Values are read from the canonical `steelbore.toml` shipped by the `construct`
-input, never retyped (§11.4). Selectable: `steelbore`, `steelbore-classic`,
+```sh
+theme list            # every theme, with color swatches
+theme show tokyonight # its role table, hex and xterm-256 indices
+theme set tokyonight  # rewrite theme.nix, then `rebuild`
+theme try tokyonight  # build it WITHOUT touching theme.nix
+```
+
+`theme try` works because every theme also gets a buildable system of its own,
+so any of them can be applied without a single file changing:
+
+```sh
+nix build .#themeSystems.x86_64-linux.tokyonight
+```
+
+These live under `themeSystems`, not `nixosConfigurations`, on purpose:
+`nix flake check` force-evaluates every `nixosConfigurations` entry, and a full
+system costs ~1.9 GB in the evaluator plus ~1.3 GB for each additional one held
+alongside it. Fifteen of them needed ~23 GB and were OOM-killed. As a
+non-standard output they stay lazy — the check skips them with a warning, and
+you pay only for the theme you actually build. `theme try` therefore activates
+the way `nixos-rebuild` does internally: point the system profile at the build,
+then `switch-to-configuration switch`.
+
+Registered palettes are read from the canonical `steelbore.toml` shipped by the
+`construct` input, never retyped (§11.4): `steelbore`, `steelbore-classic`,
 `steelbore-blue`, `steelbore-blackpinkpanther`, `steelbore-matrixgreen`,
 `steelbore-navywhite`, `tokyonight`, plus a `<slug>-high-contrast` sibling of
 each (§11.1.1).
+
+### Local themes
+
+`themes/<slug>.nix` adds a theme of your own — the filename is the slug. Either
+derive from a registered palette and override tokens, or bind the roles outright:
+
+```nix
+{ base = "steelbore"; accent = "#FF8A3D"; }              # tweak one token
+{ background = "#0B0B14"; foreground = "#E8E8F0"; … }    # fully custom
+```
+
+A local theme resolves through the same path as a registered one, so it inherits
+role completion, the hue-derived ANSI mapping and xterm-256 handling for free.
+Naming a file after a registered slug shadows it — the way to adjust Modern
+everywhere without forking upstream. Unknown role names, malformed hex and
+missing required roles are all rejected at eval time.
+
+> A fully custom palette is outside the Standard's registered family and carries
+> no verified contrast matrix (§11.4). Deriving from a `base` keeps the rest of a
+> compliant palette, and its measured ratios, intact.
 
 ## Desktop Environments
 

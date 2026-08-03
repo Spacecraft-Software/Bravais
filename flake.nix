@@ -122,24 +122,38 @@
       # shipped by the `construct` input, so an upstream palette fix lands
       # with `nix flake update construct`.
       #
-      # SWITCHING THEMES IS THIS ONE WORD. Every terminal, bar, WM, TTY and
-      # app config resolves from it, because consumers name §11.1 role tokens
-      # (`foreground`, `accent`, …) and never a brand color.
-      #
-      #   steelbore                      Steelbore Modern — Standard default
-      #   steelbore-classic              the legacy six-token palette (§11.2)
-      #   steelbore-blue                 steelbore-blackpinkpanther
-      #   steelbore-matrixgreen          steelbore-navywhite (light canvas)
-      #   tokyonight
-      #   …and a <slug>-high-contrast sibling of each (§11.1.1)
-      defaultPalette = "steelbore";
+      # The active theme is NOT set here — it lives in ./theme.nix so the one
+      # word that re-themes the machine is not buried in build machinery.
+      # Local themes live in ./themes/<slug>.nix and may shadow a registered
+      # palette of the same name.
+      defaultPalette = (import ./theme.nix).active;
+
+      # ./themes/*.nix -> { <slug> = <definition>; }. The directory is optional.
+      localThemes =
+        let
+          dir = ./themes;
+          entries = if builtins.pathExists dir then builtins.readDir dir else { };
+          isTheme = name: type: type == "regular" && nixpkgs.lib.hasSuffix ".nix" name;
+          slugOf = name: builtins.substring 0 (builtins.stringLength name - 4) name;
+        in
+        builtins.listToAttrs (
+          map (name: {
+            name = slugOf name;
+            value = import (dir + "/${name}");
+          }) (builtins.attrNames (nixpkgs.lib.filterAttrs isTheme entries))
+        );
 
       mkPalette =
         slug:
         import ./lib/palette.nix {
           tomlFile = "${construct}/steelbore-color-palette/assets/steelbore.toml";
-          inherit slug;
+          inherit slug localThemes;
         };
+
+      # Every selectable theme — registered (7 palettes + 7 high-contrast
+      # siblings) plus every local one. Drives both the per-theme
+      # nixosConfigurations and the registry the `theme` command reads.
+      allThemes = (mkPalette defaultPalette).meta.family;
 
       # Primary (single) user of every machine — stated once (elegance plan
       # 3.4) and threaded via specialArgs/extraSpecialArgs. The users/mj/
@@ -288,8 +302,35 @@
         };
 
         # Convenience alias: bare `.#bravais` → the stable ThinkPad build.
-        bravais = mkBravais { host = hosts.thinkpad; };
+        # Points at the attribute rather than calling mkBravais again: an
+        # identical second call is a full duplicate evaluation, and
+        # `nix flake check` walks every nixosConfigurations entry.
+        bravais = self.nixosConfigurations.bravais-thinkpad;
       };
+
+      # ── Per-theme systems (`theme try`) ───────────────────────────────────
+      # A buildable system per selectable theme, so any theme can be applied
+      # without editing theme.nix.
+      #
+      # Deliberately NOT in `nixosConfigurations`: `nix flake check` force-
+      # evaluates every entry there, and a full system costs ~1.9 GB for the
+      # first plus ~1.3 GB for each additional one held in the same evaluator.
+      # Fifteen variants needed ~23 GB and were OOM-killed on this 31 GB
+      # machine. As a non-standard output these stay lazy — `nix flake check`
+      # skips them with a warning, and you pay only for the theme you build.
+      #
+      #   theme try tokyonight
+      #   nix build .#themeSystems.x86_64-linux.tokyonight
+      themeSystems.${system} = builtins.listToAttrs (
+        map (slug: {
+          name = slug;
+          value =
+            (mkBravais {
+              host = hosts.thinkpad;
+              palette = slug;
+            }).config.system.build.toplevel;
+        }) allThemes
+      );
 
       # ── In-tree packages (elegance plan 3.2) ─────────────────────────────
       # Same index the modules consume (pkgs/default.nix), exposed so each
@@ -297,12 +338,69 @@
       #   nix build .#claude-desktop
       # Instantiated with allowUnfree (claude-desktop and chrome-remote-
       # desktop are unfree; legacyPackages carries no config).
-      packages.${system} = import ./pkgs {
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
+      packages.${system} =
+        (import ./pkgs {
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+        })
+        // {
+          # ── Theme registry ─────────────────────────────────────────────────
+          # Every theme, resolved, as JSON. This is what the `theme` command
+          # reads: it evaluates only the palette library, never a system
+          # config, so `theme list` is instant where walking
+          # nixosConfigurations would take a minute per theme.
+          #
+          #   nix build --no-link --print-out-paths .#theme-registry
+          theme-registry =
+            let
+              rp = nixpkgs.legacyPackages.${system};
+              roles = [
+                "background"
+                "surface"
+                "surfaceAlt"
+                "foreground"
+                "accent"
+                "structure"
+                "success"
+                "error"
+                "warning"
+                "info"
+                "focus"
+                "border"
+              ];
+              entry =
+                slug:
+                let
+                  p = mkPalette slug;
+                in
+                {
+                  inherit slug;
+                  source = if localThemes ? ${slug} then "local" else "construct";
+                  active = slug == defaultPalette;
+                  hasSurfaceClass = p.meta.hasSurfaceClass;
+                  # Hex for display, rgb for truecolor swatches — Nushell's
+                  # `ansi` builtin takes named colors, not arbitrary hex.
+                  colors = builtins.listToAttrs (
+                    map (r: {
+                      name = r;
+                      value = {
+                        hex = p.${r};
+                        rgb = p.convert.rgbTriple p.${r};
+                        x256 = p.convert.x256.${r};
+                      };
+                    }) roles
+                  );
+                };
+            in
+            rp.writeText "steelbore-theme-registry.json" (
+              builtins.toJSON {
+                active = defaultPalette;
+                themes = map entry allThemes;
+              }
+            );
         };
-      };
 
       # ── Developer tooling ────────────────────────────────────────────────
       # Quality-of-life outputs for `nix fmt`, `nix develop`, `nix flake check`.
