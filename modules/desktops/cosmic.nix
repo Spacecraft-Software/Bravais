@@ -10,29 +10,29 @@
 
 let
   # cosmic-theme stores colors as Srgba with 0.0–1.0 floats. Derived from the
-  # canonical palette via lib/colors.nix `convert.srgbaFloat` — the converter
+  # canonical palette via lib/palette.nix `convert.srgbaFloat` — the converter
   # reproduces cosmic-settings' own eight-digit formatting, so user-facing
   # diffs stay clean and the values can never drift from the palette.
   toRgb = steelborePalette.convert.srgbaFloat;
 
   # Light-mode-only derived shades — NOT in Spacecraft Software Standard §8.
-  # Scoped to cosmic.nix; do not propagate to lib/colors.nix or
+  # Scoped to cosmic.nix; do not propagate to lib/palette.nix or
   # modules/theme. Promote in the Standard first if they ever need to
   # become canonical.
   paperHex = "#F0F2F8"; # Light bg
-  radiumGreenDeepHex = "#2EAB54"; # success on Paper
-  redOxideDeepHex = "#D63838"; # destructive on Paper
+  successDeepHex = "#2EAB54"; # success on Paper
+  errorDeepHex = "#D63838"; # destructive on Paper
 
   rgb = {
-    voidNavy = toRgb steelborePalette.voidNavy;
-    moltenAmber = toRgb steelborePalette.moltenAmber;
-    steelBlue = toRgb steelborePalette.steelBlue;
-    radiumGreen = toRgb steelborePalette.radiumGreen;
-    redOxide = toRgb steelborePalette.redOxide;
-    liquidCool = toRgb steelborePalette.liquidCool;
+    background = toRgb steelborePalette.background;
+    foreground = toRgb steelborePalette.foreground;
+    accent = toRgb steelborePalette.accent;
+    success = toRgb steelborePalette.success;
+    error = toRgb steelborePalette.error;
+    info = toRgb steelborePalette.info;
     paper = toRgb paperHex;
-    radiumGreenDeep = toRgb radiumGreenDeepHex;
-    redOxideDeep = toRgb redOxideDeepHex;
+    successDeep = toRgb successDeepHex;
+    errorDeep = toRgb errorDeepHex;
   };
 
   # bg_color is the only Builder field that carries an alpha channel.
@@ -49,7 +49,7 @@ let
           alpha: 1.0,
       ))'';
 
-  bgColorDark = mkBgColor steelborePalette.voidNavy;
+  bgColorDark = mkBgColor steelborePalette.background;
 
   bgColorLight = mkBgColor paperHex;
 
@@ -94,22 +94,22 @@ in
     home-manager.users.${primaryUser}.xdg.configFile = {
       # Dark Builder — active at night via auto_switch.
       "${darkBuilderDir}/bg_color".text = bgColorDark;
-      "${darkBuilderDir}/accent".text = someRgb rgb.moltenAmber;
-      "${darkBuilderDir}/success".text = someRgb rgb.radiumGreen;
-      "${darkBuilderDir}/warning".text = someRgb rgb.moltenAmber;
-      "${darkBuilderDir}/destructive".text = someRgb rgb.redOxide;
-      "${darkBuilderDir}/text_tint".text = someRgb rgb.moltenAmber;
-      "${darkBuilderDir}/neutral_tint".text = someRgb rgb.steelBlue;
+      "${darkBuilderDir}/accent".text = someRgb rgb.foreground;
+      "${darkBuilderDir}/success".text = someRgb rgb.success;
+      "${darkBuilderDir}/warning".text = someRgb rgb.foreground;
+      "${darkBuilderDir}/destructive".text = someRgb rgb.error;
+      "${darkBuilderDir}/text_tint".text = someRgb rgb.foreground;
+      "${darkBuilderDir}/neutral_tint".text = someRgb rgb.accent;
 
       # Light Builder — active during the day via auto_switch. Uses derived
       # Paper bg + deep success/destructive shades that read on a light surface.
       "${lightBuilderDir}/bg_color".text = bgColorLight;
-      "${lightBuilderDir}/accent".text = someRgb rgb.moltenAmber;
-      "${lightBuilderDir}/success".text = someRgb rgb.radiumGreenDeep;
-      "${lightBuilderDir}/warning".text = someRgb rgb.moltenAmber;
-      "${lightBuilderDir}/destructive".text = someRgb rgb.redOxideDeep;
-      "${lightBuilderDir}/text_tint".text = someRgb rgb.voidNavy;
-      "${lightBuilderDir}/neutral_tint".text = someRgb rgb.steelBlue;
+      "${lightBuilderDir}/accent".text = someRgb rgb.foreground;
+      "${lightBuilderDir}/success".text = someRgb rgb.successDeep;
+      "${lightBuilderDir}/warning".text = someRgb rgb.foreground;
+      "${lightBuilderDir}/destructive".text = someRgb rgb.errorDeep;
+      "${lightBuilderDir}/text_tint".text = someRgb rgb.background;
+      "${lightBuilderDir}/neutral_tint".text = someRgb rgb.accent;
 
       # Auto-switch dark/light by time of day. We deliberately do NOT manage
       # is_dark — cosmic-settings-daemon needs to flip it on schedule, which

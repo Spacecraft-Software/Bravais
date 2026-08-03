@@ -21,40 +21,19 @@ let
   b = p.convert.bareHex;
 
   theme = {
-    # 16-color ANSI mapping (brand-collapsed: magenta==steelBlue,
-    # bright blue/magenta/cyan==liquidCool, white==moltenAmber — same
-    # deliberate trade-off as the TTY console, plan §5.6).
-    ansi = {
-      normal = [
-        p.voidNavy # black
-        p.redOxide # red
-        p.radiumGreen # green
-        p.moltenAmber # yellow
-        p.steelBlue # blue
-        p.steelBlue # magenta
-        p.liquidCool # cyan
-        p.moltenAmber # white
-      ];
-      bright = [
-        p.steelBlue # black
-        p.redOxide # red
-        p.radiumGreen # green
-        p.moltenAmber # yellow
-        p.liquidCool # blue
-        p.liquidCool # magenta
-        p.liquidCool # cyan
-        p.moltenAmber # white
-      ];
-    };
-    background = p.voidNavy;
-    foreground = p.moltenAmber;
+    # 16-color ANSI mapping — single-sourced in lib/palette.nix and shared
+    # with the TTY console (modules/theme/default.nix), which used to carry
+    # a second hand-maintained copy of this same table.
+    inherit (p) ansi;
+    background = p.background;
+    foreground = p.foreground;
     cursor = {
-      text = p.voidNavy;
-      cursor = p.moltenAmber;
+      text = p.background;
+      cursor = p.foreground;
     };
     selection = {
-      text = p.voidNavy;
-      background = p.steelBlue;
+      text = p.background;
+      background = p.accent;
     };
     font = "JetBrainsMono Nerd Font";
     opacity = "0.95";
@@ -608,7 +587,7 @@ in
 
       [colors.vi_mode_cursor]
       text = "${theme.cursor.text}"
-      cursor = "${p.radiumGreen}"
+      cursor = "${p.success}"
 
       [colors.selection]
       text = "${theme.selection.text}"
@@ -616,11 +595,11 @@ in
 
       [colors.search.matches]
       foreground = "${theme.cursor.text}"
-      background = "${p.liquidCool}"
+      background = "${p.info}"
 
       [colors.search.focused_match]
       foreground = "${theme.cursor.text}"
-      background = "${p.radiumGreen}"
+      background = "${p.success}"
 
       [colors.normal]
       ${group theme.ansi.normal}

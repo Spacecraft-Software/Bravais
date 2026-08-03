@@ -32,117 +32,117 @@ let
     themes {
         steelbore {
             text_unselected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             text_selected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             ribbon_selected {
-                base "${steelborePalette.voidNavy}"
-                background "${steelborePalette.moltenAmber}"
-                emphasis_0 "${steelborePalette.redOxide}"
-                emphasis_1 "${steelborePalette.moltenAmber}"
-                emphasis_2 "${steelborePalette.steelBlue}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.background}"
+                background "${steelborePalette.foreground}"
+                emphasis_0 "${steelborePalette.error}"
+                emphasis_1 "${steelborePalette.foreground}"
+                emphasis_2 "${steelborePalette.accent}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             ribbon_unselected {
-                base "${steelborePalette.voidNavy}"
-                background "${steelborePalette.steelBlue}"
-                emphasis_0 "${steelborePalette.redOxide}"
-                emphasis_1 "${steelborePalette.moltenAmber}"
-                emphasis_2 "${steelborePalette.steelBlue}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.background}"
+                background "${steelborePalette.accent}"
+                emphasis_0 "${steelborePalette.error}"
+                emphasis_1 "${steelborePalette.foreground}"
+                emphasis_2 "${steelborePalette.accent}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             table_title {
-                base "${steelborePalette.radiumGreen}"
+                base "${steelborePalette.success}"
                 background 0
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             table_cell_selected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             table_cell_unselected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             list_selected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             list_unselected {
-                base "${steelborePalette.moltenAmber}"
-                background "${steelborePalette.voidNavy}"
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.radiumGreen}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                base "${steelborePalette.foreground}"
+                background "${steelborePalette.background}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.success}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             frame_selected {
-                base "${steelborePalette.moltenAmber}"
+                base "${steelborePalette.foreground}"
                 background 0
-                emphasis_0 "${steelborePalette.moltenAmber}"
-                emphasis_1 "${steelborePalette.liquidCool}"
-                emphasis_2 "${steelborePalette.steelBlue}"
+                emphasis_0 "${steelborePalette.foreground}"
+                emphasis_1 "${steelborePalette.info}"
+                emphasis_2 "${steelborePalette.accent}"
                 emphasis_3 0
             }
             frame_highlight {
-                base "${steelborePalette.moltenAmber}"
+                base "${steelborePalette.foreground}"
                 background 0
-                emphasis_0 "${steelborePalette.steelBlue}"
+                emphasis_0 "${steelborePalette.accent}"
                 emphasis_1 0
-                emphasis_2 "${steelborePalette.moltenAmber}"
-                emphasis_3 "${steelborePalette.moltenAmber}"
+                emphasis_2 "${steelborePalette.foreground}"
+                emphasis_3 "${steelborePalette.foreground}"
             }
             exit_code_success {
-                base "${steelborePalette.radiumGreen}"
+                base "${steelborePalette.success}"
                 background 0
-                emphasis_0 "${steelborePalette.liquidCool}"
-                emphasis_1 "${steelborePalette.voidNavy}"
-                emphasis_2 "${steelborePalette.steelBlue}"
-                emphasis_3 "${steelborePalette.steelBlue}"
+                emphasis_0 "${steelborePalette.info}"
+                emphasis_1 "${steelborePalette.background}"
+                emphasis_2 "${steelborePalette.accent}"
+                emphasis_3 "${steelborePalette.accent}"
             }
             exit_code_error {
-                base "${steelborePalette.redOxide}"
+                base "${steelborePalette.error}"
                 background 0
-                emphasis_0 "${steelborePalette.moltenAmber}"
+                emphasis_0 "${steelborePalette.foreground}"
                 emphasis_1 0
                 emphasis_2 0
                 emphasis_3 0
             }
             multiplayer_user_colors {
-                player_1 "${steelborePalette.steelBlue}"
-                player_2 "${steelborePalette.steelBlue}"
+                player_1 "${steelborePalette.accent}"
+                player_2 "${steelborePalette.accent}"
                 player_3 0
-                player_4 "${steelborePalette.moltenAmber}"
-                player_5 "${steelborePalette.liquidCool}"
+                player_4 "${steelborePalette.foreground}"
+                player_5 "${steelborePalette.info}"
                 player_6 0
-                player_7 "${steelborePalette.redOxide}"
+                player_7 "${steelborePalette.error}"
                 player_8 0
                 player_9 0
                 player_10 0
@@ -281,74 +281,74 @@ in
       # Schema mirrors halloy/assets/themes/ferra.toml.
 
       [general]
-      background          = "${steelborePalette.voidNavy}"
-      horizontal_rule     = "${steelborePalette.steelBlue}"
-      scrollbar           = "${steelborePalette.steelBlue}"
-      unread_indicator    = "${steelborePalette.moltenAmber}"
-      highlight_indicator = "${steelborePalette.radiumGreen}"
-      border              = "${steelborePalette.steelBlue}"
+      background          = "${steelborePalette.background}"
+      horizontal_rule     = "${steelborePalette.accent}"
+      scrollbar           = "${steelborePalette.accent}"
+      unread_indicator    = "${steelborePalette.foreground}"
+      highlight_indicator = "${steelborePalette.success}"
+      border              = "${steelborePalette.accent}"
 
       [text]
-      primary   = "${steelborePalette.moltenAmber}"
-      secondary = "${steelborePalette.steelBlue}"
-      tertiary  = "${steelborePalette.liquidCool}"
-      success   = "${steelborePalette.radiumGreen}"
-      error     = "${steelborePalette.redOxide}"
-      warning   = "${steelborePalette.moltenAmber}"
-      info      = "${steelborePalette.liquidCool}"
-      debug     = "${steelborePalette.steelBlue}"
-      trace     = "${steelborePalette.liquidCool}"
+      primary   = "${steelborePalette.foreground}"
+      secondary = "${steelborePalette.accent}"
+      tertiary  = "${steelborePalette.info}"
+      success   = "${steelborePalette.success}"
+      error     = "${steelborePalette.error}"
+      warning   = "${steelborePalette.foreground}"
+      info      = "${steelborePalette.info}"
+      debug     = "${steelborePalette.accent}"
+      trace     = "${steelborePalette.info}"
 
       [buffer]
-      background            = "${steelborePalette.voidNavy}"
-      background_text_input = "${steelborePalette.voidNavy}"
-      background_title_bar  = "${steelborePalette.voidNavy}"
-      timestamp             = "${steelborePalette.steelBlue}"
-      action                = "${steelborePalette.radiumGreen}"
-      topic                 = "${steelborePalette.moltenAmber}"
-      highlight             = "${steelborePalette.steelBlue}"
-      code                  = "${steelborePalette.liquidCool}"
-      nickname              = "${steelborePalette.moltenAmber}"
-      nickname_offline      = "${steelborePalette.steelBlue}"
-      url                   = "${steelborePalette.liquidCool}"
-      selection             = "${steelborePalette.steelBlue}"
-      border_selected       = "${steelborePalette.moltenAmber}"
+      background            = "${steelborePalette.background}"
+      background_text_input = "${steelborePalette.background}"
+      background_title_bar  = "${steelborePalette.background}"
+      timestamp             = "${steelborePalette.accent}"
+      action                = "${steelborePalette.success}"
+      topic                 = "${steelborePalette.foreground}"
+      highlight             = "${steelborePalette.accent}"
+      code                  = "${steelborePalette.info}"
+      nickname              = "${steelborePalette.foreground}"
+      nickname_offline      = "${steelborePalette.accent}"
+      url                   = "${steelborePalette.info}"
+      selection             = "${steelborePalette.accent}"
+      border_selected       = "${steelborePalette.foreground}"
 
       [buffer.server_messages]
-      default = "${steelborePalette.steelBlue}"
+      default = "${steelborePalette.accent}"
 
       [buttons.primary]
-      background                = "${steelborePalette.voidNavy}"
-      background_hover          = "${steelborePalette.steelBlue}"
-      background_selected       = "${steelborePalette.moltenAmber}"
-      background_selected_hover = "${steelborePalette.radiumGreen}"
+      background                = "${steelborePalette.background}"
+      background_hover          = "${steelborePalette.accent}"
+      background_selected       = "${steelborePalette.foreground}"
+      background_selected_hover = "${steelborePalette.success}"
 
       [buttons.secondary]
-      background                = "${steelborePalette.voidNavy}"
-      background_hover          = "${steelborePalette.steelBlue}"
-      background_selected       = "${steelborePalette.moltenAmber}"
-      background_selected_hover = "${steelborePalette.radiumGreen}"
+      background                = "${steelborePalette.background}"
+      background_hover          = "${steelborePalette.accent}"
+      background_selected       = "${steelborePalette.foreground}"
+      background_selected_hover = "${steelborePalette.success}"
 
       # IRC mIRC-style formatting palette. Mappings mirror foot/wezterm
       # — entries the Steelbore palette doesn't model directly
       # (brown, magenta, pink, lightgrey) reuse the closest neighbor.
       [formatting]
-      white      = "${steelborePalette.moltenAmber}"
-      black      = "${steelborePalette.voidNavy}"
-      blue       = "${steelborePalette.steelBlue}"
-      green      = "${steelborePalette.radiumGreen}"
-      red        = "${steelborePalette.redOxide}"
-      brown      = "${steelborePalette.moltenAmber}"
-      magenta    = "${steelborePalette.steelBlue}"
-      orange     = "${steelborePalette.moltenAmber}"
-      yellow     = "${steelborePalette.moltenAmber}"
-      lightgreen = "${steelborePalette.radiumGreen}"
-      cyan       = "${steelborePalette.liquidCool}"
-      lightcyan  = "${steelborePalette.liquidCool}"
-      lightblue  = "${steelborePalette.liquidCool}"
-      pink       = "${steelborePalette.redOxide}"
-      grey       = "${steelborePalette.steelBlue}"
-      lightgrey  = "${steelborePalette.moltenAmber}"
+      white      = "${steelborePalette.foreground}"
+      black      = "${steelborePalette.background}"
+      blue       = "${steelborePalette.accent}"
+      green      = "${steelborePalette.success}"
+      red        = "${steelborePalette.error}"
+      brown      = "${steelborePalette.foreground}"
+      magenta    = "${steelborePalette.accent}"
+      orange     = "${steelborePalette.foreground}"
+      yellow     = "${steelborePalette.foreground}"
+      lightgreen = "${steelborePalette.success}"
+      cyan       = "${steelborePalette.info}"
+      lightcyan  = "${steelborePalette.info}"
+      lightblue  = "${steelborePalette.info}"
+      pink       = "${steelborePalette.error}"
+      grey       = "${steelborePalette.accent}"
+      lightgrey  = "${steelborePalette.foreground}"
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -386,86 +386,86 @@ in
       # 256-color theme. See note above for the palette → index mapping.
       colors:
           # Per-nick color cycle through the palette.
-          nick: [${toString x256.moltenAmber}, ${toString x256.steelBlue}, ${toString x256.radiumGreen}, ${toString x256.liquidCool}, ${toString x256.redOxide}, ${toString x256.radiumGreen}, ${toString x256.steelBlue}, ${toString x256.moltenAmber}, ${toString x256.liquidCool}, ${toString x256.steelBlue}]
+          nick: [${toString x256.foreground}, ${toString x256.accent}, ${toString x256.success}, ${toString x256.info}, ${toString x256.error}, ${toString x256.success}, ${toString x256.accent}, ${toString x256.foreground}, ${toString x256.info}, ${toString x256.accent}]
 
           clear:
               fg: default
               bg: default
 
           user_msg:
-              fg: ${toString x256.moltenAmber}            # Molten Amber
+              fg: ${toString x256.foreground}            # Molten Amber
               bg: default
 
           err_msg:
-              fg: ${toString x256.redOxide}            # Red Oxide
+              fg: ${toString x256.error}            # Red Oxide
               bg: default
               attrs: [bold]
 
           topic:
-              fg: ${toString x256.steelBlue}             # Steel Blue
+              fg: ${toString x256.accent}             # Steel Blue
               bg: default
               attrs: [bold]
 
           cursor:
-              fg: ${toString x256.voidNavy}             # Void Navy on Molten Amber
-              bg: ${toString x256.moltenAmber}
+              fg: ${toString x256.background}             # Void Navy on Molten Amber
+              bg: ${toString x256.foreground}
 
           join:
-              fg: ${toString x256.radiumGreen}             # Radium Green
+              fg: ${toString x256.success}             # Radium Green
               bg: default
               attrs: [bold]
 
           part:
-              fg: ${toString x256.redOxide}            # Red Oxide
+              fg: ${toString x256.error}            # Red Oxide
               bg: default
               attrs: [bold]
 
           nick_change:
-              fg: ${toString x256.radiumGreen}             # Radium Green
+              fg: ${toString x256.success}             # Radium Green
               bg: default
               attrs: [bold]
 
           faded:
-              fg: ${toString x256.steelBlue}             # Steel Blue
+              fg: ${toString x256.accent}             # Steel Blue
               bg: default
 
           exit_dialogue:
-              fg: ${toString x256.moltenAmber}
-              bg: ${toString x256.voidNavy}
+              fg: ${toString x256.foreground}
+              bg: ${toString x256.background}
 
           highlight:
-              fg: ${toString x256.radiumGreen}             # Radium Green for mentions
+              fg: ${toString x256.success}             # Radium Green for mentions
               bg: default
               attrs: [bold]
 
           completion:
-              fg: ${toString x256.liquidCool}            # Liquid Coolant
+              fg: ${toString x256.info}            # Liquid Coolant
               bg: default
 
           timestamp:
-              fg: ${toString x256.steelBlue}             # Steel Blue
+              fg: ${toString x256.accent}             # Steel Blue
               bg: default
 
           tab_active:
-              fg: ${toString x256.moltenAmber}            # Molten Amber
+              fg: ${toString x256.foreground}            # Molten Amber
               bg: default
               attrs: [bold]
 
           tab_normal:
-              fg: ${toString x256.steelBlue}             # Steel Blue
+              fg: ${toString x256.accent}             # Steel Blue
               bg: default
 
           tab_new_msg:
-              fg: ${toString x256.radiumGreen}             # Radium Green
+              fg: ${toString x256.success}             # Radium Green
               bg: default
 
           tab_highlight:
-              fg: ${toString x256.redOxide}            # Red Oxide
+              fg: ${toString x256.error}            # Red Oxide
               bg: default
               attrs: [bold]
 
           tab_joinpart:
-              fg: ${toString x256.steelBlue}             # Steel Blue
+              fg: ${toString x256.accent}             # Steel Blue
               bg: default
     '';
   };

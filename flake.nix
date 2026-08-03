@@ -116,8 +116,30 @@
         ) pkgs)) inputs.nil.packages;
       };
 
-      # Steelbore color palette — single canonical source in lib/colors.nix.
-      steelborePalette = import ./lib/colors.nix;
+      # ── Steelbore palette family (Standard §11) ───────────────────────────
+      # §11 is a family of seven adoptable palettes, not one palette. Values
+      # are read, never retyped (§11.4) — straight from the canonical TOML
+      # shipped by the `construct` input, so an upstream palette fix lands
+      # with `nix flake update construct`.
+      #
+      # SWITCHING THEMES IS THIS ONE WORD. Every terminal, bar, WM, TTY and
+      # app config resolves from it, because consumers name §11.1 role tokens
+      # (`foreground`, `accent`, …) and never a brand color.
+      #
+      #   steelbore                      Steelbore Modern — Standard default
+      #   steelbore-classic              the legacy six-token palette (§11.2)
+      #   steelbore-blue                 steelbore-blackpinkpanther
+      #   steelbore-matrixgreen          steelbore-navywhite (light canvas)
+      #   tokyonight
+      #   …and a <slug>-high-contrast sibling of each (§11.1.1)
+      defaultPalette = "steelbore-classic";
+
+      mkPalette =
+        slug:
+        import ./lib/palette.nix {
+          tomlFile = "${construct}/steelbore-color-palette/assets/steelbore.toml";
+          inherit slug;
+        };
 
       # Primary (single) user of every machine — stated once (elegance plan
       # 3.4) and threaded via specialArgs/extraSpecialArgs. The users/mj/
@@ -167,13 +189,18 @@
       #
       #   host    — a machine path from `hosts` above
       #   channel — "stable" (26.05) or "unstable" (rolling)
+      #   palette — a Steelbore palette slug (see `defaultPalette` above).
+      #             Per-machine override; the family default covers every
+      #             machine that does not ask for something else.
       mkBravais =
         {
           host,
           channel ? "stable",
+          palette ? defaultPalette,
         }:
         let
           ch = channels.${channel};
+          steelborePalette = mkPalette palette;
           # Always-unstable nixpkgs instantiation, threaded into modules
           # via specialArgs. Used for claude-code so even stable variants
           # ship the latest claude-code from nixpkgs-unstable instead of

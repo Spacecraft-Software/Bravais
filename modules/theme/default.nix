@@ -13,41 +13,22 @@
 
   # Environment variables for theme-aware applications
   environment.variables = {
-    SPACECRAFT_BACKGROUND = steelborePalette.voidNavy;
-    SPACECRAFT_TEXT = steelborePalette.moltenAmber;
-    SPACECRAFT_ACCENT = steelborePalette.steelBlue;
-    SPACECRAFT_SUCCESS = steelborePalette.radiumGreen;
-    SPACECRAFT_WARNING = steelborePalette.redOxide;
-    SPACECRAFT_INFO = steelborePalette.liquidCool;
+    SPACECRAFT_BACKGROUND = steelborePalette.background;
+    SPACECRAFT_TEXT = steelborePalette.foreground;
+    SPACECRAFT_ACCENT = steelborePalette.accent;
+    SPACECRAFT_SUCCESS = steelborePalette.success;
+    SPACECRAFT_WARNING = steelborePalette.error;
+    SPACECRAFT_INFO = steelborePalette.info;
   };
 
-  # TTY / Virtual Console Colors (Steelbore palette via convert.bareHex).
-  # Brand mapping deliberately collapses colors: magenta==blue (steelBlue),
-  # bright blue/magenta/cyan==liquidCool, white==moltenAmber — there is no
-  # true magenta or white on the console (documented trade-off, plan §5.6).
+  # TTY / Virtual Console Colors — the 16-color ANSI mapping is single-sourced
+  # in lib/palette.nix and shared with every terminal emulator via
+  # lib/terminal-theme.nix. This file used to carry a second copy of the same
+  # table, which had to be kept in step by hand.
   console.colors =
     let
       b = steelborePalette.convert.bareHex;
-      p = steelborePalette;
+      a = steelborePalette.ansi;
     in
-    [
-      # Normal: Black Red Green Yellow Blue Magenta Cyan White
-      (b p.voidNavy)
-      (b p.redOxide)
-      (b p.radiumGreen)
-      (b p.moltenAmber)
-      (b p.steelBlue)
-      (b p.steelBlue)
-      (b p.liquidCool)
-      (b p.moltenAmber)
-      # Bright: Black Red Green Yellow Blue Magenta Cyan White
-      (b p.steelBlue)
-      (b p.redOxide)
-      (b p.radiumGreen)
-      (b p.moltenAmber)
-      (b p.liquidCool)
-      (b p.liquidCool)
-      (b p.liquidCool)
-      (b p.moltenAmber)
-    ];
+    map b (a.normal ++ a.bright);
 }

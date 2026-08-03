@@ -164,7 +164,7 @@ let
     #   to leftwm's hardcoded red.
     # - leftwm clobbers the root window background on startup to its
     #   default grey (#333333); xsetroot must run AFTER leftwm or its
-    #   color (voidNavy) gets overwritten and gaps between tiled
+    #   color (background) gets overwritten and gaps between tiled
     #   windows show as grey instead.
     #
     # The one-second sleep gives leftwm's IPC socket and root grab
@@ -172,7 +172,7 @@ let
     (
       sleep 1
       ${pkgs.leftwm}/bin/leftwm-command "LoadTheme $HOME/.config/leftwm/themes/current/theme.ron"
-      ${xsetrootPkg}/bin/xsetroot -solid '${steelborePalette.voidNavy}'
+      ${xsetrootPkg}/bin/xsetroot -solid '${steelborePalette.background}'
     ) &
     exec ${pkgs.leftwm}/bin/leftwm
   '';

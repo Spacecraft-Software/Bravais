@@ -76,9 +76,9 @@
                 border_width: 2,
                 margin: 8,
                 workspace_margin: Some(8),
-                default_border_color: "${steelborePalette.steelBlue}",
-                floating_border_color: "${steelborePalette.liquidCool}",
-                focused_border_color: "${steelborePalette.moltenAmber}",
+                default_border_color: "${steelborePalette.accent}",
+                floating_border_color: "${steelborePalette.info}",
+                focused_border_color: "${steelborePalette.foreground}",
                 on_new_window_cmd: None,
             )
           '';
@@ -378,9 +378,9 @@
         # ═══════════════════════════════════════════════════════════════════════════
         "rofi/keybinds.rasi".text = ''
           * {
-              bg:      ${steelborePalette.voidNavy};
-              fg:      ${steelborePalette.moltenAmber};
-              accent:  ${steelborePalette.steelBlue};
+              bg:      ${steelborePalette.background};
+              fg:      ${steelborePalette.foreground};
+              accent:  ${steelborePalette.accent};
               background-color: transparent;
               text-color:       @fg;
               font: "JetBrainsMono Nerd Font 12";
@@ -565,12 +565,12 @@
         '';
 
         "eww-leftwm/eww.scss".text = ''
-          $voidNavy:    ${steelborePalette.voidNavy};
-          $moltenAmber: ${steelborePalette.moltenAmber};
-          $steelBlue:   ${steelborePalette.steelBlue};
-          $radiumGreen: ${steelborePalette.radiumGreen};
-          $liquidCool:  ${steelborePalette.liquidCool};
-          $redOxide:    ${steelborePalette.redOxide};
+          $background:    ${steelborePalette.background};
+          $foreground: ${steelborePalette.foreground};
+          $accent:   ${steelborePalette.accent};
+          $success: ${steelborePalette.success};
+          $info:  ${steelborePalette.info};
+          $error:    ${steelborePalette.error};
 
           * {
               font-family: "JetBrainsMono Nerd Font", monospace;
@@ -579,9 +579,9 @@
           }
 
           window {
-              background-color: $voidNavy;
-              color: $moltenAmber;
-              border-bottom: 2px solid $steelBlue;
+              background-color: $background;
+              color: $foreground;
+              border-bottom: 2px solid $accent;
               padding: 0 12px;
           }
 
@@ -602,12 +602,12 @@
               min-width: 0;
           }
 
-          .title  { color: $moltenAmber; }
-          .clock  { color: $liquidCool; }
+          .title  { color: $foreground; }
+          .clock  { color: $info; }
           .metrics { padding-right: 12px; }
-          .metric      { color: $radiumGreen; }  // normal
-          .metric-warn { color: $moltenAmber; }  // >=75% cpu/ram, <=30% battery
-          .metric-crit { color: $redOxide; }     // >=90% cpu/ram, <=15% battery
+          .metric      { color: $success; }  // normal
+          .metric-warn { color: $foreground; }  // >=75% cpu/ram, <=30% battery
+          .metric-crit { color: $error; }     // >=90% cpu/ram, <=15% battery
 
           // Radio / network / mode indicators — colors only (glyphs come from
           // the Nerd Font codepoints emitted in eww.yuck). Bluetooth is
@@ -615,18 +615,18 @@
           // (radio up, nothing linked), connected = radium green (active
           // link). Network stays two-state: up = green, down = red. Caffeine
           // mirrors the toggle: on = green (staying awake), off = red.
-          .bt-off       { color: $redOxide; }
-          .bt-on        { color: $steelBlue; }
-          .bt-connected { color: $radiumGreen; }
-          .net-up   { color: $radiumGreen; }
-          .net-down { color: $redOxide; }
-          .caf-on  { color: $radiumGreen; }
-          .caf-off { color: $redOxide; }
+          .bt-off       { color: $error; }
+          .bt-on        { color: $accent; }
+          .bt-connected { color: $success; }
+          .net-up   { color: $success; }
+          .net-down { color: $error; }
+          .caf-on  { color: $success; }
+          .caf-off { color: $error; }
 
           // Keyboard language — en = steel blue (default), ar = molten amber
           // (secondary layout, draws the eye when active).
-          .lang-en { color: $steelBlue; }
-          .lang-ar { color: $moltenAmber; }
+          .lang-en { color: $accent; }
+          .lang-ar { color: $foreground; }
 
           // ── LeftWM workspace buttons ──────────────────────────────────────
           // mine    = active/focused tag on the current display
@@ -638,31 +638,31 @@
           }
 
           .ws-button-mine {
-              color: $moltenAmber;
-              border-bottom: 2px solid $moltenAmber;
+              color: $foreground;
+              border-bottom: 2px solid $foreground;
               padding: 0 4px;
           }
 
           .ws-button-visible {
-              color: $liquidCool;
-              border-bottom: 2px solid $liquidCool;
+              color: $info;
+              border-bottom: 2px solid $info;
               padding: 0 4px;
           }
 
           .ws-button-busy {
-              color: $steelBlue;
+              color: $accent;
               padding: 0 4px;
           }
 
           .ws-button {
-              color: $steelBlue;
+              color: $accent;
               opacity: 0.5;
               padding: 0 4px;
           }
 
           // ── Focused window title ──────────────────────────────────────────
           .window-title {
-              color: $moltenAmber;
+              color: $foreground;
               max-width: 400px;
               text-overflow: ellipsis;
               overflow: hidden;

@@ -281,7 +281,7 @@ in
           padding = 16
           horizontal_padding = 16
           frame_width = 2
-          frame_color = "${steelborePalette.steelBlue}"
+          frame_color = "${steelborePalette.accent}"
           separator_color = frame
 
           font = "Hack Nerd Font 12"
@@ -294,19 +294,19 @@ in
           max_icon_size = 48
 
           [urgency_low]
-          background = "${steelborePalette.voidNavy}"
-          foreground = "${steelborePalette.liquidCool}"
+          background = "${steelborePalette.background}"
+          foreground = "${steelborePalette.info}"
           timeout = 5
 
           [urgency_normal]
-          background = "${steelborePalette.voidNavy}"
-          foreground = "${steelborePalette.moltenAmber}"
+          background = "${steelborePalette.background}"
+          foreground = "${steelborePalette.foreground}"
           timeout = 10
 
           [urgency_critical]
-          background = "${steelborePalette.voidNavy}"
-          foreground = "${steelborePalette.redOxide}"
-          frame_color = "${steelborePalette.redOxide}"
+          background = "${steelborePalette.background}"
+          foreground = "${steelborePalette.error}"
+          frame_color = "${steelborePalette.error}"
           timeout = 0
         '';
 

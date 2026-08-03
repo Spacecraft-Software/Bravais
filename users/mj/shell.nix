@@ -250,17 +250,17 @@ in
         # value resolves to a token from the Steelbore canonical palette.
         palettes.steelbore = {
           # Powerline section accents
-          red = steelborePalette.redOxide; # red_oxide     — OS / username cap
-          peach = steelborePalette.moltenAmber; # molten_amber  — directory block
+          red = steelborePalette.error; # red_oxide     — OS / username cap
+          peach = steelborePalette.foreground; # molten_amber  — directory block
           yellow = "#6272A4"; # slag_grey     — git block
-          green = steelborePalette.radiumGreen; # radium_green  — language runtimes
-          sapphire = steelborePalette.steelBlue; # steel_blue    — docker / conda
-          lavender = steelborePalette.liquidCool; # liquid_cool   — time block
+          green = steelborePalette.success; # radium_green  — language runtimes
+          sapphire = steelborePalette.accent; # steel_blue    — docker / conda
+          lavender = steelborePalette.info; # liquid_cool   — time block
 
           # Dark canvas (foreground text on bright section blocks)
-          crust = steelborePalette.voidNavy;
-          mantle = steelborePalette.voidNavy;
-          base = steelborePalette.voidNavy;
+          crust = steelborePalette.background;
+          mantle = steelborePalette.background;
+          base = steelborePalette.background;
 
           # Secondary surfaces
           surface0 = "#050530";
@@ -273,19 +273,19 @@ in
           overlay2 = "#6272A4";
 
           # Foreground text scale
-          text = steelborePalette.moltenAmber;
+          text = steelborePalette.foreground;
           subtext0 = "#E6E6F0";
           subtext1 = "#E6E6F0";
 
           # Remaining catppuccin role keys mapped to nearest Steelbore semantic
-          rosewater = steelborePalette.redOxide;
-          flamingo = steelborePalette.redOxide;
-          pink = steelborePalette.redOxide;
-          mauve = steelborePalette.redOxide;
-          maroon = steelborePalette.redOxide;
-          teal = steelborePalette.liquidCool;
-          sky = steelborePalette.liquidCool;
-          blue = steelborePalette.steelBlue;
+          rosewater = steelborePalette.error;
+          flamingo = steelborePalette.error;
+          pink = steelborePalette.error;
+          mauve = steelborePalette.error;
+          maroon = steelborePalette.error;
+          teal = steelborePalette.info;
+          sky = steelborePalette.info;
+          blue = steelborePalette.accent;
         };
       };
     };
@@ -315,16 +315,16 @@ in
         # it. The visible UX is identical except the indicator is uncolored.
         $env.PROMPT_MULTILINE_INDICATOR = "::: "
 
-        # Steelbore palette — interpolated from the canonical lib/colors.nix
+        # Steelbore palette — interpolated from the canonical lib/palette.nix
         # (Nushell needs literal strings inside color_config records; Nix
         # interpolation bakes them in at build time).
         let steelbore = {
-          voidNavy:    "${steelborePalette.voidNavy}"
-          moltenAmber: "${steelborePalette.moltenAmber}"
-          steelBlue:   "${steelborePalette.steelBlue}"
-          radiumGreen: "${steelborePalette.radiumGreen}"
-          redOxide:    "${steelborePalette.redOxide}"
-          liquidCool:  "${steelborePalette.liquidCool}"
+          background:    "${steelborePalette.background}"
+          foreground: "${steelborePalette.foreground}"
+          accent:   "${steelborePalette.accent}"
+          success: "${steelborePalette.success}"
+          error:    "${steelborePalette.error}"
+          info:  "${steelborePalette.info}"
         }
 
         $env.config = {
@@ -332,67 +332,67 @@ in
           ls: { use_ls_colors: true, clickable_links: true },
           cursor_shape: { emacs: block, vi_insert: block, vi_normal: block },
           color_config: {
-            separator:        $steelbore.steelBlue
+            separator:        $steelbore.accent
             leading_trailing_space_bg: { attr: "n" }
-            header:           { fg: $steelbore.moltenAmber attr: "b" }
-            empty:            $steelbore.liquidCool
-            bool:             {|v| if $v { $steelbore.radiumGreen } else { $steelbore.redOxide } }
-            int:              $steelbore.moltenAmber
-            filesize:         {|v| if $v == 0b { $steelbore.steelBlue } else if $v < 1mb { $steelbore.liquidCool } else { $steelbore.moltenAmber } }
-            duration:         $steelbore.moltenAmber
-            date:             {|v| (date now) - $v | if $in < 1hr { { fg: $steelbore.radiumGreen attr: "b" } } else if $in < 6hr { $steelbore.radiumGreen } else if $in < 1day { $steelbore.moltenAmber } else if $in < 3day { $steelbore.liquidCool } else if $in < 1wk { { fg: $steelbore.liquidCool attr: "b" } } else if $in < 6wk { $steelbore.steelBlue } else if $in < 52wk { { fg: $steelbore.steelBlue attr: "b" } } else { "dark_gray" } }
-            range:            $steelbore.moltenAmber
-            float:            $steelbore.moltenAmber
-            string:           $steelbore.moltenAmber
-            nothing:          $steelbore.liquidCool
-            binary:           $steelbore.liquidCool
-            cell-path:        $steelbore.steelBlue
-            row_index:        { fg: $steelbore.steelBlue attr: "b" }
-            record:           $steelbore.moltenAmber
-            list:             $steelbore.moltenAmber
-            block:            $steelbore.moltenAmber
+            header:           { fg: $steelbore.foreground attr: "b" }
+            empty:            $steelbore.info
+            bool:             {|v| if $v { $steelbore.success } else { $steelbore.error } }
+            int:              $steelbore.foreground
+            filesize:         {|v| if $v == 0b { $steelbore.accent } else if $v < 1mb { $steelbore.info } else { $steelbore.foreground } }
+            duration:         $steelbore.foreground
+            date:             {|v| (date now) - $v | if $in < 1hr { { fg: $steelbore.success attr: "b" } } else if $in < 6hr { $steelbore.success } else if $in < 1day { $steelbore.foreground } else if $in < 3day { $steelbore.info } else if $in < 1wk { { fg: $steelbore.info attr: "b" } } else if $in < 6wk { $steelbore.accent } else if $in < 52wk { { fg: $steelbore.accent attr: "b" } } else { "dark_gray" } }
+            range:            $steelbore.foreground
+            float:            $steelbore.foreground
+            string:           $steelbore.foreground
+            nothing:          $steelbore.info
+            binary:           $steelbore.info
+            cell-path:        $steelbore.accent
+            row_index:        { fg: $steelbore.accent attr: "b" }
+            record:           $steelbore.foreground
+            list:             $steelbore.foreground
+            block:            $steelbore.foreground
             hints:            "dark_gray"
-            search_result:    { fg: $steelbore.voidNavy bg: $steelbore.moltenAmber }
+            search_result:    { fg: $steelbore.background bg: $steelbore.foreground }
 
-            shape_and:                { fg: $steelbore.radiumGreen attr: "b" }
-            shape_binary:             { fg: $steelbore.liquidCool attr: "b" }
-            shape_block:              { fg: $steelbore.liquidCool attr: "b" }
-            shape_bool:               $steelbore.radiumGreen
-            shape_closure:            { fg: $steelbore.radiumGreen attr: "b" }
-            shape_custom:             $steelbore.radiumGreen
-            shape_datetime:           { fg: $steelbore.liquidCool attr: "b" }
-            shape_directory:          $steelbore.liquidCool
-            shape_external:           $steelbore.moltenAmber
-            shape_externalarg:        { fg: $steelbore.radiumGreen attr: "b" }
-            shape_external_resolved:  { fg: $steelbore.liquidCool attr: "b" }
-            shape_filepath:           $steelbore.steelBlue
-            shape_flag:               { fg: $steelbore.steelBlue attr: "b" }
-            shape_float:              { fg: $steelbore.moltenAmber attr: "b" }
-            shape_garbage:            { fg: $steelbore.redOxide bg: $steelbore.voidNavy attr: "b" }
-            shape_glob_interpolation: { fg: $steelbore.liquidCool attr: "b" }
-            shape_globpattern:        { fg: $steelbore.liquidCool attr: "b" }
-            shape_int:                { fg: $steelbore.moltenAmber attr: "b" }
-            shape_internalcall:       { fg: $steelbore.moltenAmber attr: "b" }
-            shape_keyword:            { fg: $steelbore.radiumGreen attr: "b" }
-            shape_list:               { fg: $steelbore.liquidCool attr: "b" }
-            shape_literal:            $steelbore.steelBlue
-            shape_match_pattern:      $steelbore.radiumGreen
+            shape_and:                { fg: $steelbore.success attr: "b" }
+            shape_binary:             { fg: $steelbore.info attr: "b" }
+            shape_block:              { fg: $steelbore.info attr: "b" }
+            shape_bool:               $steelbore.success
+            shape_closure:            { fg: $steelbore.success attr: "b" }
+            shape_custom:             $steelbore.success
+            shape_datetime:           { fg: $steelbore.info attr: "b" }
+            shape_directory:          $steelbore.info
+            shape_external:           $steelbore.foreground
+            shape_externalarg:        { fg: $steelbore.success attr: "b" }
+            shape_external_resolved:  { fg: $steelbore.info attr: "b" }
+            shape_filepath:           $steelbore.accent
+            shape_flag:               { fg: $steelbore.accent attr: "b" }
+            shape_float:              { fg: $steelbore.foreground attr: "b" }
+            shape_garbage:            { fg: $steelbore.error bg: $steelbore.background attr: "b" }
+            shape_glob_interpolation: { fg: $steelbore.info attr: "b" }
+            shape_globpattern:        { fg: $steelbore.info attr: "b" }
+            shape_int:                { fg: $steelbore.foreground attr: "b" }
+            shape_internalcall:       { fg: $steelbore.foreground attr: "b" }
+            shape_keyword:            { fg: $steelbore.success attr: "b" }
+            shape_list:               { fg: $steelbore.info attr: "b" }
+            shape_literal:            $steelbore.accent
+            shape_match_pattern:      $steelbore.success
             shape_matching_brackets:  { attr: "u" }
-            shape_nothing:            $steelbore.liquidCool
-            shape_operator:           $steelbore.moltenAmber
-            shape_or:                 { fg: $steelbore.radiumGreen attr: "b" }
-            shape_pipe:               { fg: $steelbore.radiumGreen attr: "b" }
-            shape_range:              { fg: $steelbore.moltenAmber attr: "b" }
-            shape_record:             { fg: $steelbore.liquidCool attr: "b" }
-            shape_redirection:        { fg: $steelbore.radiumGreen attr: "b" }
-            shape_signature:          { fg: $steelbore.radiumGreen attr: "b" }
-            shape_string:             $steelbore.steelBlue
-            shape_string_interpolation: { fg: $steelbore.liquidCool attr: "b" }
-            shape_table:              { fg: $steelbore.steelBlue attr: "b" }
-            shape_variable:           $steelbore.steelBlue
-            shape_vardecl:            $steelbore.steelBlue
-            shape_raw_string:         $steelbore.steelBlue
-            shape_garbage_unknown:    { fg: $steelbore.redOxide attr: "b" }
+            shape_nothing:            $steelbore.info
+            shape_operator:           $steelbore.foreground
+            shape_or:                 { fg: $steelbore.success attr: "b" }
+            shape_pipe:               { fg: $steelbore.success attr: "b" }
+            shape_range:              { fg: $steelbore.foreground attr: "b" }
+            shape_record:             { fg: $steelbore.info attr: "b" }
+            shape_redirection:        { fg: $steelbore.success attr: "b" }
+            shape_signature:          { fg: $steelbore.success attr: "b" }
+            shape_string:             $steelbore.accent
+            shape_string_interpolation: { fg: $steelbore.info attr: "b" }
+            shape_table:              { fg: $steelbore.accent attr: "b" }
+            shape_variable:           $steelbore.accent
+            shape_vardecl:            $steelbore.accent
+            shape_raw_string:         $steelbore.accent
+            shape_garbage_unknown:    { fg: $steelbore.error attr: "b" }
           }
         }
 

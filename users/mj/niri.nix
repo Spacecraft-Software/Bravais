@@ -42,8 +42,8 @@ in
       window#osd {
         padding: 12px 18px;
         border-radius: 12px;
-        border: 1px solid ${steelborePalette.steelBlue};
-        background-color: ${steelborePalette.voidNavy};
+        border: 1px solid ${steelborePalette.accent};
+        background-color: ${steelborePalette.background};
       }
 
       window#osd #container {
@@ -52,7 +52,7 @@ in
 
       window#osd image,
       window#osd label {
-        color: ${steelborePalette.moltenAmber};
+        color: ${steelborePalette.foreground};
       }
 
       window#osd progressbar {
@@ -64,18 +64,18 @@ in
       window#osd trough {
         min-height: 6px;
         border-radius: 999px;
-        background-color: ${steelborePalette.steelBlue};
+        background-color: ${steelborePalette.accent};
       }
 
       window#osd progress {
         min-height: 6px;
         border-radius: 999px;
-        background-color: ${steelborePalette.moltenAmber};
+        background-color: ${steelborePalette.foreground};
       }
 
       /* Muted state — desaturate the bar to the warning color. */
       window#osd progressbar:disabled progress {
-        background-color: ${steelborePalette.redOxide};
+        background-color: ${steelborePalette.error};
       }
     '';
 
@@ -97,8 +97,8 @@ in
           focus-ring {
               // off  — uncomment to disable; presence of the block enables it
               width 2
-              active-color "${steelborePalette.moltenAmber}"
-              inactive-color "${steelborePalette.steelBlue}"
+              active-color "${steelborePalette.foreground}"
+              inactive-color "${steelborePalette.accent}"
           }
           border { off; }
           // Default column width
@@ -129,7 +129,7 @@ in
       // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
       // fall back to the solid Void Navy fill if it's ever missing.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
-      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.voidNavy}"
+      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
       // OSD daemon for the dedicated brightness/volume keys (binds below).

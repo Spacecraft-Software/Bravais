@@ -170,8 +170,8 @@ in
     "org/gnome/Ptyxis/Profiles/steelbore" = {
       label = "Steelbore";
       palette = tt.ansi16;
-      background-color = steelborePalette.voidNavy;
-      foreground-color = steelborePalette.moltenAmber;
+      background-color = steelborePalette.background;
+      foreground-color = steelborePalette.foreground;
       use-theme-colors = false;
       opacity = 0.95;
     };
