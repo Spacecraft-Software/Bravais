@@ -4,7 +4,7 @@
 #
 # Steelbore Bravais — vendored-binary updater (elegance plan 5.1).
 #
-# Seven packages pin upstream binaries that `nix flake update` cannot bump;
+# Eight packages pin upstream binaries that `nix flake update` cannot bump;
 # this script reads each upstream source of truth, rewrites version + hash
 # in place, and builds the result:
 #
@@ -14,10 +14,11 @@
 #   goose-desktop          pkgs/goose-desktop/package.nix          GitHub releases
 #   opencode-desktop       pkgs/opencode-desktop/package.nix       GitHub releases
 #   github-copilot-app     pkgs/github-copilot-app/package.nix     GitHub releases
+#   adguardvpn-cli         pkgs/adguardvpn-cli/package.nix         GitHub releases
 #   browseros              modules/packages/browsers.nix           GitHub releases
 #
 # Usage (any directory inside the repo):
-#   nu pkgs/update-vendored.nu              # bump all seven + nix build each
+#   nu pkgs/update-vendored.nu              # bump all eight + nix build each
 #   nu pkgs/update-vendored.nu --check      # report only, change nothing
 #   nu pkgs/update-vendored.nu ollama       # single package
 #
@@ -122,12 +123,18 @@ def up-crd [check: bool] {
 # "X"` and an SRI `hash = "sha256-…"` — inside `pkgs/<name>/package.nix`, and
 # is exposed as flake attr <name>. So a bump differs only in the repo and the
 # asset URL: $asset receives the new version and returns the download URL.
+#
+# $tag_pattern / $strip_suffix exist for repos whose tags carry decoration the
+# package's `version` string does not — AdGuardVPNCLI tags `v1.7.12-release`
+# for version "1.7.12". $asset receives the *cleaned* version and re-adds the
+# decoration where the URL needs it.
 def up-github [
   pkg: string, repo: string, asset: closure, check: bool,
+  tag_pattern: string = '^v[0-9]', strip_suffix: string = '',
 ] {
   let file = $"pkgs/($pkg)/package.nix"
   let cur = (extract $file 'version = "(?<x>[^"]+)"')
-  let latest = (github-latest $repo)
+  let latest = (github-latest $repo $tag_pattern | str replace -r $"($strip_suffix)$" '')
   update-one $pkg $file $cur $latest $check {||
     [
       {from: $'version = "($cur)";', to: $'version = "($latest)";'}
@@ -164,7 +171,8 @@ def main [package?: string, --check] {
   cd (git rev-parse --show-toplevel | str trim)
   let known = [
     "claude-desktop" "chrome-remote-desktop" "ollama"
-    "goose-desktop" "opencode-desktop" "github-copilot-app" "browseros"
+    "goose-desktop" "opencode-desktop" "github-copilot-app"
+    "adguardvpn-cli" "browseros"
   ]
   let targets = if $package == null {
     $known
@@ -193,6 +201,11 @@ def main [package?: string, --check] {
       "github-copilot-app" => (up-github "github-copilot-app" "github/app" {|v|
         $"https://github.com/github/app/releases/download/v($v)/GitHub-Copilot-linux-x64.deb"
       } $check)
+      # Tags are "v1.7.12-release" but the version string is "1.7.12", so the
+      # suffix is stripped for comparison and re-added in the download URL.
+      "adguardvpn-cli" => (up-github "adguardvpn-cli" "AdguardTeam/AdGuardVPNCLI" {|v|
+        $"https://github.com/AdguardTeam/AdGuardVPNCLI/releases/download/v($v)-release/adguardvpn-cli-($v)-linux-x86_64.tar.gz"
+      } $check '^v[0-9].*-release$' '-release')
       "browseros" => (up-browseros $check)
     }
   })

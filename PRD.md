@@ -851,6 +851,8 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **DNS & Services:** dnsmasq, atftp, adguardhome
 
+**VPN:** adguardvpn-cli (vendored static binary, `pkgs/adguardvpn-cli/` — not in nixpkgs; distinct from `adguardhome`, which is a DNS blocker. Unfree. TUN mode requires privileges and overrides systemd-resolved's DoT/DNSSEC resolver; SOCKS mode does not.)
+
 ### 11.6 Multimedia (`modules/packages/multimedia.nix`)
 
 **Video Players:** mpv, vlc, cosmic-player (Rust)

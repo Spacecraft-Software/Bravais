@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **AdGuard VPN CLI** (`pkgs/adguardvpn-cli/`, wired into
+  `modules/packages/networking.nix`) — the inventory in `Packages.md` has
+  listed it since the v0 rewrite, but it was never installed, and the note
+  filing it under "available in nixpkgs" was wrong: neither 26.05 nor
+  nixos-unstable package it. They ship `adguardhome` (a network-wide DNS
+  blocker) and `adguardian` (a TUI for that), which are different products
+  from the VPN client. So the official release tarball is vendored.
+  - Unlike every other vendored binary here, this one needs **no
+    `autoPatchelfHook` and no `buildInputs`** — upstream ships a fully static
+    ELF, so it runs unmodified on NixOS. The derivation is an unpack plus two
+    `install` calls. `dontStrip` is set so the shipped detached signature keeps
+    matching the binary, and an `installCheckPhase` runs `--version` inside the
+    sandbox (under a scratch `HOME`, since first run creates a data directory)
+    to prove the static claim at build time rather than at first use.
+  - Unfree (proprietary AdGuard EULA); `allowUnfree` is already set in
+    `modules/core/nix.nix`, so no gate change was needed.
+  - **TUN mode conflicts with `modules/core/dns.nix`.** It opens `/dev/net/tun`
+    and rewrites `/etc/resolv.conf`, which systemd-resolved owns here while
+    running DNS-over-TLS + DNSSEC — so a TUN connection displaces that
+    encrypted resolver. `adguardvpn-cli config set-mode SOCKS` needs no
+    privileges and leaves resolved alone. TUN mode needs `sudo`, or a
+    `security.wrappers` entry granting `cap_net_admin`, because a store path
+    cannot carry file capabilities.
+  - The built-in `update` / `check-update` subcommands cannot write to the
+    read-only store. `pkgs/update-vendored.nu` gains an eighth entry instead;
+    its `up-github` helper grew optional `tag_pattern` / `strip_suffix`
+    parameters because upstream tags read `v1.7.12-release` while the version
+    string is `1.7.12`. Existing callers are unaffected — both parameters
+    default to the previous behaviour.
+
 - **`mcpctl` is now a declared flake input** — `mcp-servers`
   (`git+file:///spacecraft-software/mcp-servers`), installed into
   `home.packages`. It was previously installed imperatively via

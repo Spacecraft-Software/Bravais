@@ -207,6 +207,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install download managers (aria2, uget)
 - [✓] Install clipboard tools (wl-clipboard, wl-clipboard-rs)
 - [✓] Install DNS & services (dnsmasq, atftp, adguardhome)
+- [✓] Install AdGuard VPN CLI — a different product from `adguardhome` (DNS blocker) and absent from nixpkgs on both channels, so the official release tarball is vendored (`pkgs/adguardvpn-cli/`). Upstream ships a **fully static** ELF, so unlike the other vendored binaries it needs no `autoPatchelfHook` and no `buildInputs` — just `install -Dm755` plus the bash completion. Unfree (AdGuard EULA). TUN mode wants `/dev/net/tun` + `/etc/resolv.conf`, which collides with the systemd-resolved DoT/DNSSEC setup in `modules/core/dns.nix`; SOCKS mode is unprivileged and leaves resolved alone. Bump via `nu pkgs/update-vendored.nu adguardvpn-cli` (upstream tags are `vX.Y.Z-release`, so the updater strips the suffix).
 
 ### multimedia.nix
 
