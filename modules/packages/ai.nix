@@ -42,7 +42,7 @@
         # claude-code is currently installed out-of-band via the official
         # installer; the unstablePkgs entry below is commented out. See the
         # block under `with unstablePkgs;` for re-enabling.
-        # Ollama moved to modules/services/ollama.nix (official prebuilt 0.31.1 —
+        # Ollama moved to modules/services/ollama.nix (official prebuilt —
         # nixpkgs' 0.24.0 is too old for current models).
       ])
       # bravais-mcp: locally packaged first-party MCP utility

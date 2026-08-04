@@ -69,11 +69,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "claude-desktop";
-  version = "1.18286.0";
+  version = "1.24012.11";
 
   src = fetchurl {
     url = "https://downloads.claude.ai/claude-desktop/apt/stable/pool/main/c/claude-desktop/claude-desktop_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-jzFK0agKq1JxGo6qvAaq5I+zQfCt6koNcmTbXKudBTY=";
+    hash = "sha256-mcS89eP30OxEpJ+/JNfWWfLqRuKcfsYcd8cphSL1fnY=";
   };
 
   nativeBuildInputs = [
@@ -159,8 +159,13 @@ stdenv.mkDerivation (finalAttrs: {
     mkdir -p $out/lib $out/bin $out/share
     cp -r usr/lib/claude-desktop $out/lib/
     cp -r usr/share/icons $out/share/
-    install -Dm644 usr/share/applications/claude-desktop.desktop \
-      $out/share/applications/claude-desktop.desktop
+    # Installed by glob under whatever name upstream ships. 1.24012.11 renamed
+    # this from claude-desktop.desktop to the reverse-DNS app ID
+    # com.anthropic.Claude.desktop (matching StartupWMClass so docks group
+    # windows correctly), which broke the previously hardcoded path. Nothing in
+    # this repo references the entry by filename, so the glob keeps the next
+    # rename from breaking the build too.
+    install -Dm644 -t $out/share/applications usr/share/applications/*.desktop
 
     runHook postInstall
   '';

@@ -1045,7 +1045,7 @@ runtime = "runc"
 
 Module `modules/services/ollama.nix` — toggle `steelbore.services.ollama.enable` (on in `hosts/common.nix`).
 
-nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-reject that). `pkgs/ollama/` repackages Ollama's **official prebuilt** Linux binary (pinned, currently **0.31.1**): `zstd` + `tar` extract, `autoPatchelfHook`, with the ~2 GB CUDA (`cuda_v12`/`cuda_v13`) + Vulkan runners **stripped** — the ThinkPad has no NVIDIA GPU, leaving the binary + CPU `libggml-cpu-*` runners (~66 MB). Runs via the stock `services.ollama` module (daemon on `127.0.0.1:11434` as the `ollama` user; `ollama` client on PATH). Bump per update with `nu pkgs/update-vendored.nu ollama` (reads GitHub releases, prefetches, rewrites `version` + `src.hash`, builds; it doesn't self-update here).
+nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-reject that). `pkgs/ollama/` repackages Ollama's **official prebuilt** Linux binary (version pinned in `pkgs/ollama/package.nix` — the single source of truth, deliberately not restated here): `zstd` + `tar` extract, `autoPatchelfHook`, with the ~2 GB CUDA (`cuda_v12`/`cuda_v13`) + Vulkan runners **stripped** — the ThinkPad has no NVIDIA GPU, leaving the binary + CPU `libggml-cpu-*` runners (~66 MB). Runs via the stock `services.ollama` module (daemon on `127.0.0.1:11434` as the `ollama` user; `ollama` client on PATH). Bump per update with `nu pkgs/update-vendored.nu ollama` (reads GitHub releases, prefetches, rewrites `version` + `src.hash`, builds; it doesn't self-update here).
 
 ---
 

@@ -75,7 +75,7 @@
 
     # Services
     services.podman.enable = true;
-    services.ollama.enable = true; # local LLM server (official prebuilt 0.31.1, CPU-only)
+    services.ollama.enable = true; # local LLM server (official prebuilt, CPU-only — version pinned in pkgs/ollama/)
 
     # Compatibility layers
     compat.appimage.enable = true;

@@ -9,7 +9,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`pkgs/update-vendored.nu` no longer abandons the run on the first
+  failure.** `nix build` raising inside `update-one` propagated out through
+  the `each` in `main`, so one broken package silently skipped every package
+  after it in the list. This was not theoretical: claude-desktop 1.24012.11
+  failed to build, and the other six packages were never attempted — the run
+  looked like it had simply finished.
+  - `nix build` is now `try { … ; true } catch { false }`, reporting
+    `action: "build failed"` rather than raising.
+  - Each package's dispatch in `main` is wrapped in its own `try`/`catch`, so
+    an upstream 404, a moved release asset, or a prefetch timeout costs that
+    one package instead of the rest of the list (`action: "error: …"`).
+  - Failures are re-listed in a summary block after the table, because a bad
+    row is easy to miss in an eight-row summary.
+  - On a build failure the version/hash rewrite is deliberately **left in
+    place**: the bump is nearly always correct and the packaging is what needs
+    fixing, so the modified file is the starting point for that fix. The
+    summary says so and points at `git diff`.
+  - The script still exits zero; `rebuild`'s monthly `--check` nag depends on
+    that. Revisit if this is ever wired into CI.
+
+- **claude-desktop 1.24012.11 build failure.** Upstream renamed the desktop
+  entry from `claude-desktop.desktop` to the reverse-DNS app ID
+  `com.anthropic.Claude.desktop` (matching `StartupWMClass` so docks group
+  windows correctly), and `installPhase` hardcoded the old path. The binary,
+  icons and `Exec=` are unchanged. Now installed by glob
+  (`install -Dm644 -t $out/share/applications usr/share/applications/*.desktop`)
+  rather than re-hardcoding the new name, so the next rename cannot break the
+  build either — nothing in this repo refers to the entry by filename.
+
+- **Ollama's pinned version is no longer restated in five places.** The
+  0.31.1 → 0.32.5 bump orphaned hardcoded version strings in
+  `modules/services/ollama.nix`, `hosts/common.nix`, `modules/packages/ai.nix`,
+  `PRD.md` and `TODO.md`. Rewritten to point at `pkgs/ollama/package.nix` as
+  the single source of truth instead of naming a version that goes stale on
+  every bump.
+
+### Changed
+
+- **Vendored binaries bumped** — ollama 0.31.1 → 0.32.5, goose-desktop
+  1.43.0 → 1.45.0, opencode-desktop 1.18.4 → 1.18.12, github-copilot-app
+  1.0.9 → 1.1.3, browseros 0.46.0 → 0.47.18, claude-desktop 1.18286.0 →
+  1.24012.11. chrome-remote-desktop and adguardvpn-cli were already current.
+  All build; the `bravais-thinkpad` toplevel builds with them.
+
 ### Added
+
+- **Alpaca (`com.jeffser.Alpaca`, Flathub)** — GTK4/libadwaita GUI client for
+  Ollama, GPL-3.0-or-later. It was already present in
+  `modules/packages/flatpak.nix` but commented out under a note reading
+  "DISABLED with Ollama", which had gone stale: the Ollama service is enabled
+  again (`hosts/common.nix`, `steelbore.services.ollama.enable`). Flatpak
+  rather than nixpkgs per the delivery policy — a sandbox-friendly GTK app
+  Flathub ships ahead of the nixpkgs copy.
+  - Operational note recorded in the module: Alpaca can manage its **own**
+    bundled Ollama instance, but this host already runs one as a system
+    service on `127.0.0.1:11434`. Point Alpaca at that instance rather than
+    letting it start a second one — two servers compete for the same models
+    and RAM.
 
 - **AdGuard VPN CLI** (`pkgs/adguardvpn-cli/`, wired into
   `modules/packages/networking.nix`) — the inventory in `Packages.md` has

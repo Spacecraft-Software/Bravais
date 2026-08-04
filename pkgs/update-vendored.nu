@@ -90,7 +90,21 @@ def update-one [
   rewrite $file (do $pairs)
   if $attr != null {
     print $"building .#($attr) …"
-    nix build --no-link $".#($attr)"
+    # A failed build must NOT abort the run. `nix build` raising here used to
+    # kill the whole `each` in main, so one broken package silently skipped
+    # every package after it — which is exactly what happened on 2026-08-04,
+    # when claude-desktop 1.24012.11 renamed its .desktop entry and the other
+    # six were never attempted. Record the failure and carry on.
+    #
+    # The rewrite above has already landed at this point, and it is left in
+    # place deliberately: the version/hash bump is nearly always correct and
+    # the *packaging* is what needs fixing, so the modified file is the
+    # starting point for that fix. `build failed` in the table means "file
+    # modified, needs work" — check `git diff`.
+    let built = (try { nix build --no-link $".#($attr)"; true } catch { false })
+    if not $built {
+      return {package: $pkg, current: $current, latest: $latest, action: "build failed"}
+    }
   }
   {package: $pkg, current: $current, latest: $latest, action: "updated"}
 }
@@ -183,7 +197,12 @@ def main [package?: string, --check] {
   }
   # Collect before returning so the summary prints as one table (streaming
   # would split it around the slower network calls).
+  #
+  # Each package is isolated in its own try/catch so ANY failure — an upstream
+  # API 404, a moved release asset, a prefetch timeout, a broken build — costs
+  # you that one package instead of every package after it in the list.
   let results = ($targets | each {|t|
+    try {
     match $t {
       "claude-desktop" => (up-claude $check)
       "chrome-remote-desktop" => (up-crd $check)
@@ -208,6 +227,21 @@ def main [package?: string, --check] {
       } $check '^v[0-9].*-release$' '-release')
       "browseros" => (up-browseros $check)
     }
+    } catch {|err|
+      {package: $t, current: "?", latest: "?", action: $"error: ($err.msg)"}
+    }
   })
+
+  # Surface problems after the table rather than leaving them to be spotted in
+  # a column — a bad row is easy to miss in an eight-row summary.
+  let failed = ($results | where {|r| $r.action == "build failed" or ($r.action | str starts-with "error:") })
+  if not ($failed | is-empty) {
+    print ""
+    print $"($failed | length) of ($results | length) package\(s\) need attention:"
+    for f in $failed {
+      print $"  ($f.package): ($f.action)"
+    }
+    print "Files may already carry the new version/hash — review with `git diff`."
+  }
   $results
 }

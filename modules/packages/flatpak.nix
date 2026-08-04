@@ -198,11 +198,22 @@
       # delivery; it inherits the generated Konsole Steelbore profile.
 
       # ── AI ─────────────────────────────────────────────────────────────────
-      # Alpaca (Ollama GUI client) — DISABLED with Ollama; re-enable by uncommenting.
-      # {
-      #   appId = "com.jeffser.Alpaca";
-      #   origin = "flathub";
-      # }
+      # Alpaca — GTK4/libadwaita GUI client for Ollama (GPL-3.0-or-later).
+      # Re-enabled now that the Ollama service is back on (hosts/common.nix,
+      # `steelbore.services.ollama.enable`); the old "DISABLED with Ollama"
+      # note predated that. Flatpak rather than nixpkgs per the delivery
+      # policy above — it is a sandbox-friendly GTK app that Flathub ships
+      # ahead of the nixpkgs copy.
+      #
+      # Alpaca can manage its own bundled Ollama instance, but this host
+      # already runs one as a system service on the default 127.0.0.1:11434.
+      # Point Alpaca at that (Preferences → Instances → add a remote/local
+      # instance at http://127.0.0.1:11434) rather than letting it start a
+      # second copy — two servers would compete for the same models and RAM.
+      {
+        appId = "com.jeffser.Alpaca";
+        origin = "flathub";
+      }
 
       # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
       # ── Gaming ─────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 # Steelbore Bravais — Ollama local LLM server (official prebuilt, CPU-only)
 #
 # nixpkgs' ollama is far behind upstream (stable 0.24.0), and current models
-# 412-reject it. Run the official prebuilt (pkgs/ollama/, pinned 0.31.1) via the
+# 412-reject it. Run the official prebuilt (pkgs/ollama/, version pinned there) via the
 # stock services.ollama module. CPU-only — the prebuilt's CUDA/Vulkan runners are
 # stripped in the package, so no `acceleration` setting is needed.
 {
@@ -18,7 +18,7 @@ let
 in
 {
   options.steelbore.services.ollama = {
-    enable = lib.mkEnableOption "Ollama local LLM server (official prebuilt 0.31.1, CPU-only)";
+    enable = lib.mkEnableOption "Ollama local LLM server (official prebuilt, CPU-only — version pinned in pkgs/ollama/)";
   };
 
   config = lib.mkIf cfg.enable {
