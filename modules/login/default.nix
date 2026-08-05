@@ -284,6 +284,17 @@ in
     };
   };
 
+  # Pin the default session. Required because we enable several desktops at
+  # once and more than one upstream module now claims this option at the same
+  # priority: plasma6.nix sets `mkDefault "plasma"` and niri.nix (added on
+  # nixos-unstable) sets `mkDefault "niri"`, which collide with
+  # "conflicting definition values" and fail evaluation. A plain definition
+  # (priority 100) outranks both mkDefaults — no mkForce needed. Niri is the
+  # primary session here. tuigreet itself reads `--sessions`, not this option,
+  # and `--remember-session` still wins for the returning user; this only
+  # settles the module-system conflict and the sessionNames assertion.
+  services.displayManager.defaultSession = "niri";
+
   # Ensure session packages are registered.
   # GNOME sessions are registered automatically via services.desktopManager.gnome.enable.
   # LeftWM is registered via our own leftwm-xsession (NOT

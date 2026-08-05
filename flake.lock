@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785541868,
-        "narHash": "sha256-mcBE9G6k7VWe5odc4lSlswKb73vPQtYukB3tPRKbfCc=",
+        "lastModified": 1785923411,
+        "narHash": "sha256-og5+223huh6MF7hSZ10nIMuBpviGAjQ4IgwKSAYDF4I=",
         "owner": "Spacecraft-Software",
         "repo": "Construct",
-        "rev": "e2033bd1739055d74b26d5d8273eb5bfcfc8cd59",
+        "rev": "763d07ebab10a2a79fa5568631209a47d6c11a2d",
         "type": "github"
       },
       "original": {
@@ -126,11 +126,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785531816,
-        "narHash": "sha256-vkMnV0JIyw+g/NmcfoajlGaAO+9a0ezia+FZohQJrik=",
+        "lastModified": 1785958398,
+        "narHash": "sha256-5r/JgsoNMTx+qIh83WkxpujEKBR7PF5ssnh5vYCuSAw=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "bf9ce9fec78f95f374e8dd3b503863a3ec128ebe",
+        "rev": "a7c70cc290290f373f50cd820403833d250459ac",
         "type": "github"
       },
       "original": {
@@ -212,11 +212,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1785692966,
-        "narHash": "sha256-vUfIeBEfpbAfZ5zjgIkYk7eHBeVfCYVjLbWnMkseYnk=",
+        "lastModified": 1785828668,
+        "narHash": "sha256-8fsyqeO+mJqvIzeO4xIpgJe/f7MTbbVTEC6RT6WSXNs=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "643809054d65fdd466a63e3155b8c498cb483c04",
+        "rev": "e72e4f299401a3689d4b3d5fc6496b11db7064eb",
         "type": "github"
       },
       "original": {
