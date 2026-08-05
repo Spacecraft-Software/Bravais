@@ -101,7 +101,7 @@
       nil,
       mcp-servers,
       ...
-    } @ inputs:
+    }@inputs:
     let
       system = "x86_64-linux";
 
@@ -119,15 +119,20 @@
       # replaces the lazy thunk before it's ever forced, so the original
       # nixfmt-rfc-style reference is dead code and the warning never fires.
       nil = inputs.nil // {
-        packages = builtins.mapAttrs (sys: pkgs: pkgs // (builtins.mapAttrs (name: pkg:
-          if name == "default" || name == "nil" then
-            pkg.overrideAttrs (oldAttrs: {
-              doCheck = false;
-              CFG_DEFAULT_FORMATTER = "${nixpkgs.legacyPackages.${sys}.nixfmt}/bin/nixfmt";
-            })
-          else
-            pkg
-        ) pkgs)) inputs.nil.packages;
+        packages = builtins.mapAttrs (
+          sys: pkgs:
+          pkgs
+          // (builtins.mapAttrs (
+            name: pkg:
+            if name == "default" || name == "nil" then
+              pkg.overrideAttrs (oldAttrs: {
+                doCheck = false;
+                CFG_DEFAULT_FORMATTER = "${nixpkgs.legacyPackages.${sys}.nixfmt}/bin/nixfmt";
+              })
+            else
+              pkg
+          ) pkgs)
+        ) inputs.nil.packages;
       };
 
       # ── Steelbore palette family (Standard §11) ───────────────────────────
@@ -169,6 +174,36 @@
       # nixosConfigurations and the registry the `theme` command reads.
       allThemes = (mkPalette defaultPalette).meta.family;
 
+      # ── Default applications ──────────────────────────────────────────────
+      # Which program handles what. Same shape as the palette family above and
+      # for the same reason: the active choice lives in ./default-apps.nix so
+      # the one word that changes your editor is not buried in build
+      # machinery, and no consumer ever names an application.
+      #
+      # Drop-ins live in ./apps/<slug>.nix and may shadow a built-in entry —
+      # that is the whole integration cost of an app nixpkgs does not have.
+      defaultApps = import ./default-apps.nix;
+
+      # ./apps/*.nix -> { <slug> = <definition>; }. The directory is optional.
+      localApps =
+        let
+          dir = ./apps;
+          entries = if builtins.pathExists dir then builtins.readDir dir else { };
+          isApp = name: type: type == "regular" && nixpkgs.lib.hasSuffix ".nix" name;
+          slugOf = name: builtins.substring 0 (builtins.stringLength name - 4) name;
+        in
+        builtins.listToAttrs (
+          map (name: {
+            name = slugOf name;
+            value = import (dir + "/${name}");
+          }) (builtins.attrNames (nixpkgs.lib.filterAttrs isApp entries))
+        );
+
+      steelboreApps = import ./lib/default-apps.nix {
+        selection = defaultApps;
+        inherit localApps;
+      };
+
       # Primary (single) user of every machine — stated once (elegance plan
       # 3.4) and threaded via specialArgs/extraSpecialArgs. The users/mj/
       # directory name is a stable path, not a duplicate of this fact.
@@ -180,9 +215,11 @@
       # `warnOnInstantiate` during any access; the overlay replaces it with a
       # direct pointer so the warning never fires from devShell / formatter
       # evaluation.
-      devPkgs = nixpkgs.legacyPackages.${system}.extend (_final: prev: {
-        nixfmt-rfc-style = prev.nixfmt;
-      });
+      devPkgs = nixpkgs.legacyPackages.${system}.extend (
+        _final: prev: {
+          nixfmt-rfc-style = prev.nixfmt;
+        }
+      );
 
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
@@ -251,6 +288,7 @@
           specialArgs = {
             inherit
               steelborePalette
+              steelboreApps
               primaryUser
               gitway
               construct
@@ -292,6 +330,7 @@
               home-manager.extraSpecialArgs = {
                 inherit
                   steelborePalette
+                  steelboreApps
                   primaryUser
                   gitway
                   construct
@@ -416,6 +455,18 @@
                 themes = map entry allThemes;
               }
             );
+
+          # ── Default-application registry ───────────────────────────────────
+          # Every handler role and every registered app, as JSON. What the
+          # `app` command reads. `steelboreApps.registry` is deliberately
+          # pkgs-free — the `package` / `exec` / `dbusExec` fields are
+          # functions of pkgs and never reach here — so `app list` costs an
+          # evaluation of one builtins-only library, not of a system config.
+          #
+          #   nix build --no-link --print-out-paths .#app-registry
+          app-registry = nixpkgs.legacyPackages.${system}.writeText "steelbore-app-registry.json" (
+            builtins.toJSON steelboreApps.registry
+          );
         };
 
       # ── Developer tooling ────────────────────────────────────────────────

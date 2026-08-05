@@ -417,18 +417,14 @@ in
     $DRY_RUN_CMD install -Dm644 ${zellijConfigFile} "$HOME/.config/zellij/config.kdl"
   '';
 
-  # Default GUI file manager (COSMIC Files) and text editor (COSMIC Text
-  # Editor). A Home Manager option, not per-DE — it writes
-  # ~/.config/mimeapps.list, read by desktop-agnostic xdg-open/xdg-mime
-  # regardless of which of the five session DEs is active. Independent of
-  # EDITOR/VISUAL=msedit (shell.nix), which is the terminal editor.
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "inode/directory" = "com.system76.CosmicFiles.desktop";
-      "text/plain" = "com.system76.CosmicEdit.desktop";
-    };
-  };
+  # The file-manager and text-editor MIME bindings, and the FileManager1 D-Bus
+  # shadow that used to live in this file, moved to ./default-apps.nix:
+  #
+  #   app set editor <slug>        app candidates editor
+  #   app set fileManager <slug>
+  #
+  # `editor` (what a double-click opens) stays deliberately separate from
+  # `termEditor` (what $EDITOR runs) — they are different questions.
 
   xdg.configFile = {
     "containers/containers.conf".text = ''
@@ -451,27 +447,6 @@ in
   };
 
   xdg.dataFile = {
-    # ═══════════════════════════════════════════════════════════════════════════
-    # D-BUS — org.freedesktop.FileManager1 → COSMIC Files
-    # "Show in folder" in Chromium apps (Opera, Chrome, …) — and the portal's
-    # OpenURI.OpenDirectory fallback — resolve the file manager by D-Bus
-    # activation of org.freedesktop.FileManager1, NOT via the inode/directory
-    # mimeapps default above. The GNOME module ships Nautilus's activation file
-    # in the system profile, so Nautilus opened instead of COSMIC Files.
-    # dbus-broker scans $XDG_DATA_HOME/dbus-1/services before XDG_DATA_DIRS
-    # (first file claiming a name wins), so this user-level file shadows
-    # Nautilus's. cosmic-files-applet claims the bus name and spawns
-    # `cosmic-files <uri>` on ShowItems/ShowFolders; it also renders COSMIC
-    # desktop icons for ~/Desktop as a transparent layer — invisible while
-    # ~/Desktop stays empty. Reload dbus-broker (or re-login) after switch:
-    #   systemctl --user reload dbus-broker.service
-    # ═══════════════════════════════════════════════════════════════════════════
-    "dbus-1/services/org.freedesktop.FileManager1.service".text = ''
-      [D-BUS Service]
-      Name=org.freedesktop.FileManager1
-      Exec=${pkgs.cosmic-files}/bin/cosmic-files-applet
-    '';
-
     # ═══════════════════════════════════════════════════════════════════════════
     # FLATPAK — VSCode per-app override
     # User-level override (wins over system/NixOS overrides). PATH MUST keep

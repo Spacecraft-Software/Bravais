@@ -6,6 +6,7 @@
   pkgs,
   unstablePkgs,
   nil,
+  steelboreApps,
   ...
 }:
 
@@ -86,7 +87,9 @@
       enable = true;
       config = {
         init.defaultBranch = "main";
-        core.editor = "${pkgs.msedit}/bin/edit";
+        # Same registry entry as $EDITOR (users/mj/shell.nix), so `git commit`
+        # and the shell agree. Change: app set termEditor <slug>
+        core.editor = steelboreApps.roles.termEditor.exec pkgs;
         color.ui = true;
       };
     };

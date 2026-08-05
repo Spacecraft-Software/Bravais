@@ -5,11 +5,18 @@
   lib,
   pkgs,
   steelborePalette,
+  steelboreApps,
   mcp-servers,
   ...
 }:
 
 let
+  # Handler roles (lib/default-apps.nix). `termEditor` is what $EDITOR runs;
+  # `editor` — deliberately a separate role — is what a double-click opens.
+  # Selection is one word per role in the repo-root default-apps.nix.
+  termEditor = steelboreApps.roles.termEditor.exec pkgs;
+  browserCmd = steelboreApps.roles.browser.exec pkgs;
+
   # ── Shell-init single sources (CLAUDE.md "PATH in home.nix") ─────────────
   # Out-of-band tool dirs (self-updating CLIs installed outside Nix). Stated
   # ONCE here; rendered per shell below. APPENDED, never prepended, so Nix
@@ -45,9 +52,11 @@ in
 {
   # Session variables
   home.sessionVariables = {
-    EDITOR = "${pkgs.msedit}/bin/edit";
-    VISUAL = "${pkgs.msedit}/bin/edit";
-    BROWSER = "flatpak run com.google.Chrome"; # default browser — see xdg.mimeApps below to change
+    EDITOR = termEditor;
+    VISUAL = termEditor;
+    # Same registry entry the browser's MIME bindings come from, so $BROWSER
+    # and mimeapps.list can no longer disagree. Change: app set browser <slug>
+    BROWSER = browserCmd;
     STEELBORE_THEME = "true";
     NIXPKGS_ALLOW_UNFREE = "1";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
@@ -412,7 +421,7 @@ in
         alias network-diag = gping google.com
         alias top-processes = bottom
         alias disk-telemetry = yazi
-        alias edit = ${pkgs.msedit}/bin/edit
+        alias edit = ${termEditor}
 
         # Project Steelbore Identity
         def steelbore [] {
@@ -548,6 +557,106 @@ in
           }
         }
 
+        # ── app ───────────────────────────────────────────────────────────
+        # Which program handles what. Reads the resolved registry from the
+        # `app-registry` flake output, which evaluates only the builtins-only
+        # default-apps library — never a system config, so this is instant.
+        #
+        #   app list                  every role and its active app
+        #   app show [role]           one role, with every MIME type it binds
+        #   app candidates <role>     every app that can fill a role
+        #   app set <role> <slug>     rewrite default-apps.nix (then rebuild)
+        def "app registry" [] {
+          let repo = "/spacecraft-software/bravais"
+          let out = (do { ^nix build --no-link --print-out-paths $"($repo)#app-registry" } | complete)
+          if $out.exit_code != 0 {
+            print $"(ansi red)could not evaluate the app registry:(ansi reset)"
+            print $out.stderr
+            return null
+          }
+          open ($out.stdout | str trim)
+        }
+
+        def app [action?: string, a?: string, b?: string] {
+          let reg = (app registry)
+          if $reg == null { return }
+          let roles = ($reg.roles | transpose role info)
+          let roleList = ($roles.role | str join ", ")
+
+          # Printed, not returned: Nushell strips ANSI inside table cells, so
+          # the active marks would vanish. `app registry` is the pipeable view.
+          match (if $action == null { "list" } else { $action }) {
+            "list" => {
+              print $"(ansi dark_gray)change with: app set <role> <slug>   options: app candidates <role>(ansi reset)"
+              for r in $roles {
+                let id = (if ($r.info.desktopId | is-empty) { "—" } else { $r.info.desktopId })
+                let n = ($r.info.mimeTypes | length)
+                let types = (if $n == 0 { "env vars only" } else if $n == 1 { "1 MIME type" } else { $"($n) MIME types" })
+                print $"  (ansi cyan)($r.role | fill -a l -w 12)(ansi reset) (ansi green)($r.info.slug | fill -a l -w 20)(ansi reset) ($id | fill -a l -w 34) (ansi dark_gray)($types)(ansi reset)"
+              }
+            }
+            "show" => {
+              let want = (if $a == null { "editor" } else { $a })
+              if not ($want in $roles.role) {
+                print $"(ansi red)unknown role '($want)' — try: ($roleList)(ansi reset)"; return
+              }
+              let i = ($reg.roles | get $want)
+              print $"(ansi cyan)($want)(ansi reset)  ($i.description)"
+              print $"  app       (ansi green)($i.name)(ansi reset)  (ansi dark_gray)[($i.slug), ($i.source)](ansi reset)"
+              if not ($i.desktopId | is-empty) { print $"  desktop   ($i.desktopId)" }
+              if ($i.mimeTypes | is-empty) {
+                print $"  (ansi dark_gray)binds no MIME types — this role drives environment variables only(ansi reset)"
+              } else {
+                print $"  binds     ($i.mimeTypes | length) MIME types"
+                for m in ($i.mimeTypes | sort) { print $"            (ansi dark_gray)($m)(ansi reset)" }
+              }
+            }
+            "candidates" => {
+              if $a == null {
+                print $"(ansi red)app candidates needs a role — try: ($roleList)(ansi reset)"; return
+              }
+              if not ($a in $roles.role) {
+                print $"(ansi red)unknown role '($a)' — try: ($roleList)(ansi reset)"; return
+              }
+              let active = ($reg.roles | get $a | get slug)
+              print $"(ansi dark_gray)* = active(ansi reset)"
+              for s in ($reg.roles | get $a | get candidates) {
+                let e = ($reg.catalog | get $s)
+                let mark = (if $s == $active { $"(ansi green)*(ansi reset)" } else { " " })
+                let id = (if ($e.desktopId | is-empty) { "—" } else { $e.desktopId })
+                print $"($mark) ($s | fill -a l -w 20) ($e.name | fill -a l -w 22) (ansi dark_gray)($id | fill -a l -w 34) ($e.source)(ansi reset)"
+              }
+            }
+            "set" => {
+              if ($a == null) or ($b == null) {
+                print $"(ansi red)app set needs a role and a slug — e.g. app set editor cosmic-edit(ansi reset)"
+                print $"(ansi dark_gray)roles: ($roleList)(ansi reset)"; return
+              }
+              if not ($a in $roles.role) {
+                print $"(ansi red)unknown role '($a)' — try: ($roleList)(ansi reset)"; return
+              }
+              let cand = ($reg.roles | get $a | get candidates)
+              if not ($b in $cand) {
+                print $"(ansi red)'($b)' cannot fill the role '($a)'(ansi reset)"
+                print $"(ansi dark_gray)candidates: ($cand | str join ', ')(ansi reset)"
+                print $"(ansi dark_gray)or add it: /spacecraft-software/bravais/apps/($b).nix — see apps/README.md(ansi reset)"
+                return
+              }
+              let cur = ($reg.roles | get $a | get slug)
+              if $b == $cur { print $"(ansi green)already active: ($a) = ($cur)(ansi reset)"; return }
+              let f = "/spacecraft-software/bravais/default-apps.nix"
+              # Anchored at the binding so the slug list in the file's comment
+              # block is never rewritten. This is why default-apps.nix does
+              # not align its `=` signs.
+              ^sd $'($a) = "($cur)"' $'($a) = "($b)"' $f
+              print $"(ansi green)default-apps.nix: ($a) ($cur) → ($b)(ansi reset)"
+              print $"run (ansi cyan)rebuild(ansi reset) to apply, or (ansi cyan)app set ($a) ($cur)(ansi reset) to undo"
+            }
+            "help" => { help app }
+            _ => { print $"(ansi red)unknown action '($action)' — try: list, show, candidates, set, help(ansi reset)" }
+          }
+        }
+
         # Full system rebuild for bravais-thinkpad: load the signing key, bump
         # the tracked flake inputs (construct == skills-sync; nixpkgs-unstable +
         # home-manager-unstable so unstablePkgs never lags stable — elegance
@@ -676,7 +785,7 @@ in
       alias sys-logs = journalctl -p 3 -xb
       alias top-processes = bottom
       alias disk-telemetry = yazi
-      alias edit = ${pkgs.msedit}/bin/edit
+      alias edit = ${termEditor}
     '';
   };
 }

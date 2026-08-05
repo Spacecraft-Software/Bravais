@@ -9,67 +9,15 @@
 }:
 
 {
-  # Default web browser.
+  # The browser and image-viewer MIME bindings that used to live here moved to
+  # ./default-apps.nix, where every handler role is decided in one place:
   #
-  # To change the default browser, edit BOTH of the following to point at the
-  # new app's `.desktop` id (find it under any of these dirs:
-  #   ~/.local/share/applications, /run/current-system/sw/share/applications,
-  #   ~/.local/share/flatpak/exports/share/applications — Flatpak ids look like
-  #   `com.google.Chrome.desktop`, `org.mozilla.firefox.desktop`):
+  #   app set browser <slug>       app candidates browser
+  #   app set imageViewer <slug>
   #
-  #   1. `xdg.mimeApps.defaultApplications` below — writes ~/.config/mimeapps.list,
-  #      the declarative source of truth consulted by xdg-open, Niri, and the
-  #      desktop portals. HM owns this file (conflicts backed up to
-  #      mimeapps.list.backup), so do NOT hand-edit it — change it here.
-  #   2. `BROWSER` in `home.sessionVariables` (shell.nix) — for CLI tools
-  #      that open URLs via $BROWSER. Verified to reach all four shells
-  #      (Nushell, Ion, Brush, Bash): the greetd session sources
-  #      hm-session-vars.sh at login, and every WM-spawned shell inherits it.
-  #
-  # After editing, `nixos-rebuild switch` makes both live. To set them
-  # immediately in an already-running session without a rebuild (optional —
-  # the rebuild re-asserts the same values, so this only avoids a relogin):
-  #   xdg-settings set default-web-browser com.google.Chrome.desktop
-  #   xdg-mime default com.google.Chrome.desktop x-scheme-handler/http
-  #   xdg-mime default com.google.Chrome.desktop x-scheme-handler/https
-  #   xdg-mime default com.google.Chrome.desktop text/html
-  # Verify with: xdg-settings get default-web-browser
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "text/html" = "com.google.Chrome.desktop";
-      "x-scheme-handler/http" = "com.google.Chrome.desktop";
-      "x-scheme-handler/https" = "com.google.Chrome.desktop";
-      "x-scheme-handler/about" = "com.google.Chrome.desktop";
-      "x-scheme-handler/unknown" = "com.google.Chrome.desktop";
-    }
-    # Default image viewer — oculante (Rust, GPU-accelerated, editing +
-    # RAW/PSD/EXR). All types below are declared in oculante.desktop's
-    # MimeType. genAttrs maps each → the same handler.
-    // (lib.genAttrs [
-      "image/png"
-      "image/jpeg"
-      "image/gif"
-      "image/webp"
-      "image/bmp"
-      "image/tiff"
-      "image/svg+xml"
-      "image/avif"
-      "image/heic"
-      "image/jxl"
-      "image/jp2"
-      "image/vnd.microsoft.icon"
-      "image/x-tga"
-      "image/x-exr"
-      "application/vnd.adobe.photoshop" # PSD
-      "image/x-adobe-dng" # RAW
-      "image/x-canon-cr2"
-      "image/x-nikon-nef"
-      "image/x-sony-arw"
-      "image/x-fuji-raf"
-    ] (_: "oculante.desktop"));
-  };
+  # $BROWSER (shell.nix) reads the same registry entry, so the two can no
+  # longer disagree. Handler choices are made in the repo-root
+  # default-apps.nix; the MIME lists live in lib/default-apps.nix.
 
   xdg.configFile = {
     # COSMIC's cosmic-settings-daemon overwrites HM's gtk-4.0/gtk.css

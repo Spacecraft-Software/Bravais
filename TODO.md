@@ -346,6 +346,18 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`home.nix`**: Configure dconf settings (Ptyxis profile, GNOME Console)
 - [✓] **`home.nix`**: Configure containers (`~/.config/containers/containers.conf`, runc default)
 
+### Default applications (`default-apps.nix` + `lib/default-apps.nix` + `apps/`)
+
+- [✓] **`lib/default-apps.nix`**: Five handler roles (`editor`, `browser`, `fileManager`, `imageViewer`, `termEditor`), each owning its MIME list; builtins-only so the registry never evaluates a system config
+- [✓] **`lib/default-apps.nix`**: Bind `application/x-zerosize` — an empty file's type, not a subclass of `text/plain`, which is why "New file" → double-click opened gedit
+- [✓] **`lib/default-apps.nix`**: 21-entry app catalog; eval-time errors for unknown slug, role mismatch, missing selection, malformed drop-in, and a MIME type claimed by two roles
+- [✓] **`default-apps.nix`**: Active handler per role, one word each (repo root, beside `theme.nix`)
+- [✓] **`apps/`**: Drop-in directory (filename = slug, shadows a built-in) + `apps/README.md` documenting every field
+- [✓] **`flake.nix`**: `steelboreApps` threaded via `specialArgs` + `extraSpecialArgs`; `app-registry` JSON output (pkgs-free)
+- [✓] **`users/mj/default-apps.nix`**: The only `xdg.mimeApps` block — absorbed the two that were split across `desktop-theme.nix` and `apps.nix`; carries `associations.added` and the `org.freedesktop.FileManager1` D-Bus shadow
+- [✓] **`shell.nix` / `development.nix`**: `$EDITOR`, `$VISUAL`, `$BROWSER`, both `edit` aliases and `git core.editor` read the registry — six hardcoded sites collapsed to one
+- [✓] **`shell.nix`**: `app list` / `show` / `candidates` / `set` Nushell command, mirroring `theme`
+
 ---
 
 ## Phase 9: Overlays (inline in `modules/core/nix.nix`)
@@ -411,7 +423,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 9. **xdg-desktop-portal routing under multi-DE**: With GNOME, COSMIC, Plasma all enabled, each DE's NixOS module registers its own portal backends via `xdg.portal.extraPortals` and `configPackages`. The active backend is selected per-session via `XDG_CURRENT_DESKTOP`. Bravais adds explicit `xdg.portal.config.<de>.default` routing in `modules/desktops/cosmic.nix`, `modules/desktops/gnome.nix`, and `modules/desktops/plasma.nix` so Screenshot/ScreenCast/FileChooser interfaces resolve deterministically per session — without it, dbus startup popups and PrtSc "server crash" can occur in COSMIC.
 
-10. **Unified `start-<de>` commands**: All desktops expose a `start-<de>` launcher (`start-cosmic`, `start-gnome`, `start-plasma`, `start-plasma-x11`, `start-niri`, `start-leftwm`). `start-cosmic` comes from upstream `pkgs.cosmic-session`; the rest are `writeShellScriptBin` wrappers in `modules/login/default.nix`. `start-leftwm` invokes `startx leftwm` for X11 from a TTY.
+10. **Empty files are `application/x-zerosize`, not `text/plain`** -- and it is not a subclass, so a `text/plain` default does not cascade. A file manager's "New file" produces exactly this, which is how COSMIC Files opened gedit (whose desktop entry claims `x-zerosize`; cosmic-edit's does not) while `text/plain` pointed at cosmic-edit. Fixed by making the handler *role* own the MIME list in `lib/default-apps.nix` instead of trusting each app's `MimeType=` line. Diagnose with `gio info -a standard::content-type <file>`; `xdg-mime query filetype` reports `text/plain` for an empty file and will mislead you. See `CLAUDE.md` constraint #22.
+
+11. **Unified `start-<de>` commands**: All desktops expose a `start-<de>` launcher (`start-cosmic`, `start-gnome`, `start-plasma`, `start-plasma-x11`, `start-niri`, `start-leftwm`). `start-cosmic` comes from upstream `pkgs.cosmic-session`; the rest are `writeShellScriptBin` wrappers in `modules/login/default.nix`. `start-leftwm` invokes `startx leftwm` for X11 from a TTY.
 
 ---
 

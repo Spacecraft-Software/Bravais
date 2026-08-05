@@ -10,6 +10,7 @@ version = 1
 [[annotations]]
 path = [
     "*.md",
+    "apps/*.md",
     "v0/**",
     "v0.zip",
     "*.docx",

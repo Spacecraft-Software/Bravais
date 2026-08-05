@@ -33,8 +33,12 @@ Bravais is a flake-based NixOS configuration implementing the Spacecraft Softwar
 bravais/
 +-- flake.nix                      # Flake entry point
 +-- flake.lock                     # Pinned dependencies
++-- default-apps.nix               # THE ACTIVE HANDLERS — one word per role (§2.6)
++-- apps/<slug>.nix                # App drop-ins (filename = slug); may shadow a built-in
 +-- lib/                           # Custom Nix helper functions
-|   +-- default.nix                # mkSpacecraftModule, color palette
+|   +-- palette.nix                # §11 palette family: slug -> role tokens (§2.2)
+|   +-- default-apps.nix           # handler roles -> MIME lists, app catalog, resolver (§2.6)
+|   +-- terminal-theme.nix         # terminal theme record + per-format emitters
 +-- hosts/                         # Machine-specific configurations
 |   +-- bravais/                   # Primary host
 |       +-- default.nix            # Host traits (boot, locale, user, toggles)
@@ -200,6 +204,54 @@ Adding a machine = drop a `hosts/<machine>/` directory + two output lines in `fl
 Shared host settings live in `hosts/common.nix`; each `hosts/<machine>/` imports it plus its
 own `hardware.nix` and pins `networking.hostName` + `steelbore.hardware.*` +
 `steelbore.platform.x86_64.marchLevel`.
+
+### 2.6 Default Applications
+
+Which program handles what is a registry, shaped like the palette family in §2.2
+and for the same reason: the active choice is one word, no consumer names an
+application, and switching is a single edit.
+
+```nix
+{ editor = "cosmic-edit"; browser = "chrome"; fileManager = "cosmic-files";
+  imageViewer = "oculante"; termEditor = "msedit"; }   # default-apps.nix
+```
+
+`lib/default-apps.nix` — builtins-only, like `lib/palette.nix`, so it never
+drags in a system config — defines five **handler roles** and resolves each to a
+catalog entry. `users/mj/default-apps.nix` is the only consumer, and holds the
+only `xdg.mimeApps` block in the tree.
+
+| Role | Drives |
+|---|---|
+| `editor` | 34 text MIME types — what double-clicking a text file opens |
+| `browser` | `text/html`, `application/xhtml+xml`, the four `x-scheme-handler/*`, and `$BROWSER` |
+| `fileManager` | `inode/directory` **and** the `org.freedesktop.FileManager1` D-Bus name, which "Show in folder" resolves instead |
+| `imageViewer` | 20 image types incl. PSD, EXR and four camera RAW formats |
+| `termEditor` | `$EDITOR`, `$VISUAL`, the `edit` alias in Nushell and Ion, `git core.editor`. Binds no MIME types |
+
+**The role owns the MIME list, not the application.** An application's own
+`MimeType=` line is not a reliable statement of what it can open:
+`com.system76.CosmicEdit.desktop` declares `text/plain` alone, while gedit
+declares `text/plain;application/x-zerosize;`. A zero-byte file — what a file
+manager's "New file" creates — is `application/x-zerosize`, which is *not* a
+subclass of `text/plain`, so a `text/plain` default does not cascade to it and
+the type fell through to desktop-entry cache ordering. Giving the role the
+complete list and binding it wholesale removes the whole class of hole. An entry
+may set `mimeTypes` to *narrow* the role's list where an app genuinely cannot
+open everything (`loupe`, `feh`), never to widen it.
+
+Selection errors fail at evaluation with a message naming the fix: an unknown
+slug, a slug whose role does not match, a role with no selection, a malformed
+drop-in, and a MIME type claimed by two roles are each a distinct error.
+
+Applications not in nixpkgs join through `apps/<slug>.nix` — filename is the
+slug, merged over the built-in catalog and free to shadow it, exactly as
+`themes/<slug>.nix` shadows a registered palette. A drop-in that supplies
+`package` installs itself while active, so adding a new editor is one file plus
+`app set editor <slug>`. The `app-registry` package output serialises every role
+and entry to JSON and is what the `app` command reads; it stays pkgs-free (the
+`package` / `exec` / `dbusExec` fields are functions of `pkgs`), so `app list` is
+instant.
 
 ---
 
@@ -859,7 +911,7 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Audio Players (Rust):** amberol, termusic, ncspot, psst, shortwave
 
-**Image Viewers (Rust):** oculante (default GUI viewer — bound to image MIME types via `xdg.mimeApps` in `users/mj/home.nix`), loupe, emulsion, viu (CLI)
+**Image Viewers (Rust):** oculante (the active `imageViewer` role — §2.6), loupe, emulsion, viu (CLI)
 
 **Audio Recognition:** mousai (Rust)
 

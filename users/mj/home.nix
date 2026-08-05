@@ -22,6 +22,9 @@
     ./niri.nix
     ./desktop-theme.nix
     ./apps.nix
+    # Which program handles what — the sole xdg.mimeApps block. Selection is
+    # one word per role in the repo-root default-apps.nix.
+    ./default-apps.nix
   ];
 
   # Construct skill hub — installs all cross-platform skills from
