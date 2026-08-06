@@ -22,6 +22,8 @@ path = [
     "flake.lock",
     "flakes/rapg/flake.lock",
     "pkgs/steelbore-audio-led/Cargo.lock",
+    "pkgs/steelbore-niri-unmax/Cargo.lock",
+    "pkgs/steelbore-niri-unmax/.gitignore",
     "bravais-mcp/Cargo.lock",
     "bravais-mcp/.gitignore",
     "home.nix",
@@ -46,14 +48,47 @@ precedence = "closest"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
+# A vendored skill whose PROSE quotes an SPDX tag. testing-compliance.md's
+# compliance table contains the cell
+#
+#   Lint: `rg -L 'SPDX-License-Identifier: GPL-3.0-or-later' src/` → must be empty
+#
+# and REUSE reads everything after the colon to end of line, so it parses
+# "GPL-3.0-or-later' src/` → must be empty | BLOCKER |" as the file's license
+# expression. That is invalid, and under the `closest` precedence above an
+# invalid in-file expression beats this file — hence "no licensing information".
+#
+# `override` rather than editing the file: it is a synced copy of the Construct
+# skill (pkgs/sync-skills.nu), so inserting REUSE-Ignore comments would drift
+# from upstream and be overwritten on the next sync. Construct solves the same
+# problem the same way, with `precedence = "override"` on its own tree.
+#
+# Scoped to the one path rather than all of .github/skills/** on purpose: a
+# blanket override would flatten microsoft-rust-guidelines' upstream
+# "GPL-3.0-or-later OR MIT" and credit the wrong holder, which is precisely what
+# the `closest` stanza above exists to prevent (Standard §4.2).
+[[annotations]]
+path = [".github/skills/spacecraft-cli-standard/references/testing-compliance.md"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
 # Hand-written sources carry SPDX-License-Identifier inline; this stanza
 # supplies the copyright holder for them (aggregate = merged with the
 # in-file license tag), avoiding a 50-file header churn.
+#
+# steelbore-niri-unmax/src/** is listed for the same reason as audio-led's.
+# It was passing `reuse lint` only by accident before: main.rs prints
+# "Copyright (C) 2026 …" in its --version output, and REUSE read that string
+# as the file's copyright notice. Covering it here makes it deliberate, so
+# rewording a println! cannot silently break compliance.
 [[annotations]]
 path = [
     "**/*.nix",
     "pkgs/steelbore-audio-led/src/**",
     "pkgs/steelbore-audio-led/Cargo.toml",
+    "pkgs/steelbore-niri-unmax/src/**",
+    "pkgs/steelbore-niri-unmax/Cargo.toml",
     "bravais-mcp/**/*.rs",
     "bravais-mcp/**/*.toml",
 ]

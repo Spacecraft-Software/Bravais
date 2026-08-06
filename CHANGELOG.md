@@ -9,7 +9,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The system theme is now declared to running applications** (Standard
+  §11.6.4, §11.6.5). `theme.nix` has re-themed this machine from one word for a
+  long time, but only at *build* time: every terminal, both bars, the TTY and
+  greetd get their colors baked into generated config, and
+  `modules/theme/default.nix` exported per-role hex and never the slug. A
+  program started afterwards could see individual colors and still not learn
+  which theme was active, nor whether a high-contrast or mono sibling was in
+  force. §11.6.5 makes closing that the OS's obligation.
+  - `modules/theme/declaration.nix` (new) — options under `steelbore.theme.*`,
+    rendering `/etc/steelbore/theme.toml`, exporting `SPACECRAFT_THEME`, and
+    installing the advisory registry at `/etc/steelbore/themes.json`.
+  - `environment.sessionVariables`, not `environment.variables`:
+    `/etc/set-environment` is sourced by login shells but not by systemd user
+    services or graphical `.desktop` launches, and §11.6.5 requires the export
+    to reach graphical sessions.
+  - The slug keeps exactly one source. `default.nix` sets
+    `steelbore.theme.active = mkDefault steelborePalette.meta.slug` rather than
+    re-importing `theme.nix`, so `theme try <slug>` — which deliberately builds
+    a palette the file does not name — stays correct for free.
+  - `lib/palette.nix` gains `meta.polarity`, `meta.pair` and a `resolution`
+    attrset. `steelbore.toml` carries `[resolution.*]` only from 3.2.0 and the
+    `construct` input is pinned, so the table is used when present and derived
+    from the canvas otherwise. Verified against the currently pinned
+    `construct`, which predates 3.2.0: the fallback yields identical answers, so
+    nothing breaks in the window before `nix flake update construct`.
+  - `flake.nix` hoists the theme registry into the outer `let` so `theme list`
+    and `/etc/steelbore/themes.json` are one definition, and adds per-entry
+    `polarity`/`pair` plus top-level `light`/`dark`.
+  - `theme now <slug>` writes the per-user declaration, so §11.6-aware
+    applications switch with **no rebuild** (§11.6.5's closing SHOULD).
+    `theme now --clear` drops it.
+
 ### Fixed
+
+- **The desktop was unconditionally dark regardless of the declared palette**
+  (Standard §11.6.5). `color-scheme`, `gtk-theme`, `icon-theme` and the Qt style
+  were hard-coded to their dark variants in `users/mj/desktop-theme.nix`, which
+  was right for every palette except one: `steelbore-navywhite` is light-canvas
+  (§11.3.4), so a NavyWhite system told toolkits `prefer-dark` — the precise
+  inconsistency §11.6.5 forbids. Third-party applications read only the platform
+  preference, so they rendered dark chrome around a light interface. All four now
+  follow `steelborePalette.meta.polarity`.
+
+- **`STEELBORE_THEME="true"` retired** from `home.nix` and
+  `users/mj/shell.nix`. Nothing anywhere read it, and Standard §11.6.4 now names
+  it as *not* a Standard interface — the theme variable carries a **slug**, so a
+  boolean under a confusable name would make `STEELBORE_THEME=true` resolve to a
+  theme that does not exist and fall through in silence. `PRD.md` documented it
+  as `SPACECRAFT_THEME = true`, which matched neither the old code nor §11.6;
+  corrected.
+
+- **`reuse lint` passes again — 320/320, zero invalid expressions.** It had been
+  failing at 316/319 with two invalid SPDX expressions, and the failure was
+  invisible in normal use: `nix flake check --no-build` only *evaluates*
+  `checks.reuse-lint`, so the derivation was never built and the gate never
+  fired. Four causes, all pre-existing:
+  - `pkgs/steelbore-niri-unmax/`'s `.gitignore` and `Cargo.lock` were missing
+    from `REUSE.toml` — its sibling `steelbore-audio-led` and `bravais-mcp` were
+    both listed, this package was simply never added.
+  - `pkgs/steelbore-niri-unmax/Cargo.toml` carries an inline license tag but no
+    copyright, and was missing from the stanza that supplies one.
+  - `.github/skills/spacecraft-cli-standard/references/testing-compliance.md`
+    quotes <!-- REUSE-IgnoreStart -->`rg -L 'SPDX-License-Identifier: …'`<!-- REUSE-IgnoreEnd --> in a compliance table, and REUSE
+    reads to end of line, so it parsed the rest of the table cell as the file's
+    license expression. Under the `closest` precedence that vendored tree uses,
+    an invalid in-file expression beats `REUSE.toml`. Fixed with a **path-scoped**
+    `precedence = "override"` rather than by editing the file (a synced copy —
+    `REUSE-Ignore` comments would drift from upstream and be overwritten) and
+    scoped to that one path rather than all of `.github/skills/**`, because a
+    blanket override would flatten `microsoft-rust-guidelines`' upstream
+    "GPL-3.0-or-later OR MIT" and credit the wrong holder (§4.2).
+  - This changelog tripped the same scanner quirk in the entry that *documented*
+    it; the quoted command is now wrapped in `REUSE-Ignore` markers.
+
+  Also noted while fixing: `pkgs/steelbore-niri-unmax/src/main.rs` was passing
+  only by accident — `main.rs` prints `Copyright (C) 2026 …` in its `--version`
+  output and REUSE read that string as the file's copyright notice. It is now
+  covered deliberately, so rewording a `println!` cannot silently break
+  compliance.
 
 - **`pkgs/update-vendored.nu` no longer abandons the run on the first
   failure.** `nix build` raising inside `update-one` propagated out through
@@ -303,7 +383,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own header wins wherever it has one, and `LICENSES/MIT.txt` for the MIT text
   now in-tree. (`reuse lint` still reports one invalid expression in
   `spacecraft-cli-standard/references/testing-compliance.md` — an upstream
-  Construct bug, a table cell quoting `rg -L 'SPDX-License-Identifier: …'` that
+  Construct bug, a table cell quoting <!-- REUSE-IgnoreStart -->`rg -L 'SPDX-License-Identifier: …'`<!-- REUSE-IgnoreEnd --> that
   the scanner reads as a real tag. It predates this change.)
 
 - **Eww bar not rendering (both Niri and LeftWM)** — three yuck escaping
