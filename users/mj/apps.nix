@@ -432,6 +432,17 @@ in
       runtime = "runc"
     '';
 
+    # Vacuum (Rust) — default scan/clean roots. Naming `roots` REPLACES the
+    # zero-config default ($HOME), so home is listed explicitly alongside the
+    # umbrella workspace; dropping `~` here would silently stop scanning it.
+    # These roots also bound deletion (`clean` refuses anything resolving
+    # outside them), and /nix is in Vacuum's own deny list — the store is
+    # reclaimed via nix-collect-garbage in `rebuild`, never by Vacuum.
+    # Overridden per-run by positional paths, `--root`, or $VACUUM_ROOTS.
+    "vacuum/config.toml".text = ''
+      roots = ["~", "/spacecraft-software"]
+    '';
+
     # tealdeer (tldr) — auto-update once a week on first invocation.
     # The home-manager activation script also forces a refresh on every
     # nixos-rebuild (see home.activation.tldrUpdate).
