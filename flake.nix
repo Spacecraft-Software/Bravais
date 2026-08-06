@@ -174,6 +174,73 @@
       # nixosConfigurations and the registry the `theme` command reads.
       allThemes = (mkPalette defaultPalette).meta.family;
 
+      # ── Theme registry ───────────────────────────────────────────────────
+      # Every theme, resolved, as JSON. Two consumers, one definition: the
+      # `theme` command reads it via `nix build .#theme-registry` (it
+      # evaluates only the palette library, never a system config, so
+      # `theme list` is instant where walking nixosConfigurations would take
+      # a minute per theme), and modules/theme/declaration.nix installs it at
+      # /etc/steelbore/themes.json as the Standard §11.6.4 advisory registry.
+      #
+      #   nix build --no-link --print-out-paths .#theme-registry
+      themeRegistry =
+        let
+          rp = nixpkgs.legacyPackages.${system};
+          basePalette = mkPalette defaultPalette;
+          roles = [
+            "background"
+            "surface"
+            "surfaceAlt"
+            "foreground"
+            "accent"
+            "structure"
+            "success"
+            "error"
+            "warning"
+            "info"
+            "focus"
+            "border"
+          ];
+          entry =
+            slug:
+            let
+              p = mkPalette slug;
+            in
+            {
+              inherit slug;
+              source = if localThemes ? ${slug} then "local" else "construct";
+              active = slug == defaultPalette;
+              hasSurfaceClass = p.meta.hasSurfaceClass;
+              # §11.6.2 — canvas polarity and the light/dark counterpart, so a
+              # consumer can answer a platform color-scheme preference without
+              # reading steelbore.toml itself.
+              inherit (p.meta) polarity pair;
+              # Hex for display, rgb for truecolor swatches — Nushell's
+              # `ansi` builtin takes named colors, not arbitrary hex.
+              colors = builtins.listToAttrs (
+                map (r: {
+                  name = r;
+                  value = {
+                    hex = p.${r};
+                    rgb = p.convert.rgbTriple p.${r};
+                    x256 = p.convert.x256.${r};
+                  };
+                }) roles
+              );
+            };
+        in
+        rp.writeText "steelbore-theme-registry.json" (
+          builtins.toJSON {
+            active = defaultPalette;
+            # The pair actually in force, so a reader does not have to look the
+            # active slug back up in `themes` to find its counterpart.
+            dark = if basePalette.meta.polarity == "dark" then defaultPalette else basePalette.meta.pair;
+            light = if basePalette.meta.polarity == "light" then defaultPalette else basePalette.meta.pair;
+            standard = "11.6";
+            themes = map entry allThemes;
+          }
+        );
+
       # ── Default applications ──────────────────────────────────────────────
       # Which program handles what. Same shape as the palette family above and
       # for the same reason: the active choice lives in ./default-apps.nix so
@@ -288,6 +355,7 @@
           specialArgs = {
             inherit
               steelborePalette
+              themeRegistry
               steelboreApps
               primaryUser
               gitway
@@ -402,59 +470,9 @@
         })
         // {
           # ── Theme registry ─────────────────────────────────────────────────
-          # Every theme, resolved, as JSON. This is what the `theme` command
-          # reads: it evaluates only the palette library, never a system
-          # config, so `theme list` is instant where walking
-          # nixosConfigurations would take a minute per theme.
-          #
-          #   nix build --no-link --print-out-paths .#theme-registry
-          theme-registry =
-            let
-              rp = nixpkgs.legacyPackages.${system};
-              roles = [
-                "background"
-                "surface"
-                "surfaceAlt"
-                "foreground"
-                "accent"
-                "structure"
-                "success"
-                "error"
-                "warning"
-                "info"
-                "focus"
-                "border"
-              ];
-              entry =
-                slug:
-                let
-                  p = mkPalette slug;
-                in
-                {
-                  inherit slug;
-                  source = if localThemes ? ${slug} then "local" else "construct";
-                  active = slug == defaultPalette;
-                  hasSurfaceClass = p.meta.hasSurfaceClass;
-                  # Hex for display, rgb for truecolor swatches — Nushell's
-                  # `ansi` builtin takes named colors, not arbitrary hex.
-                  colors = builtins.listToAttrs (
-                    map (r: {
-                      name = r;
-                      value = {
-                        hex = p.${r};
-                        rgb = p.convert.rgbTriple p.${r};
-                        x256 = p.convert.x256.${r};
-                      };
-                    }) roles
-                  );
-                };
-            in
-            rp.writeText "steelbore-theme-registry.json" (
-              builtins.toJSON {
-                active = defaultPalette;
-                themes = map entry allThemes;
-              }
-            );
+          # Defined in the outer `let` because modules/theme/declaration.nix
+          # installs the same derivation at /etc/steelbore/themes.json (§11.6.4).
+          theme-registry = themeRegistry;
 
           # ── Default-application registry ───────────────────────────────────
           # Every handler role and every registered app, as JSON. What the

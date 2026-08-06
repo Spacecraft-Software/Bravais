@@ -5,9 +5,31 @@
   config,
   lib,
   pkgs,
+  steelborePalette,
   ...
 }:
 
+let
+  # ── §11.6.5: the platform preference must agree with the palette ──────────
+  # Standard §11.6.5 requires an OS to keep the platform's color-scheme
+  # preference in agreement with the declared palette's polarity. These keys
+  # used to be hard-coded to dark, which was correct for every palette except
+  # one: `steelbore-navywhite` is light-canvas (§11.3.4), and a NavyWhite
+  # system telling toolkits `prefer-dark` is exactly the inconsistency that
+  # clause forbids — third-party applications read only the platform
+  # preference, so they would render dark chrome around a light interface.
+  #
+  # `org.gnome.desktop.interface.color-scheme` is the key that matters: both
+  # xdg-desktop-portal-gnome and -gtk serve it as
+  # org.freedesktop.appearance.color-scheme to libadwaita apps, which is how a
+  # bare Niri/LeftWM session has an appearance preference at all (see
+  # modules/theme/dark-mode.nix).
+  isLight = steelborePalette.meta.polarity == "light";
+  colorScheme = if isLight then "prefer-light" else "prefer-dark";
+  gtkThemeName = if isLight then "adw-gtk3" else "adw-gtk3-dark";
+  iconThemeName = if isLight then "Papirus-Light" else "Papirus-Dark";
+  qtStyleName = if isLight then "adwaita" else "adwaita-dark";
+in
 {
   # The browser and image-viewer MIME bindings that used to live here moved to
   # ./default-apps.nix, where every handler role is decided in one place:
@@ -148,9 +170,9 @@
   dconf.settings = {
     # ── Dark Mode (Niri + LeftWM appearance source) ─────────────────────────
     "org/gnome/desktop/interface" = {
-      color-scheme = "prefer-dark";
-      gtk-theme = "adw-gtk3-dark";
-      icon-theme = "Papirus-Dark";
+      color-scheme = colorScheme;
+      gtk-theme = gtkThemeName;
+      icon-theme = iconThemeName;
       cursor-theme = "Bibata-Modern-Classic";
       cursor-size = 24;
       font-name = "Hack Nerd Font 11";
@@ -171,7 +193,7 @@
   gtk = {
     enable = true;
     theme = {
-      name = "adw-gtk3-dark";
+      name = gtkThemeName;
       package = pkgs.adw-gtk3;
     };
     # HM 25.11 deprecates the legacy gtk4.theme default at
@@ -180,11 +202,11 @@
     # explicitly to keep the legacy behavior across the upgrade and
     # silence the activation warning.
     gtk4.theme = {
-      name = "adw-gtk3-dark";
+      name = gtkThemeName;
       package = pkgs.adw-gtk3;
     };
     iconTheme = {
-      name = "Papirus-Dark";
+      name = iconThemeName;
       package = pkgs.papirus-icon-theme;
     };
     cursorTheme = {
@@ -213,9 +235,10 @@
     # `gnome` (qgnomeplatform) as deprecated in 25.11. `qtct` would need
     # a runtime GUI to configure — not declarative.
     platformTheme.name = "adwaita";
-    # `style.name` selects the widget style; -dark gives dark chrome
-    # immediately rather than relying on color-scheme inference.
-    style.name = "adwaita-dark";
+    # `style.name` selects the widget style explicitly rather than relying on
+    # color-scheme inference, so it has to follow the palette's polarity too
+    # (§11.6.5) — otherwise a light palette gets dark Qt chrome.
+    style.name = qtStyleName;
   };
 
   # Single cursor across X11 + Wayland + GTK + .icons. Bibata ships

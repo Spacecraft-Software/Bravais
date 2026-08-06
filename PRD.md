@@ -1124,8 +1124,14 @@ home.keyboard = {
 ```
 EDITOR = msedit/bin/edit
 VISUAL = msedit/bin/edit
-SPACECRAFT_THEME = true
 ```
+
+`SPACECRAFT_THEME` is **not** set here. It is a system-wide session variable
+carrying the active theme **slug** (Standard §11.6.3 source 2), exported by
+`modules/theme/declaration.nix` alongside the `/etc/steelbore/theme.toml`
+declaration. This paragraph previously documented it as `SPACECRAFT_THEME = true`
+— a boolean, which was never what the code set (it set `STEELBORE_THEME = "true"`)
+and is not what §11.6 defines. The boolean is retired; nothing read it.
 
 ### 13.4 User Packages
 

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Theme Module Entry Point
 {
+  lib,
   steelborePalette,
   ...
 }:
@@ -9,9 +10,28 @@
   imports = [
     ./fonts.nix
     ./dark-mode.nix
+    ./declaration.nix
   ];
 
-  # Environment variables for theme-aware applications
+  # The active slug has exactly ONE source: ./theme.nix, resolved through
+  # lib/palette.nix into `steelborePalette`. Reading ./theme.nix again in
+  # declaration.nix would give `theme try <slug>` two answers — that path builds
+  # a system with a different palette without editing ./theme.nix, so the file
+  # and the resolved palette deliberately disagree there.
+  steelbore.theme.active = lib.mkDefault steelborePalette.meta.slug;
+
+  # Per-role color environment variables, for shell scripts and third-party
+  # programs that have no §11 theme of their own.
+  #
+  # NOT a Standard interface: §11.6.4 says so in terms. A conforming
+  # application reads role values from steelbore.toml and learns the active
+  # theme from SPACECRAFT_THEME (declaration.nix) or the §11.6.4 file — never
+  # by reassembling a palette out of these. They are kept because they are
+  # useful, not because anything in §11 depends on them.
+  #
+  # These stay in `environment.variables` (/etc/set-environment, login shells)
+  # rather than moving to `sessionVariables`: their consumers are shell
+  # scripts, and widening their reach is not this section's business.
   environment.variables = {
     SPACECRAFT_BACKGROUND = steelborePalette.background;
     SPACECRAFT_SURFACE = steelborePalette.surface;

@@ -7,6 +7,13 @@
 #   theme show <slug>   inspect one
 #   theme set <slug>    rewrite this file
 #   theme try <slug>    build a theme without touching this file
+#   theme now <slug>    switch §11.6-aware apps with no rebuild
+#
+# This file is the BUILD-time selection. modules/theme/declaration.nix renders
+# it into /etc/steelbore/theme.toml and exports SPACECRAFT_THEME, which is how a
+# RUNNING application learns the active theme (Standard §11.6.4). Both come from
+# the one word below, so they cannot drift; `theme now` writes the per-user
+# override at $XDG_CONFIG_HOME/steelbore/theme.toml, which outranks it.
 #
 # Registered (from the `construct` input's steelbore.toml, Standard §11):
 #   steelbore                    Modern — the Standard default
