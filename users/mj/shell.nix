@@ -57,7 +57,10 @@ in
     # Same registry entry the browser's MIME bindings come from, so $BROWSER
     # and mimeapps.list can no longer disagree. Change: app set browser <slug>
     BROWSER = browserCmd;
-    STEELBORE_THEME = "true";
+    # STEELBORE_THEME = "true" was here — retired. A boolean nothing read, under
+    # a name Standard §11.6.4 now explicitly reserves against slug semantics.
+    # The theme variable is SPACECRAFT_THEME, it carries a slug, and
+    # modules/theme/declaration.nix exports it system-wide.
     NIXPKGS_ALLOW_UNFREE = "1";
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
@@ -466,6 +469,10 @@ in
         #   theme show [slug]   role table for one (default: the active theme)
         #   theme set <slug>    rewrite theme.nix (then rebuild)
         #   theme try <slug>    build a theme WITHOUT touching theme.nix
+        #   theme now <slug>    write the §11.6.4 per-user declaration — takes
+        #                       effect for §11.6-aware apps with NO rebuild
+        #   theme now --clear   drop the per-user declaration, fall back to
+        #                       /etc/steelbore/theme.toml
         def "theme registry" [] {
           let repo = "/spacecraft-software/bravais"
           let out = (do { ^nix build --no-link --print-out-paths $"($repo)#theme-registry" } | complete)
@@ -552,8 +559,58 @@ in
               sudo $"($out)/bin/switch-to-configuration" switch
               print $"(ansi green)($slug) is live.(ansi reset) (ansi cyan)theme set ($slug)(ansi reset) to keep it across rebuilds, or (ansi cyan)rebuild(ansi reset) to go back to ($reg.active)"
             }
+            # ── theme now ─────────────────────────────────────────────────
+            # Standard §11.6.5 closes with a SHOULD: an OS that offers a
+            # theme-switching command should also write the per-user
+            # declaration, so a switch takes effect for conforming
+            # applications without a rebuild. `set` and `try` both need one —
+            # `set` rewrites theme.nix, `try` builds a whole system. This
+            # writes one small TOML file and is done.
+            #
+            # It does NOT re-theme anything that resolved its colors at build
+            # time (terminals, bars, the TTY) — those need `set` + rebuild.
+            # What it moves is every §11.6-aware application, on next start.
+            "now" => {
+              let f = $"($env.XDG_CONFIG_HOME? | default $"($env.HOME)/.config")/steelbore/theme.toml"
+              if $slug == "--clear" or $slug == "clear" {
+                if ($f | path exists) {
+                  rm $f
+                  print $"(ansi green)removed ($f)(ansi reset)"
+                  print $"§11.6-aware apps now follow (ansi cyan)/etc/steelbore/theme.toml(ansi reset) again"
+                } else {
+                  print $"(ansi dark_gray)no per-user declaration at ($f)(ansi reset)"
+                }
+                return
+              }
+              if $slug == null { print $"(ansi red)theme now needs a slug \(or --clear\) — try: theme list(ansi reset)"; return }
+              let hit = ($reg.themes | where slug == $slug)
+              if ($hit | is-empty) {
+                print $"(ansi red)unknown theme '($slug)' — try: theme list(ansi reset)"; return
+              }
+              let t = ($hit | first)
+              # Slugs only, never colors (§11.6.4). The pair comes from the
+              # registry's polarity/pair fields, which come from
+              # steelbore.toml — read, never retyped (§11.4).
+              let dark = (if $t.polarity == "dark" { $t.slug } else { $t.pair })
+              let light = (if $t.polarity == "light" { $t.slug } else { $t.pair })
+              mkdir ($f | path dirname)
+              [ $"# Written by `theme now` — The Steelbore Standard, section 11.6.4."
+                $"# Per-user declaration; outranks /etc/steelbore/theme.toml."
+                $"# Remove it with `theme now --clear`."
+                $"[theme]"
+                $"active              = \"($t.slug)\""
+                $"dark                = \"($dark)\""
+                $"light               = \"($light)\""
+                $""
+                $"[meta]"
+                $"standard = \"11.6\""
+                $"source   = \"theme-now\""
+                $"" ] | str join (char newline) | save --force $f
+              print $"(ansi green)($f): active = ($t.slug)(ansi reset)"
+              print $"§11.6-aware apps pick it up on next start. Build-time consumers \(terminals, bars, TTY\) need (ansi cyan)theme set ($t.slug)(ansi reset) + (ansi cyan)rebuild(ansi reset)."
+            }
             "help" => { help theme }
-            _ => { print $"(ansi red)unknown action '($action)' — try: list, show, set, try, help(ansi reset)" }
+            _ => { print $"(ansi red)unknown action '($action)' — try: list, show, set, try, now, help(ansi reset)" }
           }
         }
 

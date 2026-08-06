@@ -23,10 +23,15 @@
   };
 
   # Session variables
+  # STEELBORE_THEME = "true" was here — retired. It was a boolean nothing ever
+  # read, and Standard §11.6.4 now names it explicitly as NOT a Standard
+  # interface: the theme variable is SPACECRAFT_THEME and it carries a SLUG, so
+  # leaving a boolean under a confusable name would make STEELBORE_THEME=true
+  # resolve to a theme that does not exist and fall through in silence.
+  # SPACECRAFT_THEME is exported system-wide by modules/theme/declaration.nix.
   home.sessionVariables = {
     EDITOR = "${pkgs.msedit}/bin/edit";
     VISUAL = "${pkgs.msedit}/bin/edit";
-    STEELBORE_THEME = "true";
   };
 
   # User packages

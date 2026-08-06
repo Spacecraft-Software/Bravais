@@ -409,6 +409,59 @@ let
         grayDist = sq (c.r - gv) + sq (c.g - gv) + sq (c.b - gv);
       in
       if grayDist < cubeDist then 232 + gidx else 16 + 36 * ri + 6 * gi + bi;
+
+  # ---------------------------------------------------------------------
+  # §11.6.2 — canvas polarity and the light/dark counterpart.
+  # ---------------------------------------------------------------------
+  # steelbore.toml carries [resolution.*] from v3.2.0 (Standard v1.45). The
+  # `construct` flake input is PINNED, so this has to keep working before
+  # `nix flake update construct` lands that version — otherwise a Bravais
+  # rebuild breaks in the window between the two merges. Where the table is
+  # absent, polarity is derived from the canvas and the counterpart falls back
+  # to the family defaults §11.6.2 states.
+  hasResolution = data ? resolution;
+
+  # Rec. 601 luma on the raw channels, integer math like every other converter
+  # in this file. This is a light/dark CLASSIFICATION, not a contrast ratio —
+  # no WCAG number is being claimed here. Every registered canvas sits nowhere
+  # near the boundary (Void Navy 4, Pearl Silver 229), so the cheap form agrees
+  # with the exact relative-luminance answer for all nine, and Nix has no `pow`
+  # to compute the exact one with anyway.
+  lumaOf =
+    hex:
+    let
+      c = channels hex;
+    in
+    (299 * c.r + 587 * c.g + 114 * c.b) / 1000;
+  polarityOfHex = hex: if lumaOf hex > 127 then "light" else "dark";
+
+  darkDefault =
+    if data.meta ? "default-dark-theme" then data.meta."default-dark-theme" else "steelbore";
+  lightDefault =
+    if data.meta ? "default-light-theme" then
+      data.meta."default-light-theme"
+    else
+      "steelbore-navywhite";
+
+  # Base palettes only — a high-contrast sibling shares its base's canvas, and
+  # steelbore-mono binds ANSI names ("default", "bright-white") rather than hex,
+  # so `channels` must never be handed it.
+  polarityTable =
+    if hasResolution then
+      data.resolution.polarity
+    else
+      builtins.listToAttrs (
+        map (s: {
+          name = s;
+          value = polarityOfHex themes.${s}.background;
+        }) (family ++ fidelity)
+      );
+
+  pairTable =
+    if hasResolution then
+      data.resolution.pair
+    else
+      builtins.mapAttrs (_: pol: if pol == "light" then darkDefault else lightDefault) polarityTable;
 in
 {
   # The active palette, as §11.1 role tokens. This is the whole contract —
@@ -436,6 +489,41 @@ in
     # Classic defines no surface class (§11.0.1 does not apply to it), so a
     # consumer that wants a genuinely distinct panel fill can test this.
     hasSurfaceClass = theme ? "surface";
+    # §11.6.2. Derived from the resolved canvas rather than looked up, so a
+    # local theme in ./themes/ gets a correct answer for free.
+    polarity = polarityOfHex background;
+    # The counterpart in the other polarity. A local theme with no registered
+    # entry falls back on its own polarity.
+    pair =
+      if pairTable ? ${baseSlug} then
+        pairTable.${baseSlug}
+      else if polarityOfHex background == "light" then
+        darkDefault
+      else
+        lightDefault;
+  };
+
+  # §11.6 resolution contract, for the modules that render the system
+  # declaration (modules/theme/declaration.nix) and the theme registry
+  # (flake.nix). Slugs and paths only — never a color value, because an OS
+  # declares WHICH theme and never supplies the hex (§11.6.4).
+  resolution = {
+    envVar = if hasResolution then data.resolution."env-var" else "SPACECRAFT_THEME";
+    systemFile =
+      if hasResolution then data.resolution."system-file" else "/etc/steelbore/theme.toml";
+    userFile =
+      if hasResolution then
+        data.resolution."user-file"
+      else
+        "$XDG_CONFIG_HOME/steelbore/theme.toml";
+    registry = if hasResolution then data.resolution.registry else "/etc/steelbore/themes.json";
+    polarity = polarityTable;
+    pair = pairTable;
+    inherit darkDefault lightDefault;
+    # True once the construct input carries steelbore.toml >= 3.2.0. Useful in
+    # an assertion if a consumer ever needs the real table rather than a
+    # derived one.
+    fromCanonicalFile = hasResolution;
   };
 
   # 16-color ANSI mapping, single-sourced here and consumed by both the
