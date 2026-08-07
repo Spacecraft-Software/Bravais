@@ -11,6 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Vacuum, Engram and crates-mcp are declarative.** All three were
+  `cargo install` builds under `~/.cargo/bin`, so a fresh machine reproduced
+  none of them. The Engram case was the sharp one: `mcp-servers/mcp.toml`
+  registers that server as `command = "engram"`, resolved by *bare name on
+  PATH*, so whatever cargo last built from an uncommitted working tree was
+  literally what every MCP host spawned.
+  - `vacuum` and `engram` join as `github:` flake inputs, threaded through
+    `extraSpecialArgs` and installed user-scoped in `home.packages` — their
+    state and config are entirely `$HOME`-side. Vacuum's own `nixosModule` is
+    deliberately unused: its whole body is `environment.systemPackages`, which
+    would put the binary in the system profile while the `roots` bounding its
+    deletions stayed in one user's `$HOME`.
+  - Engram had no `flake.nix` at all; one was written upstream (with the
+    `srcOverride` idiom and a packaging version-skew fix) and the repo — the
+    only private one among the inputs, which is why `github:` first 404'd —
+    was made public like the rest.
+  - `crates-mcp` is third-party, so it is packaged in `pkgs/` and pinned by
+    version + hash rather than by rev. Its four live network tests against
+    crates.io and docs.rs are skipped by name; the five offline ones still
+    gate the build.
+
+  Every binary `mcp.toml` resolves by bare name now comes from Nix.
+
+### Fixed
+
+- **A documented rule was unreadable from everywhere but one directory.**
+  Engram's `--db` default is the bare *relative* path `engram.db` with no XDG
+  fallback, so any run that did not pass `--db` minted a fresh, empty store in
+  the current directory. Two had accumulated, and
+  `skill-description-1000` — which `/spacecraft-software/CLAUDE.md` documents
+  as readable via `engram rule list --scope spacecraft-software` — existed
+  *only* in `/spacecraft-software/engram/engram.db`. The rule is back in the
+  real store, both strays are deleted, and `ENGRAM_DB` now pins the path so
+  the footgun cannot fire again. The store also moved off `~/.gemini/`, which
+  was never Gemini-specific — just wherever the first harness registered it.
+
+### Added
+
 - **The system theme is now declared to running applications** (Standard
   §11.6.4, §11.6.5). `theme.nix` has re-themed this machine from one word for a
   long time, but only at *build* time: every terminal, both bars, the TTY and

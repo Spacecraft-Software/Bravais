@@ -403,6 +403,25 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ---
 
+## Deferred — Engram / MCP follow-ups
+
+- [ ] **Home Manager module in the Engram flake.** It would own `ENGRAM_DB` and
+      render `~/.claude/commands/engram-*.md` declaratively. Those files come
+      from `engram install` today, which is imperative; doing the rendering in
+      Bravais instead was rejected because the `{{DB}}`/`{{HARNESS}}`
+      substitution lives in engram's `install.rs` and a Nix reimplementation
+      would be a second copy that drifts. Note `is_nix_managed()` makes engram
+      *refuse* to write a store-symlinked path (including with `--force`), so
+      this is a one-way door — worth doing deliberately, upstream.
+- [ ] **Engram `guix.scm`** still carries a placeholder zero source hash and
+      does not build. Needs `guix import crate -r engram`.
+- [ ] **Tag an Engram release** so `packaging/default.nix`'s `fetchFromGitHub`
+      branch can drop `lib.fakeHash`. The flake never takes that branch
+      (`srcOverride = self`), so this is only for non-flake consumers.
+- [ ] **`engram install --hooks` stays OFF.** It merges a `SessionEnd` entry
+      into `~/.claude/settings.json`, which Home Manager does not own — turning
+      it on would make two uncoordinated writers to that file.
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
