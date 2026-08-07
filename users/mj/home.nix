@@ -126,6 +126,14 @@
       # Remove the imperative copy:  cargo uninstall engram
       engram.packages.${pkgs.stdenv.hostPlatform.system}.default
 
+      # `crates-mcp` — the `crates` MCP server (crates.io / docs.rs lookups),
+      # from the in-tree pkgs/ index. Third-party, so it is packaged here rather
+      # than consumed as a flake input, and pinned by version + hash rather than
+      # by rev. mcp.toml names it by bare name on PATH, same as engram.
+      #
+      # Remove the imperative copy:  cargo uninstall crates-mcp
+      (pkgs.callPackage ../../pkgs/crates-mcp/package.nix { })
+
       # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
       # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
       # competing with — and taking down — the editor/multiplexer session.

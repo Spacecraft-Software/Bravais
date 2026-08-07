@@ -15,5 +15,6 @@
   opencode-desktop = pkgs.callPackage ./opencode-desktop/package.nix { };
   goose-desktop = pkgs.callPackage ./goose-desktop/package.nix { };
   adguardvpn-cli = pkgs.callPackage ./adguardvpn-cli/package.nix { };
+  crates-mcp = pkgs.callPackage ./crates-mcp/package.nix { };
 }
 
