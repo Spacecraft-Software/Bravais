@@ -109,6 +109,18 @@
     # one user's $HOME. Binary and root-list belong in the same module.
     vacuum.url = "github:Spacecraft-Software/Vacuum";
     vacuum.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # engram — shared verbatim chat memory (CLI + MCP server + HTTP API),
+    # first-party, developed at /spacecraft-software/engram. Same `github:`
+    # rule and same push-before-update consequence as vacuum and mcp-servers.
+    #
+    # Load-bearing beyond "a tool on PATH": mcp-servers/mcp.toml registers this
+    # server as `command = "engram"` — resolved by BARE NAME on PATH — so
+    # whatever this input puts in the user profile is literally what every MCP
+    # host spawns. Before this it was a `cargo install` build from an
+    # uncommitted working tree.
+    engram.url = "github:Spacecraft-Software/Engram";
+    engram.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -126,6 +138,7 @@
       nil,
       mcp-servers,
       vacuum,
+      engram,
       ...
     }@inputs:
     let
@@ -434,6 +447,7 @@
                   nil
                   mcp-servers
                   vacuum
+                  engram
                   ;
               };
               home-manager.users.${primaryUser} = import ./users/mj/home.nix;

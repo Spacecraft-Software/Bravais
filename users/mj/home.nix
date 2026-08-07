@@ -6,6 +6,7 @@
   construct,
   mcp-servers,
   vacuum,
+  engram,
   unstablePkgs,
   primaryUser,
   ...
@@ -109,6 +110,21 @@
       # store copy already wins. `vacuum --version` reporting 0.1.0-git — the
       # marker the flake sets — is how you confirm which one ran.
       vacuum.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+      # `engram` — shared verbatim chat memory, AND the `engram` MCP server.
+      # This entry is what every MCP host actually spawns: mcp-servers/mcp.toml
+      # resolves `command = "engram"` by BARE NAME on PATH, then runs
+      # `engram --db <path> mcp` (--db is a GLOBAL flag, hence before the
+      # subcommand). Until this landed that resolved to a `cargo install` build
+      # of an uncommitted working tree.
+      #
+      # User-scoped for the same reason as mcpctl: every byte of engram's state
+      # lives in $HOME — the SQLite store (see ENGRAM_DB in shell.nix) and the
+      # slash-command files under ~/.claude/commands/. The upstream flake ships
+      # no nixosModule, deliberately.
+      #
+      # Remove the imperative copy:  cargo uninstall engram
+      engram.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
       # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
