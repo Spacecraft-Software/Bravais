@@ -77,6 +77,24 @@
         "type": "github"
       }
     },
+    "flake-utils_3": {
+      "inputs": {
+        "systems": "systems_3"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "gitway": {
       "inputs": {
         "flake-utils": "flake-utils_2",
@@ -254,7 +272,8 @@
         "nix-flatpak": "nix-flatpak",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "rapg": "rapg"
+        "rapg": "rapg",
+        "vacuum": "vacuum"
       }
     },
     "systems": {
@@ -284,6 +303,42 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "vacuum": {
+      "inputs": {
+        "flake-utils": "flake-utils_3",
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786098381,
+        "narHash": "sha256-D+kUEYVV6noh3kcGTmihPU3UH4fDyAJ11zDb6MOwUhg=",
+        "owner": "Spacecraft-Software",
+        "repo": "Vacuum",
+        "rev": "7a00f575617b9b83a2018254c0961d41881b4aaf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Spacecraft-Software",
+        "repo": "Vacuum",
         "type": "github"
       }
     }

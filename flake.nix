@@ -93,6 +93,22 @@
     # AND pushed before `nix flake update mcp-servers` can pick it up.
     mcp-servers.url = "github:Spacecraft-Software/mcp-servers";
     mcp-servers.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # vacuum — disk-space recovery CLI + TUI, first-party, developed at
+    # /spacecraft-software/vacuum. `github:` for exactly the reasons spelled
+    # out for mcp-servers above, including the same consequence: a vacuum
+    # change must be committed AND pushed before `nix flake update vacuum`
+    # can see it. (Capital V — the repo is Spacecraft-Software/Vacuum.)
+    #
+    # Supplies the binary only. The configuration is already declarative and
+    # user-owned: users/mj/apps.nix writes ~/.config/vacuum/config.toml.
+    # Vacuum's own `nixosModules.default` (programs.vacuum.enable) is
+    # deliberately NOT imported — its entire body is
+    # `environment.systemPackages`, which would put the binary in the system
+    # profile while the `roots = ["~", …]` that bound its deletions stayed in
+    # one user's $HOME. Binary and root-list belong in the same module.
+    vacuum.url = "github:Spacecraft-Software/Vacuum";
+    vacuum.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -109,6 +125,7 @@
       antigravity-nix,
       nil,
       mcp-servers,
+      vacuum,
       ...
     }@inputs:
     let
@@ -416,6 +433,7 @@
                   antigravity-nix
                   nil
                   mcp-servers
+                  vacuum
                   ;
               };
               home-manager.users.${primaryUser} = import ./users/mj/home.nix;

@@ -5,6 +5,7 @@
   pkgs,
   construct,
   mcp-servers,
+  vacuum,
   unstablePkgs,
   primaryUser,
   ...
@@ -90,6 +91,24 @@
       # PATH, so the stale imperative build shadows this one until it is gone.
       # (`rebuild`'s drift probe is unaffected: it calls mcpctl by store path.)
       mcp-servers.packages.${pkgs.stdenv.hostPlatform.system}.mcpctl
+
+      # `vacuum` — disk-space recovery CLI + TUI from the Vacuum flake input
+      # (constraint #7: flake-input package consumed by attr-path, threaded via
+      # extraSpecialArgs). User-scoped rather than system-wide because its
+      # config is HM-managed at ~/.config/vacuum/config.toml (apps.nix) and the
+      # roots that bound its deletions are $HOME-relative — binary and root-list
+      # stay in one module. Vacuum's nixosModules.default is deliberately unused;
+      # see the input comment in flake.nix.
+      #
+      # It was previously `cargo install`ed from the working tree, which a fresh
+      # machine would not reproduce. Remove that copy:
+      #   cargo uninstall vacuum-cli
+      # (crate `vacuum-cli`, binary `vacuum`.) Unlike the mcpctl note above this
+      # is hygiene, not a shadowing fix: the out-of-band dirs including
+      # ~/.cargo/bin are APPENDED to PATH (outOfBandDirs in shell.nix), so this
+      # store copy already wins. `vacuum --version` reporting 0.1.0-git — the
+      # marker the flake sets — is how you confirm which one ran.
+      vacuum.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # Run a heavy build inside a memory-capped, killable systemd scope so a runaway
       # cargo/rustc is contained (and OOM-killed within its own cgroup) instead of
