@@ -2,6 +2,7 @@
 # Steelbore Bravais — Home Manager: Shells (bash, Nushell, Ion) + Starship + session vars
 # Split from home.nix in Phase D (elegance plan 3.1); zero behavior change.
 {
+  config,
   lib,
   pkgs,
   steelborePalette,
@@ -62,9 +63,34 @@ in
     # The theme variable is SPACECRAFT_THEME, it carries a slug, and
     # modules/theme/declaration.nix exports it system-wide.
     NIXPKGS_ALLOW_UNFREE = "1";
+
+    # Engram's --db default is the bare RELATIVE path "engram.db" (its
+    # src/cli.rs), with no XDG fallback — so every `engram` run from a directory
+    # that does not pass --db silently mints a NEW, empty store in that cwd.
+    # That had already happened twice, and one of them mattered: the
+    # `skill-description-1000` rule that /spacecraft-software/CLAUDE.md
+    # documents as readable via `engram rule list --scope spacecraft-software`
+    # existed ONLY in /spacecraft-software/engram/engram.db, so the documented
+    # command returned nothing from every directory but that one.
+    #
+    # mcp-servers/mcp.toml also passes --db explicitly, and that is deliberate
+    # rather than redundant: home.sessionVariables reaches processes descended
+    # from the login session, but a harness launched from a desktop entry,
+    # Flatpak, or GUI launcher may have a pruned environment. The flag is the
+    # guarantee; this variable is the safety net for interactive use.
+    ENGRAM_DB = "${config.xdg.dataHome}/engram/engram.db";
+
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
+
+  # Engram does not create its database's parent directory (no create_dir_all
+  # anywhere in its store layer), so a missing dir is a hard open failure on a
+  # fresh machine. Creating it is all this does — the database itself is state,
+  # never managed by Nix.
+  home.activation.engramDataDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD mkdir -p "${config.xdg.dataHome}/engram"
+  '';
 
   programs = {
     # Bash/Brush — kept enabled because NixOS internals (PAM, userdel, etc.)
@@ -774,9 +800,13 @@ in
             # the skip is the useful half; the write stays a deliberate step.
             # mcpctl comes from the `mcp-servers` flake input, so it is always
             # present — no PATH probe, and no cargo-artifact fallback. Note the
-            # input is `git+file:`, which sees COMMITTED content only: this
-            # binary is the manifest logic as of the rev in flake.lock, so an
-            # uncommitted mcpctl change is not what runs here.
+            # input is `github:`, which sees PUSHED content only: this binary is
+            # the manifest logic as of the rev in flake.lock, so an mcpctl or
+            # mcp.toml change that is merely committed — let alone uncommitted —
+            # is not what runs here. Landing one takes commit, push, then
+            # `nix flake update mcp-servers`; skip the last and this probe
+            # compares deployed configs against the OLD manifest and cheerfully
+            # reports no drift.
             let mcp_repo = "/spacecraft-software/mcp-servers"
             if ($mcp_repo | path exists) {
               # --dry-run --json is read-only; it never writes to $HOME.
