@@ -12,7 +12,9 @@ website: https://Construct.SpacecraftSoftware.org/
 **Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
 
-> **Source of truth:** The Steelbore Standard v1.39 (§11 Colour Palettes, §12 Typography)
+> **Source of truth:** The Steelbore Standard — §11 (Colour Palettes) and §12
+> (Typography), tracked as sections rather than pinned to a document version,
+> which would go stale on any unrelated release —
 > and the `spacecraft-brand-guidelines` skill. Themes may not introduce
 > colors, fonts, or naming outside what these sources define. The palette below
 > is the **Steelbore 2** generation; the five v1.33 foreground tokens and the old
@@ -75,7 +77,7 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
 
 ## Theme Generation Workflow
 
-1. **Select a target platform** — VS Code, JetBrains, terminal emulator, Material UI app, etc.
+1. **Select a target platform** — VS Code, JetBrains, terminal emulator, Material UI app, GTK 4 desktop, Qt 6 desktop, etc.
 2. **Standard Theme Naming:** Always define the theme under the name `Steelbore` (file/module named `steelbore` in snake_case) and map the §11 palette into the platform's theme registry.
 3. **Avoid Hardcoding:** Bundle colors into a named theme/config structure rather than hardcoding hex literals. This ensures the theme is easily replaceable so that users can add or swap custom themes without modifying application logic.
 4. **Map the §11 palette** into the platform's color-key schema, preserving
@@ -86,10 +88,20 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
    wells. Never invent new color names or shift hex codes.
 5. **Apply the §12 typography** (Share Tech Mono headings, Inconsolata body)
    wherever the platform supports font selection.
-6. **Emit the accessibility variants alongside the default** (Standard §11.1.1)
-   whenever the target platform supports more than one theme: the palette
-   itself, its `<slug>-high-contrast` sibling, and `steelbore-mono` (4-bit
-   ANSI, palette-independent, deferring to the user's terminal palette). For
+6. **Emit the §11.6.1 registered set** whenever the target platform supports
+   more than one theme — not just the declared palette and its variants. The
+   must-emit list is `[meta] registered-set` in `steelbore.toml`: the six
+   conforming palettes, each with its `-high-contrast` sibling, plus
+   `steelbore-mono` (4-bit ANSI, palette-independent, deferring to the user's
+   terminal palette). Thirteen themes; read them in a loop rather than writing
+   them out. Classic is **not** in the set — it binds the legacy six-role
+   contract (§11.2) and carries an `info` token that is not one of §11.1's
+   eleven roles, so emit it only for a platform whose schema fits that
+   contract. Emitting is not defaulting: `steelbore` stays the default, and the
+   platform's theme-selection key must name it. Where the platform can follow
+   the system color scheme, pair the themes per `[resolution.pair]` so a light
+   preference resolves to `steelbore-navywhite` (§11.6.2) — read the pairing,
+   never hardcode it. For
    Modern the lifts are `accent` → `#FF8A3D`, `structure`/`border` →
    `#B3A1FF`, `error` → `#FF7A7A`, `warning` → `#EE7BFF`, with `foreground`
    and `success` verbatim; for every other palette take the lifts from
@@ -100,7 +112,7 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
 7. **Verify WCAG 2.2 AA contrast** against the palette's canvas — and against
    its two surface tokens for anything the theme places on a surface — for
    every color pair before shipping.
-8. **Emit the platform's native config format** (JSON, XML, TOML, ini) with
+8. **Emit the platform's native config format** (JSON, XML, TOML, ini, CSS, QSS) with
    all hex codes verbatim from the canonical table.
 
 ## Output Targets
@@ -108,6 +120,20 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
 - **IDEs / editors**: VS Code, JetBrains, Helix, Zed, Neovim
 - **Terminal emulators**: Kitty, Alacritty, WezTerm, Foot
 - **Material Design GUI applications**
+- **GTK 4 desktop applications** — emit `steelbore.css` as a token file of
+  GTK `@define-color` declarations (`@define-color steelbore_accent …`), loaded
+  through a `GtkCssProvider` at `STYLE_PROVIDER_PRIORITY_APPLICATION`. Widget
+  rules reference the tokens (`color: @steelbore_foreground;`) and never a hex
+  literal. Emit the `<slug>-high-contrast` sibling as a second CSS file so
+  accessible mode is a provider swap. See `spacecraft-gtk-guidelines`.
+- **Qt 6 desktop applications** — emit two coupled artifacts: a `steelbore.qss`
+  stylesheet with the palette substituted into token placeholders, and a
+  `QPalette` builder mapping tokens onto Qt's colour roles (`Window` ←
+  `background`, `Base` ← `surface-alt`, `AlternateBase` ← `surface`,
+  `WindowText`/`Text` ← `foreground`, `Highlight` ← `accent`, `Link` ←
+  `structure`, `Mid` ← `border`). QML targets take a generated `Theme.qml`
+  singleton of `readonly property color` bindings instead of the QSS. See
+  `spacecraft-qt-guidelines`.
 - **Document formats** (DOCX, PDF): force the declared palette's canvas as the
   page background (`#000027` under Modern, the default) and ISO
   A4 (210 × 297 mm) page size; apply palette text colors per

@@ -12,7 +12,11 @@ website: https://Construct.SpacecraftSoftware.org/
 **Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
 
-> **Source of truth:** The Steelbore Standard (§11 Colour Palettes, §12 Typography), v1.39.
+> **Source of truth:** The Steelbore Standard — **§11** (Colour Palettes) and
+> **§12** (Typography). This skill tracks those two sections, not the document
+> version: a release that touches neither leaves this skill current, so no
+> version is pinned here to go stale. When §11 or §12 changes, this skill
+> changes with it.
 >
 > **§11 is a palette family.** The tables below are **Steelbore Modern**, the
 > default — use it unless the project declares an alternate in its `README.md`
@@ -88,7 +92,7 @@ Quick reference:
 
 - **Steelbore Theme Standard:** When implementing colors and themes, always opt to create a named theme called `Steelbore` (Snake case `steelbore` for file/module names) that bundles these colors, rather than hardcoding hex values directly in UI/styling logic. This allows users to easily swap or customize themes by registering a new named theme without modifying application logic (Standard §11.1). The full role-token contract (including `surface`, `surface-alt`, `focus`, and `border`) is defined in §11.1.
 - **Focus indicator:** Acid Lime `#B4FF00` (16.75:1) — satisfies WCAG 2.2 §2.4.11 on every background.
-- Apply the palette to Material Design components (the required UI system for Spacecraft Software GUIs).
+- Apply the palette to whichever component system §13 requires for the platform — **Material Design** for Flutter, web, mobile, and cross-platform GUI; **GNOME HIG** (libadwaita) for GTK 4; **KDE HIG** (Qt Quick Controls / Fusion) for Qt 6. The palette is system-agnostic: §13 chooses the widget vocabulary, §11 supplies the colors, and the binding is always through the named `steelbore` theme rather than the component library's own defaults.
 - All new color pairings must pass WCAG 2.2 Level AA contrast verification before adoption, stating which pairing was measured (§13).
 - For IDE and terminal themes, load the `spacecraft-theme-factory` skill.
 
