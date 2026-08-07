@@ -73,16 +73,25 @@
     nil.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # mcp-servers — `mcpctl`, which generates each MCP host's config from that
-    # repo's mcp.toml and deploys it. Local clone, so `git+file:` rather than a
-    # `path:` input: a path input is content-addressed and drifts its NAR hash
-    # on every source edit (constraint #10, the reason the five local Rust-app
-    # path inputs were dropped). A git input is pinned to a rev instead, so the
-    # tree can change freely and only `nix flake update mcp-servers` moves it.
+    # repo's mcp.toml and deploys it. A git input rather than a `path:` input:
+    # a path input is content-addressed and drifts its NAR hash on every source
+    # edit (constraint #10, the reason the five local Rust-app path inputs were
+    # dropped). A git input is pinned to a rev instead, so the tree can change
+    # freely and only `nix flake update mcp-servers` moves it.
     #
-    # Consequence: `git+file:` sees COMMITTED content only. An mcpctl change
-    # must be committed in /spacecraft-software/mcp-servers before a Bravais
-    # rebuild can pick it up.
-    mcp-servers.url = "git+file:///spacecraft-software/mcp-servers";
+    # `github:` rather than `git+file:///spacecraft-software/mcp-servers`. The
+    # local URL resolved on this machine and NOWHERE else: a GitHub runner has
+    # no such directory, so `nix flake check` failed with `Git repository
+    # "/spacecraft-software/mcp-servers" does not exist` and the flake could not
+    # be evaluated by CI, by a fresh clone, or by the Copilot coding agent —
+    # which is the whole audience .github/skills/ is vendored for. An input
+    # reachable from exactly one filesystem is not a dependency, it is a local
+    # detail leaking into a published lock file.
+    #
+    # Consequence: `github:` sees PUSHED content only — one step further than
+    # the committed-only rule this replaced. An mcpctl change must be committed
+    # AND pushed before `nix flake update mcp-servers` can pick it up.
+    mcp-servers.url = "github:Spacecraft-Software/mcp-servers";
     mcp-servers.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 

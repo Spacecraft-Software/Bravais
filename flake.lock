@@ -148,15 +148,15 @@
       "locked": {
         "lastModified": 1785780579,
         "narHash": "sha256-LGxs3qE11DczxZP9nbYAXqa0eKAcWm/yeIJBFO8OC6g=",
-        "ref": "refs/heads/main",
+        "owner": "Spacecraft-Software",
+        "repo": "mcp-servers",
         "rev": "94e74d3a38197849d50c3ccd3295bd6fa5510b67",
-        "revCount": 40,
-        "type": "git",
-        "url": "file:///spacecraft-software/mcp-servers"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///spacecraft-software/mcp-servers"
+        "owner": "Spacecraft-Software",
+        "repo": "mcp-servers",
+        "type": "github"
       }
     },
     "nil": {

@@ -35,8 +35,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      # Bumped with copilot-setup-steps.yml, which needs Nix 2.28+ to read the
+      # `rapg` relative path input at all (see the comment there). This job does
+      # not evaluate this flake — it only runs `nix run nixpkgs#nushell` — so v27
+      # worked here. Kept in step anyway: two jobs pinning different Nix versions
+      # is a trap for whoever adds a flake evaluation to this one.
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixos-unstable
           extra_nix_config: |
