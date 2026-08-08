@@ -422,26 +422,23 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] **`engram install --hooks` stays OFF.** It merges a `SessionEnd` entry
       into `~/.claude/settings.json`, which Home Manager does not own — turning
       it on would make two uncoordinated writers to that file.
-- [ ] **Register Obscura's MCP server in `mcp-servers/mcp.toml`.** Obscura ships
-      a stdio MCP server exposing browser automation to agents (`browser_fetch`,
-      `browser_screenshot`, …). The binary already lands in the *system* profile
-      (`modules/packages/ai.nix`) precisely so a bare-name lookup resolves it,
-      which is what `mcp.toml` does — so the entry is just:
-
-      ```toml
-      [[servers]]
-      name = "obscura"
-      transport = "stdio"
-      command = "obscura"
-      args = ["mcp"]
-      ```
-
-      Cross-repo: `mcp.toml` lives in `/spacecraft-software/mcp-servers`, and
-      per the `mcp-servers` input comment in `flake.nix` the change must be
-      **committed and pushed** before `nix flake update mcp-servers` can see it.
-      `browser_screenshot` needs a render-enabled build — this one is, so the
-      full tool set is available. Sanity-check the server first with
-      `echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | obscura mcp`.
+- [✓] **Register Obscura's MCP server in `mcp-servers/mcp.toml`.** Done as
+      server #14 (`command = "obscura"`, `args = ["mcp"]`) in mcp-servers
+      `c52abb2`, rendered to all 14 host templates and deployed to 15 live
+      configs. No credential, so no `[[secrets]]`, no VSCode override and no
+      `ACCEPTED` row in `check.rs`. No `RUST_LOG` block either — measured, not
+      assumed: `obscura mcp` emits only JSON-RPC on stdout and nothing on
+      stderr, even under `RUST_LOG=debug`.
+- [ ] **Deploy Obscura's MCP entry to Claude Code.** The only host `mcpctl
+      deploy` could not write: Claude Code owns `~/.claude.json` and rewrites
+      it, so a deploy under a running instance is silently reverted, and
+      `mcpctl` refuses rather than losing the change. Exit Claude Code, then
+      re-run `mcpctl deploy --yes` from `/spacecraft-software/mcp-servers`.
+      The other 15 live configs already have it.
+- [ ] **`obscura` reaches PATH only at the next `rebuild`.** The Bravais commit
+      is pushed and the toplevel builds, but the system has not been switched,
+      so every host now points at a command that does not resolve yet. One
+      `rebuild` closes this; nothing else is needed.
 
 ## Known Issues & Notes
 
