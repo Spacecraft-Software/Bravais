@@ -969,6 +969,9 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CLAUDE.md constraint #4; `unstablePkgs.claude-code` is the re-enable path)
 
+**Headless browser:**
+* `obscura` — headless browser for AI agents and web scraping (Rust, Apache-2.0), built from source in `pkgs/obscura/`. Fetches, executes JavaScript on a real V8 isolate via `deno_core`, and serves both CDP and MCP — no Chromium, no Node. Installs two binaries: `obscura` and `obscura-worker` (the parallel `scrape` command spawns the latter). Built with the `render` and `stealth` features: render adds real box geometry and PNG screenshots, stealth gives a Chrome TLS fingerprint plus tracker blocking. Source-built rather than taken from nixpkgs because nixpkgs pins a release predating the render crate entirely — see AGENTS.md constraint #24 for that and the other packaging traps. Bump per release with `nu pkgs/update-vendored.nu obscura`.
+
 **GUI:**
 * `claude-desktop` — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
 * `github-copilot-app` — official GitHub Tauri-based desktop application, repackaged from the official `.deb` in `pkgs/github-copilot-app/` (unfree). Bump per release with `nu pkgs/update-vendored.nu github-copilot-app`.

@@ -99,9 +99,9 @@ pkgs/                      # In-tree packages — `pkgs/default.nix` is the auth
                            #   steelbore-audio-led, steelbore-niri-unmax, claude-desktop,
                            #   chrome-remote-desktop, ollama, github-copilot-app, bravais-mcp,
                            #   opencode-desktop, goose-desktop, adguardvpn-cli,
-                           #   crates-mcp
+                           #   crates-mcp, obscura
                            # Each is also a flake output: `nix build .#<name>`
-pkgs/update-vendored.nu    # Bumps the 8 version+hash-pinned upstream binaries (see below)
+pkgs/update-vendored.nu    # Bumps the 9 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Skill sync helper
 theme.nix                  # THE ACTIVE THEME — one word; `theme set <slug>` rewrites it
 themes/<slug>.nix          # local themes (filename = slug); `base` to derive, or bind roles
@@ -334,16 +334,18 @@ system config.
 
 23. **Engram's `--db` default is a bare RELATIVE path, and every MCP binary is resolved by bare name** -- `engram --db` defaults to the string `engram.db` (no XDG fallback), so any invocation without `--db` silently creates a NEW, empty SQLite store in the current directory. Two such strays accumulated, and one mattered: the `skill-description-1000` rule that `/spacecraft-software/AGENTS.md` documents as readable via `engram rule list --scope spacecraft-software` lived only in `/spacecraft-software/engram/engram.db`, so the documented command returned nothing from every other directory. Fixed by `ENGRAM_DB` in `users/mj/shell.nix` (pointing at `${config.xdg.dataHome}/engram/engram.db`), *and* an explicit `--db` in `mcp-servers/mcp.toml` -- both, because the env var only reaches login-session descendants while a harness started from a desktop entry or Flatpak may have a pruned environment. Separately: **`mcp.toml` resolves `engram`, `crates-mcp` and `bravais-cli` by bare name on PATH**, so whatever is in the user profile *is* what every MCP host spawns -- which is why all three are Nix-provided (constraint: never let one drift back to `cargo install`). Note `~/.cargo/bin` is APPENDED to PATH (`outOfBandDirs`), so a Nix copy always wins; a leftover cargo build is confusing but not shadowing. Finally, **do not add a compatibility symlink at an old SQLite path** -- SQLite derives the `-wal` name from the path as opened, not the resolved target, so two writers reach the same inode through different WAL files.
 
+24. **Obscura cannot come from nixpkgs, and four things about building it are counter-intuitive** -- `obscura` *is* in nixpkgs-unstable and *is* prebuilt in `cache.nixos.org`, so `unstablePkgs.obscura` looks like the obvious one-line answer. It is not: nixpkgs pins **0.1.10**, which predates the `obscura-render` crate *entirely* -- the crate does not exist in that tree, so there is no `render` feature to enable at any price. Render first ships in **v0.2.0**. Hence the source build in `pkgs/obscura/`, and hence the lost binary cache. The rest, in the order you will hit them: (a) **`pkgs.deno.librusty_v8` is the wrong V8** -- deno tracks 147.4.0 while Obscura's lock pins `deno_core` 0.350 -> v8 **137.3.0**, so `pkgs/obscura/librusty_v8.nix` pins its own; check the lock before "simplifying" it away. (b) The tree is a **virtual workspace**, so `cargo` rejects `--features` unless a package is selected -- `cargoBuildFlags = [ "-p" "obscura-cli" "--bins" ]` is load-bearing, not an optimisation, and `--bins` is what keeps `obscura-worker` (required by the parallel `scrape`) alongside `obscura`. (c) **`stealth` needs `git` at build time**: `btls-sys` runs `git init` + `git apply` over the BoringSSL copy vendored in its own crate (nothing is cloned; BoringSSL is fully vendored, and Go is *not* needed because `deps/boringssl/gen` ships pre-generated sources). `BORING_BSSL_ASSUME_PATCHED=1` silences the failure but **skips `boring-pq.patch`**, so the ClientHello loses the post-quantum key exchange modern Chrome offers -- which is precisely the fingerprint `stealth` exists to reproduce. Supply `git`; do not take the shortcut. (d) **`obscura --version` reports `0.1.0` at every tag** -- upstream never bumped `workspace.package.version`, so the crate string and the release tag disagree. Do not "fix" the derivation's `version` to match the binary, and do not add a `testers.testVersion` check expecting them to agree.
+
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
-Eight packages pin an upstream `version` + `hash` that `nix flake update` cannot
+Nine packages pin an upstream `version` + `hash` that `nix flake update` cannot
 touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`,
-`opencode-desktop`, `github-copilot-app`, `adguardvpn-cli` (all in `pkgs/`), and
-`browseros` (inline in `modules/packages/browsers.nix`). They are **declarative,
-not self-updating** -- never bump one by hand.
+`opencode-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in
+`pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). They are
+**declarative, not self-updating** -- never bump one by hand.
 
 ```sh
-nu pkgs/update-vendored.nu              # bump all 8 + nix build each
+nu pkgs/update-vendored.nu              # bump all 9 + nix build each
 nu pkgs/update-vendored.nu --check      # report only, change nothing
 nu pkgs/update-vendored.nu ollama       # single package
 ```
@@ -361,6 +363,15 @@ nu pkgs/update-vendored.nu ollama       # single package
 - `up-github` takes optional `tag_pattern` / `strip_suffix` params for repos whose
   tags carry decoration the version string does not (AdGuardVPNCLI tags
   `v1.7.12-release` for version `1.7.12`).
+- **`obscura` is the only member built from SOURCE**, so `up-github` cannot bump it
+  and `up-obscura` exists instead. It pins *two* hashes, neither a release asset:
+  the `fetchFromGitHub` **unpacked-tree** hash (`prefetch-github-tree`, since
+  `nix store prefetch-file` hashes the tarball and has no `--unpack`), and
+  `cargoHash`, which no URL yields -- the vendored tree does not exist until cargo
+  resolves the lock, so it is discovered by poisoning the hash, building, and
+  parsing the `got:` line back out. `pkgs/obscura/librusty_v8.nix` is deliberately
+  **not** bumped by the script: that pin tracks Obscura's `deno_core` dependency,
+  not its release cadence.
 - **Never restate a pinned version in prose.** The ollama 0.31.1 -> 0.32.5 bump
   orphaned five hardcoded copies across modules and docs; they now point at
   `pkgs/ollama/package.nix` as the single source of truth. Same rule as §11.4 for

@@ -263,6 +263,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries; `LD_LIBRARY_PATH` carries libglvnd/libgbm/vulkan-loader for ANGLE's native-EGL `dlopen`)
 - [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (upstream repo has since moved to `aaif-goose/goose`; the `block/goose` release URLs still redirect), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
 - [✓] Goose Desktop `LD_LIBRARY_PATH` prefix (libglvnd/libgbm/vulkan-loader) — bundled ANGLE `libEGL.so` dlopens `libEGL.so.1`, and `DT_RUNPATH` isn't transitive, so `runtimeDependencies` alone left the GPU process dying with "Could not dlopen native EGL". Same fix opencode-desktop already carried
+- [✓] Install Obscura (headless browser for AI agents) — built from source in `pkgs/obscura/` with the `render` + `stealth` features. Not from nixpkgs: its 0.1.10 predates the `obscura-render` crate outright, so `render` cannot be switched on there. Needs its own `librusty_v8.nix` (v8 137.3.0; `deno.librusty_v8` is 147.4.0), `-p obscura-cli --bins` (virtual workspace rejects `--features` at the root), and `git` at build time for btls-sys's BoringSSL patching. System-wide so `mcp.toml` can resolve it by bare name. See AGENTS.md constraint #24
 
 ### flatpak.nix
 
@@ -421,6 +422,26 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] **`engram install --hooks` stays OFF.** It merges a `SessionEnd` entry
       into `~/.claude/settings.json`, which Home Manager does not own — turning
       it on would make two uncoordinated writers to that file.
+- [ ] **Register Obscura's MCP server in `mcp-servers/mcp.toml`.** Obscura ships
+      a stdio MCP server exposing browser automation to agents (`browser_fetch`,
+      `browser_screenshot`, …). The binary already lands in the *system* profile
+      (`modules/packages/ai.nix`) precisely so a bare-name lookup resolves it,
+      which is what `mcp.toml` does — so the entry is just:
+
+      ```toml
+      [[servers]]
+      name = "obscura"
+      transport = "stdio"
+      command = "obscura"
+      args = ["mcp"]
+      ```
+
+      Cross-repo: `mcp.toml` lives in `/spacecraft-software/mcp-servers`, and
+      per the `mcp-servers` input comment in `flake.nix` the change must be
+      **committed and pushed** before `nix flake update mcp-servers` can see it.
+      `browser_screenshot` needs a render-enabled build — this one is, so the
+      full tool set is available. Sanity-check the server first with
+      `echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | obscura mcp`.
 
 ## Known Issues & Notes
 
