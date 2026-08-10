@@ -263,6 +263,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries; `LD_LIBRARY_PATH` carries libglvnd/libgbm/vulkan-loader for ANGLE's native-EGL `dlopen`)
 - [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (upstream repo has since moved to `aaif-goose/goose`; the `block/goose` release URLs still redirect), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
 - [✓] Goose Desktop `LD_LIBRARY_PATH` prefix (libglvnd/libgbm/vulkan-loader) — bundled ANGLE `libEGL.so` dlopens `libEGL.so.1`, and `DT_RUNPATH` isn't transitive, so `runtimeDependencies` alone left the GPU process dying with "Could not dlopen native EGL". Same fix opencode-desktop already carried
+- [✓] Install Obscura (headless browser for AI agents) — built from source in `pkgs/obscura/` with the `render` + `stealth` features. Not from nixpkgs: its 0.1.10 predates the `obscura-render` crate outright, so `render` cannot be switched on there. Needs its own `librusty_v8.nix` (v8 137.3.0; `deno.librusty_v8` is 147.4.0), `-p obscura-cli --bins` (virtual workspace rejects `--features` at the root), and `git` at build time for btls-sys's BoringSSL patching. System-wide so `mcp.toml` can resolve it by bare name. See AGENTS.md constraint #24
 
 ### flatpak.nix
 
@@ -421,6 +422,23 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] **`engram install --hooks` stays OFF.** It merges a `SessionEnd` entry
       into `~/.claude/settings.json`, which Home Manager does not own — turning
       it on would make two uncoordinated writers to that file.
+- [✓] **Register Obscura's MCP server in `mcp-servers/mcp.toml`.** Done as
+      server #14 (`command = "obscura"`, `args = ["mcp"]`) in mcp-servers
+      `c52abb2`, rendered to all 14 host templates and deployed to 15 live
+      configs. No credential, so no `[[secrets]]`, no VSCode override and no
+      `ACCEPTED` row in `check.rs`. No `RUST_LOG` block either — measured, not
+      assumed: `obscura mcp` emits only JSON-RPC on stdout and nothing on
+      stderr, even under `RUST_LOG=debug`.
+- [ ] **Deploy Obscura's MCP entry to Claude Code.** The only host `mcpctl
+      deploy` could not write: Claude Code owns `~/.claude.json` and rewrites
+      it, so a deploy under a running instance is silently reverted, and
+      `mcpctl` refuses rather than losing the change. Exit Claude Code, then
+      re-run `mcpctl deploy --yes` from `/spacecraft-software/mcp-servers`.
+      The other 15 live configs already have it.
+- [ ] **`obscura` reaches PATH only at the next `rebuild`.** The Bravais commit
+      is pushed and the toplevel builds, but the system has not been switched,
+      so every host now points at a command that does not resolve yet. One
+      `rebuild` closes this; nothing else is needed.
 
 ## Known Issues & Notes
 

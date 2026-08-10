@@ -177,21 +177,95 @@ impl AppError {
         eprintln!("{line}");
     }
 
-    pub fn emit_human(&self) {
-        use owo_colors::OwoColorize;
-        eprintln!("{}: {}", "error".red().bold(), self.message.red());
-        eprintln!("       {}: {}", "hint".color(owo_colors::Rgb(255, 94, 0)), self.hint);
+    pub fn emit_human(&self, color: bool) {
+        // Unified diagnostic layout (diagnostics.md §5): [TAG] first — the
+        // tag carries the meaning even with color stripped (§18.2.1).
+        if color {
+            use owo_colors::OwoColorize;
+            // Theme tokens, not bare hex: `error` token for the tag,
+            // `foreground` for the message, `accent` for the hint.
+            eprintln!("{} {}", "[ERROR]".color(theme::ERROR).bold(), self.message);
+            eprintln!("  {} {}", "hint:".color(theme::ACCENT), self.hint.color(theme::ACCENT));
+        } else {
+            eprintln!("[ERROR] {}", self.message);
+            eprintln!("  hint: {}", self.hint);
+        }
     }
 }
 
 /// Entry point for every sub-command. Emits error in the correct form.
+/// Errors bypass the severity floor — they are never suppressible.
 pub fn report(err: AppError, mode: crate::output::OutputMode) -> i32 {
     if mode.is_machine() {
         err.emit_to_stderr();
     } else {
-        err.emit_human();
+        err.emit_human(mode.color_enabled());
     }
     err.exit_code
+}
+```
+
+### The `Diagnostic` type (non-error severities)
+
+Warnings, informational notes, and success confirmations use the sibling
+`Diagnostic` type — same field skeleton minus `exit_code`, gated by the
+severity floor (`diagnostics.md` §4):
+
+```rust
+// src/diagnostic.rs
+use serde::Serialize;
+
+/// Ordered: Info < Ok < Warn < Error. Error exists here only for floor
+/// comparisons — error-severity output goes through `AppError`.
+#[derive(Debug, Serialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum Severity { Info, Ok, Warn, Error }
+
+impl Severity {
+    pub fn tag(self) -> &'static str {
+        match self {
+            Severity::Info => "[INFO]",
+            Severity::Ok => "[OK]",
+            Severity::Warn => "[WARN]",
+            Severity::Error => "[ERROR]",
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct Diagnostic {
+    pub severity: Severity,          // "ok" | "warn" | "info" — never "error"
+    pub code: &'static str,          // SCREAMING_SNAKE, documented in `schema`
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hint: Option<String>,        // optional here; required on AppError
+    pub timestamp: String,
+    pub command: String,
+    #[serde(flatten)]
+    pub extensions: serde_json::Map<String, serde_json::Value>,
+}
+
+impl Diagnostic {
+    /// Emit honoring mode and severity floor. Single line in machine mode
+    /// (`{"diagnostic":{...}}`), tagged line(s) in human mode.
+    pub fn emit(&self, mode: crate::output::OutputMode, floor: Severity) {
+        if self.severity < floor {
+            return; // below the floor: not written, never downgraded
+        }
+        if mode.is_machine() {
+            #[derive(Serialize)]
+            struct Wrapper<'a> { diagnostic: &'a Diagnostic }
+            let line = serde_json::to_string(&Wrapper { diagnostic: self })
+                .expect("Diagnostic serializes");
+            eprintln!("{line}");
+        } else {
+            // Tag colored via theme token; message in default foreground.
+            eprintln!("{} {}", self.severity.tag(), self.message);
+            if let Some(hint) = &self.hint {
+                eprintln!("  hint: {hint}");
+            }
+        }
+    }
 }
 ```
 
@@ -337,16 +411,24 @@ fn should_use_color(cli: &Cli) -> bool {
     std::io::stdout().is_terminal()
 }
 
-fn warn_tui_fallback() {
-    let warn = serde_json::json!({
-        "warning": {
-            "code": "TUI_FALLBACK",
-            "message": "Interactive explore mode unavailable; falling back to --format json",
-            "reason": "stdout is not a TTY, agent env set, or TERM=dumb",
-            "timestamp": crate::time::now_iso8601(),
-        }
-    });
-    eprintln!("{warn}");
+/// TUI fallback is a warn-severity Diagnostic (diagnostics.md §3): human
+/// mode gets a tagged line rather than raw JSON, and the severity floor
+/// applies — emitted under the default, agent (`warn`), and --verbose
+/// floors; suppressed only by --quiet (errors-only floor). Deprecated
+/// pre-v1.1.0 shape: {"warning":{...}}.
+fn warn_tui_fallback(mode: OutputMode, floor: Severity, reason: &str) {
+    Diagnostic {
+        severity: Severity::Warn,
+        code: "TUI_FALLBACK",
+        message: "interactive explore mode unavailable; falling back to `--format json`".into(),
+        hint: Some("<tool> <noun> list --json".into()),
+        timestamp: crate::time::now_iso8601(),
+        command: crate::cli::current_invocation(),
+        extensions: serde_json::Map::from_iter([
+            ("reason".into(), serde_json::Value::String(reason.into())),
+        ]),
+    }
+    .emit(mode, floor);
 }
 ```
 

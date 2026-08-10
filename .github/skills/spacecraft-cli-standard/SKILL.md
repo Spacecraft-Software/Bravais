@@ -1,19 +1,20 @@
 ---
 name: spacecraft-cli-standard
 description: >
-  Enforces the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
+  Enforces the Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.1.0)
   on every CLI the AI writes or reviews. ALWAYS consult when working on ANY
   command-line interface — new binaries, sub-commands, clap wiring, --json or
-  --format output, exit codes, structured errors to stderr, ratatui TUI,
-  schema introspection, MCP server surface, or CLI tests. Triggers include
-  noun-verb command design, TTY detection, NO_COLOR/FORCE_COLOR, JSON output
-  envelopes, ISO 8601 UTC timestamps, UTF-8 encoding, POSIX compatibility,
-  Nushell/PowerShell 7+/Ion/Bash output, and agent env vars (AI_AGENT, AGENT,
-  CI, CLAUDECODE, CURSOR_AGENT, GEMINI_CLI). If a Spacecraft Software project
-  (Ferrocast, Caliper, Craton, Ironway, Zamak, Bravais, Mawaqit, Flux, or any
-  future project) has a CLI component, this skill governs it — even when the
-  user does not explicitly mention the Standard. Use proactively the moment
-  CLI code appears on the horizon.
+  --format output, exit codes, error/warning/info diagnostics with severity
+  tags, structured errors to stderr, ratatui TUI, schema introspection, MCP
+  server surface, or CLI tests. Triggers include noun-verb command design,
+  TTY detection, NO_COLOR/FORCE_COLOR, JSON output envelopes, ISO 8601 UTC
+  timestamps, UTF-8 encoding, POSIX compatibility, Nushell/PowerShell
+  7+/Ion/Bash output, and agent env vars (AI_AGENT, AGENT, CI, CLAUDECODE,
+  CURSOR_AGENT, GEMINI_CLI). If a Spacecraft Software project (Ferrocast,
+  Caliper, Craton, Ironway, Zamak, Bravais, Mawaqit, Flux, or any future
+  project) has a CLI component, this skill governs it — even when the user
+  does not explicitly mention the Standard. Use proactively the moment CLI
+  code appears on the horizon.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
@@ -21,10 +22,12 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # Spacecraft Software CLI Standard — Dual-Mode Self-Documenting CLI Framework
 
-**Version:** 1.0.0 | **Spec Date:** 2026-04-10 | **Author:** Mohamed Hammad
+**Version:** 1.1.0 | **Spec Date:** 2026-08-10 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
-**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0)
+**Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/) | **Source Spec:** Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.1.0)
+
+**Changelog:** see [`references/CHANGELOG.md`](references/CHANGELOG.md) for the full version history.
 
 This skill encodes the Spacecraft Software CLI Standard so every CLI the AI writes for a
 Spacecraft Software project ships with two co-equal output personalities: a
@@ -55,7 +58,7 @@ Violation of any item below blocks shipping. No exceptions.
 | 5 | **GPL-3.0-or-later + SPDX header** | Every source file. |
 | 6 | **`--json` on every data-returning command** | With a stable schema. Breaking schema changes require a major version bump + deprecation cycle. JSON output is a superset of text output. |
 | 7 | **stdout = data only, stderr = everything else** | No progress indicators, banners, log lines, or ANSI escapes mixed into stdout. Ever. |
-| 8 | **Structured errors on stderr in machine mode** | JSON object with `error.{code, exit_code, message, hint, timestamp, command, docs_url}`. See `references/exit-codes-errors.md`. |
+| 8 | **Severity-tagged diagnostics on stderr** | Errors: JSON object with `error.{code, exit_code, message, hint, timestamp, command, docs_url}` in machine mode (`references/exit-codes-errors.md`). Warnings/info/success confirmations: the `diagnostic` envelope and the `[ERROR]`/`[WARN]`/`[OK]`/`[INFO]` tag ladder — color is never the sole carrier of meaning (Steelbore Standard §18.2.1). See `references/diagnostics.md`. |
 
 ---
 
@@ -68,7 +71,7 @@ one-liners are the mental anchor, not the spec.
 2. **Exit codes are the agent's control flow** — use the canonical map (§4). Non-zero exit + JSON error object to stderr. [`references/exit-codes-errors.md`]
 3. **Make commands idempotent** — same invocation twice, same result. Prefer `ensure` / `apply` / `sync` over `create` / `delete`. Every destructive command supports `--dry-run`. [`references/validation-safety.md`]
 4. **Self-documenting beats external docs** — every tool ships `<tool> schema` and `<tool> describe` sub-commands, plus `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `CONTRIBUTING.md` at repo root. [`references/schema-introspection.md`]
-5. **Structured errors, not narrative messages** — JSON error object on stderr in machine mode. The `hint` field carries the exact command to fix the error ("tips thinking"). [`references/exit-codes-errors.md`]
+5. **Structured errors, not narrative messages** — JSON error object on stderr in machine mode. The `hint` field carries the exact command to fix the error ("tips thinking"). Non-error messages use the same discipline: four severities (`error`/`warn`/`ok`/`info`) carrying the §18.2.1 text tags, with `hint` as a field on any diagnostic — never a severity of its own. [`references/exit-codes-errors.md`, `references/diagnostics.md`]
 6. **Design for composability** — stdout is pure data payload. `--fields` limits payload for token budgets. `jsonl` for streaming. [`references/output-modes.md`]
 7. **Consistent noun-verb structure** — `<tool> <noun-singular> <verb>`. Standard verbs: `list`, `get`, `create`, `update`, `delete`, `apply`, `sync`, `describe`, `schema`. Global flags identical across all Spacecraft Software CLIs. [`references/schema-introspection.md`]
 8. **Understand when MCP beats CLI** — tools with >10 sub-commands SHOULD also expose an MCP server via `<tool> mcp`. Lazy-load schemas to avoid context bloat. [`references/mcp-surface.md`]
@@ -86,8 +89,8 @@ behavior. Divergent implementation is a BLOCKER.
 | `--format <fmt>` | One of: `json`, `jsonl`, `yaml`, `csv`, `explore`. |
 | `--fields <f1,f2,...>` | Restrict output to listed fields. Reduces token cost. |
 | `--dry-run` | Emit action plan as JSON; no side effects. MUST be accepted by every write / delete / destructive command. |
-| `--verbose` / `-v` | Diagnostic output to stderr. |
-| `--quiet` / `-q` | Suppress non-error stderr. |
+| `--verbose` / `-v` | Lower the severity floor to `info`: emit everything, including diagnostic narration and raw subprocess passthrough. See `references/diagnostics.md` §4. |
+| `--quiet` / `-q` | Raise the severity floor to `error`: errors only on stderr. Mutually exclusive with `--verbose` (exit 2 if combined). |
 | `--no-color` | Disable ANSI color. Equivalent to `--color=never`. |
 | `--color <when>` | `never` / `always` / `auto`. |
 | `--help` / `-h` | Help text with ≥2 examples per sub-command (one demonstrating `--json`). Footer MUST include project URL (e.g., `https://<ProjectName>.SpacecraftSoftware.org/`) and maintainer name. |
@@ -184,6 +187,7 @@ Read before implementing; don't fly blind.
 |------|---------------------------|
 | `references/output-modes.md` | Human mode rendering, machine mode output, color precedence, Spacecraft Software palette tokens, JSON envelope, metadata wrapper |
 | `references/exit-codes-errors.md` | Any error path, structured error schema, "tips thinking" hint pattern, `error.code` enum values |
+| `references/diagnostics.md` | Any non-payload message — severity ladder (`[ERROR]`/`[WARN]`/`[OK]`/`[INFO]`), message style rules, the `diagnostic` machine envelope, the `--quiet`/`--verbose`/agent severity floor, human-mode tag rendering and colors |
 | `references/schema-introspection.md` | `<tool> schema` (JSON Schema Draft 2020-12), `<tool> describe` manifest, `CLAUDE.md` / `AGENTS.md` / `SKILL.md` / `CONTRIBUTING.md` context files, noun-verb structure |
 | `references/shell-compat.md` | Output that must parse in POSIX sh, Bash 5+, Brush, Nushell 0.111+, PowerShell 7.6+, or Ion (RedoxOS) |
 | `references/tui-explore.md` | `--format explore` / `-E` TUI mode, ratatui+crossterm, dual CUA+Vim keybindings, alt-screen buffer, search/filter/sort/detail/export |
@@ -266,5 +270,5 @@ host; route to them rather than restating their rules.
 
 ---
 
-*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.0.0) "Dual-Mode
-Self-Documenting CLI Framework", 2026-04-10.*
+*End of SKILL.md. Full normative spec: Spacecraft Software Dual-Mode Self-Documenting CLI Standard (v1.1.0) "Dual-Mode
+Self-Documenting CLI Framework", 2026-08-10.*

@@ -74,6 +74,16 @@
       # (no Flathub listing yet — block/goose#6602 is open; revisit once
       # published). Derivation + version/hash-bump notes live in
       # pkgs/goose-desktop/. Apache-2.0 license.
-      ++ [ (import ../../pkgs { inherit pkgs; }).goose-desktop ];
+      ++ [ (import ../../pkgs { inherit pkgs; }).goose-desktop ]
+      # Obscura — headless browser for AI agents: fetch, run JS on a real V8
+      # isolate, screenshot, scrape, and serve CDP — no Chromium, no Node.
+      # Source-built rather than `unstablePkgs.obscura` because nixpkgs carries
+      # 0.1.10, which predates the render crate outright; see pkgs/obscura/ for
+      # the full rationale and the version/hash-bump procedure.
+      #
+      # System-wide on purpose: it also ships an MCP server (`obscura mcp`), and
+      # mcp-servers/mcp.toml resolves servers by BARE NAME on PATH (constraint
+      # #23), so the system profile is where it has to land.
+      ++ [ (import ../../pkgs { inherit pkgs; }).obscura ];
   };
 }

@@ -12,8 +12,15 @@
 #
 # This script removes the drift by making `.github/skills/` a pure function of
 # the `construct` rev already pinned in `flake.lock`. Same input as
-# `~/.agents/skills` (the Home Manager path), so the local agents and the cloud
-# agents read byte-identical skills.
+# `~/.local/state/construct/pinned` (the Home Manager path), so the local agents
+# and the cloud agents read byte-identical skills.
+#
+# Note the comparison is against `pinned`, NOT `~/.agents/skills`. That is a
+# pointer, and `construct skill sync --build` can move it ahead of `pinned`
+# between rebuilds. It only ever moves to a tree built from the LOCKED rev, so
+# the two cannot diverge in content — but if you ever change that, this file's
+# byte-identity claim is what breaks first, silently, while `--check` keeps
+# passing.
 #
 # Usage (any directory inside the repo):
 #   nu pkgs/sync-skills.nu           # rewrite .github/skills/ from the pinned rev

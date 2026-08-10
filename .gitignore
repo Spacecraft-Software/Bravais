@@ -10,8 +10,6 @@ result-*
 .claude/settings.local.json
 
 # Agent context files (kept local, not version-controlled)
-CLAUDE.md
-AGENTS.md
 .mimocode/
 Chat.txt
 chat/

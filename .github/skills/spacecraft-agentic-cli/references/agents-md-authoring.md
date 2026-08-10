@@ -25,8 +25,8 @@ does NOT belong, and provides anti-pattern catalogs.
 
 | File | Reader | Lifetime | Authoritative on |
 |------|--------|----------|------------------|
-| `AGENTS.md` | Generic agents (Codex CLI, Cursor, Aider, OpenCode, Goose) | Loaded each session | Coding conventions, build/test commands, project invariants |
-| `CLAUDE.md` | Claude Code | Loaded each session | Same as AGENTS.md, plus Claude-specific tool/skill/MCP context |
+| `AGENTS.md` | **Every** agent, Claude included (via the import below) | Loaded each session | **Authoritative.** Coding conventions, build/test commands, project invariants |
+| `CLAUDE.md` | Claude Code | Loaded each session | An `@AGENTS.md` import plus Claude-only tool/skill/MCP context — nothing else |
 | `SKILL.md` | Spacecraft Software Skills, CLI-Anything, `gws`-style skill systems | Loaded by skill loader | The CLI's own capability surface and triggering description |
 | `CONTRIBUTING.md` | Human contributors | Read once during onboarding | Dev environment setup, PR conventions |
 
@@ -123,13 +123,29 @@ Cargo workspace. It targets POSIX shell environments first and PowerShell
 
 ## §3 — CLAUDE.md: how it differs from AGENTS.md
 
-CLAUDE.md MUST be a strict superset of AGENTS.md. Start by symlinking or
-copying AGENTS.md, then add Claude-specific sections:
+**Standard §5.7 governs this file.** CLAUDE.md is an `@AGENTS.md` import
+plus Claude-only content — it MUST NOT restate, summarize, or mirror
+AGENTS.md. Copying or symlinking AGENTS.md into it is non-compliant: the
+two copies are edited in different sessions, drift, and the agent reading
+the stale one is never told it is stale.
+
+> **This rule was inverted when §5.7 was added.** Earlier revisions of this
+> reference told authors to make CLAUDE.md a strict superset by symlinking
+> or copying. That produced duplication by construction. If you find a
+> project still arranged that way, or a file carrying a "keep these two in
+> sync" instruction, that instruction is the bug — fold the content into
+> AGENTS.md and reduce CLAUDE.md to the shape below.
+
+Anything that is true of the *project* goes in AGENTS.md. Only what a
+non-Claude harness cannot act on belongs here:
 
 ```markdown
 # CLAUDE.md — <project-name>
 
-<!-- All AGENTS.md content above -->
+@AGENTS.md
+
+> Record project knowledge in `AGENTS.md`, not here. This file holds
+> only Claude-Code-only context.
 
 ## Skills referenced
 - `spacecraft-standard-constitution` — master Standard
@@ -157,6 +173,27 @@ The Claude-specific sections matter because Claude Code has features
 (skills, MCP, TaskMaster integration) that other agents may not use.
 Mentioning them in AGENTS.md would mislead a Codex CLI session into
 expecting capabilities it doesn't have.
+
+**The test for where a fact belongs:** would a Codex CLI or Cursor session
+be worse off without it? If yes, it goes in AGENTS.md. `CLAUDECODE=1` is
+the classic false positive — a CLI that detects it alongside `CURSOR_AGENT`
+and `GEMINI_CLI` is documenting its own product behavior, which every
+harness needs to know, so it belongs in AGENTS.md.
+
+**CLAUDE.md is mandatory, even when it holds nothing else.** Claude Code
+reads `CLAUDE.md`, not `AGENTS.md` — a project with only an AGENTS.md
+gives a Claude session *no* project context at all. When there is nothing
+Claude-only to say, the file is still four lines: the heading, the
+`@AGENTS.md` import, and the blockquote.
+
+Both files are tracked (§5.7). Neither may be gitignored: an ignored
+AGENTS.md makes the import dangle on a fresh clone. Because they are
+published artifacts, keep credentials, private hostnames, and personal
+filesystem paths out of both — and review a previously-ignored context
+file for sensitive content *before* un-ignoring it.
+
+Tooling that renders managed blocks into context files (rule
+synchronizers, task systems) targets AGENTS.md only.
 
 ---
 
@@ -295,7 +332,7 @@ are inline in `#[cfg(test)] mod tests {}` blocks."
 | File | Target length | Hard cap |
 |------|---------------|----------|
 | AGENTS.md | 80–200 lines | 400 lines |
-| CLAUDE.md | 100–250 lines | 500 lines |
+| CLAUDE.md | 5–40 lines | 80 lines |
 | SKILL.md | 50–150 lines | 300 lines |
 | CONTRIBUTING.md | (no agent-loaded budget) | — |
 

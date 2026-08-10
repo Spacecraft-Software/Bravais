@@ -33,19 +33,22 @@ keybindings, the Spacecraft Software palette mapping, and implementation constra
 4. **CI mode.** `CI=true` without an explicit `--format explore` override
    also falls back to `--format json`.
 
-The fallback warning to stderr MUST be structured when machine mode is
-active:
+The fallback warning is a `warn`-severity diagnostic (`diagnostics.md`).
+In machine mode it is the single-line `diagnostic` envelope on stderr:
 
 ```json
-{
-  "warning": {
-    "code": "TUI_FALLBACK",
-    "message": "Interactive explore mode unavailable; falling back to --format json",
-    "reason": "stdout is not a TTY",
-    "timestamp": "2026-04-10T14:30:00Z"
-  }
-}
+{"diagnostic":{"severity":"warn","code":"TUI_FALLBACK","message":"interactive explore mode unavailable; falling back to `--format json`","hint":"<tool> <noun> list --json","reason":"stdout is not a TTY","timestamp":"2026-04-10T14:30:00Z","command":"<tool> <noun> list --format explore"}}
 ```
+
+In human mode it renders as a tagged line — never as raw JSON:
+
+```
+[WARN] interactive explore mode unavailable; falling back to `--format json`
+  hint: <tool> <noun> list --json
+```
+
+(The pre-v1.1.0 `{"warning": {...}}` shape is deprecated; parsers SHOULD
+still accept it from older tools.)
 
 ---
 

@@ -2,7 +2,7 @@
   "_metadata": {
     "version": "1.0.0",
     "license": "GPL-3.0-or-later",
-    "description": "Canonical hint strings keyed by error.code for Spacecraft Software CLIs. Every hint is a runnable command (paste-test passes). Substitute <tool> with the actual tool name (ferrocast, caliper, etc.).",
+    "description": "Canonical hint strings keyed by error.code for Spacecraft Software CLIs. Every hint is a runnable command (paste-test passes). Substitute <tool> with the actual tool name (ferrocast, caliper, etc.). Warn/info diagnostic codes (spacecraft-cli-standard references/diagnostics.md) follow the same pattern — key by diagnostic.code here rather than maintaining a parallel catalog (e.g. TUI_FALLBACK hints the working non-TUI invocation: <tool> <noun> list --json).",
     "see_also": "references/tips-thinking.md"
   },
 
@@ -48,9 +48,10 @@
   },
 
   "MISSING_DEPENDENCY": {
-    "with_nix": "nix-shell -p <package-name>",
+    "with_nix": "nix run nixpkgs#<package-name> -- <args>",
+    "with_guix": "guix shell <package-name> -- <command>",
     "with_check": "<tool> describe --fields dependencies --json",
-    "context": "Required external tool not in PATH. Per Spacecraft Software standard, prefer Nix package manager. Use --with-check hint when agent should query the dependency list first."
+    "context": "Required external tool not in PATH. Hint the ephemeral run preferred by spacecraft-missing-pkg (nix run / guix shell) — never nix-shell -p (superseded, see tips-thinking.md) and never a durable or system-package-manager install. Use with_check when the agent should query the dependency list first."
   },
 
   "TIMEOUT": {

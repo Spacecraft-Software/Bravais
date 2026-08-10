@@ -173,6 +173,10 @@ release), **MAJOR** (fix before next minor release).
 | 25 | MCP surface available for tools with >10 sub-commands | `<tool> mcp --help` → exit 0; initial `tools/list` over stdio responds | MAJOR (BLOCKER if tool advertises MCP support) |
 | 26 | Dual CUA + Vim keybindings in TUI | Scripted TUI test: `arrow down` + `j` both navigate one row down | MAJOR |
 | 27 | Spacecraft Software palette only in TUI | Screenshot diff against palette reference; no out-of-palette colors | MAJOR |
+| 28 | Every human-mode diagnostic line carries its `[ERROR]`/`[WARN]`/`[OK]`/`[INFO]` tag, with color and without | Induce an error with `NO_COLOR=1`; assert stderr contains `[ERROR]` and no `\x1B[`. Repeat in a PTY with color; tag still present | CRITICAL |
+| 29 | Severity floor honored (`--quiet` = errors only; default = `ok`+; `--verbose` = `info`+; agent env = `warn`+) | Trigger a `warn` diagnostic under `--quiet` → absent; under default → present. Trigger an `info` diagnostic under default → absent; under `--verbose` → present | CRITICAL |
+| 30 | Non-error diagnostics in machine mode use the single-line `{"diagnostic":{...}}` envelope with `severity`, `code`, `message`, `timestamp`, `command` | `AI_AGENT=claude-code_2-1-218_agent <tool> <noun> list --format explore` → each stderr line parses as JSON; the fallback line has `diagnostic.severity == "warn"` and `diagnostic.code == "TUI_FALLBACK"` | MAJOR |
+| 31 | No `error` or `diagnostic` envelope ever on stdout, in any mode | Induce error and TUI-fallback paths; assert stdout is data-only or empty | BLOCKER |
 
 ---
 

@@ -4,6 +4,7 @@
   config,
   pkgs,
   construct,
+  constructSkills,
   mcp-servers,
   vacuum,
   engram,
@@ -30,9 +31,15 @@
   ];
 
   # Construct skill hub — installs all cross-platform skills from
-  # github:Spacecraft-Software/Construct into ~/.agents/skills/ (Nix store)
-  # and symlinks each agent harness to it. Run `skills-sync` then rebuild
-  # to pull the latest skill set.
+  # github:Spacecraft-Software/Construct and symlinks every agent harness at
+  # ~/.agents/skills.
+  #
+  # Under mutablePointer that path is a symlink to
+  # ~/.local/state/construct/current rather than straight into the store, so
+  # `skills-sync` applies a new skill set in seconds with no rebuild and no
+  # sudo. A rebuild still resets the pointer to whatever flake.lock pins, and
+  # `rebuild` reports the gap when the two disagree.
+  #
   # Gemini CLI reads ~/.agents/ directly, so ".gemini/skills" stays omitted.
   # Antigravity does NOT — it scans ~/.gemini/config/skills (reached via the
   # ~/.gemini/antigravity/skills symlink), so that path must be managed here
@@ -40,6 +47,11 @@
   spacecraft.construct = {
     enable = true;
     enableGrok = true;
+    mutablePointer.enable = true;
+    # The SAME derivation flake.nix exposes as `packages.skills`. Not a
+    # convenience: it is what makes "pinned vs live" an exact comparison
+    # instead of a permanently-drifted one. See `constructSkills` in flake.nix.
+    package = constructSkills;
     agentPaths = [
       ".agent/skills"
       ".ai/skills"
