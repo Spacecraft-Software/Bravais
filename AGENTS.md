@@ -53,9 +53,11 @@ Targets `bravais-thinkpad` (stable; march pinned to v3 in `hosts/thinkpad/`). St
 cd /spacecraft-software/bravais/ ; gitway-add ~/.ssh/<signing-key> ; nix flake update antigravity-nix construct gitway ; sudo nix-collect-garbage --verbose -d ; sudo rm -r /tmp/* ; sudo journalctl --vacuum-time=7d ; df -h / ; sudo cp --verbose -r ...(glob /spacecraft-software/bravais/*) /etc/nixos/ ; print "cd /etc/nixos/" ; cd /etc/nixos/ ; sudo rm --verbose -r ...( [v0 "*.md" "flake.*" LICENSE "*.docx" hosts lib modules overlays users "*.txt"] | each { |p| glob $p } | flatten ) ; cd /spacecraft-software/bravais/ ; sudo nixos-rebuild switch --flake .#bravais-thinkpad --show-trace --verbose
 ```
 
-`nix flake update construct` is equivalent to `skills-sync` — updating `construct` also picks up any new skills before the rebuild applies them.
+`nix flake update construct` is the *first half* of `skills-sync`, which also builds the new tree and moves the skill pointer, so no rebuild is needed to apply it — see "The skill pointer" below.
 
-The whole sequence above is now wrapped in a Nushell `def rebuild` command (defined in `users/mj/home.nix`, after `skills-ship`), so the user can just type `rebuild`. It differs from the raw chain in three deliberate ways: GC keeps a week of generations (`--delete-older-than 7d`, not `-d`); the update list also bumps `nixpkgs-unstable` + `home-manager-unstable` so `unstablePkgs` never lags stable (plan 5.2), and a monthly nag reminds to run `nu pkgs/update-vendored.nu --check` (vendored-binary bumps, plan 5.1); the `/tmp` wipe is dropped (builds use `/mnt/nix-tmp`, and `rm -r /tmp/*` can kill an X11/LeftWM session); and the `/etc/nixos` step is a lean `rsync -av --delete --delete-excluded` mirror (tracks deletions, prunes stale files; excludes `.git/`, `result`, `.claude/`) that runs only after a successful switch. Flags: `--dry` (dry-build, no cleanup/mirror), `--no-update`, `--no-gc`, `--trace` (adds `--show-trace --verbose`).
+The whole sequence above is now wrapped in a Nushell `def rebuild` command (defined in `users/mj/home.nix`, after `skills-ship`), so the user can just type `rebuild`. It differs from the raw chain in three deliberate ways: GC keeps a week of generations (`--delete-older-than 7d`, not `-d`); the update list also bumps `nixpkgs-unstable` + `home-manager-unstable` so `unstablePkgs` never lags stable (plan 5.2), and a monthly nag reminds to run `nu pkgs/update-vendored.nu --check` (vendored-binary bumps, plan 5.1); the `/tmp` wipe is dropped (builds use `/mnt/nix-tmp`, and `rm -r /tmp/*` can kill an X11/LeftWM session); and the `/etc/nixos` step is a lean `rsync -av --delete --delete-excluded` mirror (tracks deletions, prunes stale files; excludes `.git/`, `result`, `.claude/`) that runs only after a successful switch. Flags: `--dry` (dry-build, no cleanup/mirror), `--no-update`, `--no-gc`, `--trace` (adds `--show-trace --verbose`), `--skills-only` (bump only `construct`; skip GC, the mirror and the mcpctl probe).
+
+Measured cost of a prose-only skill change, so the flags can be chosen on evidence rather than feel: the skill derivation itself is **~0.6 s** (2.9 MB, 44 skills), a warm system eval is **~20 s** (the tree is usually dirty, so there is no eval cache at all), and the `/etc/nixos` no-op rsync is **~0.05 s** — not a cost worth gating on a diff. The expensive parts are the five-input `flake update` and the GC, which is exactly what `--skills-only` drops. `skills-sync` avoids the switch altogether.
 
 ## Architecture
 
@@ -151,18 +153,68 @@ there for the primary host.
 
 Skills are installed from the `construct` flake input (`github:Spacecraft-Software/Construct`)
 via `construct.homeManagerModules.default` (enabled as `spacecraft.construct` in `home.nix`).
-HM copies all cross-platform skills into `~/.agents/skills/` (Nix store path) and symlinks
+HM copies all cross-platform skills into a store tree and symlinks
 `~/.agent/skills`, `~/.ai/skills`, `~/.aichat/skills`, `~/.claude/skills`, `~/.codex/skills`,
-`~/.copilot/skills`, `~/.opencode/skills` to it. `.gemini` is intentionally omitted —
-Gemini reads `~/.agents/` directly.
+`~/.copilot/skills`, `~/.opencode/skills` to `~/.agents/skills`. `.gemini` is intentionally
+omitted — Gemini reads `~/.agents/` directly. `~/.agents/skills` itself is a pointer, not a
+store path — see "The skill pointer" below.
 
 No manual clone of `/spacecraft-software/construct` is needed for skill installation —
 everything comes from the flake. The local clone at `/spacecraft-software/construct` is
 only needed for skill authoring.
 
-To pull skill updates: run `skills-sync` (Nushell command in `home.nix`) to update the
-`construct` entry in `flake.lock`, then rebuild to apply. Unlike the old approach,
-skills are frozen at flake-lock time — no mid-session drift.
+### The skill pointer (no rebuild, no sudo)
+
+`~/.agents/skills` is **not** a store path. It is a symlink to
+`~/.local/state/construct/current`, and the layout is:
+
+```
+~/.local/state/construct/pinned   -> /nix/store/…-construct-skills   # home.file; GC-rooted by the HM generation
+~/.local/state/construct/current  -> …/pinned, or a `nix build --out-link` result
+~/.agents/skills                  -> ~/.local/state/construct/current
+~/.<agent>/skills  (×9)           -> ~/.agents/skills
+```
+
+| Command | Effect |
+|---------|--------|
+| `skills-sync` | `nix flake update construct`, build `.#skills` at the **new lock**, move `current` — skills live in seconds |
+| `skills-status` | Is the live tree the flake-pinned one? |
+| `skills-reset` | Discard a moved pointer, back to the lock |
+| `rebuild --skills-only` | Full switch, but only bumps `construct`; skips GC, the `/etc/nixos` mirror and the mcpctl probe |
+
+Two rules that are not obvious and are easy to break:
+
+1. **`current` is only ever written by `nix build --out-link`, or pointed at
+   `pinned`.** Never `ln -s` it at a bare `/nix/store/…` path: that shape has no
+   GC root, and the next `nix-collect-garbage` deletes the skill tree out from
+   under every agent on the machine. Both legal shapes are rooted — via the
+   HM generation through `pinned`, or via the indirect root `--out-link`
+   registers under `/nix/var/nix/gcroots/auto/`.
+2. **Every activation re-points `current` at `pinned`,** so `flake.lock` stays
+   authoritative and the pointer only runs ahead *between* rebuilds. Making the
+   seed conditional (`if [ ! -L current ]`) looks kinder but is a trap: a later
+   rebuild bumps `pinned` while `current` stays behind, and the machine silently
+   runs stale skills.
+
+`skill sync --build` builds **this flake's** `skills` output at the **locked**
+rev — not `github:…/Construct#skills` at HEAD. Standalone would resolve
+Construct's own locked nixpkgs (unrealised here: a tarball fetch plus a full
+nixpkgs instantiation ahead of a ~3 MB copy), and building HEAD would let the
+live tree diverge from the lock-derived vendored copy in `.github/skills/`
+without any signal.
+
+`flake.nix` binds `constructSkills` once and hands the **same derivation** to
+both `packages.skills` and `spacecraft.construct.package`. That is load-bearing,
+not tidiness — `construct` pins its own nixpkgs, this flake overrides it with
+`follows`, and HM runs under `useGlobalPkgs` with overlays, so letting each side
+build its own yields different store paths for a byte-identical tree and any
+pinned-vs-live comparison reports drift forever.
+
+Grok is the exception: `~/.grok/skills` is still a plain store link and still
+needs a rebuild. It holds one skill, so the asymmetry is cosmetic.
+
+Agents cache skills at session start — a sync mid-session is invisible until the
+harness restarts.
 
 ## Adding packages
 

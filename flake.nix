@@ -315,6 +315,26 @@
       # directory name is a stable path, not a duplicate of this fact.
       primaryUser = "mj";
 
+      # ── Agent skill tree ──────────────────────────────────────────────────
+      # THE skill tree, built exactly once and used in two places: the
+      # `packages.skills` output below, and `spacecraft.construct.package` in
+      # users/mj/home.nix. Both must be the SAME derivation, which is why this
+      # is bound here rather than left to the module's default.
+      #
+      # The reason is not tidiness. `construct` pins its own nixpkgs, this
+      # flake overrides it with `follows`, and Home Manager runs under
+      # `useGlobalPkgs` with the overlays from modules/core/nix.nix — three
+      # nixpkgs instantiations, hence three different store paths for a
+      # byte-identical tree. Let the module build its own and the pointer drift
+      # probe in `rebuild` would compare two of them and report drift forever.
+      # Handing one derivation to both sides makes the comparison exact.
+      #
+      # A plain instantiation is correct here: mkSkills only needs
+      # `runCommandLocal`, so none of the overlays are relevant to its output.
+      constructSkills = construct.lib.mkSkills {
+        pkgs = nixpkgs.legacyPackages.${system};
+      };
+
       # ── Dev tooling pkgs ──────────────────────────────────────────────────
       # A nixpkgs instance with the nixfmt-rfc-style alias suppressed, used by
       # the flake formatter and devShell below. The alias fires a
@@ -441,6 +461,7 @@
                   primaryUser
                   gitway
                   construct
+                  constructSkills
                   rapg
                   unstablePkgs
                   antigravity-nix
@@ -526,6 +547,18 @@
           app-registry = nixpkgs.legacyPackages.${system}.writeText "steelbore-app-registry.json" (
             builtins.toJSON steelboreApps.registry
           );
+
+          # ── Agent skill tree ───────────────────────────────────────────────
+          # What `construct skill sync --build` builds and points
+          # ~/.local/state/construct/current at. Deliberately a top-level
+          # output rather than something reached through a nixosConfiguration:
+          # evaluating it touches no NixOS module system, so the whole build is
+          # ~0.6 s against ~20 s for a system eval. That gap IS the feature.
+          #
+          # It is the very derivation home.nix installs as the pinned tree —
+          # see `constructSkills` in the outer let for why that identity
+          # matters.
+          skills = constructSkills;
         };
 
       # ── Developer tooling ────────────────────────────────────────────────

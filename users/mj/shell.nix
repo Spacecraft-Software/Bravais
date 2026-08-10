@@ -464,18 +464,34 @@ in
         }
 
 
-        # Update the Construct skill flake input — thin alias to the construct
-        # CLI (`construct skill sync`, flake-update-only). Run rebuild afterwards
-        # to apply. The binary is on PATH via home.packages.
+        # Update the Construct skill flake input AND apply it — thin alias to
+        # `construct skill sync --build`. The binary is on PATH via
+        # home.packages.
         #
-        # This moves flake.lock, which also re-points the vendored Copilot
-        # skills in .github/skills/. Follow with `nu pkgs/sync-skills.nu` and
-        # commit both, or the Skills Drift workflow fails on the next push.
+        # --build is what makes this a complete operation rather than half of
+        # one: it builds this flake's `skills` output at the newly-locked rev
+        # and moves ~/.local/state/construct/current to it, so every harness
+        # sees the new skills immediately. No rebuild, no sudo. A rebuild is
+        # still what RESETS the pointer to the lock.
+        #
+        # It builds the LOCKED rev, never branch HEAD — that is deliberate.
+        # flake.lock stays the source of truth, so the vendored Copilot copy in
+        # .github/skills/ (which pkgs/sync-skills.nu derives from that same
+        # locked rev) cannot silently diverge from what runs locally.
+        #
+        # This moves flake.lock, so still follow with `nu pkgs/sync-skills.nu`
+        # and commit both, or the Skills Drift workflow fails on the next push.
         def skills-sync [topic?: string] {
           if $topic == "help" { ^construct skill sync --help; return }
           if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: skills-sync help(ansi reset)"; return }
-          ^construct skill sync
+          ^construct skill sync --build
         }
+
+        # Where the live skill tree stands relative to what flake.lock pins.
+        def skills-status [] { ^construct skill status }
+
+        # Discard a moved pointer — back to the flake-pinned skill tree.
+        def skills-reset [] { ^construct skill reset }
 
         # Ship local Construct skill edits — commit (signed) + push, then sync.
         # Run from / pointed at the construct clone; rebuild afterwards to apply.
@@ -750,7 +766,7 @@ in
         #   --no-update  skip `nix flake update`
         #   --no-gc      skip garbage collection + journal vacuum
         #   --trace      add --show-trace --verbose (to diagnose eval failures)
-        def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace] {
+        def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only] {
           if $topic == "help" { help rebuild; return }
           if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
           cd /spacecraft-software/bravais
@@ -763,15 +779,28 @@ in
             print $"(ansi yellow)vendored binaries unchecked for 30+ days — run: nu pkgs/update-vendored.nu --check(ansi reset)"
             mkdir ($stamp | path dirname); touch $stamp
           }
+          # --skills-only is the fast path for a prose-only skill change: skills
+          # come from `construct` alone, so bumping the other four inputs drags
+          # unrelated rebuild work into an edit that touched a Markdown file.
+          # It also drops the GC, the /etc/nixos mirror and the mcpctl probe —
+          # none of which a skill edit can affect. What it does NOT drop is the
+          # switch itself: ~/.agents/skills is a Home-Manager store link, so a
+          # system generation is still the only way to move it.
           if not $no_update {
             gitway-add ~/.ssh/id_ed25519
-            nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+            if $skills_only {
+              nix flake update construct
+            } else {
+              nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+            }
           }
-          if (not $no_gc) and (not $dry) {
+          if (not $no_gc) and (not $dry) and (not $skills_only) {
             try { sudo nix-collect-garbage --delete-older-than 7d }
             try { sudo journalctl --vacuum-time=7d }
           }
-          print $"(ansi blue)── disk before ──(ansi reset)"; df -h /
+          if not $skills_only {
+            print $"(ansi blue)── disk before ──(ansi reset)"; df -h /
+          }
           # --option warn-dirty false silences the "Git tree is dirty" warning on
           # the local flake eval (also set declaratively via nix.settings.warn-dirty;
           # this covers the rebuild run before that lands in /etc/nix/nix.conf).
@@ -782,8 +811,13 @@ in
             sudo nixos-rebuild dry-build --flake .#bravais-thinkpad ...$extra
           } else {
             sudo nixos-rebuild switch --flake .#bravais-thinkpad ...$extra
+          }
+          if (not $dry) and (not $skills_only) {
             # Lean true mirror: prune stale files, but skip VCS internals,
             # the build symlink, and agent-local context (.claude is gitignored).
+            # Measured no-op cost on this tree (333 files, 8.2 MB) is ~0.05 s, so
+            # this is deliberately NOT gated on a diff — the gate would cost more
+            # to maintain than the copy it skips.
             sudo rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
             print $"(ansi green)── disk after ──(ansi reset)"; df -h /
 
