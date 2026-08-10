@@ -65,7 +65,7 @@ In `--json` mode, on any non-zero exit, the tool MUST emit a JSON object to
 - **Single-line JSON on stderr.** PowerShell wraps each stderr line as a separate `ErrorRecord`. Multi-line stderr JSON becomes unparseable in PowerShell. Serialize the error object without pretty-printing when writing to stderr.
 - **Always emit on non-zero exit in machine mode.** Missing error object = BLOCKER defect.
 - **Never emit an error object on stdout.** Stdout stays pure-data or empty.
-- **In human mode (TTY)**, the tool SHOULD still print the `hint` to stderr as colored text (Plasma Orange for the hint, Mars Red for the message) but MAY use prose formatting. The structured JSON object is only required in machine mode.
+- **In human mode (TTY)**, the tool still prints the error to stderr as a `[ERROR]`-tagged line with the `hint:` continuation (§6; full rendering spec in `diagnostics.md` §5). The structured JSON object is only required in machine mode.
 
 ---
 
@@ -161,19 +161,22 @@ hallucinating or escalating to the user.
 
 ## §6 — Human-Mode Error Rendering
 
-In human mode (TTY), the tool SHOULD render errors with color, but the
-*content* MUST match the structured error:
+In human mode (TTY), the tool renders the error in the unified diagnostic
+layout (`diagnostics.md` §5) — the *content* MUST match the structured
+error:
 
 ```
-error: Repository 'foo/bar' does not exist
-       hint: Run 'mytool repo list' to see available repositories
+[ERROR] repository `foo/bar` does not exist
+  hint: mytool repo list --json
 ```
 
-Colors (Spacecraft Software Steelbore 2 palette, Standard §11):
-- `error:` label — **Mars Red** (`#FF3B3B`), bold.
-- Message — Mars Red.
-- `hint:` label and hint text — **Plasma Orange** (`#FF5E00`).
-- Timestamp (if shown) — **Platinum Mist** (`#D9DEE5`), dimmed.
+The `[ERROR]` tag is mandatory even without color — color is never the
+sole carrier of meaning (Steelbore Standard §18.2.1). Colors via §11.1
+theme tokens: the `[ERROR]` tag in the `error` token (Mars Red
+`#FF3B3B` under `steelbore`), bold; the message body in `foreground`
+(Platinum Mist); the `hint:` label and hint text in `accent` (Plasma
+Orange). Full color table, colorless behavior, and the `docs:` line:
+`diagnostics.md` §5.
 
 The `--json` flag switches to the structured JSON form, unconditionally.
 
@@ -190,6 +193,8 @@ The `--json` flag switches to the structured JSON form, unconditionally.
 
 ---
 
-*See also: `output-modes.md` for the success envelope; `validation-safety.md`
-for the Wizard Fallback pattern that generates `MISSING_ARGUMENT` errors;
-and `rust-implementation.md` §3 for the Rust `AppError` type.*
+*See also: `diagnostics.md` for the severity ladder, message style rules,
+and the non-error `diagnostic` envelope; `output-modes.md` for the success
+envelope; `validation-safety.md` for the Wizard Fallback pattern that
+generates `MISSING_ARGUMENT` errors; and `rust-implementation.md` §3 for
+the Rust `AppError` type.*

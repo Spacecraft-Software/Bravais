@@ -1,8 +1,17 @@
 # AGENTS.md — <PROJECT_NAME>
 
 <!--
-  Spacecraft Software AGENTS.md template, version 1.0.0.
+  Spacecraft Software AGENTS.md template, version 2.0.0.
   License: GPL-3.0-or-later
+
+  THIS FILE IS THE AUTHORITY (Standard §5.7). Every agent reads it —
+  Codex CLI, Cursor, Aider, OpenCode, Goose, and Claude Code (which
+  imports it from CLAUDE.md via `@AGENTS.md`). New project knowledge
+  goes HERE, not into a harness-specific file. CLAUDE.md holds only
+  what is meaningless to a non-Claude harness.
+
+  This file is tracked, never gitignored, and never carries credentials,
+  private hostnames, or personal filesystem paths.
 
   Replace every <PLACEHOLDER> below with project-specific content.
   Delete instruction comments before committing.

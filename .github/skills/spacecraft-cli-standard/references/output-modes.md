@@ -42,13 +42,18 @@ Human mode targets a live terminal emulator with a sighted operator.
 
 ### Required characteristics
 
-- **Color palette.** Use the Spacecraft Software Steelbore 2 palette (Standard §11) via ANSI escape sequences, with semantic mapping:
-  - Success messages → **Acid Lime** (`#B4FF00`)
-  - Warnings → **Plasma Magenta** (`#E445FF`)
-  - Errors → **Mars Red** (`#FF3B3B`)
-  - Informational text → **Pulse Violet** (`#8A6CFF`)
-  - Data values → **Platinum Mist** (`#D9DEE5`)
-  - Backgrounds / neutral chrome → **Void Navy** (`#000027`)
+- **Color palette.** Use the Spacecraft Software Steelbore 2 palette (Standard §11) via the §11.1 theme tokens, with semantic mapping:
+  - Success messages (`[OK]`) → `success` token — **Acid Lime** (`#B4FF00`)
+  - Warnings (`[WARN]`) → `warning` token — **Plasma Magenta** (`#E445FF`)
+  - Errors (`[ERROR]`) → `error` token — **Mars Red** (`#FF3B3B`)
+  - Informational text (`[INFO]`) → `structure` token — **Pulse Violet** (`#8A6CFF`)
+  - Hints → `accent` token — **Plasma Orange** (`#FF5E00`)
+  - Data values → `foreground` token — **Platinum Mist** (`#D9DEE5`)
+  - Backgrounds / neutral chrome → `background` token — **Void Navy** (`#000027`)
+
+  Every colored status line carries its `[TAG]` — color is never the sole
+  carrier of meaning (Steelbore Standard §18.2.1). Severity semantics,
+  tags, and rendering layout: `diagnostics.md`.
 - **Column-aligned tabular output** for `list` commands, using Unicode box-drawing characters for borders. Keep data on single lines where feasible so the output is still grep-parseable.
 - **Relative timestamps** for recency in human mode (e.g., "3 minutes ago"). The underlying data is always stored and transmitted as ISO 8601 UTC; relative display is a rendering convenience. `--absolute-time` toggles back to ISO 8601 UTC.
 - **Progress indicators** (spinners, progress bars) rendered to stderr only, never to stdout.
@@ -144,8 +149,10 @@ Strict order. First match decides. Implement as a single function returning
 
 1. `--color=never` / `--no-color` flag → disable.
 2. `--color=always` flag → enable (including when piped).
-3. `NO_COLOR` env var (set + non-empty) → disable.
-4. `FORCE_COLOR` env var (set + non-empty) → enable. **Overrides `NO_COLOR`.**
+3. `FORCE_COLOR` env var (set + non-empty) → enable. Checked **before**
+   `NO_COLOR` so it overrides it (per force-color.org; the reference Rust
+   implementation has always checked in this order).
+4. `NO_COLOR` env var (set + non-empty) → disable.
 5. `CLICOLOR=0` → disable.
 6. `TERM=dumb` → disable.
 7. TTY detection: `isatty(stdout) == true` → enable. Else disable.
@@ -165,7 +172,7 @@ enhanced `^>` / `^|` / `&>` / `&|` redirection operators), Bash, and
 Nushell.
 
 - **stdout** carries only the data payload. Nothing else.
-- **stderr** carries everything else: progress indicators, warnings, informational messages, interactive prompts, structured errors.
+- **stderr** carries everything else: progress indicators, interactive prompts, and every diagnostic — errors, warnings, informational messages, and success confirmations, emitted as severity-tagged lines (human mode) or single-line `error`/`diagnostic` envelopes (machine mode) per `diagnostics.md`.
 
 A tool that writes a progress spinner to stdout is broken — pipe consumers
 (`jq`, `from json`, `ConvertFrom-Json`) will choke on mixed content.

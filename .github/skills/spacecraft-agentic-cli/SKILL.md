@@ -82,8 +82,8 @@ repository root, on day one, before business logic:
 
 | File | Primary consumer | Contents |
 |------|------------------|----------|
-| `AGENTS.md` | Generic agents (Codex CLI, Cursor, Aider, OpenCode) | Coding conventions, test/build commands, forbidden patterns, repository invariants |
-| `CLAUDE.md` | Claude Code agent | Same as AGENTS.md, plus Claude Code–specific context (skills referenced, MCP servers expected, tool preferences) |
+| `AGENTS.md` | **Every** agent (Codex CLI, Cursor, Aider, OpenCode, and Claude Code via the import) | **Authoritative.** Coding conventions, test/build commands, forbidden patterns, repository invariants |
+| `CLAUDE.md` | Claude Code agent | An `@AGENTS.md` import plus Claude-only context (skills, `.claude/`, slash commands, MCP client) — never a restatement of AGENTS.md |
 | `SKILL.md` | Spacecraft Software Skills + CLI-Anything + `gws` | YAML frontmatter (name, description, license) + capability surface for the CLI itself |
 | `CONTRIBUTING.md` | Human contributors | Onboarding, dev environment setup, PR conventions |
 
@@ -96,6 +96,15 @@ AGENTS.md is for *project-specific* invariants).
 Drop-in templates live in `assets/agents-md.template.md` and
 `assets/claude-md.template.md`. Never copy them blindly — each file must be
 specialized for the project.
+
+**Standard §5.7 is binding here.** `AGENTS.md` is the single source of
+truth and every project must ship one; `CLAUDE.md` is an `@AGENTS.md`
+import plus Claude-only content and must not restate it. Both are tracked
+— a gitignored `AGENTS.md` makes the import dangle on a fresh clone — and
+neither carries credentials, private hostnames, or personal filesystem
+paths. Tooling that renders managed blocks into context files targets
+`AGENTS.md` only. A "keep these two files in sync" instruction is not a
+solution to drift; it is evidence the split is wrong.
 
 **No-clobber: read before you write.** Scaffolding these files is the one
 durable change this skill triggers on the user's own machine, and a repo often
@@ -145,6 +154,14 @@ including:
 Canonical hint strings for every standard error code live in
 `assets/error-hint-catalog.json` — use them as starting points.
 
+**Hint is a field, never a severity.** The severity ladder is exactly
+`error`/`warn`/`ok`/`info` with the `[ERROR]`/`[WARN]`/`[OK]`/`[INFO]`
+tags (`spacecraft-cli-standard` `references/diagnostics.md`); any
+diagnostic of any severity MAY carry a `hint`, and non-error diagnostics
+(the `diagnostic` envelope) benefit from one exactly the same way —
+e.g. the TUI-fallback warning hints the working non-TUI invocation. The
+message states what happened; only the hint says what to run next.
+
 ---
 
 ## §4 — Agent Environment Detection (Behavioral Cascade)
@@ -156,9 +173,9 @@ simultaneously:
 
 | Variable | Output format | Color | TUI | Interactivity | Verbosity |
 |----------|---------------|-------|-----|---------------|-----------|
-| `AI_AGENT` set | json | off | suppressed | non-interactive (--yes implicit) | minimal — failures only |
-| `AGENT` set | json | off | suppressed | non-interactive | minimal |
-| `CI` truthy | json | off | suppressed | non-interactive | normal |
+| `AI_AGENT` set | json | off | suppressed | non-interactive (--yes implicit) | minimal — severity floor `warn` (failures + degradations; no `ok`/`info` chatter) |
+| `AGENT` set | json | off | suppressed | non-interactive | minimal — floor `warn` |
+| `CI` truthy | json | off | suppressed | non-interactive | normal — floor `ok` |
 | `CLAUDECODE` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
 | `CURSOR_AGENT` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
 | `GEMINI_CLI` set | (informational) | (per other rules) | (per other rules) | (per other rules) | (per other rules) |
@@ -184,6 +201,10 @@ without inferring agent intent.
 **Read `references/agent-env-detection.md`** for concrete Rust detection
 code, the canonical priority order, and a Bun-style verbosity adaptation
 (suppress passing test logs under `AI_AGENT`; emit only failure traces).
+The verbosity column is defined precisely as the **severity floor** in
+`spacecraft-cli-standard` `references/diagnostics.md` §4: agent mode
+raises the floor to `warn`, `--quiet` to `error`, `--verbose` lowers it
+to `info`; explicit flags beat environment detection.
 
 ---
 

@@ -336,17 +336,18 @@ test scaffold.
 
 ## §6 — Localization and human-mode rendering
 
-In human (TTY) mode, the hint field SHOULD still be rendered as a
-suggestion to the human user. Format it visibly:
+In human (TTY) mode, the hint field is still rendered as a suggestion to
+the human user, in the unified diagnostic layout defined by
+`spacecraft-cli-standard` `references/diagnostics.md` §5:
 
 ```
-Error: Repository 'foo/bar' does not exist
-  → Try: ferrocast repo list --json
+[ERROR] repository `foo/bar` does not exist
+  hint: ferrocast repo list --json
 ```
 
-The arrow + `Try:` prefix MUST NOT appear in the JSON `hint` field
-itself. It is added at render time only. The JSON hint stays a pure
-runnable string.
+The `[ERROR]` tag and the indented `hint:` label MUST NOT appear in the
+JSON `hint` field itself. They are added at render time only. The JSON
+hint stays a pure runnable string.
 
 **Localization:** the `message` field MAY be localized for human users.
 The `hint` field MUST NOT be localized — it is always the literal command

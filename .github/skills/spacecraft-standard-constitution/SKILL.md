@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v1.45 (§13 design systems; §3.1.1 TypeScript over JS; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
+  The Steelbore Standard v1.47 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 1.45 | **Date:** 2026-08-06 | **Author:** Mohamed Hammad
+**Version:** 1.47 | **Date:** 2026-08-09 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -450,6 +450,61 @@ limits are therefore enforced **before packing**, not after a failure.
 | Rendered, not raw | "Rendered" means the string the loader sees. A YAML folded scalar (`description: >`) joins its wrapped lines with single spaces and retains a trailing newline, so the raw line lengths are not the measurement. Block (`>` / `\|`) and single-line plain or quoted forms alike are measured after folding. |
 | Machine-enforced | The cap MUST be checked by an automated gate that runs both in the skill repository's CI on every pull request and push to the default branch, and in whatever command produces the distributable bundle. A developer-installed git hook is a convenience, never the gate — hooks are opt-in per clone and cannot be relied on. |
 | Over-limit skills do not ship | A skill whose description exceeds the cap MUST NOT be packed, committed, or published. Trim the description; do not raise the cap. |
+
+### §5.7 — Agent Context Files
+
+Coding agents load a project's root context file into their window at the start
+of every session. Different harnesses read different filenames — `AGENTS.md` is
+the cross-vendor convention (Codex CLI, Cursor, Aider, OpenCode, Goose, Gemini
+CLI), while Claude Code reads `CLAUDE.md`. Maintaining both as parallel prose
+guarantees drift: the two copies are edited in different sessions, diverge, and
+the agent that reads the stale one is misinformed. This section fixes a single
+source of truth.
+
+**`AGENTS.md` is the authority.** Every project **must** ship an `AGENTS.md` at
+its root, in addition to the §5.2 posture files. It is harness-neutral: it
+carries the project's build, test, and lint commands, architectural invariants,
+forbidden patterns, repository layout, and any fact an agent cannot infer from
+the code itself.
+
+**`CLAUDE.md` is a thin overlay, and is also required.** Claude Code reads
+`CLAUDE.md` and does *not* read `AGENTS.md`, so a project shipping only an
+`AGENTS.md` gives a Claude session no project context at all. The file **must**
+consist of an `@AGENTS.md` import followed only by content that is meaningless
+to a non-Claude harness — Skill-tool invocations, `.claude/` paths, Claude Code
+slash commands, and Claude-client MCP configuration. It **must not** restate,
+summarize, or mirror `AGENTS.md`. Where there is nothing Claude-only to say, the
+import and its note are the whole file:
+
+```markdown
+# CLAUDE.md
+
+@AGENTS.md
+
+> Record project knowledge in `AGENTS.md`, not here. This file holds
+> only Claude-Code-only context.
+```
+
+**Mandatory rules:**
+
+| Rule | Detail |
+|------|--------|
+| Write to `AGENTS.md` | New project knowledge — a build command, an invariant, a gotcha — MUST be written to `AGENTS.md`. An agent or maintainer adds to `CLAUDE.md` only when the fact is meaningless to a harness that is not Claude Code. "Update the context file" always means `AGENTS.md`. |
+| No duplication | A rule stated in `AGENTS.md` MUST NOT be restated in `CLAUDE.md`. Instructions of the form "keep these two files in sync" are evidence the split is wrong and MUST be removed rather than honored. |
+| Both tracked | Both files are version-controlled artifacts, not agent-local scratch, and both are required. A `.gitignore` entry for either one breaks the `@AGENTS.md` import on a fresh clone and hides project knowledge from every contributor who did not author it. |
+| No secrets | Because they are tracked and published, context files are subject to the same hygiene as any other repository file: no credentials, tokens, keys, private hostnames or network topology, or personal filesystem paths. A context file that was previously ignored MUST be reviewed for sensitive content **before** it is un-ignored. |
+| Generated blocks | Tooling that renders managed regions into context files (rule synchronizers, task systems) MUST target `AGENTS.md` only. Writing the same block into both files reintroduces the duplication the import exists to remove. |
+
+A relative import resolves against the file containing it, never against the
+working directory, so each project's `CLAUDE.md` reaches its own `AGENTS.md`.
+Claude Code walks up the directory tree and concatenates every `CLAUDE.md` it
+finds, so a project nested under another inherits the ancestor's context in
+addition to its own — which is why an ancestor file must not restate what a
+child already says.
+
+Other harness-specific files (`GEMINI.md`, `.cursorrules`, and similar) follow
+the `CLAUDE.md` pattern: import or reference `AGENTS.md`, then add only what is
+specific to that harness.
 
 ---
 
@@ -1431,18 +1486,47 @@ When implementing features or writing code based on a Product Requirements Docum
 
 ### §17.1 — Progress Reporting Format
 
-Every progress report must include the percentage of completion for individual milestones, the overall progress of the Minimum Viable Product (MVP), and the total progress of the PRD.
+A progress report is a block of labelled rows, one row per tracked track. Every row carries its own 20-cell bar and its own percentage, so each figure is legible on its own line rather than compressed into a shared summary line.
 
 **Format template:**
 ```
-[Progress: ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱] 70%
-Milestones: M0: 100% | M1: 100% | M2: 70% | M3: 0% | M4: 0%
-Product Status: MVP: 90% | PRD: 70%
+M0:   [████████████░░░░░░░░]  60%
+M1:   [████████████░░░░░░░░]  60%
+M2:   [████████████░░░░░░░░]  60%
+M3:   [████████████░░░░░░░░]  60%
+M4:   [████████████░░░░░░░░]  60%
+MVP: [ ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱ ] 70%
+TODO: [████████████░░░░░░░░]  60%
+PLAN: [████████████░░░░░░░░]  60%
+PRD:  [████████████░░░░░░░░]  60%
 ```
+
+**Row order** is fixed: milestone rows `M0`…`Mn` in ascending order, then `MVP`, then `TODO`, then `PLAN`, then `PRD`.
+
+**Only applicable rows are emitted.** The milestone rows match the milestones the plan actually defines — there is no fixed count, and `M0`–`M4` in the template above is an illustration, not a required set. `TODO`, `PLAN`, and `PRD` each appear only when the task is driven by such an artifact. `MVP` is always present. A row is never padded in at 0% to fill out the block: a fabricated track reports progress against nothing and misrepresents the work.
 
 ### §17.2 — Progress Bar Style
 
-The progress bar must use high-visibility Unicode block characters (e.g., `▰` for filled and `▱` for empty) to form a clean, static, 20-character visual representation of total PRD completion. Do not use legacy ASCII characters like `#` or `-` for the progress bar.
+Every bar is a static, 20-cell, high-visibility Unicode bar. Legacy ASCII characters — `#`, `-`, `=` — are forbidden in any bar.
+
+Two cell styles are in use, and the distinction is normative:
+
+| Rows | Filled | Empty | Brackets |
+|------|--------|-------|----------|
+| Milestones, `TODO`, `PLAN`, `PRD` | `█` (U+2588) | `░` (U+2591) | Tight — no space inside either bracket |
+| `MVP` | `▰` (U+25B0) | `▱` (U+25B1) | Padded — exactly one space inside each bracket |
+
+The MVP row is deliberately set apart: it is the headline figure, and the tracks above and below it are the inputs that feed it. Its distinct glyph pair makes it findable at a glance in a stack of otherwise identical bars.
+
+**Column alignment is normative.** The MVP row's bracket padding exists to preserve it — the row is one character narrower in its label field and one character wider inside each bracket, so every bar cell and every percentage digit lands in the same column across the whole block.
+
+- On every row other than `MVP`, the label and its colon are left-aligned in a six-character field, followed immediately by `[`.
+- On the `MVP` row, `MVP:` is left-aligned in a five-character field, followed by `[` and one space.
+- Both place the first bar cell in column 8, so every bar occupies columns 8 through 27.
+- The percentage is right-aligned so its `%` sign lands in the same column on every row — two spaces after the closing bracket on the tight-bracket rows, one on the `MVP` row. That difference is exactly what the padded brackets buy.
+- The separator never drops below one space. At 100% the `MVP` row keeps its single space and its percentage therefore sits one column right — the only value at which the two row types do not align, and preferable to a bracket abutting a digit.
+
+**Cell count.** The number of filled cells is the percentage scaled to twenty cells and rounded to the nearest cell. Two saturation rules override the rounding: a bar shows twenty filled cells **only** at exactly 100%, and zero filled cells **only** at exactly 0%. Rounding 99% up to a visually complete bar reports work as finished that is not, which is the drift this chapter exists to catch.
 
 ### §17.3 — Reporting Cadence
 
@@ -1653,6 +1737,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§5** Project Posture: README/NOTICE/CONTRIBUTING present; default personal-hobby stance applied; general-use carve-outs declared in project README
 - [ ] **§5.5** Package distribution: `packaging/guix.scm`, `packaging/default.nix`, and `packaging/PKGBUILD` present, buildable, and carrying correct version + SHA-256 checksum (in each package manager's native format) before any release tag is pushed
 - [ ] **§5.6** Skill packaging: every `SKILL.md` `description` measures ≤ 1000 rendered characters (folded scalars counted as the loader sees them, not as raw lines); the cap is enforced by CI *and* by the command that produces the bundle, not only by a local git hook — N/A for projects that ship no skills
+- [ ] **§5.7** Agent context files: `AGENTS.md` and `CLAUDE.md` both present at the repository root and version-controlled; `CLAUDE.md` is an `@AGENTS.md` import plus Claude-only content and restates nothing; neither file is gitignored; no credentials, private hostnames, or personal filesystem paths in either; managed blocks rendered into `AGENTS.md` only
 - [ ] **§6.1** POSIX-compliant CLI/system tools
 - [ ] **§7** Shell scripts are POSIX-compatible; Nushell/Ion native variants provided where shell-native idioms are required; no Bashisms in shared scripts
 - [ ] **§8** Texinfo manual present for user-facing programs (`doc/<project>.texi`); builds to `.info`, `.html`, and `.pdf`; `install-info` hook present in all three package manifests (§5.5) — N/A for scripts and internal tooling
@@ -1665,7 +1750,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§14** ISO 8601 dates; 24h time; UTC Z is the default primary timestamp (companion local time with UTC offset permitted, never a replacement) — unless the project filed the §14.2.1 domain exception for inherently local-time-bound data; ISO 8601 durations; metric units
 - [ ] **§15** Attribution present: maintainer name (`Mohamed Hammad`), contact (`Mohamed.Hammad@SpacecraftSoftware.org`), and project URL in `--version` / README / About
 - [ ] **§15.3** Third-party work credited in `CREDITS.md` at project/skill root when triggers apply; deeper `references/ATTRIBUTION.md` present where reference content is adapted from external sources
-- [ ] **§17** Development progress tracked and reported continuously with milestone percentages, MVP, total PRD completion, and a Unicode progress bar
+- [ ] **§17** Development progress tracked and reported continuously as the §17.1 labelled-row block — one 20-cell bar per track, milestone rows then MVP then TODO/PLAN/PRD, only the rows that apply; MVP set in `▰`/`▱` with padded brackets and every other row in `█`/`░`, columns aligned, no ASCII bars
 - [ ] **§18** Accessible mode implemented and off by default; §18.1 toggle honored with correct precedence; status never color-only; no animation or decorative art in accessible mode; TUI ships a linear mode and a non-interactive CLI path; GUI publishes accessible names and roles (AccessKit for Rust); verified with a real screen reader; existing projects carry a dated remediation entry in `PROJECTS.md` until they conform — N/A for projects registered as games (§18.5), which are exempt in full
 - [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too
 - [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution
@@ -1689,6 +1774,7 @@ for a pure Rust library), note it as N/A rather than silently skipping it.
 | Creating IDE / terminal themes        | `spacecraft-theme-factory`                         |
 | Resolving or declaring the system theme (§11.6) | `steelbore-color-palette`                |
 | Implementing or auditing accessibility (§18) | `spacecraft-accessibility-support`          |
+| Authoring `AGENTS.md` / `CLAUDE.md` (§5.7) | `spacecraft-agentic-cli`                     |
 | All other Spacecraft Software work    | `spacecraft-standard-constitution`                 |
 
 ---
