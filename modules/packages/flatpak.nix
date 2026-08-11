@@ -43,6 +43,23 @@
       }
     ];
 
+    # Keep the declared Flatpaks current. Neither update mechanism is on by
+    # default, so without this nothing ever refreshes them — the version
+    # installed is whatever the remote happened to serve the day the app was
+    # first declared, forever. Chrome sat two months stale that way.
+    #
+    # A timer, deliberately, rather than `update.onActivation = true`: the
+    # entries here pin no version (only an appId), so "current" is a property
+    # of the remote and not of this flake — a rebuild is not what makes it
+    # true. Tying updates to activation would add an unbounded download to
+    # every `nixos-rebuild switch` (Chrome alone is ~150 MB, and a runtime bump
+    # ~250 MB) and block the switch on it, for a class of package a rebuild
+    # cannot make reproducible anyway.
+    services.flatpak.update.auto = {
+      enable = true;
+      onCalendar = "weekly";
+    };
+
     # Declarative Flatpak packages.
     #
     # DELIVERY POLICY (elegance plan 4.1): an app ships from nixpkgs UNLESS it

@@ -4,8 +4,16 @@
 # CRD is not in nixpkgs. This repackages Google's official amd64 .deb:
 # `dpkg -x` the tree, `autoPatchelfHook` the bundled ELF host binaries, and patch
 # only the hardcoded *paths* in the Python management script (interpreter, Xorg /
-# Xvfb / xrandr / xdpyinfo, the Xorg module dir, and sudo/pkexec) so the daemon
-# finds its tools on NixOS. We deliberately do NOT patch CRD's session-launch
+# Xvfb / xrandr / xdpyinfo / xauth / mcookie / setxkbmap, the Xorg module dir,
+# and sudo/pkexec) so the daemon finds its tools on NixOS.
+#
+# EVERY external command the script runs must be substituted here, not left to
+# PATH. The systemd unit has no `path`, so the daemon inherits systemd's minimal
+# PATH and a bare command name resolves to nothing — `xauth`/`mcookie` were
+# missed originally and the service crash-looped with "xauth failed with code
+# 127" (127 being the shell's command-not-found) on every start.
+#
+# We deliberately do NOT patch CRD's session-launch
 # logic — the normal headless-virtual-X flow is what we want (it runs
 # ~/.chrome-remote-desktop-session). No setuid `user-session` helper exists in
 # this release, so none is wrapped.
@@ -47,6 +55,9 @@
   xorg-server,
   xrandr,
   xdpyinfo,
+  xauth,
+  setxkbmap,
+  util-linux,
 }:
 
 let
@@ -62,11 +73,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "chrome-remote-desktop";
-  version = "151.0.7922.13";
+  version = "152.0.7977.9";
 
   src = fetchurl {
     url = "https://dl.google.com/linux/chrome-remote-desktop/deb/pool/main/c/chrome-remote-desktop/chrome-remote-desktop_${finalAttrs.version}_amd64.deb";
-    sha256 = "94e8f7ca4e754d9179a396a8b5d1188252aad70b7a645635b913209b58539a33";
+    sha256 = "fc6e10808f589a0475ce20a0038c902701e9e59cfb0ac810a45116f8c057f9e7";
   };
 
   nativeBuildInputs = [
@@ -133,6 +144,8 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail '"Xorg"' '"${xorg-server}/bin/Xorg"' \
       --replace-fail '"xrandr"' '"${xrandr}/bin/xrandr"' \
       --replace-fail 'xdpyinfo' '${xdpyinfo}/bin/xdpyinfo' \
+      --replace-fail 'xauth add :%d . `mcookie`' '${xauth}/bin/xauth add :%d . `${util-linux}/bin/mcookie`' \
+      --replace-fail '"setxkbmap"' '"${setxkbmap}/bin/setxkbmap"' \
       --replace-fail '/usr/lib/xorg/modules' '${xorg-server}/lib/xorg/modules' \
       --replace-fail '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
       --replace-fail '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
