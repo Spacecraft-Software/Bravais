@@ -125,20 +125,9 @@ maintenance" below — don't confuse the two sets.
 
 ## Module design pattern
 
-All opt-in modules follow the `steelbore.*` namespace:
-
-```nix
-{ config, lib, pkgs, ... }:
-{
-  options.steelbore.desktops.niri = {
-    enable = lib.mkEnableOption "Niri scrolling tiling compositor (Wayland)";
-  };
-
-  config = lib.mkIf config.steelbore.desktops.niri.enable {
-    # Implementation
-  };
-}
-```
+All opt-in modules follow the `steelbore.*` namespace — `options.steelbore.<area>.<name>`
+declared with `lib.mkEnableOption`, implementation behind `lib.mkIf cfg.enable`.
+Read any file under `modules/` for the shape.
 
 `lib/` holds `palette.nix` (§11 palette family: slug → role tokens + ANSI map +
 format converters), `default-apps.nix` (handler roles → MIME lists, app catalog,
@@ -170,7 +159,8 @@ only needed for skill authoring.
 
 ```
 ~/.local/state/construct/pinned   -> /nix/store/…-construct-skills   # home.file; GC-rooted by the HM generation
-~/.local/state/construct/current  -> …/pinned, or a `nix build --out-link` result
+~/.local/state/construct/built    -> /nix/store/…-construct-skills   # `nix build --out-link`; GC-rooted by its own auto root
+~/.local/state/construct/current  -> …/pinned  (tracking the lock)  or  …/built  (moved ahead)
 ~/.agents/skills                  -> ~/.local/state/construct/current
 ~/.<agent>/skills  (×9)           -> ~/.agents/skills
 ```
@@ -184,12 +174,18 @@ only needed for skill authoring.
 
 Two rules that are not obvious and are easy to break:
 
-1. **`current` is only ever written by `nix build --out-link`, or pointed at
-   `pinned`.** Never `ln -s` it at a bare `/nix/store/…` path: that shape has no
-   GC root, and the next `nix-collect-garbage` deletes the skill tree out from
-   under every agent on the machine. Both legal shapes are rooted — via the
-   HM generation through `pinned`, or via the indirect root `--out-link`
-   registers under `/nix/var/nix/gcroots/auto/`.
+1. **`current` only ever points at `pinned` or at `built`.** Never `ln -s` it at
+   a bare `/nix/store/…` path: that shape has no GC root, and the next
+   `nix-collect-garbage` deletes the skill tree out from under every agent on
+   the machine. Both legal targets are rooted — `pinned` via the HM generation,
+   `built` via the indirect root `--out-link` registers under
+   `/nix/var/nix/gcroots/auto/`.
+
+   `built` is why the pointer is a three-link layout rather than two: `nix build
+   --out-link` **refuses** to replace a link whose current target is outside the
+   store, and `current -> pinned` is exactly that after every rebuild. Building
+   onto a dedicated link sidesteps the refusal, and lets `current` be swapped by
+   an atomic rename so it is never momentarily dangling.
 2. **Every activation re-points `current` at `pinned`,** so `flake.lock` stays
    authoritative and the pointer only runs ahead *between* rebuilds. Making the
    seed conditional (`if [ ! -L current ]`) looks kinder but is a trap: a later
@@ -228,102 +224,19 @@ After adding, update `PRD.md` (package inventory section) and `TODO.md` (relevan
 
 ## Changing fonts
 
-**These fonts are a deliberate, pinned choice — leave them as configured.** Do **not** swap them out because a skill (e.g. `spacecraft-brand-guidelines`, `spacecraft-theme-factory`) prescribes a different typeface, because the Standard names a brand font, or because some default seems "more on-brand." The current families below are the intended values. Only change a font when the **user explicitly asks for that specific font change** — never as a side effect of applying a skill, theme, or brand guideline.
+**These fonts are a deliberate, pinned choice — leave them as configured.** Do **not** swap them out because a skill (e.g. `spacecraft-brand-guidelines`, `spacecraft-theme-factory`) prescribes a different typeface, because the Standard names a brand font, or because some default seems "more on-brand." Only change a font when the **user explicitly asks for that specific font change** — never as a side effect of applying a skill, theme, or brand guideline.
 
-There are two font *roles*, both defined in `modules/theme/fonts.nix`:
+Current values: **UI = Hack Nerd Font**, **terminal = JetBrainsMono Nerd Font**. Both are defined in `modules/theme/fonts.nix`; the terminal font is a one-line edit to `theme.font` in `lib/terminal-theme.nix`.
 
-- **Main / UI font** — the `sansSerif` + `serif` fontconfig defaults (general UI, GTK `font-name`/`document-font-name`). Current value: **Hack Nerd Font**.
-- **Terminal / code font** — the `monospace` fontconfig default + every terminal app config. Current value: **JetBrains Mono Nerd Font** (`JetBrainsMono Nerd Font`, one word). Icon fallback: **CaskaydiaMono Nerd Font** (monospace), **Symbols Nerd Font Mono** (Rio).
-
-`fonts.nix` sets the fontconfig defaults. Since the Phase C terminal-theme
-generator, **every terminal emulator config derives its font from
-`theme.font` in `lib/terminal-theme.nix`** (foot, xterm, xfce, ghostty, warp,
-konsole, wezterm, cosmic-term, waveterm, alacritty, rio — rio automatically
-gets the `…Mono` variant, constraint #11). A terminal-font change is now a
-ONE-LINE edit there. Family strings still appear by hand in the NON-generated
-spots: `modules/theme/fonts.nix` (packages + fontconfig), the **eww** scss +
-**ironbar** css (bar fonts), **halloy**/**tiny** configs, the **dconf**
-`font-name`/`monospace-font-name` keys, `gtk.font`, Starship has none, and
-`modules/desktops/shared.nix` (dunst) for the UI font (polybar was removed
-in Phase E — eww is the bar on both WMs). Grep those when changing a family.
-
-**Procedure (the way that actually works):**
-
-1. **Get the exact family name — do not guess.** The fontconfig family is *not* the nixpkgs attr. Build the package and read it:
-   ```sh
-   p=$(nix build --no-link --print-out-paths nixpkgs#nerd-fonts.jetbrains-mono)
-   fc-scan --format '%{family}\n' "$p" | tr ',' '\n' | sort -u | grep -i jetbrains
-   # → "JetBrainsMono Nerd Font", "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font Propo"
-   ```
-   Common gotcha: `nerd-fonts.jetbrains-mono` → family `JetBrainsMono Nerd Font` (no space), `nerd-fonts.hack` → `Hack Nerd Font`.
-
-2. **Terminal font = one line.** Edit `theme.font` in `lib/terminal-theme.nix`
-   — every generated terminal config (foot, xterm, xfce, ghostty, konsole,
-   wezterm, waveterm, alacritty, rio, ptyxis palette consumers) follows
-   automatically, and Rio keeps its `"${theme.font} Mono"` variant + the
-   `Symbols Nerd Font Mono` extras by construction (constraint #11).
-   Then stem-replace only the NON-generated spots (bars, IRC clients, dconf
-   font-name keys, gtk font, dunst UI font):
-   ```sh
-   sd 'JetBrainsMono' 'NewFamily' users/mj/home.nix   # eww/ironbar/halloy/dconf hits only
-   ```
-   and edit the `nerd-fonts.*` attrs + `defaultFonts` in `fonts.nix` by hand.
-
-3. **UI font** (`Hack Nerd Font`): edit `fonts.nix` defaults, the dconf
-   `font-name`/`document-font-name` keys and `gtk.font` in `home.nix`, and the
-   dunst (`modules/desktops/shared.nix`) font.
-
-4. **Verify** before declaring done:
-   ```sh
-   git add -A
-   nix build --no-link --print-out-paths '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'   # must evaluate+build
-   nix-store -qR <result> | grep -i nerd-fonts                                                              # new fonts in, old fonts out
-   ```
-   The build does **not** catch a wrong family name (it's just a string) — only step 1's `fc-scan` does.
-
-5. Update `PRD.md` §4.3 (Typography) and `TODO.md` `fonts.nix` checklist to the new families.
+The full procedure — getting the real fontconfig family with `fc-scan` (the build does NOT catch a wrong family name), the non-generated spots that still need editing by hand, and the verification steps — is in the `changing-fonts` skill (`.claude/skills/changing-fonts/`).
 
 ## Changing default applications
 
-Which program handles what is a registry, shaped exactly like the theme system.
-The active choice is **one word per role** in **`default-apps.nix`** at the repo
-root; the role→MIME lists and the app catalog live in `lib/default-apps.nix`;
-`users/mj/default-apps.nix` is the only consumer.
+Which program handles what is a registry: **one word per role** in `default-apps.nix` at the repo root, with roles and the app catalog in `lib/default-apps.nix` and `users/mj/default-apps.nix` as the only consumer.
 
-```sh
-app list                  # every role and its active app
-app show editor           # the resolved entry + every MIME type it binds
-app candidates editor     # every app that can fill the role
-app set editor zed        # rewrite default-apps.nix, then `rebuild`
-```
+**The ROLE owns the MIME list, never the application** — an app's own `MimeType=` line is not a reliable statement of what it can open (constraint #22). **Never hardcode a `.desktop` id, a browser command, or an editor path in a consumer** — thread `steelboreApps` from `specialArgs`/`extraSpecialArgs` instead. Adding a second `xdg.mimeApps` block anywhere is the specific mistake this design replaced: two blocks merge silently until the day both name the same type, which is an eval-time conflict.
 
-Roles: `editor` (GUI — what double-clicking a text file opens), `browser`,
-`fileManager`, `imageViewer`, `termEditor` (`$EDITOR`/`$VISUAL`/`git core.editor`
-— binds no MIME types). `editor` and `termEditor` are deliberately separate.
-
-**The ROLE owns the MIME list, never the application.** An app's own `MimeType=`
-line is not a reliable statement of what it can open (see constraint #22), so
-whichever app fills a role inherits the role's complete set. A catalog entry may
-set `mimeTypes` to *narrow* the list when it genuinely cannot open everything
-(`loupe`, `feh`), but never to widen it — add the type to the role instead.
-
-An app that isn't in nixpkgs yet joins via a **drop-in**: `apps/<slug>.nix`,
-filename = slug, merged over the built-in catalog and free to shadow it — the
-same semantics as `themes/<slug>.nix`. `apps/README.md` documents every field.
-A drop-in that sets `package` installs itself when active, so `app set` is the
-only edit needed.
-
-Never hardcode a `.desktop` id, a browser command, or an editor path in a
-consumer — thread `steelboreApps` from `specialArgs`/`extraSpecialArgs` and read
-`steelboreApps.roles.<role>`. Same rule as §11.4 for palette values. Adding a
-second `xdg.mimeApps` block anywhere is the specific mistake this replaced: two
-blocks merge silently until the day both name the same type, which is an
-eval-time conflict.
-
-The `app-registry` flake output (JSON) is what the `app` command reads; it stays
-pkgs-free (the `package`/`exec`/`dbusExec` fields are functions of `pkgs` and
-never reach it), so `app list` costs one builtins-only evaluation rather than a
-system config.
+The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` are in the `default-apps` skill (`.claude/skills/default-apps/`).
 
 ## Key conventions
 
@@ -390,49 +303,11 @@ system config.
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
-Nine packages pin an upstream `version` + `hash` that `nix flake update` cannot
-touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`,
-`opencode-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in
-`pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). They are
-**declarative, not self-updating** -- never bump one by hand.
+Nine packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`).
 
-```sh
-nu pkgs/update-vendored.nu              # bump all 9 + nix build each
-nu pkgs/update-vendored.nu --check      # report only, change nothing
-nu pkgs/update-vendored.nu ollama       # single package
-```
+They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only). **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
 
-- **Failures are isolated per package** (fixed 2026-08-04). A build failure yields
-  `action: "build failed"`; any other error yields `action: "error: …"`; both are
-  re-listed in a summary block after the table. Before that fix, `nix build`
-  raising propagated out of the `each` in `main`, so the first broken package
-  silently skipped every package after it -- the run merely *looked* finished.
-- **A failed build leaves the version/hash rewrite in place on purpose.** The bump
-  is nearly always correct and the *packaging* is what needs fixing, so the
-  modified file is the starting point. Check `git diff`.
-- The script exits **zero** even on failure, because `rebuild`'s monthly `--check`
-  nag depends on it. Change that only if it is ever wired into CI.
-- `up-github` takes optional `tag_pattern` / `strip_suffix` params for repos whose
-  tags carry decoration the version string does not (AdGuardVPNCLI tags
-  `v1.7.12-release` for version `1.7.12`).
-- **`obscura` is the only member built from SOURCE**, so `up-github` cannot bump it
-  and `up-obscura` exists instead. It pins *two* hashes, neither a release asset:
-  the `fetchFromGitHub` **unpacked-tree** hash (`prefetch-github-tree`, since
-  `nix store prefetch-file` hashes the tarball and has no `--unpack`), and
-  `cargoHash`, which no URL yields -- the vendored tree does not exist until cargo
-  resolves the lock, so it is discovered by poisoning the hash, building, and
-  parsing the `got:` line back out. `pkgs/obscura/librusty_v8.nix` is deliberately
-  **not** bumped by the script: that pin tracks Obscura's `deno_core` dependency,
-  not its release cadence.
-- **Never restate a pinned version in prose.** The ollama 0.31.1 -> 0.32.5 bump
-  orphaned five hardcoded copies across modules and docs; they now point at
-  `pkgs/ollama/package.nix` as the single source of truth. Same rule as §11.4 for
-  palette values.
-- `adguardvpn-cli` is the odd one out: upstream ships a **fully static** ELF, so it
-  needs no `autoPatchelfHook` and no `buildInputs` -- unlike every other entry,
-  which is a `.deb` needing the Electron/Chromium library chase. Its
-  `installCheckPhase` runs `--version` under a scratch `HOME` (first run creates a
-  data dir) to prove the static claim at build time.
+Per-package failure isolation, the `up-github` tag options, and why `obscura` needs its own bumper with two hashes are in the `vendored-binaries` skill (`.claude/skills/vendored-binaries/`).
 
 ## Documentation maintenance
 
@@ -454,22 +329,6 @@ it. Both are tracked; `PRD.md` and `TODO.md` are tracked as well.
 - **Before opening a PR:** open an issue first for non-trivial changes. Test with a real `toplevel` build (see Build and test commands) — not `nix flake check`, which times out — plus `nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace`.
 - **Commits:** Conventional Commits prefix (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`), subject ≤ 72 chars, imperative mood, body wrapped at 72 columns. **Signed & Verified — mandatory** (Standard §6.3): Ed25519 SSH commit signing (`commit.gpgsign=true`, `gpg.format=ssh`, signing key registered as a *Signing* key on GitHub). Do **not** use `git commit -s` (DCO sign-off) — that is a different mechanism and does not satisfy this requirement.
 - **Forking:** encouraged under GPL-3.0-or-later when goals diverge.
-
-## Quick reference
-
-| Task | Command |
-|------|---------|
-| Build stable config (the gate) | `nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'` |
-| Eval unstable config | `nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'` |
-| Build one in-tree package | `nix build .#<name>` (after `git add -A`) |
-| Bump vendored binaries | `nu pkgs/update-vendored.nu` (`--check` to report only) |
-| Dry-run default | `nixos-rebuild dry-build --flake .#bravais-thinkpad` |
-| Switch to stable | `sudo nixos-rebuild switch --flake .#bravais-thinkpad` |
-| Switch to unstable | `sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable` |
-| Update flake inputs | `nix flake update` |
-| Fix rapg hash | `nix flake update rapg` |
-| GC old generations | `sudo nix-collect-garbage --verbose -d` |
-| Show flake outputs | `nix flake show` |
 
 ---
 
