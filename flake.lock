@@ -203,11 +203,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786522232,
-        "narHash": "sha256-hP72tku+pzewFNWLrHbyPcTnT0ntk3+kkfmNdzOs4uk=",
+        "lastModified": 1786564445,
+        "narHash": "sha256-TEo1OP9TD9OvQQKUplm0QmjPqKS39EkURJlvCJoGWjw=",
         "owner": "Spacecraft-Software",
         "repo": "mcp-servers",
-        "rev": "73217d3d8c2cc7a8e9414a3e36a1dfb50c5ae7d4",
+        "rev": "f4865f12a9f40ef205da80be0e920b2621ef92e1",
         "type": "github"
       },
       "original": {
