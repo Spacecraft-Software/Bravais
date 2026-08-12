@@ -41,6 +41,13 @@
         name = "flathub";
         location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
       }
+      # System 's origin for the COSMIC applets below. Declared as the
+      # `.flatpakrepo` rather than the bare repo URL so the GPG key travels
+      # with it — a bare URL would need `--no-gpg-verify` to add.
+      {
+        name = "cosmic";
+        location = "https://apt.pop-os.org/cosmic/cosmic.flatpakrepo";
+      }
     ];
 
     # Keep the declared Flatpaks current. Neither update mechanism is on by
@@ -67,6 +74,26 @@
     # sandbox-hostile/self-updating GUI (VS Code, RustRover) — then Flatpak.
     # Never both: nixpkgs Emacs/Vim/Yakuake replaced the Flatpak copies here.
     services.flatpak.packages = [
+      # ── COSMIC applets ─────────────────────────────────────────────────────
+      # Declared here to collapse a SECOND Flatpak installation. These two were
+      # hand-installed into the per-user scope (~/.local/share/flatpak), which
+      # brought its own `cosmic` remote along and left flathub configured
+      # twice — so every unqualified `flatpak` command became ambiguous
+      # ("Remote 'flathub' found in multiple installations"). The user scope
+      # held these two apps and 2.4 GB; everything else, all 32 apps, was
+      # already system-wide and declarative.
+      #
+      # System Flatpaks export into /var/lib/flatpak/exports/share, which is on
+      # XDG_DATA_DIRS, so the COSMIC panel still discovers them from here.
+      {
+        appId = "io.github.cosmic_utils.cosmic-ext-applet-clipboard-manager";
+        origin = "cosmic";
+      }
+      {
+        appId = "io.github.cosmic_utils.minimon-applet";
+        origin = "cosmic";
+      }
+
       # ── Browsers ───────────────────────────────────────────────────────────
       # { appId = "app.zen_browser.zen";               origin = "flathub"; }
       {
