@@ -760,7 +760,7 @@ in
         #   --no-update  skip `nix flake update`
         #   --no-gc      skip garbage collection + journal vacuum
         #   --trace      add --show-trace --verbose (to diagnose eval failures)
-        def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only] {
+        def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only, --no-flatpak] {
           if $topic == "help" { help rebuild; return }
           if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
           cd /spacecraft-software/bravais
@@ -865,6 +865,32 @@ in
                 }
               } else {
                 print $"(ansi yellow)mcpctl drift probe failed:(ansi reset)"; print $probe.stderr
+              }
+            }
+
+            # Flatpak updates, LAST and after the switch — not during it.
+            #
+            # `services.flatpak.update.onActivation = true` would also do this,
+            # and is the more obviously declarative spelling, but it blocks
+            # activation on an unbounded download: a browser is ~150 MB and a
+            # runtime bump ~250 MB, and the whole set has run to several GB at
+            # under 1 MB/s. A switch held open for hours — or interrupted
+            # part-way — is a worse failure than a Flatpak being a few days
+            # old, and these entries pin no version anyway, so "current" is a
+            # property of the remote rather than of this flake.
+            #
+            # Placed after the mcpctl probe so the fast diagnostics are already
+            # on screen before the slow download starts, and skippable with
+            # --no-flatpak. The weekly timer in modules/packages/flatpak.nix
+            # stays as the safety net for stretches without a rebuild.
+            if not $no_flatpak {
+              let pending = (^flatpak remote-ls --system --updates | complete)
+              let count = (if $pending.exit_code == 0 { $pending.stdout | lines | where { |l| $l != "" } | length } else { 0 })
+              if $count > 0 {
+                print $"(ansi blue)── flatpak: ($count) update\(s\) ──(ansi reset)"
+                ^flatpak update --system -y
+              } else {
+                print $"(ansi green)flatpak: up to date(ansi reset)"
               }
             }
           }
