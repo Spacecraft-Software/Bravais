@@ -7,7 +7,6 @@
   pkgs,
   steelborePalette,
   steelboreApps,
-  mcp-servers,
   ...
 }:
 
@@ -44,11 +43,6 @@ let
   # socket (CLAUDE.md constraint #8), so every interactive shell re-points it.
   gitwaySockPosix = "/run/user/$(id -u)/gitway-agent.sock";
 
-  # mcpctl from the `mcp-servers` flake input (constraint #7: flake-input
-  # package consumed by attr-path, threaded via extraSpecialArgs). Referenced
-  # by store path rather than name so `rebuild`'s drift probe does not depend
-  # on PATH ordering or on the package still being in home.packages.
-  mcpctl = "${mcp-servers.packages.${pkgs.stdenv.hostPlatform.system}.mcpctl}/bin/mcpctl";
 in
 {
   # Session variables
@@ -832,19 +826,32 @@ in
             # agent session — so an auto-deploy would silently skip ~/.claude.json,
             # the file most likely to be stale, while reporting success. Surfacing
             # the skip is the useful half; the write stays a deliberate step.
-            # mcpctl comes from the `mcp-servers` flake input, so it is always
-            # present — no PATH probe, and no cargo-artifact fallback. Note the
-            # input is `github:`, which sees PUSHED content only: this binary is
-            # the manifest logic as of the rev in flake.lock, so an mcpctl or
-            # mcp.toml change that is merely committed — let alone uncommitted —
-            # is not what runs here. Landing one takes commit, push, then
-            # `nix flake update mcp-servers`; skip the last and this probe
-            # compares deployed configs against the OLD manifest and cheerfully
-            # reports no drift.
+            # mcpctl is invoked BY NAME, not by store path. The store path was
+            # deliberate once — "no PATH probe, no cargo-artifact fallback" —
+            # and it caused three consecutive false alarms, because the path is
+            # baked into this function when Nushell parses config.nu at shell
+            # startup. Activation rewrites config.nu, but a shell already
+            # running keeps the definition it parsed, so the FIRST rebuild after
+            # any mcpctl change probes with the PREVIOUS binary and reports on a
+            # manifest it cannot parse. The switch had worked every time.
+            #
+            # The reason for pinning no longer holds: `~/.cargo/bin` is APPENDED
+            # to PATH (see outOfBandDirs), so a Nix-provided mcpctl already wins
+            # name resolution over a stray `cargo install` build — constraint
+            # #23 says as much. Resolving by name costs nothing and self-heals
+            # on the next activation, since the profile bin dir is what moves.
+            #
+            # Note the input is `github:`, which sees PUSHED content only: this
+            # binary is the manifest logic as of the rev in flake.lock, so an
+            # mcpctl or mcp.toml change that is merely committed — let alone
+            # uncommitted — is not what runs here. Landing one takes commit,
+            # push, then `nix flake update mcp-servers`; skip the last and this
+            # probe compares deployed configs against the OLD manifest and
+            # cheerfully reports no drift.
             let mcp_repo = "/spacecraft-software/mcp-servers"
             if ($mcp_repo | path exists) {
               # --dry-run --json is read-only; it never writes to $HOME.
-              let probe = (^${mcpctl} deploy --dry-run --json --repo $mcp_repo | complete)
+              let probe = (^mcpctl deploy --dry-run --json --repo $mcp_repo | complete)
               if $probe.exit_code == 0 {
                 let report = ($probe.stdout | from json | get data)
                 let drifted = ($report.files | where dirty | length)
