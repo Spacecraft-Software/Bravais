@@ -487,6 +487,50 @@ in
         # Discard a moved pointer — back to the flake-pinned skill tree.
         def skills-reset [] { ^construct skill reset }
 
+        # ── flatpak ───────────────────────────────────────────────────────
+        # Path a detached `flatpak-update` writes its progress to. Fixed
+        # rather than passed around, so `flatpak-status` knows where to look
+        # without being told, and `rebuild` and a hand-run update share one
+        # log instead of each inventing their own.
+        def flatpak-log []: nothing -> string {
+          $nu.home-dir | path join ".local" "state" "flatpak-update.log"
+        }
+
+        # Progress of the declared system Flatpaks: how many refs are still
+        # outdated, whether an update is running, free space, and the tail of
+        # its log.
+        def flatpak-status []: nothing -> record {
+          let log = (flatpak-log)
+          {
+            pending: (^flatpak remote-ls --updates | lines | length)
+            # The wrapper IS the update. flatpak-session-helper, -portal and
+            # -system-helper are always-on daemons, so a bare "flatpak"
+            # filter would report running = true forever.
+            running: (ps | where name =~ "flatpak-wrappe" | is-not-empty)
+            free: (^df -h / | lines | last | split row -r '\s+' | get 3)
+            # Flatpak redraws its bar with carriage returns, so the log is
+            # ONE enormous line. Without the split it reads as frozen while
+            # still moving — which is exactly how a working download got
+            # mistaken for a hung one.
+            progress: (if ($log | path exists) {
+              open --raw $log | str replace --all "\r" "\n" | lines | where $it != "" | last
+            } else {
+              "no run recorded"
+            })
+          }
+        }
+
+        # Update every declared system Flatpak, detached, so it survives this
+        # shell and never blocks it. `--fork` returns in under a millisecond
+        # and the child inherits the redirection, so neither `sh -c` nor
+        # POSIX redirection is needed.
+        def flatpak-update []: nothing -> nothing {
+          let log = (flatpak-log)
+          mkdir ($log | path dirname)
+          ^setsid --fork flatpak update --system -y o+e> $log
+          print "flatpak update started — watch with: flatpak-status"
+        }
+
         # Ship local Construct skill edits — commit (signed) + push, then sync.
         # Run from / pointed at the construct clone; rebuild afterwards to apply.
         def skills-ship [topic?: string] {
@@ -879,16 +923,23 @@ in
             # old, and these entries pin no version anyway, so "current" is a
             # property of the remote rather than of this flake.
             #
-            # Placed after the mcpctl probe so the fast diagnostics are already
-            # on screen before the slow download starts, and skippable with
-            # --no-flatpak. The weekly timer in modules/packages/flatpak.nix
+            # Started DETACHED via `flatpak-update`, not run inline. Inline was
+            # the first shape and it made `rebuild` block for as long as the
+            # download took — measured at roughly three hours for 4.4 GB at
+            # ~0.4 MB/s. That is the same objection that rules out
+            # `onActivation`, only moved later in the sequence; detaching is
+            # what actually removes it. The switch is already complete by this
+            # point, so nothing is left half-applied if the download is slow,
+            # interrupted, or fails.
+            #
+            # Skippable with --no-flatpak. `flatpak-status` reports progress
+            # afterwards, and the weekly timer in modules/packages/flatpak.nix
             # stays as the safety net for stretches without a rebuild.
             if not $no_flatpak {
-              let pending = (^flatpak remote-ls --system --updates | complete)
-              let count = (if $pending.exit_code == 0 { $pending.stdout | lines | where { |l| $l != "" } | length } else { 0 })
-              if $count > 0 {
-                print $"(ansi blue)── flatpak: ($count) update\(s\) ──(ansi reset)"
-                ^flatpak update --system -y
+              let pending = (flatpak-status | get pending)
+              if $pending > 0 {
+                print $"(ansi blue)── flatpak: ($pending) update\(s\), detached ──(ansi reset)"
+                flatpak-update
               } else {
                 print $"(ansi green)flatpak: up to date(ansi reset)"
               }
