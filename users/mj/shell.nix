@@ -900,10 +900,14 @@ in
                 let report = ($probe.stdout | from json | get data)
                 let drifted = ($report.files | where dirty | length)
                 if $drifted > 0 {
-                  print $"(ansi yellow)($drifted) MCP host config\(s\) drifted from the manifest — run: mcpctl deploy --yes(ansi reset)"
+                  # --repo is part of the hint, not decoration: `rebuild` runs
+                  # from the bravais checkout, so a bare `mcpctl deploy --yes`
+                  # exits with "no `mcp.toml` in … or any parent". A hint has
+                  # to be runnable as printed (CLI Standard §3).
+                  print $"(ansi yellow)($drifted) MCP host config\(s\) drifted from the manifest — run: mcpctl deploy --yes --repo ($mcp_repo)(ansi reset)"
                 }
                 if ($report.blocked | length) > 0 {
-                  print $"(ansi yellow)MCP deploy would skip a running host — close it and re-run mcpctl deploy:(ansi reset)"
+                  print $"(ansi yellow)MCP deploy would skip a running host — close it, then: mcpctl deploy --yes --repo ($mcp_repo)(ansi reset)"
                   # `for`, not `each`: `each` returns a list and Nushell renders it.
                   for entry in $report.blocked { print $"  ($entry)" }
                 }
