@@ -192,7 +192,7 @@ execution-layer spokes. Keep the policy here; keep the mechanics in the spokes.
   companions (§2) and any house-style GFM authoring/audit. This router delegates companion generation
   to it; it also responds to its own `/spacecraft-markdown-document` slash command.
 - The Steelbore Standard §8 (Documentation / Texinfo), §11 (Colour Palette), §12 (Typography), §4 (Licensing: §4.1.1 artifact classes, §4.3 SPDX/REUSE), §15 (Attribution surfaces).
-- `spacecraft-standard-constitution` — the full Standard, including §8 Texinfo requirements for user-facing programs.
+- `spacecraft-steelbore-standard` — the full Standard, including §8 Texinfo requirements for user-facing programs.
 - `gnu-coding-standards` — deeper GNU Texinfo conventions (for GNU-targeted work; Spacecraft projects follow Standard §8 and this skill).
 - `spacecraft-theme-factory` — for IDE and terminal themes (separate concern; shares the §11 palette).
 - `spacecraft-brand-guidelines` — brand colors and typography quick-reference; shares the §11 palette.

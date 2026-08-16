@@ -1,5 +1,5 @@
 ---
-name: spacecraft-standard-constitution
+name: spacecraft-steelbore-standard
 description: >
   The authoritative compliance reference for ALL work on Spacecraft Software-umbrella projects and
   subprojects (Zamak, Bravais, Ferrocast, Craton, Ironway, Caliper, Mawaqit, and any future
@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v1.47 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
+  The Steelbore Standard v1.49 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 1.47 | **Date:** 2026-08-09 | **Author:** Mohamed Hammad
+**Version:** 1.49 | **Date:** 2026-08-16 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -116,7 +116,7 @@ this table and §15.1's subdomain table in the same commit.
 ### §2.2 — Skill IDs are functional, not codenamed
 
 Skill directory names and SKILL.md `name` fields are **functional identifiers**
-(e.g., `spacecraft-standard-constitution`, `spacecraft-document-format`) and are not subject to
+(e.g., `spacecraft-steelbore-standard`, `spacecraft-document-format`) and are not subject to
 the §2 codename convention. §2 reserves codenames for projects/modules/utilities/releases,
 not for skill identifiers.
 
@@ -275,7 +275,7 @@ The GPL/AGPL choice above governs **software**. License by artifact class:
 
 Skills are **software-class** → `GPL-3.0-or-later` (no skill is network-facing → no AGPL).
 Deliberate split for the Standard: the **published Standard document** is `CC-BY-SA-4.0`,
-while this `spacecraft-standard-constitution` **skill** encoding is `GPL-3.0-or-later`.
+while this `spacecraft-steelbore-standard` **skill** encoding is `GPL-3.0-or-later`.
 
 ### §4.2 — Upstream License Compliance (preserve what you build on)
 
@@ -1495,7 +1495,7 @@ M1:   [████████████░░░░░░░░]  60%
 M2:   [████████████░░░░░░░░]  60%
 M3:   [████████████░░░░░░░░]  60%
 M4:   [████████████░░░░░░░░]  60%
-MVP: [ ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱ ] 70%
+MVP:  [██████████████░░░░░░]  70%
 TODO: [████████████░░░░░░░░]  60%
 PLAN: [████████████░░░░░░░░]  60%
 PRD:  [████████████░░░░░░░░]  60%
@@ -1509,22 +1509,13 @@ PRD:  [████████████░░░░░░░░]  60%
 
 Every bar is a static, 20-cell, high-visibility Unicode bar. Legacy ASCII characters — `#`, `-`, `=` — are forbidden in any bar.
 
-Two cell styles are in use, and the distinction is normative:
+A single cell style applies to every row — milestones, `MVP`, `TODO`, `PLAN`, and `PRD` alike: filled cells are `█` (U+2588), empty cells are `░` (U+2591), and the brackets are tight, with no space inside either bracket.
 
-| Rows | Filled | Empty | Brackets |
-|------|--------|-------|----------|
-| Milestones, `TODO`, `PLAN`, `PRD` | `█` (U+2588) | `░` (U+2591) | Tight — no space inside either bracket |
-| `MVP` | `▰` (U+25B0) | `▱` (U+25B1) | Padded — exactly one space inside each bracket |
+**Column alignment is normative.** With one style shared by every row, alignment follows from three rules:
 
-The MVP row is deliberately set apart: it is the headline figure, and the tracks above and below it are the inputs that feed it. Its distinct glyph pair makes it findable at a glance in a stack of otherwise identical bars.
-
-**Column alignment is normative.** The MVP row's bracket padding exists to preserve it — the row is one character narrower in its label field and one character wider inside each bracket, so every bar cell and every percentage digit lands in the same column across the whole block.
-
-- On every row other than `MVP`, the label and its colon are left-aligned in a six-character field, followed immediately by `[`.
-- On the `MVP` row, `MVP:` is left-aligned in a five-character field, followed by `[` and one space.
-- Both place the first bar cell in column 8, so every bar occupies columns 8 through 27.
-- The percentage is right-aligned so its `%` sign lands in the same column on every row — two spaces after the closing bracket on the tight-bracket rows, one on the `MVP` row. That difference is exactly what the padded brackets buy.
-- The separator never drops below one space. At 100% the `MVP` row keeps its single space and its percentage therefore sits one column right — the only value at which the two row types do not align, and preferable to a bracket abutting a digit.
+- On every row, the label and its colon are left-aligned in a six-character field, followed immediately by `[`.
+- That places the first bar cell in column 8, so every bar occupies columns 8 through 27 and the closing bracket lands in column 28.
+- The percentage is right-aligned in a five-character field immediately after the closing bracket, so its `%` sign lands in column 33 whether the value is one, two, or three digits. The separator never drops below one space — at exactly 100% the number consumes one of the two separator spaces — and the block stays aligned at every value.
 
 **Cell count.** The number of filled cells is the percentage scaled to twenty cells and rounded to the nearest cell. Two saturation rules override the rounding: a bar shows twenty filled cells **only** at exactly 100%, and zero filled cells **only** at exactly 0%. Rounding 99% up to a visually complete bar reports work as finished that is not, which is the drift this chapter exists to catch.
 
@@ -1750,7 +1741,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§14** ISO 8601 dates; 24h time; UTC Z is the default primary timestamp (companion local time with UTC offset permitted, never a replacement) — unless the project filed the §14.2.1 domain exception for inherently local-time-bound data; ISO 8601 durations; metric units
 - [ ] **§15** Attribution present: maintainer name (`Mohamed Hammad`), contact (`Mohamed.Hammad@SpacecraftSoftware.org`), and project URL in `--version` / README / About
 - [ ] **§15.3** Third-party work credited in `CREDITS.md` at project/skill root when triggers apply; deeper `references/ATTRIBUTION.md` present where reference content is adapted from external sources
-- [ ] **§17** Development progress tracked and reported continuously as the §17.1 labelled-row block — one 20-cell bar per track, milestone rows then MVP then TODO/PLAN/PRD, only the rows that apply; MVP set in `▰`/`▱` with padded brackets and every other row in `█`/`░`, columns aligned, no ASCII bars
+- [ ] **§17** Development progress tracked and reported continuously as the §17.1 labelled-row block — one 20-cell bar per track, milestone rows then MVP then TODO/PLAN/PRD, only the rows that apply; every row set in `█`/`░` with tight brackets, columns aligned, no ASCII bars
 - [ ] **§18** Accessible mode implemented and off by default; §18.1 toggle honored with correct precedence; status never color-only; no animation or decorative art in accessible mode; TUI ships a linear mode and a non-interactive CLI path; GUI publishes accessible names and roles (AccessKit for Rust); verified with a real screen reader; existing projects carry a dated remediation entry in `PROJECTS.md` until they conform — N/A for projects registered as games (§18.5), which are exempt in full
 - [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too
 - [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution
@@ -1775,7 +1766,7 @@ for a pure Rust library), note it as N/A rather than silently skipping it.
 | Resolving or declaring the system theme (§11.6) | `steelbore-color-palette`                |
 | Implementing or auditing accessibility (§18) | `spacecraft-accessibility-support`          |
 | Authoring `AGENTS.md` / `CLAUDE.md` (§5.7) | `spacecraft-agentic-cli`                     |
-| All other Spacecraft Software work    | `spacecraft-standard-constitution`                 |
+| All other Spacecraft Software work    | `spacecraft-steelbore-standard`                 |
 
 ---
 

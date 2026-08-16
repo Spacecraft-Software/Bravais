@@ -2,7 +2,7 @@
 
 The `microsoft-rust-guidelines` skill is a Spacecraft Software adaptation of publicly released
 work by Microsoft. This file records the upstream source it builds on, in
-accordance with [The Steelbore Standard §15.3](../spacecraft-standard-constitution/SKILL.md).
+accordance with [The Steelbore Standard §15.3](../spacecraft-steelbore-standard/SKILL.md).
 
 ## Microsoft Pragmatic Rust Guidelines
 

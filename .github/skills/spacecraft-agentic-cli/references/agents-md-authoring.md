@@ -148,7 +148,7 @@ non-Claude harness cannot act on belongs here:
 > only Claude-Code-only context.
 
 ## Skills referenced
-- `spacecraft-standard-constitution` — master Standard
+- `spacecraft-steelbore-standard` — master Standard
 - `spacecraft-cli-standard` — structural CLI Standard
 - `spacecraft-agentic-cli` — agent-facing UX
 - `spacecraft-brand-guidelines` — color palette

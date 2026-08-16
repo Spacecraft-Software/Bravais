@@ -37,7 +37,7 @@
 The following Spacecraft Software skills apply to this project. Consult them
 via the Skill tool when their triggers match:
 
-- `spacecraft-standard-constitution` — master Steelbore Standard
+- `spacecraft-steelbore-standard` — master Steelbore Standard
 - `spacecraft-cli-standard` — structural CLI Standard rules
 - `spacecraft-agentic-cli` — agent-facing UX for the CLI
 - `spacecraft-brand-guidelines` — brand look-and-feel

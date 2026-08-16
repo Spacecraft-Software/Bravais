@@ -257,7 +257,7 @@ workstation, not a throwaway sandbox. Four rules; detail in
 
 ## §11 — Relation to Other Spacecraft Software Skills
 
-- **`spacecraft-standard-constitution`** — the master Standard. This skill is subordinate; master wins on conflict.
+- **`spacecraft-steelbore-standard`** — the master Standard. This skill is subordinate; master wins on conflict.
 - **`spacecraft-agentic-cli`** — the agent-facing UX layer built directly atop this Standard (error hints, MCP lazy-loading, token economy). Paired: this skill defines structure, that one adds agent-UX depth. Now local-host aware.
 - **`spacecraft-missing-pkg`** — provisioning. When building or testing the CLI needs a toolchain, linter, or interpreter that isn't installed, this owns getting it — ephemeral-first, consent before any durable install.
 - **`spacecraft-cli-preference`** — governs which *external* CLI tools to invoke (e.g., `rg` over `grep`). Complementary: that skill picks tools, this one defines how the CLI you're *building* should behave. Now local-host aware (substitutes only when the tool is present).

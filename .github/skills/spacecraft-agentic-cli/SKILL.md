@@ -384,7 +384,7 @@ Assets:
 
 This skill is the **agent-UX layer** in the Spacecraft Software CLI skill stack:
 
-- **`spacecraft-standard-constitution`** — master Standard. Master wins on conflict.
+- **`spacecraft-steelbore-standard`** — master Standard. Master wins on conflict.
 - **`spacecraft-cli-standard`** — structural CLI Standard rules (what the CLI must
   be). Authoritative on structure. This skill is subordinate; never
   weakens its rules. Both load together when a Spacecraft Software CLI is in scope.
