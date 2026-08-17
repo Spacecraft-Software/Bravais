@@ -48,7 +48,7 @@ const SKILLS = [
     "spacecraft-nix-guidelines"        # every modules/**.nix in this repo
     "spacecraft-nu-guidelines"         # users/mj/shell.nix, pkgs/*.nu
     "spacecraft-rust-guidelines"       # house Rust style, pairs with the MS set
-    "spacecraft-standard-constitution" # The Steelbore Standard
+    "spacecraft-steelbore-standard" # The Steelbore Standard
     "spacecraft-theme-factory"         # lib/terminal-theme.nix emitters
 ]
 

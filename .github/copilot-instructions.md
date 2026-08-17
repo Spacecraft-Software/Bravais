@@ -215,5 +215,5 @@ holds the authoritative skill list; the table below tracks it.
 | `spacecraft-nix-guidelines` | Every `.nix` file here — modules, flakes, derivations |
 | `spacecraft-nu-guidelines` | `users/mj/shell.nix` Nushell defs, `pkgs/*.nu` scripts |
 | `spacecraft-rust-guidelines` | House Rust style; pairs with the Microsoft set |
-| `spacecraft-standard-constitution` | The Steelbore Standard itself |
+| `spacecraft-steelbore-standard` | The Steelbore Standard itself |
 | `spacecraft-theme-factory` | `lib/terminal-theme.nix` emitters, per-app theming |

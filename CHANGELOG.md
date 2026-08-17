@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vendored skill renamed: `spacecraft-standard-constitution` →
+  `spacecraft-steelbore-standard`** (Steelbore Standard v1.49, Construct PR
+  #42). The `pkgs/sync-skills.nu` allow-list is updated — without it the
+  skill would silently stop being vendored — along with
+  `.github/copilot-instructions.md`, the vendored bundle directory (refreshed
+  to the v1.49 content it will re-sync to), and the cross-references inside
+  the other vendored skills. `flake.lock` still pins a pre-rename Construct
+  rev; the next `sync-skills` run after a flake bump regenerates the vendored
+  tree verbatim.
+
 ### Added
 
 - **Vacuum, Engram and crates-mcp are declarative.** All three were

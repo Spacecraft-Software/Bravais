@@ -4,7 +4,7 @@ The `spacecraft-cli-preference` skill recommends and documents modern CLI
 tools authored by many upstream projects. While the reference prose is
 original writing, flags and behaviours were cross-checked against the
 sources below. Filed in accordance with
-[The Steelbore Standard §15.3](../spacecraft-standard-constitution/SKILL.md).
+[The Steelbore Standard §15.3](../spacecraft-steelbore-standard/SKILL.md).
 
 ## Upstream sources
 

@@ -3,7 +3,7 @@
 The `spacecraft-rust-guidelines` skill is original Spacecraft Software work (a
 concurrency & performance doctrine for Rust). Its **idiom layer**
 ([`references/idioms.md`](references/idioms.md)) adapts third-party work, recorded here
-in accordance with [The Steelbore Standard §15.3](../spacecraft-standard-constitution/SKILL.md).
+in accordance with [The Steelbore Standard §15.3](../spacecraft-steelbore-standard/SKILL.md).
 
 ## Apollo GraphQL — Rust Best Practices skill
 

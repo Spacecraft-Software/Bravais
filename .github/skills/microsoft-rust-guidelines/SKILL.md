@@ -166,7 +166,7 @@ Use when:
 ## Steelbore Standard Requirements (Rust)
 
 When writing Rust code for any Spacecraft Software project, these additional rules
-from [The Steelbore Standard](../spacecraft-standard-constitution/SKILL.md) apply on top of the
+from [The Steelbore Standard](../spacecraft-steelbore-standard/SKILL.md) apply on top of the
 Microsoft Pragmatic Rust Guidelines above.
 
 ### §4 — SPDX License Header (mandatory)
@@ -193,7 +193,7 @@ are not manifests) are exempt; software source files are not.
   `build.rs` or a build-time message — so flag state is visible at compile time. Any flag
   that breaks or destabilizes the build on a given platform/toolchain (e.g. LTO under some
   NixOS, cross-compilation, or static-linking setups) MUST be disabled; Stability
-  (Priority 1) outranks Performance. See `spacecraft-standard-constitution` §3.2.1.
+  (Priority 1) outranks Performance. See `spacecraft-steelbore-standard` §3.2.1.
 - Benchmarking is **mandatory** before and after any optimization work; regressions must
   be documented and justified — it is also the evidence for the concurrency-vs-serial
   trade-off above.

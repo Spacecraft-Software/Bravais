@@ -487,7 +487,7 @@ documentation. See `references/ATTRIBUTION.md` for per-tool sourcing.
 ## §8 — Spacecraft Software Compliance Note
 
 This skill itself is a Spacecraft Software artifact and conforms to the relevant parts
-of The Steelbore Standard (see `spacecraft-standard-constitution` skill):
+of The Steelbore Standard (see `spacecraft-steelbore-standard` skill):
 
 - **§4** GPL-3.0-or-later license declared in frontmatter
 - **§12** ISO 8601 dates used throughout
