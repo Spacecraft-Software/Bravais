@@ -35,6 +35,25 @@
     enableGnomeKeyring = true;
   };
 
+  # `passwd(1)` uses its OWN PAM service, and it is the only place the login
+  # keyring can be re-keyed. Without `pam_gnome_keyring.so` in that service's
+  # *password* stanza, `passwd` changes the Unix password and leaves the
+  # keyring encrypted under the OLD one. Nothing warns: greetd's
+  # pam_gnome_keyring then silently fails to auto-unlock at every login, and
+  # every later prompt rejects the (correct) account password as wrong.
+  #
+  # fprintAuth is switched off here for a reason that is not obvious:
+  # `security.pam.services.<name>.fprintAuth` defaults to
+  # `services.fprintd.enable`, so `passwd` accepts a fingerprint. Authenticating
+  # that way means PAM never learns PAM_OLDAUTHTOK, and pam_gnome_keyring cannot
+  # re-encrypt the keyring without the old password — the module would be
+  # present and still do nothing. A typed current password is what makes the
+  # re-key work, exactly as at greetd (modules/hardware/fingerprint.nix).
+  security.pam.services.passwd = {
+    enableGnomeKeyring = true;
+    fprintAuth = false;
+  };
+
   # SSH agent — provided by gitway-agent (NixOS module from the gitway flake;
   # imported in flake.nix). Disable system OpenSSH ssh-agent.service so it
   # doesn't race gitway-agent for $SSH_AUTH_SOCK. The OpenSSH CLI tools remain
