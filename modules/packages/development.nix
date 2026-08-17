@@ -33,6 +33,7 @@
 
         # C/C++ Toolchain
         gcc # C — GNU Compiler Collection
+        webkitgtk_4_1 # C/C++ — WebKitGTK web engine library (libwebkit2gtk-4.1, Tauri runtime dep)
 
         # Ada Toolchain — lowPrio so GNAT's bundled gcc/cpp/cc/g++ yield to the
         # primary `gcc` above on buildEnv collision; gnat/gnatmake/etc. still link.

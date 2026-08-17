@@ -869,6 +869,8 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Ada Toolchain:** gnat16 (GNAT — GCC 16 Ada compiler)
 
+**C/C++ Toolchain & Libraries:** gcc, webkitgtk_4_1 (libwebkit2gtk-4.1 — WebKitGTK web engine, Tauri runtime dep)
+
 **Nix Ecosystem:** nixfmt (Rust), cachix, nix, guix, emacsPackages.guix
 
 **Git system config:** `init.defaultBranch = "main"`, `core.editor = msedit`, `color.ui = true`
