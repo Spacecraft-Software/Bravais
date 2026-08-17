@@ -869,6 +869,15 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Ada Toolchain:** gnat16 (GNAT — GCC 16 Ada compiler)
 
+**C/C++ Toolchain & Libraries:** gcc, webkitgtk_4_1 (libwebkit2gtk-4.1, GTK3 — Tauri runtime dep),
+webkitgtk_6_0 (libwebkitgtk-6.0, GTK4 — `lib.lowPrio`, see below)
+
+Both WebKitGTK ABIs are installed in parallel: their libraries, SONAMEs and typelibs are all
+version-suffixed and therefore non-conflicting. The single shared file is the unversioned
+`bin/WebKitWebDriver`, settled on the 4.1 copy via `lib.lowPrio` so the winner is explicit rather
+than list-order-dependent (`environment.systemPackages` sets `ignoreCollisions = true` and would
+otherwise shadow silently; a strict buildEnv such as `home.packages` would fail — cf. constraint #12).
+
 **Nix Ecosystem:** nixfmt (Rust), cachix, nix, guix, emacsPackages.guix
 
 **Git system config:** `init.defaultBranch = "main"`, `core.editor = msedit`, `color.ui = true`
