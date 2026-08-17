@@ -33,7 +33,16 @@
 
         # C/C++ Toolchain
         gcc # C — GNU Compiler Collection
-        webkitgtk_4_1 # C/C++ — WebKitGTK web engine library (libwebkit2gtk-4.1, Tauri runtime dep)
+        # WebKitGTK, both ABIs in parallel. Every library, SONAME and typelib is
+        # version-suffixed (libwebkit2gtk-4.1.so.0 / WebKit2-4.1.typelib vs
+        # libwebkitgtk-6.0.so.4 / WebKit-6.0.typelib), so the two do not conflict —
+        # only the unversioned `bin/WebKitWebDriver` is shared. lowPrio settles that
+        # one file on 4.1 (the ABI github-copilot-app's Tauri runtime links against).
+        # Without it the winner is decided by list order, and a strict buildEnv —
+        # e.g. home.packages, which unlike environment.systemPackages does not set
+        # ignoreCollisions — fails outright. Same reason as the gnat lowPrio above.
+        webkitgtk_4_1 # C/C++ — WebKitGTK for GTK3 (libwebkit2gtk-4.1)
+        (lib.lowPrio webkitgtk_6_0) # C/C++ — WebKitGTK for GTK4 (libwebkitgtk-6.0)
 
         # Ada Toolchain — lowPrio so GNAT's bundled gcc/cpp/cc/g++ yield to the
         # primary `gcc` above on buildEnv collision; gnat/gnatmake/etc. still link.

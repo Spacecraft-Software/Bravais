@@ -181,7 +181,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install Cloud CLIs (google-cloud-sdk, azure-cli, awscli)
 - [✓] Install languages (JDK, PHP, Guile + guile-json)
 - [✓] Install Ada toolchain (gnat16 — GNAT/GCC 16 Ada compiler)
-- [✓] Install C/C++ toolchain & libraries (gcc, webkitgtk_4_1 / libwebkit2gtk-4.1)
+- [✓] Install C/C++ toolchain & libraries (gcc, webkitgtk_4_1 + webkitgtk_6_0, both ABIs in parallel)
 - [✓] Install Nix ecosystem (nixfmt, cachix, nix, guix)
 - [✓] Configure system Git defaults (`init.defaultBranch`, `core.editor`)
 
