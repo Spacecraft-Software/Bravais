@@ -42,7 +42,23 @@ let
   imgSize = "80G";
 in
 {
-  systemd.tmpfiles.rules = [ "d ${mountAt} 0755 root root -" ];
+  # The age field is load-bearing, not cosmetic. `-` (never clean) let the
+  # fallback path leak without bound: with the Expansion drive unplugged,
+  # ${mountAt} is a plain directory on the system disk and nix-daemon builds
+  # there "transparently" — but a build killed part-way leaves its scratch tree
+  # behind, and nothing removes it. `nix-collect-garbage` does not touch the
+  # builder TMPDIR, so the rebuild's own GC step reports success while the disk
+  # keeps filling. Observed 2026-08-19: 13 orphaned trees dating back to
+  # 2026-06-01 held ~146 GiB, leaving 759 MiB free on a 203 GiB partition, and
+  # the next build failed with "No space left on device" during installPhase.
+  #
+  # 10d is chosen for headroom, not for reclaim speed: systemd-tmpfiles ages
+  # each file individually, an active build touches its files continuously, and
+  # nothing here builds for even one day — so this cannot race a live build. It
+  # bounds the leak at ten days' worth instead of unbounded. Applies equally
+  # when the loop image IS mounted, where the same orphans accumulate on the
+  # external drive.
+  systemd.tmpfiles.rules = [ "d ${mountAt} 0755 root root 10d" ];
 
   systemd.paths.nix-tmp-loop = {
     description = "Watch for Expansion drive auto-mount, then bring up nix-tmp loop";
