@@ -794,6 +794,40 @@ in
           }
         }
 
+        # Antigravity staleness probe.
+        #
+        # `nix flake update antigravity-nix` bumps the INPUT, but the Antigravity
+        # version is a `version` + `hash` pair inside that input's
+        # artifacts/versions.json — the same class of pin `update-vendored.nu`
+        # exists for here, and equally untouchable by a flake update. So a
+        # rebuild can report "antigravity-nix: unchanged" while being four IDE
+        # releases behind, which is exactly what happened between 2026-07-21 and
+        # 2026-08-19: upstream's daily update.yml was failing, no PR was ever
+        # opened, and every rebuild in that window looked completely healthy.
+        #
+        # Upstream advances those pins on a 07:00 UTC cron and auto-merges, so
+        # the normal path needs no help from here. This only catches the case
+        # that actually bit: that cron silently failing for weeks. It compares
+        # what the lock pins against what Google advertises, and never blocks —
+        # a probe that fails the rebuild when a Cloud Run endpoint is briefly
+        # unreachable would be worse than the staleness it reports.
+        def antigravity-status [] {
+          let latest = (try {
+            let r = (http get --max-time 10sec
+              "https://antigravity-ide-auto-updater-974169037036.us-central1.run.app/releases")
+            $"($r.0.version)-($r.0.execution_id)"
+          } catch { null })
+          let pinned = (try {
+            # `open` dispatches on extension and does not know `.lock`, so it
+            # hands back a byte stream rather than a record — hence the
+            # explicit `--raw | from json`.
+            let rev = (open --raw /spacecraft-software/bravais/flake.lock
+              | from json | get nodes.antigravity-nix.locked.rev)
+            ^nix eval --raw $"github:UnbreakableMJ/antigravity-nix/($rev)#packages.x86_64-linux.google-antigravity-ide.version"
+          } catch { null })
+          { pinned: $pinned, latest: $latest, current: ($pinned == $latest) }
+        }
+
         # Full system rebuild for bravais-thinkpad: load the signing key, bump
         # the tracked flake inputs (construct == skills-sync; nixpkgs-unstable +
         # home-manager-unstable so unstablePkgs never lags stable — elegance
@@ -830,6 +864,18 @@ in
               nix flake update construct
             } else {
               nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+            }
+            # Report only, and only on the full path: --skills-only does not
+            # touch this input, and the probe costs a network round trip.
+            if not $skills_only {
+              let ag = (antigravity-status)
+              if $ag.pinned == null or $ag.latest == null {
+                print $"(ansi dark_gray)antigravity: version probe unavailable — skipped(ansi reset)"
+              } else if not $ag.current {
+                print $"(ansi yellow)antigravity-nix pins IDE ($ag.pinned) but ($ag.latest) is out — its daily auto-update has probably stalled(ansi reset)"
+                print $"(ansi dark_gray)  fix upstream: cd /spacecraft-software/antigravity-nix; ./scripts/update-version.sh; then PR to master(ansi reset)"
+                print $"(ansi dark_gray)  then re-run: nix flake update antigravity-nix(ansi reset)"
+              }
             }
           }
           if (not $no_gc) and (not $dry) and (not $skills_only) {
