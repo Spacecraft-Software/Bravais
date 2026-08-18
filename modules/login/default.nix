@@ -156,6 +156,22 @@ let
     ${
       gitway.packages.${pkgs.stdenv.hostPlatform.system}.default
     }/bin/gitway-add "$HOME/.ssh/id_ed25519" &
+    # Polkit authentication agent. Niri spawns one via spawn-at-startup
+    # (users/mj/niri.nix); LeftWM had NONE, so every polkit-mediated action
+    # here failed with no dialog at all — including `fprintd-enroll`, which
+    # needs net.reactivated.fprint.device.enroll, and udisks mounts and
+    # Flatpak installs.
+    #
+    # Spawned here rather than from the theme's `up` script
+    # (modules/desktops/leftwm.nix): `up` re-runs on EVERY LoadTheme, and this
+    # very script issues one a second from now, so an agent placed there would
+    # accumulate one process per theme load. polkit-gnome is GTK3, which is
+    # correct for LeftWM's X11 session.
+    ${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1 &
+    # Diagnose the keyring before any browser can mint a fresh Safe Storage
+    # key off a broken one. Read-only; exits non-zero and notifies on trouble.
+    # The delay lets pam_gnome_keyring's daemon settle first.
+    ( sleep 5 ; steelbore-keyring-check ) &
     # After leftwm is up, force-apply the Steelbore theme and re-set the
     # root background. Both calls must happen AFTER leftwm starts:
     #

@@ -488,6 +488,30 @@ This document tracks the implementation status of the Bravais NixOS distribution
       so every host now points at a command that does not resolve yet. One
       `rebuild` closes this; nothing else is needed.
 
+## Fingerprint & keyring hardening (2026-08-18)
+
+- [✓] Split `steelbore-keyring-unlock` into `steelbore-keyring-check`
+      (read-only) + a D-Bus unlock path; drop `--unlock --replace`
+- [✓] `steelbore-keyring-check` spawned at session start under Niri and LeftWM
+- [✓] Pin the gcr 3 prompter with a version assertion (`modules/core/keyring.nix`)
+- [✓] Explicit `fprintAllow`/`fprintDeny` policy (28 → 8 PAM services)
+- [✓] Refuse fingerprint for `login` and `cosmic-greeter` (same inversion as greetd)
+- [✓] Polkit authentication agent for LeftWM
+- [✓] Docs: USER_MANUAL §7.4–7.6, PRD §5.5/§5.6/§6.1, AGENTS constraint #25
+- [ ] Enroll `gitway biometric` — **after** a healthy login keyring exists
+      (`gitway biometric enroll ~/.ssh/id_ed25519`; do NOT add `--biometric`
+      to the `gitway-add` spawn lines, it forces a prompt every login)
+- [ ] Test `pam_fprintd` conversation handling in `gtklock`, `swaylock` and
+      `polkit-1` — "Place your finger" arrives as `PAM_TEXT_INFO` and blocks;
+      if a dialog hangs rather than falling through to password, move that
+      service to `fprintDeny`
+- [ ] Measure LeftWM's `dbus-run-session` private bus vs the PAM-seeded keyring
+      daemon on `/run/user/1000/bus` — Secret Service activation may fail there
+- [ ] Single-source the browser probe list shared with
+      `modules/packages/flatpak.nix` (deferred; couples a diagnostic to Flatpak)
+- [ ] Port `steelbore-keyring-unlock-helper` from `writePython3` to `adit`
+      (Rust) once that flake input ships
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
