@@ -282,6 +282,21 @@ in
           // Mouse-wheel workspace nav (silent — secondary, mouse-only).
           Mod+WheelScrollDown { focus-workspace-down; }
           Mod+WheelScrollUp   { focus-workspace-up; }
+          // Side-button workspace nav (silent — secondary, mouse-only).
+          // MouseBack is BTN_SIDE and MouseForward is BTN_EXTRA — the two extra
+          // buttons under the thumb on most mice, X11 buttons 8 and 9. Back maps
+          // to "up" and forward to "down" so the pair reads in the same
+          // direction as the wheel bindings above and Mod+Page_Up/Page_Down.
+          //
+          // Deliberately bound WITHOUT Mod, which is what makes them useful
+          // one-handed — and which has a real cost: niri grabs these buttons
+          // compositor-wide, so applications never see them and browser/file-
+          // manager back-forward navigation stops working entirely. Add `Mod+`
+          // to both lines to get that back at the price of needing the modifier.
+          // `MouseSide`/`MouseExtra` are NOT valid niri key names; only
+          // MouseBack/MouseForward (and MouseLeft/Right/Middle) parse.
+          MouseBack    { focus-workspace-up; }
+          MouseForward { focus-workspace-down; }
 
           // Resize
           Mod+R     hotkey-overlay-title="Switch Preset Column Widths" { switch-preset-column-width; }

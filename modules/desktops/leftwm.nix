@@ -574,20 +574,38 @@
                 ;; opens NetworkManager TUI for connection management.
                 (button :onclick "alacritty -e nmtui"
                   (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
-                ;; Caps Lock / Num Lock — rendered only while engaged, so presence
-                ;; rather than color carries the meaning (Standard §18.2.1); the color
-                ;; is reinforcement, not the signal.
-                (label :class "ind-lock" :visible {beacon.caps} :text ico-caps)
-                (label :class "ind-lock" :visible {beacon.num}  :text ico-num)
-                ;; Volume and microphone — green while live, red while muted. The glyph
-                ;; changes with the state too (volume_off / microphone_off), so muted
-                ;; reads correctly without relying on color alone.
-                (label :class {beacon.muted ? "ind-muted" : "ind-live"}
-                       :text "''${beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low}''${beacon.volume}%")
-                (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
-                       :text "''${beacon.mic_muted ? ico-mic-off : ico-mic-on}''${beacon.mic}%")
-                ;; Display backlight.
-                (label :class "ind-bright" :text "''${ico-bright}''${beacon.brightness}%")
+                ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
+                ;; box, not one interpolated string, because these glyphs disagree about
+                ;; their own metrics: volume_high overflows its 600-unit advance by 150
+                ;; and brightness_5 by 342, while volume_medium (+19) and volume_low
+                ;; (+112) sit inside theirs. A literal space therefore renders a gap that
+                ;; visibly changes width as the volume crosses 66% and 33%, and no space
+                ;; lets the overflowing ink run into the first digit. `:spacing` is
+                ;; measured in pixels and does not care what the glyph does, so the gap
+                ;; is identical in every state. This is why the md-battery precedent
+                ;; (RSB +50, no space) does NOT generalise to other nf-md-* icons —
+                ;; measure with fontTools before assuming it does.
+                (box :class "beacon-group" :orientation "h" :spacing 10 :space-evenly false
+                  ;; Caps Lock / Num Lock — rendered only while engaged, so presence
+                  ;; rather than color carries the meaning (Standard §18.2.1); the color
+                  ;; is reinforcement, not the signal.
+                  (label :class "ind-lock" :visible {beacon.caps} :text ico-caps)
+                  (label :class "ind-lock" :visible {beacon.num}  :text ico-num)
+                  ;; Volume and microphone — green while live, red while muted. The glyph
+                  ;; changes with the state too (volume_off / microphone_off), so muted
+                  ;; reads correctly without relying on color alone.
+                  (box :orientation "h" :spacing 3 :space-evenly false
+                    (label :class {beacon.muted ? "ind-muted" : "ind-live"}
+                           :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
+                    (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%"))
+                  (box :orientation "h" :spacing 3 :space-evenly false
+                    (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
+                           :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
+                    (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"} :text "''${beacon.mic}%"))
+                  ;; Display backlight.
+                  (box :orientation "h" :spacing 3 :space-evenly false
+                    (label :class "ind-bright" :text ico-bright)
+                    (label :class "ind-bright" :text "''${beacon.brightness}%")))
                 ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
                 ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
                 ;; neutral. The label word is replaced by its Nerd Font glyph
@@ -692,6 +710,9 @@
           .ind-muted  { color: $error; }
           .ind-bright { color: $accent; }
           .ind-lock   { color: $warning; }
+          // Separates the beacon cluster from the radio/network icons on its
+          // left; the cpu label's own margin handles the right-hand side.
+          .beacon-group { margin-left: 10px; }
 
           .lang-en { color: $accent; }
           .lang-ar { color: $foreground; }
