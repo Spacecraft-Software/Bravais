@@ -507,7 +507,10 @@ in
             # -system-helper are always-on daemons, so a bare "flatpak"
             # filter would report running = true forever.
             running: (ps | where name =~ "flatpak-wrappe" | is-not-empty)
-            free: (^df -h / | lines | last | split row -r '\s+' | get 3)
+            # /var/lib/flatpak, not / — this field exists to answer "is there
+            # room for a 4.4 GB update", and / is a 16 GiB tmpfs that always
+            # looks empty. The real target shares the nvme partition with /nix.
+            free: (^df -h /var/lib/flatpak | lines | last | split row -r '\s+' | get 3)
             # Flatpak redraws its bar with carriage returns, so the log is
             # ONE enormous line. Without the split it reads as frozen while
             # still moving — which is exactly how a working download got
@@ -883,7 +886,10 @@ in
             try { sudo journalctl --vacuum-time=7d }
           }
           if not $skills_only {
-            print $"(ansi blue)── disk before ──(ansi reset)"; df -h /
+            # /nix, not / — on this host / is a 16 GiB tmpfs that is always
+            # near-empty, so `df -h /` reported 0% used while the nvme partition
+            # holding /nix and /mnt/nix-tmp was at 100% and builds were failing.
+            print $"(ansi blue)── disk before ──(ansi reset)"; df -h /nix
           }
           # --option warn-dirty false silences the "Git tree is dirty" warning on
           # the local flake eval (also set declaratively via nix.settings.warn-dirty;
@@ -903,7 +909,7 @@ in
             # this is deliberately NOT gated on a diff — the gate would cost more
             # to maintain than the copy it skips.
             sudo rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
-            print $"(ansi green)── disk after ──(ansi reset)"; df -h /
+            print $"(ansi green)── disk after ──(ansi reset)"; df -h /nix
 
             # MCP host configs are NOT part of this flake. They live in
             # /spacecraft-software/mcp-servers, are generated from that repo's
