@@ -58,6 +58,7 @@ bravais/
 |   +-- hardware/                  # Hardware-specific modules
 |   |   +-- default.nix            # Hardware module entry
 |   |   +-- audio-led.nix          # mute/mic-mute keyboard LED sync (steelbore-audio-led)
+|   |                             #   (bar indicators come from pkgs/steelbore-beacon, PRD 6.5)
 |   |   +-- bluetooth.nix          # BlueZ stack + bluetui/overskride
 |   |   +-- fingerprint.nix        # fprintd
 |   |   +-- intel.nix              # Intel vendor bits (kvm-intel, microcode); march levels in modules/platform/
@@ -508,6 +509,16 @@ When enabled: `hardware.bluetooth.enable = true` (BlueZ / `bluetoothd`), `powerO
 **Option:** `steelbore.hardware.audioLed.enable`
 
 Lights the ThinkPad **mute** (`platform::mute`) and **mic-mute** (`platform::micmute`) keyboard LEDs to follow the real mute state under Niri. The kernel `audio-mute` / `audio-micmute` triggers follow the ALSA *hardware* mute, but PipeWire mutes in *software*, so the LEDs would otherwise never light. Ships **steelbore-audio-led** (`pkgs/steelbore-audio-led/`; Rust + `libpulse-binding`, GPL-3.0): a tiny event-driven daemon, run as a systemd **user** service, that mirrors the default sink/source mute onto the LED `brightness` nodes — so they track mute no matter how it was toggled (key, GUI, per-app). A udev rule sets each LED's `trigger` to `none` so the daemon owns it; `brightness` is `input`-group-writable via the existing brightnessctl udev rule (`modules/desktops/niri.nix`). **CapsLock** (kernel input layer) and **FnLock** (EC + `thinkpad_acpi`) already work and need no module.
+
+### 6.5 Status-Bar Hardware Indicators (`pkgs/steelbore-beacon`)
+
+The Eww bar carries live **audio**, **microphone**, **backlight** and **lock-key** indicators. All four come from one daemon, **steelbore-beacon** (`pkgs/steelbore-beacon/`; Rust + `libpulse-binding` + `evdev` + `rustix`, GPL-3.0), which blocks on three kernel event sources and writes one JSON object per line to stdout. Both bars consume it with a single `deflisten`, so the indicator updates the instant a function key is pressed rather than on a poll interval.
+
+The three sources: the **PulseAudio** mainloop for default-sink and default-source volume and mute (resolved by name on each event, so swapping to a headset follows correctly); **`EV_LED`** from every LED-capable `/dev/input/event*` for Caps Lock and Num Lock, which the kernel emits regardless of which process toggled the lock and is therefore correct under both Niri and LeftWM; and **`POLLPRI`** on `/sys/class/backlight/intel_backlight/actual_brightness`, which the backlight core notifies on every change. All three are readable rootless — `mj` is in `input` and `video`.
+
+Rendering follows Standard §18.2.1: the glyph itself changes between live and muted (`volume_off` / `microphone_off`), and the lock indicators are drawn only while engaged, so no indicator depends on color alone. Colors are §11 role tokens on the canvas — `success` while live, `error` while muted, `accent` for brightness, `warning` for the lock badges — never on a surface fill (§11.0.1).
+
+**FnLock is deliberately not indicated.** The T490s exposes no `fn_lock` attribute anywhere under `/sys` and no input device advertises `KEY_FN_ESC`; the embedded controller handles Fn+Esc entirely and never tells the kernel. An indicator could only infer the state and would drift out of sync after the first resume, so the feature is omitted rather than guessed at. (This is distinct from the *physical* FnLock LED noted in §6.4, which the EC drives on its own.)
 
 ---
 

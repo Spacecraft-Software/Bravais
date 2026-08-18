@@ -49,3 +49,9 @@ bravais.html
 # OS
 .DS_Store
 Thumbs.db
+
+# Rust build artifacts. The in-tree crates under pkgs/ are built by Nix, which
+# makes its own target dir inside the sandbox; a local `cargo build` left one
+# here it would otherwise be committed AND copied into the derivation source by
+# `lib.cleanSource` (which filters VCS metadata, not build output).
+target/

@@ -288,6 +288,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] **`default.nix`**: Hardware module entry point (imports audio-led, bluetooth, fingerprint, intel)
 - [✓] **`audio-led.nix`**: Define option; mute/mic-mute keyboard LED sync — ship `steelbore-audio-led` (Rust + libpulse-binding, `pkgs/steelbore-audio-led/`) as a systemd user service, plus a udev rule clearing the `platform::{mute,micmute}` LED triggers so the daemon owns them (CapsLock + FnLock already work)
+- [✓] **Bar hardware indicators**: audio level/mute, mic level/mute, backlight level, and Caps/Num Lock in both Eww bars, fed by `pkgs/steelbore-beacon` (Rust; PulseAudio + `EV_LED` + backlight `POLLPRI`, event-driven, no polling). FnLock omitted — the T490s EC exposes no `fn_lock` sysfs attribute and emits no `KEY_FN_ESC`, so it can only be guessed at (PRD 6.5)
 - [✓] **`bluetooth.nix`**: Define option, enable BlueZ (`hardware.bluetooth`, powerOnBoot, Experimental), install bluetui + overskride
 - [✓] **`fingerprint.nix`**: Define option, enable fprintd
 - [✓] **`intel.nix`**: Define option with `marchLevel` suboption (enum: v1/v2/v3/v4, default: v2 — safe portable level; hosts pin their true level)

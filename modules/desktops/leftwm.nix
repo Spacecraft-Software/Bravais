@@ -16,6 +16,12 @@
 
   config = lib.mkIf config.steelbore.desktops.leftwm.enable (
     let
+      # Event-driven feed for the audio / mic / backlight / lock-key indicators
+      # in the bar below. Referenced by absolute store path in its `deflisten`,
+      # exactly as `leftwm-state` is: a bare name would resolve against the
+      # PATH the theme's `up` script happens to inherit, not a login shell's.
+      beacon = (import ../../pkgs { inherit pkgs; }).steelbore-beacon;
+
       # The LeftWM Themes wiki strongly recommends that
       # `~/.config/leftwm/themes/current` be a symlink rather than a real
       # directory — leftwm 0.5.x's path resolution intermittently fails to
@@ -507,8 +513,41 @@
           ;; each new line, updating the variable instantly on every state change
           ;; (no polling). The `-n` flag preserves newlines in the Liquid template
           ;; output so the `literal` widget can parse the rendered yuck.
+
           (deflisten leftwm-ws "${pkgs.leftwm}/bin/leftwm-state -w 0 -n -t ${workspaceTemplate}")
           (deflisten window-title "${pkgs.leftwm}/bin/leftwm-state -w 0 -s '{% if window_title != \"\" %}{{ window_title }}{% else %}STEELBORE OS :: BRAVAIS{% endif %}'")
+
+          ;; Hardware state — one event-driven feed. `steelbore-beacon`
+          ;; (pkgs/steelbore-beacon) blocks on three kernel event sources — the
+          ;; PulseAudio mainloop, EV_LED from the keyboard's evdev node, and
+          ;; POLLPRI on the backlight's `actual_brightness` — and writes one JSON
+          ;; line per change. `deflisten` rather than `defpoll` because all four
+          ;; indicators react to function keys: a poll slow enough to be cheap
+          ;; visibly lags the keypress, and one fast enough to feel instant wakes
+          ;; the CPU all day for state that changes a handful of times an hour.
+          ;; FnLock is deliberately absent — this ThinkPad's EC handles Fn+Esc
+          ;; entirely, exposing no sysfs attribute and emitting no KEY_FN_ESC, so
+          ;; an indicator could only guess and would silently drift after resume.
+          ;; :initial keeps the bar renderable before the first line lands, and if
+          ;; the daemon is missing altogether.
+          (deflisten beacon
+            :initial '{"volume":0,"muted":false,"mic":0,"mic_muted":false,"brightness":100,"caps":false,"num":false}'
+            "${beacon}/bin/steelbore-beacon")
+
+          ;; Static indicator glyphs — same shell-printf idiom and long interval as
+          ;; the cpu/ram/battery icons above (yuck literals don't parse \uXXXX).
+          ;; All are nf-md-*, whose ink sits inside its advance like md-battery's,
+          ;; so the labels below omit the literal space before the value for the
+          ;; same reason the battery label does.
+          (defpoll ico-vol-high  :interval "3600s" "printf '\\xF3\\xB0\\x95\\xBE'")  ;; nf-md-volume_high U+F057E
+          (defpoll ico-vol-med   :interval "3600s" "printf '\\xF3\\xB0\\x96\\x80'")  ;; nf-md-volume_medium U+F0580
+          (defpoll ico-vol-low   :interval "3600s" "printf '\\xF3\\xB0\\x95\\xBF'")  ;; nf-md-volume_low U+F057F
+          (defpoll ico-vol-mute  :interval "3600s" "printf '\\xF3\\xB0\\x96\\x81'")  ;; nf-md-volume_off U+F0581
+          (defpoll ico-mic-on    :interval "3600s" "printf '\\xF3\\xB0\\x8D\\xAC'")  ;; nf-md-microphone U+F036C
+          (defpoll ico-mic-off   :interval "3600s" "printf '\\xF3\\xB0\\x8D\\xAD'")  ;; nf-md-microphone_off U+F036D
+          (defpoll ico-bright    :interval "3600s" "printf '\\xF3\\xB0\\x83\\xA0'")  ;; nf-md-brightness_5 U+F00E0
+          (defpoll ico-caps      :interval "3600s" "printf '\\xF3\\xB0\\x98\\xB2'")  ;; nf-md-apple_keyboard_caps U+F0632
+          (defpoll ico-num       :interval "3600s" "printf '\\xF3\\xB0\\x8E\\xA5'")  ;; nf-md-numeric U+F03A5
 
           (defwidget bar []
             (centerbox :orientation "h"
@@ -535,6 +574,20 @@
                 ;; opens NetworkManager TUI for connection management.
                 (button :onclick "alacritty -e nmtui"
                   (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
+                ;; Caps Lock / Num Lock — rendered only while engaged, so presence
+                ;; rather than color carries the meaning (Standard §18.2.1); the color
+                ;; is reinforcement, not the signal.
+                (label :class "ind-lock" :visible {beacon.caps} :text ico-caps)
+                (label :class "ind-lock" :visible {beacon.num}  :text ico-num)
+                ;; Volume and microphone — green while live, red while muted. The glyph
+                ;; changes with the state too (volume_off / microphone_off), so muted
+                ;; reads correctly without relying on color alone.
+                (label :class {beacon.muted ? "ind-muted" : "ind-live"}
+                       :text "''${beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low}''${beacon.volume}%")
+                (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
+                       :text "''${beacon.mic_muted ? ico-mic-off : ico-mic-on}''${beacon.mic}%")
+                ;; Display backlight.
+                (label :class "ind-bright" :text "''${ico-bright}''${beacon.brightness}%")
                 ;; Threshold colors: amber = warning, red = dangerous. CPU/RAM climb
                 ;; (high is bad); battery drains (low is bad). "--" (no battery) stays
                 ;; neutral. The label word is replaced by its Nerd Font glyph
@@ -571,6 +624,7 @@
           $success: ${steelborePalette.success};
           $info:  ${steelborePalette.info};
           $error:    ${steelborePalette.error};
+          $warning: ${steelborePalette.warning};
 
           * {
               font-family: "JetBrainsMono Nerd Font", monospace;
@@ -625,6 +679,20 @@
 
           // Keyboard language — en = steel blue (default), ar = molten amber
           // (secondary layout, draws the eye when active).
+          // Hardware indicators fed by steelbore-beacon. Text sits on the canvas,
+          // never on a surface fill (Standard §11.0.1) — same reason the metrics
+          // above do. On Void Navy: success 16.75:1, error 5.77:1, accent 6.66:1,
+          // warning 6.41:1, all clear of the 4.5:1 AA floor.
+          //
+          // Line comments, not /* */: a block comment survives SCSS into the CSS
+          // GTK parses, and GTK rejects ANY non-ASCII byte inside one with a
+          // misleading "unknown @ rule" -- the section sign and em dash above
+          // would be enough. SCSS strips // entirely, so it never reaches GTK.
+          .ind-live   { color: $success; }
+          .ind-muted  { color: $error; }
+          .ind-bright { color: $accent; }
+          .ind-lock   { color: $warning; }
+
           .lang-en { color: $accent; }
           .lang-ar { color: $foreground; }
 
