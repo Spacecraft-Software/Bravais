@@ -699,7 +699,7 @@
           // (secondary layout, draws the eye when active).
           // Hardware indicators fed by steelbore-beacon. Text sits on the canvas,
           // never on a surface fill (Standard §11.0.1) — same reason the metrics
-          // above do. On Void Navy: success 16.75:1, error 5.77:1, accent 6.66:1,
+          // above do. On Void Navy: success 16.75:1, error 5.77:1,
           // warning 6.41:1, all clear of the 4.5:1 AA floor.
           //
           // Line comments, not /* */: a block comment survives SCSS into the CSS
@@ -708,7 +708,7 @@
           // would be enough. SCSS strips // entirely, so it never reaches GTK.
           .ind-live   { color: $success; }
           .ind-muted  { color: $error; }
-          .ind-bright { color: $accent; }
+          .ind-bright { color: $success; }  // matches .metric (cpu/ram/battery)
           .ind-lock   { color: $warning; }
           // Separates the beacon cluster from the radio/network icons on its
           // left; the cpu label's own margin handles the right-hand side.
