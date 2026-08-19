@@ -61,6 +61,8 @@ Three Nushell commands back it, defined beside the `skills-*` ones: `flatpak-sta
 
 After the flake update (full path only) it runs an `antigravity-status` probe -- see constraint #27 -- which warns if `antigravity-nix`'s pinned Antigravity IDE is behind what Google advertises, because bumping that input cannot move the pins inside it.
 
+`scripts/rebuild.sh` is the same sequence for a shell that is not Nushell -- an agent's tool shell, a rescue TTY, or a session where Home Manager has not been activated and the `rebuild` function therefore does not exist. It takes the identical flags and performs the identical steps; **change one and change the other**. Written to the POSIX subset under a Bash shebang (§7.1), so it also runs under `dash`, `ash` and `brush` -- verify with `nix run nixpkgs#shellcheck -- -s sh scripts/rebuild.sh`, which must stay at zero findings. Two behaviours differ by necessity: the Nushell `antigravity-status` and `flatpak-status` return records that other commands consume as data, whereas the script only prints; and the mcpctl drift probe needs `jaq` or `jq` for its filter expressions, so it is **skipped with a note** when neither is present rather than allowed to fail into a silently-wrong zero (the bundled `python3` fallback understands dotted paths only, which is all the antigravity probe needs).
+
 Flags: `--dry` (dry-build, no cleanup/mirror), `--no-update`, `--no-gc`, `--trace` (adds `--show-trace --verbose`), `--skills-only` (bump only `construct`; skip GC, the mirror and the mcpctl probe), `--no-flatpak` (skip the Flatpak update).
 
 Measured cost of a prose-only skill change, so the flags can be chosen on evidence rather than feel: the skill derivation itself is **~0.6 s** (2.9 MB, 44 skills), a warm system eval is **~20 s** (the tree is usually dirty, so there is no eval cache at all), and the `/etc/nixos` no-op rsync is **~0.05 s** — not a cost worth gating on a diff. The expensive parts are the five-input `flake update` and the GC, which is exactly what `--skills-only` drops. `skills-sync` avoids the switch altogether.
@@ -112,6 +114,7 @@ pkgs/                      # In-tree packages — `pkgs/default.nix` is the auth
                            # Each is also a flake output: `nix build .#<name>`
 pkgs/update-vendored.nu    # Bumps the 9 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Skill sync helper
+scripts/rebuild.sh         # POSIX/Bash port of the Nushell `rebuild` (keep the two in step)
 theme.nix                  # THE ACTIVE THEME — one word; `theme set <slug>` rewrites it
 themes/<slug>.nix          # local themes (filename = slug); `base` to derive, or bind roles
 lib/palette.nix            # §11 palette family: slug -> role tokens + ANSI map + converters
