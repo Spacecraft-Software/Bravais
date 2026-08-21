@@ -445,7 +445,15 @@
         "eww-leftwm/eww.yuck".text = ''
           ;; Steelbore Eww — LeftWM bar widget
 
-          (defpoll time    :interval "1s"  "date '+%Y-%m-%d %H:%M:%S'")
+          ;; UTC offset appended so the reading is unambiguous rather than a bare
+          ;; local time (Standard §14.3 permits local as a display companion; the
+          ;; offset is what keeps it honest). Derived, never hardcoded: `%-:::z`
+          ;; is GNU date's minimal-precision offset with padding suppressed, so
+          ;; Asia/Bahrain renders "UTC+3" rather than "UTC+03", a half-hour zone
+          ;; would render "UTC+5:30", and travelling changes it on its own. The
+          ;; `-` flag is what avoids a second process per second just to strip a
+          ;; leading zero.
+          (defpoll time    :interval "1s"  "date '+%Y-%m-%d %H:%M:%S UTC%-:::z'")
           (defpoll cpu     :interval "3s"  "top -bn1 -d 0.1 | awk '/^%Cpu/ {printf \"%d\", $2 + $4}'")
           (defpoll memory  :interval "5s"  "free | awk '/^Mem/ {printf \"%d\", $3 / $2 * 100}'")
           (defpoll battery :interval "30s" "cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo --")
