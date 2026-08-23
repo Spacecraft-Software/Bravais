@@ -217,7 +217,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install Rust image viewers (loupe, viu, emulsion)
 - [✓] Install mousai (audio recognition)
 - [✓] Install audio mixers / output switchers (wiremix TUI, pavucontrol GUI) — PipeWire sink/stream routing for Niri
-- [✓] Install processing tools (rav1e, gifski, oxipng, video-trimmer, ffmpeg)
+- [✓] Install processing tools (rav1e, gifski, oxipng, video-trimmer, ffmpeg, imagemagick, exiftool)
 - [✓] Install yt-dlp
 
 ### productivity.nix

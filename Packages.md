@@ -219,6 +219,8 @@
     * **rav1e** 🦀 `[CLI ⌨️]` *(Fastest and safest AV1 video encoder)*
     * **gifski** 🦀 `[CLI ⌨️]` *(High-quality GIF encoder based on pngquant)*
     * **oxipng** 🦀 `[CLI ⌨️]` *(Multithreaded, lossless PNG optimization tool)*
+    * **ImageMagick** ⚠️ `[CLI ⌨️]` *(Image conversion, composition and editing suite - C)*
+    * **ExifTool** ⚠️ `[CLI ⌨️]` *(Read, write and edit image/media metadata - Perl)*
     * **Gyroflow** 🦀 `[GUI 🖱️]` *(Advanced video stabilization tool)*
     * **Video Trimmer** 🦀 `[GUI 🖱️]` *(GTK app to quickly trim videos)*
 * **Downloaders**
