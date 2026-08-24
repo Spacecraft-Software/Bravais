@@ -7,7 +7,7 @@ rustPlatform.buildRustPackage {
 
   src = ../../bravais-mcp;
 
-  cargoHash = "sha256-hXcopCNFUlbhXiiBB2uU2Kg1HC221Hme/MpgNRUh1mE=";
+  cargoHash = "sha256-69rW1rKd95XRSlgGWBRAUB8bnzWDwipFc/co5HJHBGs=";
 
   meta = with lib; {
     description = "Rust Model Context Protocol server for Steelbore OS Bravais";
