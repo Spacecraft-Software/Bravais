@@ -45,6 +45,8 @@
       oxipng # Rust — PNG optimizer
       video-trimmer # Rust — Video trimmer
       ffmpeg
+      imagemagick # C — Image conversion/composition suite
+      exiftool # Perl — Read/write image and media metadata
 
       # Downloaders
       yt-dlp

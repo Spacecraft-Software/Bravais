@@ -928,7 +928,7 @@ antigravity-hub — needs no IDE) and `google-antigravity-ide` (IDE only). The
 
 **Audio Mixers / Output Switchers:** wiremix (Rust TUI; Niri `Mod+A`), pavucontrol (GTK GUI; Niri `Mod+Shift+A`) — PipeWire sink/stream routing, since Niri has no audio applet. CLI equivalents `wpctl`/`pactl` ship with the PipeWire stack.
 
-**Processing (Rust):** rav1e, gifski, oxipng, video-trimmer, ffmpeg
+**Processing (Rust):** rav1e, gifski, oxipng, video-trimmer, ffmpeg, imagemagick (C), exiftool (Perl)
 
 **Downloaders:** yt-dlp
 
