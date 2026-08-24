@@ -65,7 +65,7 @@ preferred = "jaq"
 language = "rust"
 category = "core-unix"
 notes = "Fast JSON processor in Rust"
-gotchas = "jaq is a mostly compatible clone of jq but handles some edge-case filters differently. Refer to Loran (https://Loran.SpacecraftSoftware.org/) for details."
+gotchas = "jaq is NOT a safe alias for jq. It does not auto-vivify, so `echo null | jaq '.a.b = 1'` errors where jq returns {\"a\":{\"b\":1}}; several input files are run as separate streams rather than one; output-format flags are not last-wins; 22 jq builtins are missing and 9 jq flags are rejected. Use Pathfinder (https://Pathfinder.SpacecraftSoftware.org/) when existing jq scripts must keep working. jaq also has -i/--in-place, which jq lacks."
 
 [[mappings]]
 legacy = "curl"
