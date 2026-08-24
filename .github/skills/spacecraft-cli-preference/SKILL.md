@@ -205,7 +205,7 @@ Read files with a plain file-view operation — each is short (typically 40–12
 | `ps`             | `procs` 🦀            | `references/procs.md`         | Colored, tree, TCP/UDP columns            |
 | `top` / `htop`   | `bottom` 🦀 (`btm`)   | `references/bottom.md`        | Graphs, network, processes                |
 | `cd` + history   | `zoxide` 🦀 (`z`)     | `references/zoxide.md`        | Shell init required                       |
-| `jq`             | `jaq` 🦀              | `references/jaq.md`           | Faster; near-identical syntax             |
+| `jq`             | `jaq` 🦀              | `references/jaq.md`           | Faster. **Not alias-safe** — no auto-vivification; use `pathfinder` for existing jq scripts |
 | `tar`/`zip`/`gz` | `ouch` 🦀             | `references/ouch.md`          | One command, all archive formats          |
 | `diff` (git)     | `delta` 🦀            | `references/delta.md`         | Configure as `core.pager` in `.gitconfig` |
 | `make`           | `just` 🦀             | `references/just.md`          | `Justfile`, not `Makefile`                |
