@@ -841,6 +841,13 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 - **BrowserOS** (Chromium/AppImage) — agentic browser, packaged with `appimageTools.wrapType2`
   (pinned `fetchurl` + SRI hash) so it builds reproducibly into the Nix store; version/hash
   bumped by `pkgs/update-vendored.nu`
+- **Tor Browser** (Firefox/bundle, `unstablePkgs`) — anonymity browser over the Tor network.
+  Stays in nixpkgs rather than Flatpak because the derivation repacks the Tor Project's
+  official prebuilt tarball, so it is not a Firefox source build and substitutes from
+  cache. Taken from unstable because point releases carry Firefox-ESR security patches and
+  a stale Tor Browser is an anonymity problem; the bundled updater is disabled upstream
+  (`policies.DisableAppUpdate`), so `nix flake update nixpkgs-unstable` is the only thing
+  that moves it. Deliberately not bound to the `webBrowser` role in `default-apps.nix`
 - **Firefox** (system-managed via `programs.firefox.enable`)
 - google-chrome, brave, microsoft-edge, librewolf
 

@@ -148,6 +148,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable Firefox via `programs.firefox`
 - [✓] Install browsers (Chrome, Brave, Edge, Librewolf)
 - [✓] Package BrowserOS AppImage as Nix derivation (`appimageTools.wrapType2`, pinned fetchurl)
+- [✓] Install Tor Browser from `unstablePkgs` (prebuilt bundle; security-relevant point releases)
 
 ### terminals.nix
 
