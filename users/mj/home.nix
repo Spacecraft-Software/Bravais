@@ -48,6 +48,20 @@
     enable = true;
     enableGrok = true;
     mutablePointer.enable = true;
+
+    # ~/.agents/skills is a real directory of per-skill symlinks, not one
+    # directory symlink into the pointer. Same content either way; the
+    # difference is that names this module does not carry stay free, which is
+    # what lets Orca own its own three skills here.
+    #
+    # enableOrca is off (the module default, stated for the record): Orca's
+    # updater throws `skill-package-link` on any file with nlink != 1, which
+    # every Nix-store file becomes once store optimisation hardlinks it, and
+    # then reports the skill as `Unrecognized`. Vendored copies that were
+    # byte-identical to Orca's own manifest were flagged just the same, so the
+    # copies live where Orca can write them: `orca skills install`.
+    perSkillLinks.enable = true;
+    enableOrca = false;
     # The SAME derivation flake.nix exposes as `packages.skills`. Not a
     # convenience: it is what makes "pinned vs live" an exact comparison
     # instead of a permanently-drifted one. See `constructSkills` in flake.nix.
