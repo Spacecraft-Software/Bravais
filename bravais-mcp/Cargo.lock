@@ -62,7 +62,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bravais-mcp"
+name = "bravais-cli"
 version = "0.1.0"
 dependencies = [
  "bravais-mcp-server",
