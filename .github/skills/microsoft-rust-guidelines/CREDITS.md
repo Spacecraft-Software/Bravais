@@ -17,13 +17,13 @@ accordance with [The Steelbore Standard §15.3](../spacecraft-steelbore-standard
 ## License of the Spacecraft Software adaptation
 
 This skill is **dual-licensed: `GPL-3.0-or-later OR MIT`** — see
-[`LICENSE-GPL`](LICENSE-GPL) and [`LICENSE-MIT`](LICENSE-MIT). The recipient
+[`LICENSE.GPL`](LICENSE.GPL) and [`LICENSE.MIT`](LICENSE.MIT). The recipient
 may use the skill under **either** license, at their option.
 
 - The **MIT arm** preserves the terms of the upstream Microsoft Pragmatic Rust
   Guidelines verbatim (Standard §4.2 — third-party-derived artifacts keep their
   upstream license; Microsoft's copyright + permission notice is retained in
-  `LICENSE-MIT`). The entire `references/` tree is Microsoft's MIT text.
+  `LICENSE.MIT`). The entire `references/` tree is Microsoft's MIT text.
 - The **GPL-3.0-or-later arm** brings the skill in line with the Standard's
   software-class default (Standard §4.1.1 — skills are software-class). MIT is
   one-way compatible with the GPL, so offering the adapted work under

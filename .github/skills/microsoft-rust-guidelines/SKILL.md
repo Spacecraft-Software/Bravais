@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 **Maintainer (Spacecraft Software adaptation):** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
-**License:** GPL-3.0-or-later OR MIT (dual; see [`LICENSE-GPL`](LICENSE-GPL), [`LICENSE-MIT`](LICENSE-MIT), [`CREDITS.md`](CREDITS.md))
+**License:** GPL-3.0-or-later OR MIT (dual; see [`LICENSE.GPL`](LICENSE.GPL), [`LICENSE.MIT`](LICENSE.MIT), [`CREDITS.md`](CREDITS.md))
 *(Base guidelines: Microsoft Pragmatic Rust Guidelines — MIT License)*
 
 This skill enforces structured, guideline-driven Rust development. It ensures all

@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v1.49 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
+  The Steelbore Standard v1.50 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 1.49 | **Date:** 2026-08-16 | **Author:** Mohamed Hammad
+**Version:** 1.50 | **Date:** 2026-08-22 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -345,6 +345,26 @@ and the correct comment syntax for the file type.)
   Two independently maintained copies of the same license text are **non-compliant**:
   they drift, and a stale root `LICENSE` misreports the project's license to every
   GitHub visitor.
+- **License file naming.** The canonical filename is `LICENSE` — **no extension**.
+  `LICENSE.md` and `LICENSE.txt` are non-compliant. GitHub's detector ranks an
+  extensionless `LICENSE` above every extended form, and a canonical plain-text copy
+  matches on that detector's exact matcher rather than falling through to a fuzzy one;
+  a Markdown-formatted copy is in any case already excluded by the verbatimness rule
+  above.
+
+  `COPYING` MAY additionally be provided at the project root, as a **symbolic link** to
+  `LICENSE`, by projects that want the GNU convention alongside the GitHub-detected
+  name. It MUST NOT be a second regular copy of the text. It MUST NOT appear inside a
+  distributable sub-unit: archivers dereference symbolic links by default, so a linked
+  `COPYING` inside a bundle ships the whole license text a second time.
+
+  **More than one license.** Where an artifact is offered under more than one license —
+  a dual-licensed §4.2 upstream import, for example — each license text gets its own
+  file, named `LICENSE.<TAG>` (`LICENSE.GPL`, `LICENSE.MIT`), after GNU's
+  `COPYING.LESSER` and `COPYING.RUNTIME` convention. License texts are never
+  concatenated into one file. The authoritative statement of *which* licenses apply, and
+  of their exact versions, remains the SPDX expression in the file header or the
+  repo-root `REUSE.toml`; the filename tag is a human-facing label, not a version claim.
 - **CI gate:** `reuse lint` MUST pass before shipping.
 
 When writing or reviewing any file, confirm REUSE coverage; when generating a new file,
@@ -450,6 +470,19 @@ limits are therefore enforced **before packing**, not after a failure.
 | Rendered, not raw | "Rendered" means the string the loader sees. A YAML folded scalar (`description: >`) joins its wrapped lines with single spaces and retains a trailing newline, so the raw line lengths are not the measurement. Block (`>` / `\|`) and single-line plain or quoted forms alike are measured after folding. |
 | Machine-enforced | The cap MUST be checked by an automated gate that runs both in the skill repository's CI on every pull request and push to the default branch, and in whatever command produces the distributable bundle. A developer-installed git hook is a convenience, never the gate — hooks are opt-in per clone and cannot be relied on. |
 | Over-limit skills do not ship | A skill whose description exceeds the cap MUST NOT be packed, committed, or published. Trim the description; do not raise the cap. |
+
+**License carriage.** A bundle is a distribution in its own right. Consumers install
+the `.zip` or `.skill` without ever seeing the source repository, so the repo-root
+`LICENSE` never reaches them. A copyleft license obliges the distributor to give every
+recipient a copy of the license along with the work; the bundle is where that
+obligation lands.
+
+| Rule | Detail |
+|------|--------|
+| `LICENSE` in every skill | Each skill directory MUST contain a `LICENSE` file named per §4.3, and every bundle built from that directory MUST include it. A bundle carrying no license text does not satisfy the distribution terms of any copyleft license the skill is under. |
+| Byte-identical to the root | Where the skill and the repository name the same license, the skill's `LICENSE` MUST be byte-identical to the repo-root `LICENSE`, and an automated gate MUST verify it. §4.3 forbids two independently maintained copies of a license text; enforced equality is what keeps these one maintained text rather than two. |
+| Regular file, never a link | The skill's `LICENSE` MUST be a regular file. A parent-relative symbolic link (`../LICENSE`) dangles the moment the directory is packaged on its own — which is precisely what bundling and per-skill Nix packaging do — and a within-directory link is dereferenced by the archiver, duplicating the payload instead of saving it. |
+| Multi-licensed skills | A skill offered under more than one license carries one `LICENSE.<TAG>` file per license (§4.3) in place of a single `LICENSE`, and every one of them ships in the bundle. |
 
 ### §5.7 — Agent Context Files
 
@@ -1724,10 +1757,10 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§3.3** Hardened security; PQC readiness addressed
 - [ ] **§4.1** License is `GPL-3.0-or-later` or `AGPL-3.0-or-later` (AGPL for network-facing; per §4.1)
 - [ ] **§4.2** Upstream copyright notices, license texts, and `NOTICE`/`AUTHORS` preserved verbatim; upstream licenses shipped in `LICENSES/`
-- [ ] **§4.3** REUSE-compliant: two-tag SPDX header (`SPDX-FileCopyrightText` + `SPDX-License-Identifier`) on every file (or `.license` sidecar / `REUSE.toml` entry); `LICENSES/` directory present; root `LICENSE` carries the canonical license text and `LICENSES/<SPDX-id>.txt` symlinks to it (never two independent copies); `reuse lint` passes
+- [ ] **§4.3** REUSE-compliant: two-tag SPDX header (`SPDX-FileCopyrightText` + `SPDX-License-Identifier`) on every file (or `.license` sidecar / `REUSE.toml` entry); `LICENSES/` directory present; root `LICENSE` carries the canonical license text and `LICENSES/<SPDX-id>.txt` symlinks to it (never two independent copies); license files named per §4.3 (`LICENSE` with no extension, `LICENSE.<TAG>` per license when more than one applies, `COPYING` only ever a symlink); `reuse lint` passes
 - [ ] **§5** Project Posture: README/NOTICE/CONTRIBUTING present; default personal-hobby stance applied; general-use carve-outs declared in project README
 - [ ] **§5.5** Package distribution: `packaging/guix.scm`, `packaging/default.nix`, and `packaging/PKGBUILD` present, buildable, and carrying correct version + SHA-256 checksum (in each package manager's native format) before any release tag is pushed
-- [ ] **§5.6** Skill packaging: every `SKILL.md` `description` measures ≤ 1000 rendered characters (folded scalars counted as the loader sees them, not as raw lines); the cap is enforced by CI *and* by the command that produces the bundle, not only by a local git hook — N/A for projects that ship no skills
+- [ ] **§5.6** Skill packaging: every `SKILL.md` `description` measures ≤ 1000 rendered characters (folded scalars counted as the loader sees them, not as raw lines); the cap is enforced by CI *and* by the command that produces the bundle, not only by a local git hook; every skill directory carries a `LICENSE` (§4.3 naming, byte-identical to the repo root, a regular file) and every bundle ships it — N/A for projects that ship no skills
 - [ ] **§5.7** Agent context files: `AGENTS.md` and `CLAUDE.md` both present at the repository root and version-controlled; `CLAUDE.md` is an `@AGENTS.md` import plus Claude-only content and restates nothing; neither file is gitignored; no credentials, private hostnames, or personal filesystem paths in either; managed blocks rendered into `AGENTS.md` only
 - [ ] **§6.1** POSIX-compliant CLI/system tools
 - [ ] **§7** Shell scripts are POSIX-compatible; Nushell/Ion native variants provided where shell-native idioms are required; no Bashisms in shared scripts
