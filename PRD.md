@@ -873,6 +873,31 @@ Orca itself is not packaged — it is a self-updating AppImage, the same class a
 constraint #4 CLIs. Note `pkgs.orca` in nixpkgs is the unrelated GNOME **screen
 reader**, which depends on this identical package set.
 
+#### Codex Desktop (`pkgs/codex-desktop/`)
+
+OpenAI's official Codex app, repackaged from the amd64 `.deb` (upstream package name is
+`chatgpt`; binary exposed here as `codex-desktop`). Electron, so the usual
+`autoPatchelfHook` + `wrapGAppsHook3` treatment.
+
+Three things are specific to it:
+
+- **No versioned URL.** Upstream publishes only `…/linux/deb/latest/chatgpt_amd64.deb`, so
+  the pin breaks whenever OpenAI ships a build *and* the pinned artifact cannot be refetched
+  once replaced. Every other vendored binary can always refetch its exact version. The
+  updater therefore keys off the blob **ETag** from a HEAD request (kept in
+  `passthru.upstreamETag`) so `--check` stays free, and reads the version out of the `.deb`
+  control file only when something has actually changed.
+- **`MimeType` is deliberately stripped.** Upstream declares
+  `x-scheme-handler/http;x-scheme-handler/https` plus csv/xls/xlsx/doc/docx/pptx — i.e. it
+  advertises itself as a web browser and a spreadsheet handler. Shipping that verbatim
+  exposes constraint #22's failure mode, where an unbound or ambiguously-bound type is
+  resolved by desktop-entry cache ordering. Only its own `x-scheme-handler/codex` is kept;
+  handlers are decided in `default-apps.nix` alone.
+- **Qt shims ignored, musl prebuilds deleted.** `libqt5_shim.so`/`libqt6_shim.so` are
+  Electron's optional Qt dialog integration and are left unsatisfied rather than dragging
+  Qt5+Qt6 into a GTK app's closure; the Alpine/musl native addons are removed by shape
+  (`*-musl` dirs, `*.musl.node`) — the same trap as constraint #15.
+
 ### 11.2 Editors (`modules/packages/editors.nix`)
 
 **Linting:** markdownlint-cli2

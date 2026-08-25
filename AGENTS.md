@@ -109,10 +109,10 @@ pkgs/                      # In-tree packages — `pkgs/default.nix` is the auth
                            #   steelbore-audio-led, steelbore-beacon,
                            #   steelbore-niri-unmax, claude-desktop,
                            #   chrome-remote-desktop, ollama, github-copilot-app, bravais-mcp,
-                           #   opencode-desktop, goose-desktop, adguardvpn-cli,
-                           #   crates-mcp, obscura
+                           #   opencode-desktop, goose-desktop, codex-desktop,
+                           #   adguardvpn-cli, crates-mcp, obscura
                            # Each is also a flake output: `nix build .#<name>`
-pkgs/update-vendored.nu    # Bumps the 9 version+hash-pinned upstream packages (see below)
+pkgs/update-vendored.nu    # Bumps the 10 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Skill sync helper
 scripts/rebuild.sh         # POSIX/Bash port of the Nushell `rebuild` (keep the two in step)
 theme.nix                  # THE ACTIVE THEME — one word; `theme set <slug>` rewrites it
@@ -321,7 +321,9 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
-Nine packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`).
+Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`).
+
+`codex-desktop` is the odd one out: OpenAI publishes **no versioned URL**, only `…/deb/latest/`. The pin therefore breaks whenever they ship a build, and the pinned artifact cannot be refetched once replaced — unlike every other entry, whose exact version stays fetchable. Its updater keys off the blob **ETag** from a HEAD request rather than a release API, so `--check` stays free instead of downloading 378 MB, and reads the version out of the `.deb` control file only once something has actually changed.
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only). **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
 

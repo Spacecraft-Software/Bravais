@@ -135,6 +135,58 @@ def up-claude [check: bool] {
   } "claude-desktop"
 }
 
+def up-codex [check: bool] {
+  let file = "pkgs/codex-desktop/package.nix"
+  let url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb"
+  let cur = (extract $file 'version = "(?<x>[^"]+)"')
+  let cur_etag = (extract $file 'upstreamETag = "(?<x>[^"]+)"')
+
+  # OpenAI publishes no release API and no versioned URL -- only `latest` --
+  # and the version string lives inside the .deb's control file. So "what is
+  # the latest version?" cannot be answered without downloading 378 MB, which
+  # is far too expensive for the monthly `--check` nag `rebuild` runs.
+  #
+  # The blob ETag changes on every upload, so a HEAD request answers "has
+  # anything been published?" for free. Only when it differs do we pay for the
+  # download, and only then can the new version be read out of the control
+  # file. When the ETag matches, `latest` is still the artifact we pinned.
+  let etag = (
+    try {
+      ^curl -sI --max-time 60 $url
+      | lines
+      | where {|l| ($l | str downcase | str starts-with "etag:")}
+      | first
+      | parse -r '"(?<x>[^"]+)"'
+      | get 0.x
+    } catch { null }
+  )
+  if $etag == null {
+    return {package: "codex-desktop", current: $cur, latest: "unknown", action: "error: HEAD failed"}
+  }
+  if $etag == $cur_etag {
+    return {package: "codex-desktop", current: $cur, latest: $cur, action: "up to date"}
+  }
+  if $check {
+    return {package: "codex-desktop", current: $cur, latest: "new build", action: "update available"}
+  }
+
+  # Something was published: fetch it, then read the real version out of the
+  # control file. dpkg-deb comes from nixpkgs rather than the host -- this
+  # script must work on a machine that has never installed dpkg.
+  let sri = (prefetch-sri $url)
+  let store = (nix store prefetch-file --json $url | from json | get storePath)
+  let ver = (
+    ^nix run nixpkgs#dpkg -- --field $store Version | str trim
+  )
+  update-one "codex-desktop" $file $cur $ver $check {||
+    [
+      {from: $'version = "($cur)";', to: $'version = "($ver)";'}
+      {from: (extract $file 'hash = "(?<x>sha256-[^"]+)"'), to: $sri}
+      {from: $'upstreamETag = "($cur_etag)";', to: $'upstreamETag = "($etag)";'}
+    ]
+  } "codex-desktop"
+}
+
 def up-crd [check: bool] {
   let file = "pkgs/chrome-remote-desktop/package.nix"
   let cur = (extract $file 'version = "(?<x>[^"]+)"')
@@ -266,7 +318,7 @@ def main [package?: string, --check] {
   let known = [
     "claude-desktop" "chrome-remote-desktop" "ollama"
     "goose-desktop" "opencode-desktop" "github-copilot-app"
-    "adguardvpn-cli" "browseros" "obscura"
+    "adguardvpn-cli" "browseros" "obscura" "codex-desktop"
   ]
   let targets = if $package == null {
     $known
@@ -286,6 +338,7 @@ def main [package?: string, --check] {
     match $t {
       "claude-desktop" => (up-claude $check)
       "chrome-remote-desktop" => (up-crd $check)
+      "codex-desktop" => (up-codex $check)
       "ollama" => (up-github "ollama" "ollama/ollama" {|v|
         $"https://github.com/ollama/ollama/releases/download/v($v)/ollama-linux-amd64.tar.zst"
       } $check)
