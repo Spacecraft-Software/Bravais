@@ -287,8 +287,12 @@ in
           // buttons under the thumb on most mice, X11 buttons 8 and 9.
           //
           // These move between COLUMNS, not workspaces, so that the thumb
-          // buttons read the same way in every session: back = left, forward =
-          // right. Under GNOME, Plasma, COSMIC and LeftWM the same two buttons
+          // buttons read the same way in every session: back = RIGHT, forward =
+          // LEFT. That direction was chosen by use rather than derived from the
+          // button names, so do not "correct" it on sight; the evdev remap in
+          // modules/desktops/mouse-workspace-nav.nix is swapped to match, and
+          // the two must move together.
+          // Under GNOME, Plasma, COSMIC and LeftWM the same two buttons
           // switch workspaces left/right, via an evdev remap
           // (modules/desktops/mouse-workspace-nav.nix) because none of those can
           // bind a mouse button natively. Niri CAN, so it is deliberately left
@@ -308,8 +312,8 @@ in
           // to both lines to get that back at the price of needing the modifier.
           // `MouseSide`/`MouseExtra` are NOT valid niri key names; only
           // MouseBack/MouseForward (and MouseLeft/Right/Middle) parse.
-          MouseBack    { focus-column-left; }
-          MouseForward { focus-column-right; }
+          MouseBack    { focus-column-right; }
+          MouseForward { focus-column-left; }
 
           // Resize
           Mod+R     hotkey-overlay-title="Switch Preset Column Widths" { switch-preset-column-width; }
