@@ -674,24 +674,35 @@ plasma-browser-integration, kdeconnect-kde, plasma-systemmonitor, filelight, kca
 
 **Excluded packages:** oxygen, elisa, khelpcenter
 
-### 9.1a Mouse side-button workspace nav (`modules/desktops/gnome-mouse-nav.nix`)
+### 9.1a Mouse side-button workspace nav (`modules/desktops/mouse-workspace-nav.nix`)
 
-**Option:** `steelbore.desktops.gnomeMouseNav.enable`
+**Option:** `steelbore.desktops.mouseWorkspaceNav.enable`
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces left/right under
-GNOME, matching the Niri binds.
+**GNOME, Plasma, COSMIC and LeftWM**.
 
-GNOME cannot express this natively — Mutter's keybinding schemas take keyboard
+Only Niri can bind a mouse button natively; Mutter, KWin and cosmic all accept keyboard
 accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore
-happens **below the compositor** via `xremap` (Rust), emitting `<Control><Alt>Left/Right`,
-which GNOME already binds to `switch-to-workspace-left/-right` and grabs globally — so the
-module needs no dconf settings and no application can observe the emitted combo.
+happens **below the compositor** via `xremap` (Rust), emitting **Super+Ctrl+Left/Right**.
 
-The unit is bound to `gnome-session-initialized.target` rather than
-`graphical-session.target`, which is load-bearing: a broader scope would swallow the
-buttons before Niri saw them and kill browser back-forward in every session at once,
-instead of only under GNOME. Requires `hardware.uinput.enable` plus `uinput` group
-membership (`input` alone covers only reading real devices).
+That combo is already the shipped default for this action in Plasma
+(`Switch One Desktop to the Left = Meta+Ctrl+Left`) and COSMIC
+(`(modifiers: [Super, Ctrl], key: "Left"): PreviousWorkspace`), so only GNOME needed a
+binding added — appended to the stock accelerator list in `users/mj/desktop-theme.nix`
+rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
+
+**Niri is deliberately excluded.** It handles the buttons natively, and xremap grabs the
+device and re-emits — so a unit on `graphical-session.target` would consume them before
+Niri saw them. The unit is `wantedBy` exactly `gnome-session-initialized.target`,
+`cosmic-session.target` and `plasma-core.target`.
+
+**LeftWM is the other exception**, being startx-based with no systemd graphical session: no
+unit can fire there, so its theme `up` hook starts the same command (exposed as the
+read-only `…mouseWorkspaceNav.command` option so the two cannot drift) and `down` kills it
+by pidfile.
+
+Requires `hardware.uinput.enable` plus `uinput` group membership (`input` alone covers only
+reading real devices).
 
 ### 9.4 Niri (Wayland -- Scrolling Tiling)
 

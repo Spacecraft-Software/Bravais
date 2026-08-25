@@ -68,11 +68,30 @@
             # is ready before returning — no sleep/wait needed here.
             ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" daemon
             ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" open bar
+
+            # Side-button workspace nav. LeftWM is started by startx and has no
+            # systemd graphical session at all, so the user unit in
+            # modules/desktops/mouse-workspace-nav.nix — which is wanted by the
+            # GNOME/COSMIC/Plasma session targets — can never fire here. Start
+            # the same command by hand and record the pid so `down` can stop it;
+            # without that, a leftwm session that ends leaves xremap holding an
+            # EVIOCGRAB on the mouse.
+            ${lib.optionalString config.steelbore.desktops.mouseWorkspaceNav.enable ''
+              ${config.steelbore.desktops.mouseWorkspaceNav.command} &
+              echo $! > "''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
+            ''}
           '';
         }
         {
           name = "down";
-          path = pkgs.writeShellScript "leftwm-steelbore-down" "exit 0";
+          path = pkgs.writeShellScript "leftwm-steelbore-down" ''
+            pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
+            if [ -r "$pidfile" ]; then
+              kill "$(cat "$pidfile")" 2>/dev/null || true
+              rm -f "$pidfile"
+            fi
+            exit 0
+          '';
         }
         {
           name = "theme.ron";
@@ -246,6 +265,13 @@
                 (command: PreviousLayout, value: "", modifier: ["modkey", "Shift"], key: "space"),
 
                 // Workspaces
+                // Accept the combo the side-button remap emits. modkey is
+                // Mod4, so ["modkey","Control"]+Left == Super+Ctrl+Left, which
+                // is what modules/desktops/mouse-workspace-nav.nix turns
+                // BTN_SIDE/BTN_EXTRA into — the same combo Plasma and COSMIC
+                // already use for this action by default. Typing it works too.
+                (command: FocusPreviousTag, value: "", modifier: ["modkey", "Control"], key: "Left"),
+                (command: FocusNextTag, value: "", modifier: ["modkey", "Control"], key: "Right"),
                 (command: GotoTag, value: "1", modifier: ["modkey"], key: "1"),
                 (command: GotoTag, value: "2", modifier: ["modkey"], key: "2"),
                 (command: GotoTag, value: "3", modifier: ["modkey"], key: "3"),

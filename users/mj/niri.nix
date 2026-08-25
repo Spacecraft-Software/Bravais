@@ -288,12 +288,18 @@ in
           //
           // These move between COLUMNS, not workspaces, so that the thumb
           // buttons read the same way in every session: back = left, forward =
-          // right. Under GNOME the same two buttons switch workspaces
-          // left/right (modules/desktops/gnome-mouse-nav.nix), and GNOME's
-          // workspaces are horizontal. Niri's are not — they stack vertically,
-          // and it has no horizontal workspace axis at all — so matching the
-          // *direction* means binding the horizontal thing niri does have.
-          // The wheel binds above keep workspace switching, so nothing is lost.
+          // right. Under GNOME, Plasma, COSMIC and LeftWM the same two buttons
+          // switch workspaces left/right, via an evdev remap
+          // (modules/desktops/mouse-workspace-nav.nix) because none of those can
+          // bind a mouse button natively. Niri CAN, so it is deliberately left
+          // out of that module — the remapper grabs the device and re-emits, so
+          // running it here would consume these buttons before niri saw them.
+          //
+          // Those desktops have horizontal workspaces. Niri does not: its
+          // workspaces stack vertically and it has no horizontal workspace axis
+          // at all, so matching the *direction* means binding the horizontal
+          // thing niri does have. The wheel binds above keep workspace
+          // switching, so nothing is lost.
           //
           // Deliberately bound WITHOUT Mod, which is what makes them useful
           // one-handed — and which has a real cost: niri grabs these buttons
