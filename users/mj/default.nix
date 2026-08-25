@@ -14,7 +14,7 @@
       "audio"
       "seat" # Access to /run/seatd.sock (cage/Wayland kiosk)
       # /dev/uinput, for xremap's virtual output device under GNOME
-      # (modules/desktops/gnome-mouse-nav.nix enables hardware.uinput, which
+      # (modules/desktops/mouse-workspace-nav.nix enables hardware.uinput, which
       # creates this group). `input` above covers only READING the real
       # devices; creating a virtual one needs this.
       "uinput"

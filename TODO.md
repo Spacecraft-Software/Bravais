@@ -108,13 +108,15 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable GPG agent with pinentry-qt
 - [✓] Exclude bloatware (oxygen, elisa, khelpcenter)
 
-### Mouse side-button nav (`gnome-mouse-nav.nix`)
+### Mouse side-button nav (`mouse-workspace-nav.nix`)
 
-- [✓] Define `steelbore.desktops.gnomeMouseNav` option
-- [✓] Remap `BTN_SIDE`/`BTN_EXTRA` to `<Control><Alt>Left/Right` via xremap (Rust)
-- [✓] Scope the unit to `gnome-session-initialized.target` so other sessions are untouched
+- [✓] Define `steelbore.desktops.mouseWorkspaceNav` option
+- [✓] Remap `BTN_SIDE`/`BTN_EXTRA` to Super+Ctrl+Left/Right via xremap (Rust)
+- [✓] Scope the unit to the GNOME/COSMIC/Plasma session targets, never `graphical-session`
+- [✓] Add the combo to GNOME's dconf (Plasma + COSMIC already default to it)
+- [✓] Bind it in LeftWM (`FocusPreviousTag`/`FocusNextTag`) + start/stop from the theme hooks
+- [✓] Leave Niri on its native `MouseBack`/`MouseForward` binds
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
-- [✓] Repoint Niri's side buttons at `focus-column-left/right` for directional consistency
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
