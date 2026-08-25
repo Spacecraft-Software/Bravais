@@ -851,6 +851,28 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
 - **Firefox** (system-managed via `programs.firefox.enable`)
 - google-chrome, brave, microsoft-edge, librewolf
 
+### 11.1a Orca computer-use (`modules/packages/orca.nix`)
+
+The AT-SPI accessibility stack backing Orca's computer-use feature, gathered behind
+`steelbore.packages.orca` so the whole set is removed with one toggle when Orca goes.
+
+- **python3Packages.pygobject3** — Python GObject/`gi` bindings
+- **python3Packages.pyatspi** — Python AT-SPI bindings
+- **at-spi2-core** — the AT-SPI accessibility bus/runtime
+- **gobject-introspection** — supplies the runtime typelibs `gi` needs
+- **`orca-python`** — a wrapped interpreter that can actually import the two Python
+  modules. Listing `python3Packages.*` in `environment.systemPackages` does **not**
+  make them importable: the files land in the system path but `python3` resolves
+  through its symlink to its own store prefix, so they never reach `sys.path`. A
+  session-wide `PYTHONPATH` was rejected (it leaks into every Python on the machine,
+  including virtualenvs on another minor version), as was replacing the system
+  `python3` (already declared, and `system.path` sets `ignoreCollisions = true`, so a
+  second `bin/python3` would silently pick an arbitrary winner).
+
+Orca itself is not packaged — it is a self-updating AppImage, the same class as the
+constraint #4 CLIs. Note `pkgs.orca` in nixpkgs is the unrelated GNOME **screen
+reader**, which depends on this identical package set.
+
 ### 11.2 Editors (`modules/packages/editors.nix`)
 
 **Linting:** markdownlint-cli2
