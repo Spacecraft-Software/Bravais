@@ -58,6 +58,7 @@
     desktops.niri.enable = true;
     desktops.niriUnmax.enable = true; # revert Chrome-style post-open self-maximize
     desktops.leftwm.enable = true;
+    desktops.gnomeMouseNav.enable = true; # side buttons to workspace left/right (see modules/desktops/gnome-mouse-nav.nix)
 
     # Package bundles
     packages.browsers.enable = true;

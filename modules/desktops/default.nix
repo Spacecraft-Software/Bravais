@@ -8,6 +8,7 @@
     ./shared.nix
     ./niri.nix
     ./niri-unmax.nix
+    ./gnome-mouse-nav.nix
     ./leftwm.nix
     ./assertions.nix
   ];
