@@ -70,6 +70,7 @@
     packages.productivity.enable = true;
     packages.system.enable = true;
     packages.ai.enable = true;
+    packages.orca.enable = true; # AT-SPI stack for Orca computer-use (see modules/packages/orca.nix)
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
 

@@ -150,6 +150,12 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Package BrowserOS AppImage as Nix derivation (`appimageTools.wrapType2`, pinned fetchurl)
 - [✓] Install Tor Browser from `unstablePkgs` (prebuilt bundle; security-relevant point releases)
 
+### orca.nix
+
+- [✓] Define `steelbore.packages.orca` option (AT-SPI stack for Orca computer-use)
+- [✓] Install pygobject3, pyatspi, at-spi2-core, gobject-introspection
+- [✓] Ship `orca-python` wrapper — bare `python3Packages.*` entries are not importable
+
 ### terminals.nix
 
 - [✓] Define `steelbore.packages.terminals` option

@@ -97,8 +97,8 @@ modules/login/             # greetd + tuigreet + shell sessions (single default.
 modules/services/          # steelbore.services.*: podman (container runtime),
                            #   ollama, chrome-remote-desktop
 modules/compat/            # steelbore.compat.*: appimage (binfmt auto-run)
-modules/packages/          # 12 opt-in bundles: ai, browsers, development, editors,
-                           #   flatpak, homebrew, multimedia, networking,
+modules/packages/          # 13 opt-in bundles: ai, browsers, development, editors,
+                           #   flatpak, homebrew, multimedia, networking, orca,
                            #   productivity, security, system, terminals
 users/mj/default.nix       # System user definition (users.users.${primaryUser})
 users/mj/home.nix          # HM core: identity + imports (~90 lines; Phase D split)
@@ -145,7 +145,7 @@ resolver) and `terminal-theme.nix` (terminal theme record + emitters); the forme
 `lib/default.nix` helper was removed for simple cases.
 
 **Host toggles** live in `hosts/thinkpad/default.nix` under the `steelbore`
-attribute set. All 12 package bundles and all 5 desktop environments are enabled
+attribute set. All 13 package bundles and all 5 desktop environments are enabled
 there for the primary host.
 
 ## First-time bootstrap
