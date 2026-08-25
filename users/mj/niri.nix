@@ -282,14 +282,18 @@ in
           // Mouse-wheel workspace nav (silent — secondary, mouse-only).
           Mod+WheelScrollDown { focus-workspace-down; }
           Mod+WheelScrollUp   { focus-workspace-up; }
-          // Side-button workspace nav (silent — secondary, mouse-only).
+          // Side-button COLUMN nav (silent — secondary, mouse-only).
           // MouseBack is BTN_SIDE and MouseForward is BTN_EXTRA — the two extra
-          // buttons under the thumb on most mice, X11 buttons 8 and 9. Back maps
-          // to "down" and forward to "up", which is deliberately the OPPOSITE of
-          // the wheel bindings above: the wheel matches scroll direction, while
-          // the side buttons sit fore-and-aft under the thumb and read as
-          // "further forward = further up the stack". Reversed from the original
-          // wiring after using it; do not "fix" it back to match the wheel.
+          // buttons under the thumb on most mice, X11 buttons 8 and 9.
+          //
+          // These move between COLUMNS, not workspaces, so that the thumb
+          // buttons read the same way in every session: back = left, forward =
+          // right. Under GNOME the same two buttons switch workspaces
+          // left/right (modules/desktops/gnome-mouse-nav.nix), and GNOME's
+          // workspaces are horizontal. Niri's are not — they stack vertically,
+          // and it has no horizontal workspace axis at all — so matching the
+          // *direction* means binding the horizontal thing niri does have.
+          // The wheel binds above keep workspace switching, so nothing is lost.
           //
           // Deliberately bound WITHOUT Mod, which is what makes them useful
           // one-handed — and which has a real cost: niri grabs these buttons
@@ -298,8 +302,8 @@ in
           // to both lines to get that back at the price of needing the modifier.
           // `MouseSide`/`MouseExtra` are NOT valid niri key names; only
           // MouseBack/MouseForward (and MouseLeft/Right/Middle) parse.
-          MouseBack    { focus-workspace-down; }
-          MouseForward { focus-workspace-up; }
+          MouseBack    { focus-column-left; }
+          MouseForward { focus-column-right; }
 
           // Resize
           Mod+R     hotkey-overlay-title="Switch Preset Column Widths" { switch-preset-column-width; }

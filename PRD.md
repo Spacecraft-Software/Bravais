@@ -674,6 +674,25 @@ plasma-browser-integration, kdeconnect-kde, plasma-systemmonitor, filelight, kca
 
 **Excluded packages:** oxygen, elisa, khelpcenter
 
+### 9.1a Mouse side-button workspace nav (`modules/desktops/gnome-mouse-nav.nix`)
+
+**Option:** `steelbore.desktops.gnomeMouseNav.enable`
+
+Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces left/right under
+GNOME, matching the Niri binds.
+
+GNOME cannot express this natively — Mutter's keybinding schemas take keyboard
+accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore
+happens **below the compositor** via `xremap` (Rust), emitting `<Control><Alt>Left/Right`,
+which GNOME already binds to `switch-to-workspace-left/-right` and grabs globally — so the
+module needs no dconf settings and no application can observe the emitted combo.
+
+The unit is bound to `gnome-session-initialized.target` rather than
+`graphical-session.target`, which is load-bearing: a broader scope would swallow the
+buttons before Niri saw them and kill browser back-forward in every session at once,
+instead of only under GNOME. Requires `hardware.uinput.enable` plus `uinput` group
+membership (`input` alone covers only reading real devices).
+
 ### 9.4 Niri (Wayland -- Scrolling Tiling)
 
 **Option:** `steelbore.desktops.niri.enable`
