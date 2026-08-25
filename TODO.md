@@ -156,6 +156,13 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install pygobject3, pyatspi, at-spi2-core, gobject-introspection
 - [✓] Ship `orca-python` wrapper — bare `python3Packages.*` entries are not importable
 
+### codex-desktop
+
+- [✓] Package OpenAI Codex Desktop from the official amd64 `.deb`
+- [✓] Strip upstream's http/https + office `MimeType` claims (constraint #22)
+- [✓] Remove musl prebuilds; ignore optional Qt shim deps
+- [✓] Add `up-codex` to `update-vendored.nu` — ETag-based, no release API exists
+
 ### terminals.nix
 
 - [✓] Define `steelbore.packages.terminals` option

@@ -15,6 +15,7 @@
   bravais-mcp = pkgs.callPackage ./bravais-mcp/package.nix { };
   opencode-desktop = pkgs.callPackage ./opencode-desktop/package.nix { };
   goose-desktop = pkgs.callPackage ./goose-desktop/package.nix { };
+  codex-desktop = pkgs.callPackage ./codex-desktop/package.nix { };
   adguardvpn-cli = pkgs.callPackage ./adguardvpn-cli/package.nix { };
   crates-mcp = pkgs.callPackage ./crates-mcp/package.nix { };
   obscura = pkgs.callPackage ./obscura/package.nix { };

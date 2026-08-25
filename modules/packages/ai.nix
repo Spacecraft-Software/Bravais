@@ -75,6 +75,13 @@
       # published). Derivation + version/hash-bump notes live in
       # pkgs/goose-desktop/. Apache-2.0 license.
       ++ [ (import ../../pkgs { inherit pkgs; }).goose-desktop ]
+      # Codex Desktop — OpenAI's official Codex app, repackaged from the .deb
+      # (upstream package name is `chatgpt`). Derivation + bump notes live in
+      # pkgs/codex-desktop/. Unfree; same allowUnfree gate as claude-desktop.
+      # NOTE: upstream publishes only a `latest` URL with no versioned path, so
+      # this pin breaks whenever OpenAI ships a build and the pinned artifact
+      # cannot be refetched — see the header of pkgs/codex-desktop/package.nix.
+      ++ [ (import ../../pkgs { inherit pkgs; }).codex-desktop ]
       # Obscura — headless browser for AI agents: fetch, run JS on a real V8
       # isolate, screenshot, scrape, and serve CDP — no Chromium, no Node.
       # Source-built rather than `unstablePkgs.obscura` because nixpkgs carries
