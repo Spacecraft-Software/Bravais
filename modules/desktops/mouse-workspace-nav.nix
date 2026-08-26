@@ -3,6 +3,12 @@
 #
 # The two thumb buttons (BTN_SIDE/BTN_EXTRA) switch workspaces left/right.
 #
+# DIRECTION: back (BTN_SIDE) goes RIGHT and forward (BTN_EXTRA) goes LEFT. That
+# is deliberate and was chosen by use, not derived from the button names -- do
+# not "fix" it to the reading that back should mean left. users/mj/niri.nix is
+# swapped to match, so the pair behaves identically in every session; change one
+# and you must change the other or the two diverge.
+#
 # Niri can express this natively — its bind syntax has first-class mouse button
 # names — and therefore does NOT go through this module; see users/mj/niri.nix.
 # Nothing else can. Mutter's keybinding schemas, KWin's shortcuts and cosmic's
@@ -37,8 +43,8 @@ let
     keymap:
       - name: Mouse side buttons -> workspace left/right
         remap:
-          BTN_SIDE: SUPER-C-left
-          BTN_EXTRA: SUPER-C-right
+          BTN_SIDE: SUPER-C-right
+          BTN_EXTRA: SUPER-C-left
   '';
 
   # Shared by the systemd unit and by the LeftWM theme hook, which cannot use a
