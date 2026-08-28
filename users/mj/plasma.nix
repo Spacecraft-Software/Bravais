@@ -28,18 +28,20 @@ in
   # 24-hour time and ISO 8601 dates in Plasma
   # ═══════════════════════════════════════════════════════════════════════════
   #
-  # Two layers, because the clock applet's own keys override the locale:
+  # The applet's own keys are the ONLY thing that sets this, deliberately.
+  # Locale is not used and must not be reintroduced -- see modules/core/locale.nix.
   #
-  #   1. ~/.config/plasma-localerc  — [Formats] LC_TIME, which startplasma's
-  #      runStartupConfig() exports into the session environment, so Dolphin,
-  #      Kate, Discover and every other KDE app follow. This is why
-  #      en_DK.UTF-8 has to be a GENERATED locale — see
-  #      i18n.extraLocaleSettings.LC_TIME in modules/core/locale.nix, which is
-  #      what causes it to be built. LANG is deliberately left alone here; only
-  #      time formatting moves.
+  #   use24hFormat = 2  -> 24-hour
+  #   dateFormat = isoDate -> Qt.formatDate(d, Qt.ISODate), i.e. %Y-%m-%d,
+  #                           and genuinely locale-independent
   #
-  #   2. plasma-org.kde.plasma.desktop-appletsrc — the digital clock keys,
-  #      which win over the locale for the panel readout specifically.
+  # WHAT IS NOT CONTROLLABLE HERE: the time SEPARATOR. DigitalClock.qml's
+  # timeFormatCorrection() takes its delimiter from
+  # Qt.locale().timeFormat(Locale.ShortFormat) and there is no config key for
+  # it, so the separator is whatever Qt's CLDR says for the session locale.
+  # en_US gives ":". en_DK gives "." and produced a 23.15 clock -- which is why
+  # LC_TIME is NOT written here any more and why locale.nix stays on en_US.
+  # A future locale change must keep a colon separator or this breaks again.
   #
   # WHY kwriteconfig6 AND NOT xdg.configFile: plasmashell rewrites appletsrc
   # constantly (every panel move, widget add, popup resize). An xdg.configFile
@@ -59,17 +61,10 @@ in
   # not do is pick them up live — Plasmoid.configuration has no KConfigWatcher.
   # There is no plasmashell "reconfigure" D-Bus method (unlike KWin's), so:
   #   - the clock flips on `systemctl --user restart plasma-plasmashell.service`
-  #   - LC_TIME needs a full log out and back in, because runStartupConfig()
-  #     runs exactly once, at startplasma.
+  #     (or at the next login), and nothing here needs a full re-login any more
+  #     now that no locale is involved.
   home.activation.plasmaDateTime = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    localerc="${config.xdg.configHome}/plasma-localerc"
     rc="${config.xdg.configHome}/plasma-org.kde.plasma.desktop-appletsrc"
-
-    # Absolute paths for both files rather than the bare names KConfig would
-    # resolve through $XDG_CONFIG_HOME: this activation runs inside
-    # home-manager-mj.service, which does not necessarily carry that variable.
-    $DRY_RUN_CMD ${kwriteconfig} --file "$localerc" \
-      --group Formats --key LC_TIME en_DK.UTF-8
 
     # The applet index is runtime-generated — it is [Containments][2][Applets][21]
     # today and will not stay that across a panel edit or a fresh install — so

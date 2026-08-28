@@ -11,14 +11,28 @@
   # Locale
   i18n.defaultLocale = "en_US.UTF-8";
 
-  # NOTE: there is deliberately no `i18n.supportedLocales` here. On 26.05 that
-  # option is hidden and derived — it aggregates defaultLocale plus every
-  # locale named in extraLocaleSettings below — so setting LC_TIME to en_DK
-  # already gets en_DK.UTF-8 generated. Writing the list by hand would be
-  # redundant today and a trap tomorrow: the next LC_* added below would need
-  # mirroring here or the locale silently would not be built. Confirm with
-  #   nix eval .#nixosConfigurations.bravais-thinkpad.config.i18n.supportedLocales
-  # (A locale wanted WITHOUT a matching LC_* goes in `i18n.extraLocales`.)
+  # LC_TIME stays en_US here, and that is a CORRECTION, not an oversight.
+  #
+  # en_DK.UTF-8 was used briefly to get ISO 8601 dates and 24h time
+  # system-wide. It failed on both fronts and was reverted:
+  #
+  #   1. Qt does NOT read glibc locales — it carries its own CLDR data, and
+  #      CLDR's en_DK is Danish-conventioned, whose short time format is
+  #      "HH.mm". Plasma's digital clock lifts its separator straight out of
+  #      Qt.locale().timeFormat(ShortFormat) in timeFormatCorrection(), with no
+  #      config key to override it, so the panel clock rendered 23.15 with a
+  #      DOT. See users/mj/plasma.nix, which is where the clock is actually
+  #      pinned to 24h + ISO in a locale-independent way.
+  #   2. glibc never generated it anyway. Despite i18n.supportedLocales
+  #      evaluating to include en_DK.UTF-8/UTF-8, the built glibc-locales
+  #      contained only en_US, so `LC_ALL=en_DK.UTF-8 date +%x` fell back to C
+  #      and printed 08/28/26. Verify any locale added here actually exists
+  #      before trusting it:  LC_ALL=<locale> date '+%x %X'
+  #
+  # So: ISO 8601 in the Plasma clock comes from the applet keys, not from here.
+  # Making `date` in a terminal print ISO is a SEPARATE, still-open problem —
+  # it needs (2) solved first, and whatever locale is chosen must keep a colon
+  # time separator under Qt/CLDR or it will re-break the clock.
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -28,14 +42,7 @@
     LC_NUMERIC = "en_US.UTF-8";
     LC_PAPER = "en_US.UTF-8";
     LC_TELEPHONE = "en_US.UTF-8";
-    # ISO 8601 dates and 24h time everywhere, per AGENTS.md ("All date/time
-    # displays use %Y-%m-%d %H:%M:%S 24h format") and Standard §14.1, which
-    # states AM/PM is never permitted. Deliberately system-wide rather than
-    # Plasma-only: this host runs five desktops, and scoping the fix to one of
-    # them would leave GNOME, COSMIC, Niri and LeftWM on 12h M/D/Y. Every other
-    # LC_* stays en_US, so only date/time formatting moves — `date`, `ls -l`
-    # and log viewers change with it, which is the intent.
-    LC_TIME = "en_DK.UTF-8";
+    LC_TIME = "en_US.UTF-8";
   };
 
   # Console/TTY keymap is set in the shared host config (see hosts/common.nix)
