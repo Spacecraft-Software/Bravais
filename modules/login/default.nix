@@ -269,29 +269,27 @@ in
     enable = true;
     settings = {
       default_session = {
-        # tuigreet renders --time-format through chrono's strftime, so anything
-        # without a % passes through verbatim.
+        # tuigreet renders --time-format through chrono's strftime.
         #
-        # The "UTC+3" suffix is a LITERAL, and deliberately so. chrono's three
-        # offset specifiers render "+03" (%Z), "+0300" (%z) and "+03:00" (%:z)
-        # — none of them spell "UTC+3" — and hardcoding is safe here for a
-        # reason worth writing down rather than rediscovering: Asia/Bahrain
-        # (time.timeZone, modules/core/locale.nix) observes no DST and has had
-        # exactly one transition in its whole tzdata history, +04 -> +03 on
-        # 1972-06-01, with none scheduled. The offset cannot drift out from
-        # under this string.
+        # The offset is DERIVED, not hardcoded: %:z renders the running
+        # system's own UTC offset, so this line stays correct by itself if
+        # time.timeZone (modules/core/locale.nix) ever changes, and across a
+        # DST transition in any zone that has one. Asia/Bahrain has none — one
+        # transition in its entire tzdata history, +04 -> +03 on 1972-06-01 —
+        # so a literal "UTC+3" would have been stable too, but it would have
+        # been a second place to remember when editing the timezone.
         #
-        # If time.timeZone ever changes, THIS LINE MUST CHANGE WITH IT — that
-        # is the cost of the literal, and the only one. Swap in " UTC%:z" to
-        # make it self-updating at the price of reading "UTC+03:00".
+        # The other two specifiers are the wrong shape: %Z renders a bare
+        # "+03" and %z an unpunctuated "+0300". %:z is the only one that reads
+        # as an offset, at the cost of "UTC+03:00" rather than "UTC+3".
         #
-        # Labelling the offset is also what makes the greeter's local time
+        # Labelling the offset is what makes the greeter's local time
         # unambiguous rather than merely local (Standard §14.3, which permits
         # local time as a human-facing companion).
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
             --time \
-            --time-format "%Y-%m-%d %H:%M:%S UTC+3" \
+            --time-format "%Y-%m-%d %H:%M:%S UTC%:z" \
             --remember \
             --remember-session \
             --asterisks \
