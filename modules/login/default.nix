@@ -269,10 +269,29 @@ in
     enable = true;
     settings = {
       default_session = {
+        # tuigreet renders --time-format through chrono's strftime, so anything
+        # without a % passes through verbatim.
+        #
+        # The "UTC+3" suffix is a LITERAL, and deliberately so. chrono's three
+        # offset specifiers render "+03" (%Z), "+0300" (%z) and "+03:00" (%:z)
+        # — none of them spell "UTC+3" — and hardcoding is safe here for a
+        # reason worth writing down rather than rediscovering: Asia/Bahrain
+        # (time.timeZone, modules/core/locale.nix) observes no DST and has had
+        # exactly one transition in its whole tzdata history, +04 -> +03 on
+        # 1972-06-01, with none scheduled. The offset cannot drift out from
+        # under this string.
+        #
+        # If time.timeZone ever changes, THIS LINE MUST CHANGE WITH IT — that
+        # is the cost of the literal, and the only one. Swap in " UTC%:z" to
+        # make it self-updating at the price of reading "UTC+03:00".
+        #
+        # Labelling the offset is also what makes the greeter's local time
+        # unambiguous rather than merely local (Standard §14.3, which permits
+        # local time as a human-facing companion).
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
             --time \
-            --time-format "%Y-%m-%d %H:%M:%S" \
+            --time-format "%Y-%m-%d %H:%M:%S UTC+3" \
             --remember \
             --remember-session \
             --asterisks \
