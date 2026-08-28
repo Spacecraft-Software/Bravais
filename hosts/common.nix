@@ -71,9 +71,81 @@
     packages.productivity.enable = true;
     packages.system.enable = true;
     packages.ai.enable = true;
+    packages.games.enable = true; # source ports + DOSBox; game data lives in ~/Games (see modules/packages/games.nix)
     packages.orca.enable = true; # AT-SPI stack for Orca computer-use (see modules/packages/orca.nix)
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
+
+    # DOS games. Adding one is a single entry here: it becomes a `play-<slug>`
+    # command and a launcher entry.
+    #
+    # `package` is the ONLY thing that differs between the two kinds of entry,
+    # and the difference is legal, not technical. Set it when the rightsholder
+    # has granted redistribution and Nix can therefore fetch the game (seeded
+    # into ~/Games/dos/<dir> on first run). Omit it otherwise: the wrapper is
+    # still generated, and tells you which file it wants and where, but you put
+    # the files there from your own copy.
+    #
+    # DO NOT add a `package` to an entry below without first reading that
+    # game's own licence terms. Shareware episodes are usually redistributable
+    # and full versions usually are not, and the two ship the same filenames.
+    #
+    # `exe` varies between releases of the same game (a GOG re-release, a
+    # shareware episode and a CD version often disagree). If a wrapper reports
+    # the executable missing, `ls ~/Games/dos/<dir>` and correct it here.
+    packages.games.dosGames = [
+      {
+        slug = "skyroads";
+        name = "SkyRoads";
+        exe = "SKYROADS.EXE";
+        dir = "skyroads";
+        comment = "1993 space-racing game (Bluemoon Interactive)";
+        # Freeware by the publisher's own readme — see pkgs/skyroads/.
+        package = (import ../pkgs { inherit pkgs; }).skyroads;
+      }
+      {
+        slug = "prince";
+        name = "Prince of Persia";
+        exe = "PRINCE.EXE";
+        dir = "prince";
+        comment = "1989 cinematic platformer (Broderbund)";
+      }
+      {
+        slug = "hocus";
+        name = "Hocus Pocus";
+        exe = "HOCUS.EXE";
+        dir = "hocus";
+        comment = "1994 platformer (Apogee)";
+      }
+      {
+        slug = "rescue-rover";
+        name = "Rescue Rover";
+        exe = "ROVER.EXE";
+        dir = "rescue-rover";
+        comment = "1991 puzzle game (id Software)";
+      }
+      {
+        slug = "keen1";
+        name = "Commander Keen: Marooned on Mars";
+        exe = "KEEN1.EXE";
+        dir = "keen1";
+        comment = "1990 platformer, episode 1 (id Software / Apogee)";
+      }
+      {
+        slug = "duke1";
+        name = "Duke Nukem";
+        exe = "DN1.EXE";
+        dir = "duke1";
+        comment = "1991 platformer (Apogee)";
+      }
+      {
+        slug = "duke2";
+        name = "Duke Nukem II";
+        exe = "DN2.EXE";
+        dir = "duke2";
+        comment = "1993 platformer (Apogee)";
+      }
+    ];
 
     # Services
     services.podman.enable = true;

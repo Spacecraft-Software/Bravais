@@ -1025,6 +1025,51 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **Downloaders:** yt-dlp
 
+### 11.6a Games (`modules/packages/games.nix`)
+
+**Doom engine:** gzdoom (C++ — OpenGL/Vulkan; Doom 1/2/Ultimate/Final, Heretic, Hexen), freedoom (data — free BSD-3 IWADs)
+
+**Quake 1:** ironwail (C — performance-focused QuakeSpasm fork, the default), vkquake (C — Vulkan fork)
+
+**Build engine:** raze (C++ — ZDoom-tech; Duke3D, Blood, Shadow Warrior, Redneck Rampage), eduke32 (C — the classic Duke3D port; also voidsw, Ion Fury)
+
+**DOS:** dosbox-staging (C++)
+
+**Commands:** every launcher is `play-`-prefixed — `play-doom`, `play-quake`, `play-quake-vk`, `play-duke3d`, `play-duke3d-eduke32`, and one `play-<slug>` per DOS game. The prefix is load-bearing, not cosmetic: `freedoom`'s own `bin/freedoom1` launcher searches `PATH` for a port literally named `doom`, so a wrapper by that name would hijack it — and because `config.system.path` is a `buildEnv` with `ignoreCollisions = true`, a name clash with an engine binary would silently pick a winner rather than failing the build the way the Home Manager `buildEnv` does (constraint #12).
+
+**Why wrappers at all:** no engine defaults to a user-writable data directory, because the store is read-only and the FHS paths they fall back on do not exist here. Each is told differently — gzdoom via `$DOOMWADDIR` (its ini's `[IWADSearch.Directories]` carries that literal string); the QuakeSpasm family via repeatable `-basedir` (the first is validated for `id1/pak0.pak`, later ones are not); eduke32 via the `EDUKE32_DATA_DIR` its nixpkgs wrapper already reads; and raze via the working directory, since its `[GameSearch.Directories]` defaults unconditionally include `Path=.` and it has no equivalent environment variable. Raze's `-j` is *not* the right flag — it adds mod content in the Build-launcher emulation path, not a GRP search path.
+
+**Registry:** `steelbore.packages.games.dosGames` in `hosts/common.nix`. One attrset per DOS game generates the `play-<slug>` wrapper and a launcher entry; `steelbore.packages.games.dataDir` (default `Games`) is the single source of every path in the module.
+
+#### Game data — the three tiers
+
+Game data is deliberately **not** shipped by this module except where the rightsholder granted redistribution. `package` on a `dosGames` entry is the only thing that differs between the tiers, and the difference is legal, not technical.
+
+| Tier | What | Where it comes from |
+|---|---|---|
+| **Free content** | `freedoom1.wad`, `freedoom2.wad`, `freedm.wad`; SkyRoads | Installed. The Freedoom WADs are symlinked into `~/Games/doom/` by `systemd.user.tmpfiles`; SkyRoads is fetched by Nix and seeded on first `play-skyroads` |
+| **Freely redistributable shareware** | Doom 1 `DOOM1.WAD`, Quake shareware `pak0.pak`, the Duke3D shareware GRP, shareware episodes of the Apogee titles | Legal to download; **not** downloaded here |
+| **Commercial — you must own it** | `DOOM.WAD`, `DOOM2.WAD`, `TNT.WAD`, `PLUTONIA.WAD`, Quake `pak1.pak`, the full `DUKE3D.GRP`, Prince of Persia, Hocus Pocus, Commander Keen 2-5 | Your own Steam/GOG copy. Nothing in this repo downloads them and nothing should be added that does |
+
+Layout (`~/Games`, created by `systemd.user.tmpfiles.rules` using `%h`, so no literal user name appears):
+
+```
+~/Games/doom/          DOOM.WAD, DOOM2.WAD, … + the three freedoom symlinks
+~/Games/quake/id1/     pak0.pak, pak1.pak
+~/Games/duke3d/        DUKE3D.GRP, DUKE.RTS
+~/Games/dos/<slug>/    one directory per dosGames entry
+```
+
+`~/.local/share/games/doom` is symlinked to `~/Games/doom` as well, because gzdoom's stock ini lists it and freedoom's own launchers hardcode it into `DOOMWADPATH`. Without the Freedoom symlinks a fresh install dies on *"Cannot find a game IWAD"* despite the WADs being installed — gzdoom's progdir is its **own** `share/games/doom`, a different store path from freedoom's.
+
+#### SkyRoads (`pkgs/skyroads/`)
+
+Fetched from the publisher's own history page (`http://www.bluemoon.ee/history/skyroads/skyroads.zip`) and installed to `share/games/dos/skyroads`. **HTTP only** — the site serves no usable TLS on that path; integrity comes from the pinned hash, which is what Nix verifies, so do not "fix" the scheme.
+
+The bundled `readme.txt` grants redistribution — *"This program is freeware. You can distribute this program freely, as long as you don't reverse engineer, and/or modify … must be distributed as a single unit, with all accompanying files included and intact"* — while forbidding modification, so it fails both the FSF and OSI tests: `meta.license` is `unfreeRedistributable`. All 29 files are installed unmodified, `readme.txt` included; that is the condition the grant is attached to, not tidiness.
+
+Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen since the 1990s and Bluemoon publishes no release feed, so there is nothing for a bumper to poll.
+
 ### 11.7 Productivity (`modules/packages/productivity.nix`)
 
 **Knowledge Mgmt (Rust):** appflowy, affine

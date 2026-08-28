@@ -98,9 +98,9 @@ modules/login/             # greetd + tuigreet + shell sessions (single default.
 modules/services/          # steelbore.services.*: podman (container runtime),
                            #   ollama, chrome-remote-desktop
 modules/compat/            # steelbore.compat.*: appimage (binfmt auto-run)
-modules/packages/          # 13 opt-in bundles: ai, browsers, development, editors,
-                           #   flatpak, homebrew, multimedia, networking, orca,
-                           #   productivity, security, system, terminals
+modules/packages/          # 14 opt-in bundles: ai, browsers, development, editors,
+                           #   flatpak, games, homebrew, multimedia, networking,
+                           #   orca, productivity, security, system, terminals
 users/mj/default.nix       # System user definition (users.users.${primaryUser})
 users/mj/home.nix          # HM core: identity + imports (~90 lines; Phase D split)
 users/mj/{git,shell,terminals,niri,desktop-theme,apps}.nix  # one-concern HM modules
@@ -111,7 +111,7 @@ pkgs/                      # In-tree packages — `pkgs/default.nix` is the auth
                            #   steelbore-niri-unmax, claude-desktop,
                            #   chrome-remote-desktop, ollama, github-copilot-app, bravais-mcp,
                            #   opencode-desktop, goose-desktop, codex-desktop,
-                           #   adguardvpn-cli, crates-mcp, obscura
+                           #   adguardvpn-cli, crates-mcp, obscura, skyroads
                            # Each is also a flake output: `nix build .#<name>`
 pkgs/update-vendored.nu    # Bumps the 10 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Skill sync helper
@@ -145,9 +145,11 @@ format converters), `default-apps.nix` (handler roles → MIME lists, app catalo
 resolver) and `terminal-theme.nix` (terminal theme record + emitters); the former
 `lib/default.nix` helper was removed for simple cases.
 
-**Host toggles** live in `hosts/thinkpad/default.nix` under the `steelbore`
-attribute set. All 13 package bundles and all 5 desktop environments are enabled
-there for the primary host.
+**Host toggles** live in `hosts/common.nix` under the `steelbore` attribute set —
+all 14 package bundles and all 5 desktop environments are enabled there.
+`hosts/thinkpad/default.nix` carries only what is genuinely per-machine:
+`networking.hostName`, the `steelbore.hardware.*` toggles, the CRD service and
+the march pin.
 
 ## First-time bootstrap
 
@@ -329,6 +331,8 @@ Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot t
 `codex-desktop` is the odd one out: OpenAI publishes **no versioned URL**, only `…/deb/latest/`. The pin therefore breaks whenever they ship a build, and the pinned artifact cannot be refetched once replaced — unlike every other entry, whose exact version stays fetchable. Its updater keys off the blob **ETag** from a HEAD request rather than a release API, so `--check` stays free instead of downloading 378 MB, and reads the version out of the `.deb` control file only once something has actually changed.
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only). **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
+
+`skyroads` (`pkgs/skyroads/`) also pins a `version` + `hash` but is deliberately **outside** this set and outside `update-vendored.nu`: the artifact has been frozen since the 1990s and Bluemoon publishes no release feed, so there is nothing for a bumper to poll. Do not "fix" the omission by adding it.
 
 Per-package failure isolation, the `up-github` tag options, and why `obscura` needs its own bumper with two hashes are in the `vendored-binaries` skill (`.claude/skills/vendored-binaries/`).
 

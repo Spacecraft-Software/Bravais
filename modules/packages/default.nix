@@ -12,6 +12,7 @@
     ./productivity.nix
     ./system.nix
     ./ai.nix
+    ./games.nix
     ./orca.nix
     ./flatpak.nix
     ./homebrew.nix

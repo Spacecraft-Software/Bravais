@@ -19,5 +19,6 @@
   adguardvpn-cli = pkgs.callPackage ./adguardvpn-cli/package.nix { };
   crates-mcp = pkgs.callPackage ./crates-mcp/package.nix { };
   obscura = pkgs.callPackage ./obscura/package.nix { };
+  skyroads = pkgs.callPackage ./skyroads/package.nix { };
 }
 
