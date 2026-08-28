@@ -72,6 +72,7 @@
     packages.system.enable = true;
     packages.ai.enable = true;
     packages.games.enable = true; # source ports + DOSBox; game data lives in ~/Games (see modules/packages/games.nix)
+    packages.games.steam.enable = true; # pulls the 32-bit graphics stack — separate toggle on purpose
     packages.orca.enable = true; # AT-SPI stack for Orca computer-use (see modules/packages/orca.nix)
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)

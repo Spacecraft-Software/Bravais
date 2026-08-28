@@ -148,6 +148,17 @@ in
   options.steelbore.packages.games = {
     enable = lib.mkEnableOption "Classic FPS source ports and DOS emulation";
 
+    steam.enable = lib.mkEnableOption ''
+      Steam via the upstream `programs.steam` module.
+
+      A SEPARATE toggle from the bundle rather than part of it, for two
+      reasons. It is by far the heaviest thing here — `programs.steam` sets
+      `hardware.graphics.enable32Bit`, pulling the entire 32-bit Mesa/driver
+      stack — and that is a system-wide graphics change, not a games-only one.
+      Keeping it independent means Steam can be dropped on a tight disk
+      without losing the source ports
+    '';
+
     dataDir = lib.mkOption {
       type = lib.types.str;
       default = "Games";
@@ -264,6 +275,37 @@ in
       ]
       ++ map mkDosGame cfg.dosGames
       ++ map mkDosDesktopItem cfg.dosGames;
+
+    # Steam, from nixpkgs via the upstream module rather than the parked
+    # com.valvesoftware.Steam Flatpak. The delivery policy in flatpak.nix says
+    # nixpkgs unless huge-source-build or sandbox-hostile, and Steam is
+    # neither — `pkgs.steam` is a thin FHS wrapper around Valve's own
+    # bootstrap, which then self-updates inside ~/.local/share/Steam exactly
+    # as it does on any distro. The module also does things the Flatpak cannot
+    # do as well: udev rules for Steam Controller / Deck hardware, the 32-bit
+    # graphics stack, and firewall options for Remote Play.
+    #
+    # `programs.steam.enable` sets `hardware.graphics.enable32Bit = true`
+    # (nixos/modules/programs/steam.nix), which is why this has its own toggle
+    # — see the option description.
+    #
+    # No collision with the `steam-run` already in ./system.nix: that is
+    # `steam.run`, a separate derivation, and `pkgs.steam` ships only
+    # `bin/steam` (meta.mainProgram). The two differ in channel — system.nix
+    # takes steam-run from unstablePkgs — which is harmless, since they are
+    # independent FHS environments with different binary names.
+    #
+    # Deliberately left at their defaults, all off, as decisions that are not
+    # mine to make silently:
+    #   remotePlay.openFirewall / localNetworkGameTransfers.openFirewall
+    #     — these punch holes in the firewall.
+    #   protontricks.enable  — only needed to fix specific Proton titles.
+    #   gamescopeSession.enable — adds a whole session entry to the greeter.
+    #   extest.enable — translates X11 input to uinput for Steam Input under
+    #     Wayland; relevant on this host (niri/COSMIC/Plasma are Wayland) but
+    #     upstream still gates it as opt-in, so turn it on if a controller
+    #     misbehaves rather than pre-emptively.
+    programs.steam.enable = cfg.steam.enable;
 
     # systemd.user.tmpfiles (not systemd.tmpfiles) so %h expands to the
     # invoking user's home — no literal `mj`, no primaryUser threading, and the

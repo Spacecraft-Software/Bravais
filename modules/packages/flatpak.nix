@@ -262,6 +262,13 @@
       # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
       # ── Gaming ─────────────────────────────────────────────────────────────
       # DISABLED — commented out to reclaim disk space; re-enable to restore
+      #
+      # Steam now ships from nixpkgs via programs.steam — see
+      # steelbore.packages.games.steam in modules/packages/games.nix. Do NOT
+      # un-park the Flatpak alongside it: the module supplies udev rules for
+      # Steam Controller/Deck hardware and the 32-bit graphics stack that the
+      # sandboxed copy cannot, and two Steams would mean two libraries
+      # (~/.var/app/com.valvesoftware.Steam vs ~/.local/share/Steam).
       # { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
       # { appId = "com.usebottles.bottles";             origin = "flathub"; }
       # { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
