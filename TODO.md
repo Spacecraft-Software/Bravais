@@ -172,6 +172,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install Doom engine (gzdoom + freedoom free IWADs)
 - [✓] Install Quake 1 ports (ironwail, vkquake)
 - [✓] Install Build-engine ports (raze, eduke32)
+- [✓] Install ECWolf for Wolfenstein 3D / Spear of Destiny (data in `~/Games/wolf3d`)
 - [✓] Install dosbox-staging
 - [✓] Ship `play-`-prefixed wrappers pointed at `~/Games` — the prefix is required, not cosmetic: freedoom's own `bin/freedoom1` searches `PATH` for a port named `doom`, and `config.system.path` sets `ignoreCollisions = true` so a clash would silently pick a winner instead of failing the build
 - [✓] Per-engine data mechanisms: `$DOOMWADDIR` (gzdoom), repeatable `-basedir` (ironwail/vkquake), `EDUKE32_DATA_DIR` (eduke32), working directory (raze — it has no env var, and `-j` is Build-launcher mod loading, not a GRP search path)
@@ -179,7 +180,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] `systemd.user.tmpfiles.rules` with `%h` for the `~/Games` layout — no literal user name, no `primaryUser` threading, and applied at switch time via `system.userActivationScripts.tmpfiles`
 - [✓] Symlink freedoom's three WADs into `~/Games/doom` and alias `~/.local/share/games/doom` — without this a fresh install dies on "Cannot find a game IWAD" despite the WADs being installed, because gzdoom's progdir is its own store path, not freedoom's
 - [✓] Package SkyRoads (`pkgs/skyroads/`) — freeware per the publisher's own readme; all 29 files installed unmodified, seeded into `~/Games/dos/skyroads` on first run so the game can write high scores
-- [ ] Supply game data for the commercial DOS entries (Prince of Persia, Hocus Pocus, Rescue Rover, Commander Keen, Duke Nukem 1/2) — wrappers exist and name the path they want; `exe` may need correcting per release
+- [✓] Supply game data for the DOS entries — Prince of Persia 1/2, Duke Nukem 1/2 from local archives; Hocus Pocus and Rescue Rover 1/2 symlinked from the Steam library. `exe` corrected per release: Duke Nukem II is `NUKEM2.EXE` not `DN2.EXE`, and Duke Nukem 1 ships lower-case `dn1.exe`
+- [ ] Commander Keen 1 still has no data (`~/Games/dos/keen1`)
 - [ ] Optional: `noDisplay` overrides for the engines' own broken `.desktop` entries (their `Exec=` carries no data path); must be HM-level, since a systemPackages entry cannot win against `ignoreCollisions`
 
 ### codex-desktop

@@ -100,6 +100,18 @@ let
     exec ${pkgs.eduke32}/bin/eduke32-wrapper "$@"
   '';
 
+  # ECWolf reads its data set from the working directory, the same shape as
+  # raze above, and `--data wl6` names the full Wolfenstein 3D set so it does
+  # not stop on the graphical IWAD picker. Spear of Destiny (`sod`) and the
+  # shareware set (`wl1`) live in the same directory and are reachable by
+  # passing a different --data, which is why the flag is not hardcoded past
+  # this default.
+  playWolf3d = pkgs.writeShellScriptBin "play-wolf3d" ''
+    mkdir -p "$HOME/${dataDir}/wolf3d"
+    cd "$HOME/${dataDir}/wolf3d"
+    exec ${lib.getExe pkgs.ecwolf} --data wl6 "$@"
+  '';
+
   # ── DOS game registry ──────────────────────────────────────────────────────
   # DOSBox Staging needs no MOUNT incantation: per docs/dosbox.1, "If PATH is a
   # DOS executable (.BAT/.COM/.EXE), its parent path is mounted as C: and the
@@ -263,6 +275,9 @@ in
         raze # C++ — ZDoom-tech Build port (Duke3D, Blood, Shadow Warrior, Redneck Rampage)
         eduke32 # C — the classic Duke3D port (also voidsw, Ion Fury)
 
+        # ── Wolfenstein 3D ───────────────────────────────────────────────────
+        ecwolf # C++ — ECWolf, the Wolf3D/Spear of Destiny source port
+
         # ── DOS ──────────────────────────────────────────────────────────────
         dosbox-staging # C++ — modernized DOS emulator
       ])
@@ -272,6 +287,7 @@ in
         playQuakeVk
         playDuke3d
         playDuke3dEduke32
+        playWolf3d
       ]
       ++ map mkDosGame cfg.dosGames
       ++ map mkDosDesktopItem cfg.dosGames;
@@ -322,6 +338,7 @@ in
         (d "${dataDir}/quake")
         (d "${dataDir}/quake/id1")
         (d "${dataDir}/duke3d")
+        (d "${dataDir}/wolf3d")
         (d "${dataDir}/dos")
       ]
       ++

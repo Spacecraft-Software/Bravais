@@ -1033,9 +1033,11 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **Build engine:** raze (C++ — ZDoom-tech; Duke3D, Blood, Shadow Warrior, Redneck Rampage), eduke32 (C — the classic Duke3D port; also voidsw, Ion Fury)
 
+**Wolfenstein 3D:** ecwolf (C++ — ECWolf; also plays Spear of Destiny via `--data sod` and the shareware set via `--data wl1`)
+
 **DOS:** dosbox-staging (C++)
 
-**Commands:** every launcher is `play-`-prefixed — `play-doom`, `play-quake`, `play-quake-vk`, `play-duke3d`, `play-duke3d-eduke32`, and one `play-<slug>` per DOS game. The prefix is load-bearing, not cosmetic: `freedoom`'s own `bin/freedoom1` launcher searches `PATH` for a port literally named `doom`, so a wrapper by that name would hijack it — and because `config.system.path` is a `buildEnv` with `ignoreCollisions = true`, a name clash with an engine binary would silently pick a winner rather than failing the build the way the Home Manager `buildEnv` does (constraint #12).
+**Commands:** every launcher is `play-`-prefixed — `play-doom`, `play-quake`, `play-quake-vk`, `play-duke3d`, `play-duke3d-eduke32`, `play-wolf3d`, and one `play-<slug>` per DOS game. The prefix is load-bearing, not cosmetic: `freedoom`'s own `bin/freedoom1` launcher searches `PATH` for a port literally named `doom`, so a wrapper by that name would hijack it — and because `config.system.path` is a `buildEnv` with `ignoreCollisions = true`, a name clash with an engine binary would silently pick a winner rather than failing the build the way the Home Manager `buildEnv` does (constraint #12).
 
 **Why wrappers at all:** no engine defaults to a user-writable data directory, because the store is read-only and the FHS paths they fall back on do not exist here. Each is told differently — gzdoom via `$DOOMWADDIR` (its ini's `[IWADSearch.Directories]` carries that literal string); the QuakeSpasm family via repeatable `-basedir` (the first is validated for `id1/pak0.pak`, later ones are not); eduke32 via the `EDUKE32_DATA_DIR` its nixpkgs wrapper already reads; and raze via the working directory, since its `[GameSearch.Directories]` defaults unconditionally include `Path=.` and it has no equivalent environment variable. Raze's `-j` is *not* the right flag — it adds mod content in the Build-launcher emulation path, not a GRP search path.
 

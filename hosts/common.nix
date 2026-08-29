@@ -112,6 +112,13 @@
         comment = "1989 cinematic platformer (Broderbund)";
       }
       {
+        slug = "prince2";
+        name = "Prince of Persia 2: The Shadow and the Flame";
+        exe = "PRINCE.EXE";
+        dir = "prince2";
+        comment = "1993 sequel (Broderbund)";
+      }
+      {
         slug = "hocus";
         name = "Hocus Pocus";
         exe = "HOCUS.EXE";
@@ -126,6 +133,13 @@
         comment = "1991 puzzle game (id Software)";
       }
       {
+        slug = "rescue-rover2";
+        name = "Rescue Rover 2";
+        exe = "ROVER2.EXE";
+        dir = "rescue-rover2";
+        comment = "1991 sequel (id Software)";
+      }
+      {
         slug = "keen1";
         name = "Commander Keen: Marooned on Mars";
         exe = "KEEN1.EXE";
@@ -133,16 +147,20 @@
         comment = "1990 platformer, episode 1 (id Software / Apogee)";
       }
       {
+        # Lower-case on purpose: this release ships `dn1.exe`, and the path is
+        # resolved by the host kernel before DOSBox ever sees it, so the case
+        # has to match what is actually on disk. Episodes 2 and 3 sit in the
+        # same directory as dn2.exe / dn3.exe.
         slug = "duke1";
         name = "Duke Nukem";
-        exe = "DN1.EXE";
+        exe = "dn1.exe";
         dir = "duke1";
-        comment = "1991 platformer (Apogee)";
+        comment = "1991 platformer, episode 1 (Apogee)";
       }
       {
         slug = "duke2";
         name = "Duke Nukem II";
-        exe = "DN2.EXE";
+        exe = "NUKEM2.EXE";
         dir = "duke2";
         comment = "1993 platformer (Apogee)";
       }
