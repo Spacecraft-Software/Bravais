@@ -102,6 +102,9 @@ pub struct Options {
     pub gc_all: bool,
     /// Journal retention passed to `journalctl --vacuum-time`.
     pub journal_days: u32,
+    /// Deploy MCP host configs after the switch instead of only reporting
+    /// drift. Opt-in; see `mcpctl` for why this is not the default.
+    pub mcp_deploy: bool,
 }
 
 struct Runner {
@@ -250,7 +253,7 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     // --- postflight ------------------------------------------------------
     if switched && !opts.dry && !opts.skills_only {
         mirror_etc(&mut r);
-        mcpctl_probe(&mut r);
+        mcpctl(&mut r, opts.mcp_deploy);
     }
 
     if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
@@ -363,52 +366,97 @@ fn mirror_etc(r: &mut Runner) {
     );
 }
 
-/// Report MCP host configs that have drifted from the manifest.
+/// Reconcile MCP host configs with the manifest.
 ///
-/// Report only, never deploy. `mcpctl deploy` refuses a host whose process is
-/// running, and a rebuild is usually run from inside an agent session -- so an
-/// automatic deploy would silently skip ~/.claude.json, the file most likely to
-/// be stale, while reporting success. Surfacing the skip is the useful half.
-fn mcpctl_probe(r: &mut Runner) {
+/// Reports drift by default; deploys only with `--mcp-deploy`. That split is
+/// deliberate and the reason is visible in mcpctl's own output: it REFUSES a
+/// host whose process is currently running, reporting
+///
+///   `ClaudeCode` — `claude` is running and rewrites its own config; exit it first
+///
+/// and a rebuild is usually run from inside exactly such a session. An
+/// automatic deploy would therefore skip ~/.claude.json -- the file most likely
+/// to be stale -- while exiting 0 and looking like it worked. So the deploy is
+/// opt-in, and whatever it could not write is raised as a warning rather than
+/// buried in a success.
+///
+/// Note the manifest is the one in the `mcp-servers` flake input, which sees
+/// PUSHED content only. A change that is merely committed is not what runs
+/// here; landing one takes commit, push, then `nix flake update mcp-servers`.
+fn mcpctl(r: &mut Runner, deploy: bool) {
     const REPO: &str = "/spacecraft-software/mcp-servers";
     if !Path::new(REPO).exists() {
-        r.record("mcpctl-drift", Outcome::Skipped, Some("no repo".into()));
+        r.record("mcpctl", Outcome::Skipped, Some("no repo".into()));
         return;
     }
-    let Ok(out) = Command::new("mcpctl")
-        .args(["deploy", "--dry-run", "--json", "--repo", REPO])
-        .output()
-    else {
-        r.record("mcpctl-drift", Outcome::Skipped, Some("mcpctl absent".into()));
+
+    let mut cmd = Command::new("mcpctl");
+    cmd.args(["deploy", "--json", "--repo", REPO]);
+    if deploy {
+        cmd.arg("--yes");
+    } else {
+        cmd.arg("--dry-run");
+    }
+    let Ok(out) = cmd.output() else {
+        r.record("mcpctl", Outcome::Skipped, Some("mcpctl absent".into()));
         return;
     };
     if !out.status.success() {
-        r.record("mcpctl-drift", Outcome::Failed, Some("probe failed".into()));
+        r.record("mcpctl", Outcome::Failed, Some("mcpctl failed".into()));
         return;
     }
-    let drifted = serde_json::from_slice::<serde_json::Value>(&out.stdout)
-        .ok()
-        .and_then(|v| {
-            Some(
-                v.get("data")?
-                    .get("files")?
-                    .as_array()?
-                    .iter()
-                    .filter(|f| f.get("dirty").and_then(serde_json::Value::as_bool) == Some(true))
-                    .count(),
-            )
+    let Ok(v) = serde_json::from_slice::<serde_json::Value>(&out.stdout) else {
+        r.record("mcpctl", Outcome::Failed, Some("unparseable output".into()));
+        return;
+    };
+    let data = v.get("data").unwrap_or(&v);
+
+    let dirty = data
+        .get("files")
+        .and_then(|f| f.as_array())
+        .map_or(0, |fs| {
+            fs.iter()
+                .filter(|f| f.get("dirty").and_then(serde_json::Value::as_bool) == Some(true))
+                .count()
+        });
+
+    // Every entry here is a host mcpctl could not write. Raised individually
+    // because each names the process the user has to exit, and a count alone
+    // would not tell them which.
+    let blocked: Vec<String> = data
+        .get("blocked")
+        .and_then(|b| b.as_array())
+        .map(|bs| {
+            bs.iter()
+                .filter_map(|b| b.as_str().map(ToOwned::to_owned))
+                .collect()
         })
-        .unwrap_or(0);
-    if drifted > 0 {
-        // The hint has to be runnable as printed (CLI Standard §5): `preflight`
-        // runs from the bravais checkout, so a bare `mcpctl deploy --yes` exits
-        // with "no mcp.toml in ... or any parent".
-        r.out.say(
-            Level::Warn,
-            &format!("{drifted} MCP host config(s) drifted — run: mcpctl deploy --yes --repo {REPO}"),
-        );
+        .unwrap_or_default();
+    for b in &blocked {
+        r.out.say(Level::Warn, &format!("mcpctl could not write: {b}"));
     }
-    r.record("mcpctl-drift", Outcome::Ok, Some(format!("{drifted} drifted")));
+
+    if deploy {
+        r.record(
+            "mcpctl-deploy",
+            Outcome::Ok,
+            Some(format!("{dirty} deployed, {} blocked", blocked.len())),
+        );
+    } else {
+        if dirty > 0 {
+            // The hint has to be runnable as printed (CLI Standard §5):
+            // preflight runs from the bravais checkout, so a bare
+            // `mcpctl deploy --yes` exits with "no mcp.toml in ... or any
+            // parent". Hence --repo in the suggestion.
+            r.out.say(
+                Level::Warn,
+                &format!(
+                    "{dirty} MCP host config(s) drifted — run: mcpctl deploy --yes --repo {REPO}   (or: preflight --mcp-deploy)"
+                ),
+            );
+        }
+        r.record("mcpctl-drift", Outcome::Ok, Some(format!("{dirty} drifted")));
+    }
 }
 
 /// Warn when antigravity-nix pins an IDE older than what Google ships.

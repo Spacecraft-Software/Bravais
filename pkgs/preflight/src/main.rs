@@ -52,6 +52,7 @@ use output::{AppError, ColorWhen, Exit, Format, Level, Out};
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
+        "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
         "  preflight disk report --json  Machine-readable free space and reclaimable bytes\n",
         "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
@@ -125,6 +126,10 @@ struct Cli {
     /// Journal retention for journalctl --vacuum-time, in days
     #[arg(long, value_name = "DAYS", default_value_t = 7)]
     journal_days: u32,
+
+    /// Deploy MCP host configs after the switch (default: report drift only)
+    #[arg(long)]
+    mcp_deploy: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -196,6 +201,7 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
         reclaim: cli.reclaim,
         gc_all: cli.gc_all,
         journal_days: cli.journal_days,
+        mcp_deploy: cli.mcp_deploy,
     };
     let (report, switched) = steps::run(out, opts);
 
@@ -289,7 +295,8 @@ fn cmd_schema(out: Out) -> i32 {
                     "--no-flatpak": "skip the detached Flatpak update",
                     "--reclaim": "reclaim safe caches before the switch",
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
-                    "--journal-days": "journalctl --vacuum-time, in days (default 7)"
+                    "--journal-days": "journalctl --vacuum-time, in days (default 7)",
+                    "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually"
                 }
             },
             "preflight disk report": { "description": "Free space and reclaimable bytes" },
