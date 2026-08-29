@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "preflight"
+version = "0.1.0"
+edition = "2021"
+description = "Steelbore OS rebuild orchestrator: preflight checks, the switch, postflight disk accounting."
+license = "GPL-3.0-or-later"
+authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+jiff = "0.2"
+rustix = { version = "1", features = ["fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Release tuning (Standard §3.2.1). LTO plus one codegen unit shrink a binary
+# that is mostly argument plumbing and `posix_spawn`. `-C target-cpu=native` is
+# deliberately NOT set, for the same reason steelbore-beacon omits it: it breaks
+# Nix build reproducibility and binary-cache reuse, and Stability (Priority 1)
+# outranks a perf gain that is unmeasurable in a process which spends its life
+# waiting on `nixos-rebuild`.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }

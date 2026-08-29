@@ -20,5 +20,6 @@
   crates-mcp = pkgs.callPackage ./crates-mcp/package.nix { };
   obscura = pkgs.callPackage ./obscura/package.nix { };
   skyroads = pkgs.callPackage ./skyroads/package.nix { };
+  preflight = pkgs.callPackage ./preflight/package.nix { };
 }
 

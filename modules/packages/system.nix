@@ -127,6 +127,12 @@
       ++ (with unstablePkgs; [
         steam-run # FHS environment for running Linux binaries
       ])
+      ++ [
+        # `preflight` — the rebuild orchestrator (pkgs/preflight/). System-wide
+        # rather than user-scoped because it drives `sudo nixos-rebuild` and
+        # mirrors /etc/nixos: it is machine maintenance, not a user tool.
+        (import ../../pkgs { inherit pkgs; }).preflight
+      ]
       ++ (lib.optional (!(pkgs.spacedrive.meta.broken or false)) pkgs.spacedrive);
 
     # Non-package concerns live in their own modules (this module installs
