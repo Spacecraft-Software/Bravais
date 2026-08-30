@@ -181,7 +181,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Symlink freedoom's three WADs into `~/Games/doom` and alias `~/.local/share/games/doom` — without this a fresh install dies on "Cannot find a game IWAD" despite the WADs being installed, because gzdoom's progdir is its own store path, not freedoom's
 - [✓] Package SkyRoads (`pkgs/skyroads/`) — freeware per the publisher's own readme; all 29 files installed unmodified, seeded into `~/Games/dos/skyroads` on first run so the game can write high scores
 - [✓] Supply game data for the DOS entries — Prince of Persia 1/2, Duke Nukem 1/2 from local archives; Hocus Pocus and Rescue Rover 1/2 symlinked from the Steam library. `exe` corrected per release: Duke Nukem II is `NUKEM2.EXE` not `DN2.EXE`, and Duke Nukem 1 ships lower-case `dn1.exe`
+- [✓] WarCraft II via wargus — `pkgs.wargus` is broken *and* tier-3-violating (it fetches a commercial rip from archive.org, now 403); overridden to drop the fetch and build the engine only. Data is imported at run time to `$HOME/.stratagus/data.Wargus`
+- [✓] Gate `play-warcraft2` on the extracted-data marker — bare `wargus` with no data prints nothing and **blocks** on its GUI wizard, because the `--help` branch in `stratagus-game-launcher.h` falls through to launching instead of returning; the wrapper exits 1 with the import command instead. wargus's own desktop entry is repointed at the wrapper so a menu launch cannot hang either
+- [✓] `wine.enable` sub-toggle (wineWow64Packages.staging + winetricks + lutris) for the Blizzard titles with no source port — off by default at 665 MiB down / 2.8 GiB unpacked
 - [ ] Commander Keen 1 still has no data (`~/Games/dos/keen1`)
+- [ ] WarCraft II data not yet imported — run `play-warcraft2 --extract` against a DOS/BNE/GOG copy
 - [ ] Optional: `noDisplay` overrides for the engines' own broken `.desktop` entries (their `Exec=` carries no data path); must be HM-level, since a systemPackages entry cannot win against `ignoreCollisions`
 
 ### codex-desktop

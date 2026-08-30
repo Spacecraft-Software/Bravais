@@ -112,6 +112,57 @@ let
     exec ${lib.getExe pkgs.ecwolf} --data wl6 "$@"
   '';
 
+  # ── WarCraft II (Stratagus / Wargus) ───────────────────────────────────────
+  # `pkgs.wargus` DOES NOT BUILD, and the cause is this module's own tier-3
+  # rule rather than a transient outage: its postInstall runs `wartool` over a
+  # full commercial rip of the game that the derivation itself fetches from
+  # archive.org -- marking that data `license = unfree` -- and the URL has
+  # returned 403 since ~2026. Re-pointing it at another mirror would preserve
+  # the policy violation, so the fetch is dropped and only the engine is built.
+  #
+  # NOTHING IS LOST by dropping it, which is the non-obvious part. The launcher
+  # resolves its data at RUN time to $HOME/.stratagus/data.Wargus
+  # (SetUserDataPath in stratagus-game-launcher.h) -- a user-writable path, not
+  # the store -- and ships its own extraction wizard. The store copy the
+  # derivation was building is not the one an install actually reads.
+  wargusEngine = pkgs.wargus.overrideAttrs (_: {
+    postInstall = ''
+      makeWrapper $out/games/wargus $out/bin/wargus \
+        --prefix PATH : ${lib.makeBinPath [ "$out" ]}
+      substituteInPlace $out/share/applications/wargus.desktop \
+        --replace-fail $out/games/wargus play-warcraft2
+    '';
+  });
+
+  # Gated on the extracted-data marker, like mkDosGame below, and for a sharper
+  # reason: `--help` PRINTS usage and then falls through to launching (that
+  # branch in stratagus-game-launcher.h does not return), and with no data the
+  # launcher blocks on a GUI wizard -- so a data-less run hangs with no output
+  # rather than failing. TITLE_PNG is the marker the launcher itself tests.
+  #
+  # The wizard is the supported import path and is left reachable: it prompts
+  # for the source and calls wartool. Per GAME_CD in wargus.cpp it accepts the
+  # DOS REZDAT.WAR, the Battle.net Edition INSTALL.MPQ/INSTALL.EXE, or a GOG
+  # installer .exe. As everywhere else here, the user supplies the data.
+  playWarcraft2 = pkgs.writeShellScriptBin "play-warcraft2" ''
+    set -eu
+    data="$HOME/.stratagus/data.Wargus"
+    case "''${1-}" in
+      --extract | --extract-no-gui) exec ${lib.getExe' wargusEngine "wargus"} "$@" ;;
+    esac
+    if [ ! -e "$data/graphics/ui/title.png" ]; then
+      echo "play-warcraft2: no extracted game data in $data" >&2
+      echo "" >&2
+      echo "  play-warcraft2 --extract          import from your own copy (GUI)" >&2
+      echo "  play-warcraft2 --extract-no-gui   the same, console prompts" >&2
+      echo "" >&2
+      echo "Accepts the DOS REZDAT.WAR, the Battle.net Edition INSTALL.MPQ or" >&2
+      echo "INSTALL.EXE, or a GOG installer .exe. Nothing here downloads it." >&2
+      exit 1
+    fi
+    exec ${lib.getExe' wargusEngine "wargus"} "$@"
+  '';
+
   # ── DOS game registry ──────────────────────────────────────────────────────
   # DOSBox Staging needs no MOUNT incantation: per docs/dosbox.1, "If PATH is a
   # DOS executable (.BAT/.COM/.EXE), its parent path is mounted as C: and the
@@ -159,6 +210,27 @@ in
 {
   options.steelbore.packages.games = {
     enable = lib.mkEnableOption "Classic FPS source ports and DOS emulation";
+
+    wine.enable = lib.mkEnableOption ''
+      Wine, Winetricks and Lutris, for the Blizzard titles that have no
+      source port.
+
+      A SEPARATE toggle for the same reason Steam has one: measured 665 MiB
+      down / 2.8 GiB unpacked, which is a large fraction of this machine's
+      free space and buys nothing unless those games are actually installed.
+      Wine itself is cached -- only the cheap FHS wrappers build locally.
+
+      The 32-bit graphics stack Wine needs is already on, as a side effect of
+      `steam.enable` above. Enabling this WITHOUT Steam pulls that stack in
+      via wine's own multilib closure, which is a second reason the two
+      toggles stay independent rather than one `nonNative` umbrella.
+
+      Covers what the source ports cannot: StarCraft (free from the vendor
+      since 2017), StarCraft Remastered, and WarCraft III / Reforged. These
+      install through Lutris into a prefix and self-update there, so they are
+      deliberately out-of-band like the other vendor-updated software here --
+      this toggle supplies the runtime, never the games.
+    '';
 
     steam.enable = lib.mkEnableOption ''
       Steam via the upstream `programs.steam` module.
@@ -282,15 +354,42 @@ in
         dosbox-staging # C++ — modernized DOS emulator
       ])
       ++ [
+        # ── WarCraft II (Stratagus) ──────────────────────────────────────────
+        # The engine is a source port like the ones above and rides with the
+        # bundle; only the Wine runtime below is gated, being the expensive
+        # part. wargus ships its own desktop entry, repointed at the wrapper.
+        wargusEngine
+
         playDoom
         playQuake
         playQuakeVk
         playDuke3d
         playDuke3dEduke32
         playWolf3d
+        playWarcraft2
       ]
       ++ map mkDosGame cfg.dosGames
-      ++ map mkDosDesktopItem cfg.dosGames;
+      ++ map mkDosDesktopItem cfg.dosGames
+      ++ lib.optionals cfg.wine.enable (
+        with pkgs;
+        [
+          # Staging over stable: it carries the game-facing patches, and both
+          # are equally cached.
+          #
+          # wineWow64Packages, NOT wineWowPackages. The latter is the multilib
+          # 32+64 build and is what most game guides still name, but nixpkgs
+          # deprecates it ("no longer preferred by upstream") and evaluating it
+          # prints that warning on EVERY eval of this system -- the same leak
+          # the nil formatter override in flake.nix exists to stop. The Wow64
+          # build still runs 32-bit Windows binaries, thunking them inside a
+          # 64-bit process, which is what the Blizzard launcher and the older
+          # clients need. If a specific title regresses under it, the multilib
+          # build is the fallback and the warning is the price.
+          wineWow64Packages.staging # C — Windows compatibility layer
+          winetricks # shell — DLL and prefix fixups
+          lutris # Python — prefix manager with per-title install scripts
+        ]
+      );
 
     # Steam, from nixpkgs via the upstream module rather than the parked
     # com.valvesoftware.Steam Flatpak. The delivery policy in flatpak.nix says

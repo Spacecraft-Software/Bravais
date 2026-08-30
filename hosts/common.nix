@@ -73,6 +73,14 @@
     packages.ai.enable = true;
     packages.games.enable = true; # source ports + DOSBox; game data lives in ~/Games (see modules/packages/games.nix)
     packages.games.steam.enable = true; # pulls the 32-bit graphics stack — separate toggle on purpose
+    # Wine + Lutris, for the Blizzard titles with no source port (StarCraft,
+    # WarCraft III). OFF by default and left explicit rather than omitted, so
+    # the knob is discoverable: measured 665 MiB down / 2.8 GiB unpacked, which
+    # is a large share of this machine's free space. Flip to `true` and rebuild
+    # when those games are actually wanted; `preflight disk reclaim` first if
+    # /nix is tight. WarCraft II needs none of this — it has a source port and
+    # rides with the bundle above.
+    packages.games.wine.enable = false;
     packages.orca.enable = true; # AT-SPI stack for Orca computer-use (see modules/packages/orca.nix)
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
