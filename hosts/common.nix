@@ -71,9 +71,108 @@
     packages.productivity.enable = true;
     packages.system.enable = true;
     packages.ai.enable = true;
+    packages.games.enable = true; # source ports + DOSBox; game data lives in ~/Games (see modules/packages/games.nix)
+    packages.games.steam.enable = true; # pulls the 32-bit graphics stack — separate toggle on purpose
+    # Wine + Lutris, for the Blizzard titles with no source port (StarCraft,
+    # WarCraft III). OFF by default and left explicit rather than omitted, so
+    # the knob is discoverable: measured 665 MiB down / 2.8 GiB unpacked, which
+    # is a large share of this machine's free space. Flip to `true` and rebuild
+    # when those games are actually wanted; `preflight disk reclaim` first if
+    # /nix is tight. WarCraft II needs none of this — it has a source port and
+    # rides with the bundle above.
+    packages.games.wine.enable = false;
     packages.orca.enable = true; # AT-SPI stack for Orca computer-use (see modules/packages/orca.nix)
     packages.flatpak.enable = true;
     packages.homebrew.enable = true; # Linuxbrew via FHS env (escape hatch; see modules/packages/homebrew.nix)
+
+    # DOS games. Adding one is a single entry here: it becomes a `play-<slug>`
+    # command and a launcher entry.
+    #
+    # `package` is the ONLY thing that differs between the two kinds of entry,
+    # and the difference is legal, not technical. Set it when the rightsholder
+    # has granted redistribution and Nix can therefore fetch the game (seeded
+    # into ~/Games/dos/<dir> on first run). Omit it otherwise: the wrapper is
+    # still generated, and tells you which file it wants and where, but you put
+    # the files there from your own copy.
+    #
+    # DO NOT add a `package` to an entry below without first reading that
+    # game's own licence terms. Shareware episodes are usually redistributable
+    # and full versions usually are not, and the two ship the same filenames.
+    #
+    # `exe` varies between releases of the same game (a GOG re-release, a
+    # shareware episode and a CD version often disagree). If a wrapper reports
+    # the executable missing, `ls ~/Games/dos/<dir>` and correct it here.
+    packages.games.dosGames = [
+      {
+        slug = "skyroads";
+        name = "SkyRoads";
+        exe = "SKYROADS.EXE";
+        dir = "skyroads";
+        comment = "1993 space-racing game (Bluemoon Interactive)";
+        # Freeware by the publisher's own readme — see pkgs/skyroads/.
+        package = (import ../pkgs { inherit pkgs; }).skyroads;
+      }
+      {
+        slug = "prince";
+        name = "Prince of Persia";
+        exe = "PRINCE.EXE";
+        dir = "prince";
+        comment = "1989 cinematic platformer (Broderbund)";
+      }
+      {
+        slug = "prince2";
+        name = "Prince of Persia 2: The Shadow and the Flame";
+        exe = "PRINCE.EXE";
+        dir = "prince2";
+        comment = "1993 sequel (Broderbund)";
+      }
+      {
+        slug = "hocus";
+        name = "Hocus Pocus";
+        exe = "HOCUS.EXE";
+        dir = "hocus";
+        comment = "1994 platformer (Apogee)";
+      }
+      {
+        slug = "rescue-rover";
+        name = "Rescue Rover";
+        exe = "ROVER.EXE";
+        dir = "rescue-rover";
+        comment = "1991 puzzle game (id Software)";
+      }
+      {
+        slug = "rescue-rover2";
+        name = "Rescue Rover 2";
+        exe = "ROVER2.EXE";
+        dir = "rescue-rover2";
+        comment = "1991 sequel (id Software)";
+      }
+      {
+        slug = "keen1";
+        name = "Commander Keen: Marooned on Mars";
+        exe = "KEEN1.EXE";
+        dir = "keen1";
+        comment = "1990 platformer, episode 1 (id Software / Apogee)";
+      }
+      {
+        # Lower-case on purpose: this release ships `dn1.exe`, and the path is
+        # resolved by the host kernel before DOSBox ever sees it, so the case
+        # has to match what is actually on disk. Episodes 2 and 3 sit in the
+        # same directory as dn2.exe / dn3.exe.
+        slug = "duke1";
+        name = "Duke Nukem";
+        exe = "dn1.exe";
+        dir = "duke1";
+        comment = "1991 platformer, episode 1 (Apogee)";
+      }
+      {
+        slug = "duke2";
+        name = "Duke Nukem II";
+        exe = "NUKEM2.EXE";
+        dir = "duke2";
+        comment = "1993 platformer (Apogee)";
+      }
+    ];
 
     # Services
     services.podman.enable = true;

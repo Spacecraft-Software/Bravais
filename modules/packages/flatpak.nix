@@ -262,6 +262,13 @@
       # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
       # ── Gaming ─────────────────────────────────────────────────────────────
       # DISABLED — commented out to reclaim disk space; re-enable to restore
+      #
+      # Steam now ships from nixpkgs via programs.steam — see
+      # steelbore.packages.games.steam in modules/packages/games.nix. Do NOT
+      # un-park the Flatpak alongside it: the module supplies udev rules for
+      # Steam Controller/Deck hardware and the 32-bit graphics stack that the
+      # sandboxed copy cannot, and two Steams would mean two libraries
+      # (~/.var/app/com.valvesoftware.Steam vs ~/.local/share/Steam).
       # { appId = "com.heroicgameslauncher.hgl";        origin = "flathub"; }  # Heroic
       # { appId = "com.usebottles.bottles";             origin = "flathub"; }
       # { appId = "com.valvesoftware.Steam";            origin = "flathub"; }
@@ -273,6 +280,14 @@
 
       # ── Retro / Classic Games ──────────────────────────────────────────────
       # DISABLED — commented out to reclaim disk space; re-enable to restore
+      #
+      # DOSBox and the ZDoom-family ports now ship from nixpkgs — see
+      # modules/packages/games.nix. Do NOT un-park those: the delivery policy
+      # above says nixpkgs unless huge-source-build or sandbox-hostile, and all
+      # of them substitute from cache.nixos.org. Two copies would also mean two
+      # separate data directories (~/.var/app/… vs ~/Games/), which is exactly
+      # the confusion the policy exists to prevent. (org.libretro.RetroArch is a
+      # different product — a multi-system frontend — and is not duplicated.)
       # { appId = "com.dosbox.DOSBox";                  origin = "flathub"; }
       # { appId = "com.dosbox_x.DOSBox-X";              origin = "flathub"; }
       # { appId = "com.play0ad.zeroad";                 origin = "flathub"; }  # 0 A.D.

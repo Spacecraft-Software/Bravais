@@ -98,9 +98,9 @@ modules/login/             # greetd + tuigreet + shell sessions (single default.
 modules/services/          # steelbore.services.*: podman (container runtime),
                            #   ollama, chrome-remote-desktop
 modules/compat/            # steelbore.compat.*: appimage (binfmt auto-run)
-modules/packages/          # 13 opt-in bundles: ai, browsers, development, editors,
-                           #   flatpak, homebrew, multimedia, networking, orca,
-                           #   productivity, security, system, terminals
+modules/packages/          # 14 opt-in bundles: ai, browsers, development, editors,
+                           #   flatpak, games, homebrew, multimedia, networking,
+                           #   orca, productivity, security, system, terminals
 users/mj/default.nix       # System user definition (users.users.${primaryUser})
 users/mj/home.nix          # HM core: identity + imports (~90 lines; Phase D split)
 users/mj/{git,shell,terminals,niri,desktop-theme,apps}.nix  # one-concern HM modules
@@ -111,7 +111,7 @@ pkgs/                      # In-tree packages — `pkgs/default.nix` is the auth
                            #   steelbore-niri-unmax, claude-desktop,
                            #   chrome-remote-desktop, ollama, github-copilot-app, bravais-mcp,
                            #   opencode-desktop, goose-desktop, codex-desktop,
-                           #   adguardvpn-cli, crates-mcp, obscura
+                           #   adguardvpn-cli, crates-mcp, obscura, skyroads
                            # Each is also a flake output: `nix build .#<name>`
 pkgs/update-vendored.nu    # Bumps the 10 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Skill sync helper
@@ -145,9 +145,11 @@ format converters), `default-apps.nix` (handler roles → MIME lists, app catalo
 resolver) and `terminal-theme.nix` (terminal theme record + emitters); the former
 `lib/default.nix` helper was removed for simple cases.
 
-**Host toggles** live in `hosts/thinkpad/default.nix` under the `steelbore`
-attribute set. All 13 package bundles and all 5 desktop environments are enabled
-there for the primary host.
+**Host toggles** live in `hosts/common.nix` under the `steelbore` attribute set —
+all 14 package bundles and all 5 desktop environments are enabled there.
+`hosts/thinkpad/default.nix` carries only what is genuinely per-machine:
+`networking.hostName`, the `steelbore.hardware.*` toggles, the CRD service and
+the march pin.
 
 ## First-time bootstrap
 
@@ -322,6 +324,10 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 
 29. **Only niri can bind a mouse button, so side-button workspace nav is an evdev remap everywhere else -- and it MUST NOT be scoped to `graphical-session.target`** -- Mutter's keybinding schemas, KWin's shortcuts and cosmic's RON bindings all take keyboard accelerators only; no nixpkgs GNOME extension binds side buttons (`gnomeExtensions.panel-scroll` is scroll-on-the-panel only), and under Wayland an extension cannot reliably grab pointer buttons over an application window. `modules/desktops/mouse-workspace-nav.nix` therefore remaps `BTN_SIDE`/`BTN_EXTRA` **below the compositor** with `xremap` (Rust) into **Super+Ctrl+Left/Right**. That combo is not arbitrary: it is already the shipped default for this exact action in **Plasma** (`Switch One Desktop to the Left = Meta+Ctrl+Left`) and **COSMIC** (`(modifiers: [Super, Ctrl], key: "Left"): PreviousWorkspace`, in cosmic-comp's own `Shortcuts/v1/defaults`), so only GNOME needed a binding added (`users/mj/desktop-theme.nix`, appended to the stock list rather than replacing it). Emitting GNOME's `Ctrl+Alt+Left/Right` instead would have meant editing Plasma *and* COSMIC -- do not "simplify" it back without re-checking those two defaults. **Niri is deliberately excluded**: it binds `MouseBack`/`MouseForward` natively, and since xremap `EVIOCGRAB`s the device and re-emits, a unit on `graphical-session.target` would consume the buttons before niri saw them and silently kill those binds. The unit is therefore `wantedBy` exactly `gnome-session-initialized.target`, `cosmic-session.target` and `plasma-core.target` -- **never `graphical-session.target`**. **LeftWM is the other exception**: it is startx-based with no systemd graphical session at all, so no unit can fire there; its theme `up` hook starts the same command (exposed as the read-only `steelbore.desktops.mouseWorkspaceNav.command` option so the two cannot drift) and `down` kills it by pidfile, without which a finished leftwm session leaves xremap holding a grab on the mouse. Three further non-obvious points: while the remapper runs, **all** keyboard and mouse input is proxied through it (the kernel releases grabs on process death, `Restart=on-failure` covers a crash); `--watch=device` is required or a Bluetooth mouse that reconnects after suspend is never picked up; and plain `pkgs.xremap` is the *wlroots* variant, which is correct for all four desktops because the variant selects only the lazily-constructed window-detection client, which a keymap without `application:` conditions never consults. The `uinput` group in `users/mj/default.nix` is what lets it create its virtual device -- `input` covers only *reading* the real ones -- and a group change needs a re-login, not just a rebuild.
 
+30. **A failed `home-manager-mj.service` silently strands EVERY HM change, and one stale `.backup` file is enough to cause it** -- Home Manager activation is all-or-nothing and runs early-exiting checks (`checkLinkTargets`) before any `home.activation` entry. `home-manager.backupFileExtension = "backup"` (flake.nix) means a real file in the way of an HM-managed path is moved to `<name>.backup` -- but if `<name>.backup` **already exists** activation aborts with `Existing file '...backup' would be clobbered by backing up '...'`, and `nixos-rebuild switch` still reports success because the NixOS half applied fine. Found 2026-08-28: `~/.config/mimeapps.list.backup` had sat there since June, so every HM generation since had been evaluated, built, and never activated -- new modules appeared in `nix eval` output while nothing reached `$HOME`. **When an HM-managed file does not appear, check `systemctl status home-manager-mj.service` FIRST**; a green `nixos-rebuild` proves nothing about it. Recovery is to move the stale backup aside (rename, do not delete -- it is the only copy of whatever it shadowed) and re-run activation. To run it by hand outside the unit, `HOME_MANAGER_BACKUP_EXT=backup <generation>/activate` -- without that variable the script takes the no-backup path and refuses on the *original* file instead, which looks like a different bug.
+
+31. **Qt does not read glibc locales, so a locale chosen for `date` can silently deform every KDE app** -- Qt carries its own CLDR database and consults it for formats, while glibc reads the generated locale archive; the two disagree, and `LC_TIME` feeds both. `en_DK` is the trap: glibc's en_DK is the conventional "English with ISO 8601" locale (`d_fmt %Y-%m-%d`, `t_fmt %T`), but **CLDR's en_DK is Danish-conventioned with a short time format of `HH.mm`**, so setting it system-wide rendered the Plasma panel clock as `23.15` with a DOT. `DigitalClock.qml`'s `timeFormatCorrection()` lifts its delimiter straight out of `Qt.locale().timeFormat(Locale.ShortFormat)` and the applet exposes **no key to override it**, so the separator is not configurable -- only the locale changes it. The clock is therefore pinned by applet keys alone (`users/mj/plasma.nix`: `use24hFormat=2`, `dateFormat=isoDate`, the latter going through `Qt.formatDate(d, Qt.ISODate)` and genuinely locale-independent), and `modules/core/locale.nix` stays on `en_US`. Any future locale change must keep a **colon** time separator under CLDR or the clock re-breaks. Separately, do not trust `i18n.supportedLocales` as evidence a locale exists: it evaluated to include `en_DK.UTF-8/UTF-8` while the built `glibc-locales` contained only `en_US`, so `LC_ALL=en_DK.UTF-8 date +%x` fell back to C. **Verify with `LC_ALL=<locale> date '+%x %X'`, never by reading the option.**
+
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
 Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`).
@@ -329,6 +335,8 @@ Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot t
 `codex-desktop` is the odd one out: OpenAI publishes **no versioned URL**, only `…/deb/latest/`. The pin therefore breaks whenever they ship a build, and the pinned artifact cannot be refetched once replaced — unlike every other entry, whose exact version stays fetchable. Its updater keys off the blob **ETag** from a HEAD request rather than a release API, so `--check` stays free instead of downloading 378 MB, and reads the version out of the `.deb` control file only once something has actually changed.
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only). **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
+
+`skyroads` (`pkgs/skyroads/`) also pins a `version` + `hash` but is deliberately **outside** this set and outside `update-vendored.nu`: the artifact has been frozen since the 1990s and Bluemoon publishes no release feed, so there is nothing for a bumper to poll. Do not "fix" the omission by adding it.
 
 Per-package failure isolation, the `up-github` tag options, and why `obscura` needs its own bumper with two hashes are in the `vendored-binaries` skill (`.claude/skills/vendored-binaries/`).
 

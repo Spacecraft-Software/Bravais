@@ -150,7 +150,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ### Infrastructure
 
-- [✓] **`default.nix`**: Package module entry with imports (all 12 submodules)
+- [✓] **`default.nix`**: Package module entry with imports (all 14 submodules)
 
 ### browsers.nix
 
@@ -165,6 +165,28 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Define `steelbore.packages.orca` option (AT-SPI stack for Orca computer-use)
 - [✓] Install pygobject3, pyatspi, at-spi2-core, gobject-introspection
 - [✓] Ship `orca-python` wrapper — bare `python3Packages.*` entries are not importable
+
+### games.nix
+
+- [✓] Define `steelbore.packages.games` option
+- [✓] Install Doom engine (gzdoom + freedoom free IWADs)
+- [✓] Install Quake 1 ports (ironwail, vkquake)
+- [✓] Install Build-engine ports (raze, eduke32)
+- [✓] Install ECWolf for Wolfenstein 3D / Spear of Destiny (data in `~/Games/wolf3d`)
+- [✓] Install dosbox-staging
+- [✓] Ship `play-`-prefixed wrappers pointed at `~/Games` — the prefix is required, not cosmetic: freedoom's own `bin/freedoom1` searches `PATH` for a port named `doom`, and `config.system.path` sets `ignoreCollisions = true` so a clash would silently pick a winner instead of failing the build
+- [✓] Per-engine data mechanisms: `$DOOMWADDIR` (gzdoom), repeatable `-basedir` (ironwail/vkquake), `EDUKE32_DATA_DIR` (eduke32), working directory (raze — it has no env var, and `-j` is Build-launcher mod loading, not a GRP search path)
+- [✓] `dosGames` submodule + `play-<slug>` / desktop-entry generator; `dataDir` option single-sources every path
+- [✓] `systemd.user.tmpfiles.rules` with `%h` for the `~/Games` layout — no literal user name, no `primaryUser` threading, and applied at switch time via `system.userActivationScripts.tmpfiles`
+- [✓] Symlink freedoom's three WADs into `~/Games/doom` and alias `~/.local/share/games/doom` — without this a fresh install dies on "Cannot find a game IWAD" despite the WADs being installed, because gzdoom's progdir is its own store path, not freedoom's
+- [✓] Package SkyRoads (`pkgs/skyroads/`) — freeware per the publisher's own readme; all 29 files installed unmodified, seeded into `~/Games/dos/skyroads` on first run so the game can write high scores
+- [✓] Supply game data for the DOS entries — Prince of Persia 1/2, Duke Nukem 1/2 from local archives; Hocus Pocus and Rescue Rover 1/2 symlinked from the Steam library. `exe` corrected per release: Duke Nukem II is `NUKEM2.EXE` not `DN2.EXE`, and Duke Nukem 1 ships lower-case `dn1.exe`
+- [✓] WarCraft II via wargus — `pkgs.wargus` is broken *and* tier-3-violating (it fetches a commercial rip from archive.org, now 403); overridden to drop the fetch and build the engine only. Data is imported at run time to `$HOME/.stratagus/data.Wargus`
+- [✓] Gate `play-warcraft2` on the extracted-data marker — bare `wargus` with no data prints nothing and **blocks** on its GUI wizard, because the `--help` branch in `stratagus-game-launcher.h` falls through to launching instead of returning; the wrapper exits 1 with the import command instead. wargus's own desktop entry is repointed at the wrapper so a menu launch cannot hang either
+- [✓] `wine.enable` sub-toggle (wineWow64Packages.staging + winetricks + lutris) for the Blizzard titles with no source port — off by default at 665 MiB down / 2.8 GiB unpacked
+- [ ] Commander Keen 1 still has no data (`~/Games/dos/keen1`)
+- [ ] WarCraft II data not yet imported — run `play-warcraft2 --extract` against a DOS/BNE/GOG copy
+- [ ] Optional: `noDisplay` overrides for the engines' own broken `.desktop` entries (their `Exec=` carries no data path); must be HM-level, since a systemPackages entry cannot win against `ignoreCollisions`
 
 ### codex-desktop
 

@@ -403,6 +403,98 @@ let
 in
 {
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ORCA — re-install the three Orca skills after Orca prunes them
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Orca deletes its own skills at startup. Measured 2026-08-26: boot 22:59:58,
+  # home-manager activation finished 23:00:06 having touched nothing, then
+  #
+  #   23:01:34  Started Orca.
+  #   23:01:38  [skills] scan roots=93 present=12 walked=93 skills=139
+  #             ids=home-codex,home-agents,home-claude,...
+  #
+  # and 23:01:38 is exactly the mtime of ~/.agents/skills, whose three real
+  # directories (computer-use, orca-cli, orchestration) were gone. `home-agents`
+  # is in that root list, so Orca scanned the shared skills directory and pruned
+  # the entries it does not consider installed. Nothing in this configuration
+  # removes them -- Construct's per-skill-links activation explicitly preserves
+  # real directories, and the timing rules it out anyway.
+  #
+  # This cannot be ordered After= the Orca unit: Orca runs as a TRANSIENT unit
+  # named app-orca@<random>.service, launched from
+  # ~/.local/share/applications/orca.desktop, so there is no stable unit name to
+  # depend on. A timer sidesteps the ordering problem entirely and self-heals
+  # whenever the prune happens, including when Orca is started by hand hours
+  # into a session.
+  #
+  # The guard is what keeps this cheap: when the three directories are present
+  # the service exits without touching the network. `orca-ide skills install`
+  # resolves to `npx --yes skills add ...`, so nodejs must be on PATH -- a user
+  # unit does not inherit the login shell's PATH. `orca-ide` rather than `orca`
+  # is deliberate: `orca` on PATH is GNOME's screen reader, an unrelated program
+  # that would sit there as a daemon.
+  systemd.user.services.orca-skills-ensure = {
+    Unit.Description = "Re-install Orca skills if Orca pruned them";
+    Service = {
+      Type = "oneshot";
+      Environment = [
+        # Every entry here was established by running this exact PATH by hand
+        # rather than guessed; the `|| true` below would have swallowed each
+        # failure silently, so none of them would have surfaced on their own.
+        #   bash     — ~/.local/bin/orca-ide is a `#!/usr/bin/env bash` shim;
+        #              without it: `env: 'bash': No such file or directory`
+        #   nodejs   — `orca-ide skills install` resolves to `npx skills add`
+        #   git      — that CLI *clones* the skills repo; without it the install
+        #              reaches the network stage and dies with
+        #              `Failed to clone …: Error: spawn git ENOENT`
+        # A user unit inherits none of the login shell's PATH, which is why this
+        # has to be spelled out at all.
+        "PATH=${
+          lib.makeBinPath [
+            pkgs.bash
+            pkgs.nodejs
+            pkgs.git
+            pkgs.coreutils
+          ]
+        }:%h/.local/bin"
+      ];
+      ExecStart = toString (
+        pkgs.writeShellScript "orca-skills-ensure" ''
+          set -u
+          skills_dir="$HOME/.agents/skills"
+          missing=0
+          for s in computer-use orca-cli orchestration; do
+            [ -f "$skills_dir/$s/SKILL.md" ] || missing=1
+          done
+          [ "$missing" -eq 0 ] && exit 0
+
+          # Orca itself is out of band; if it is not installed there is nothing
+          # to re-install and this must not look like a failure.
+          command -v orca-ide >/dev/null 2>&1 || exit 0
+
+          echo "orca-skills-ensure: one or more skills missing — reinstalling" >&2
+          orca-ide skills install \
+            --skill computer-use --skill orca-cli --skill orchestration \
+            --agent universal || true
+        ''
+      );
+    };
+  };
+
+  systemd.user.timers.orca-skills-ensure = {
+    Unit.Description = "Periodically restore Orca skills pruned at Orca startup";
+    Timer = {
+      # Orca launched ~96s after boot in the measured case and pruned 4s later,
+      # so the first check deliberately sits well behind that; re-checking every
+      # 15 minutes bounds how long a prune can go uncorrected without making the
+      # guard hot.
+      OnBootSec = "5min";
+      OnUnitActiveSec = "15min";
+      Unit = "orca-skills-ensure.service";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
   # Refresh the tealdeer (tldr) cache on every home-manager activation.
   # `tldr --update` pulls the latest pages bundle. Failure is non-fatal so
   # an offline rebuild still succeeds.
