@@ -14,13 +14,48 @@
 
 use serde::Serialize;
 
+/// The builder's scratch directory: a loop-mounted ext4 image on a removable
+/// drive, per `modules/core/nix-tmp.nix`.
+///
+/// Measured here because it is where the BUILD peaks, which is a different
+/// question from where the SWITCH writes. The nix-daemon's `TMPDIR` and
+/// `nix.settings.build-dir` both point at it unconditionally, so every build
+/// this tool triggers lands here whether or not this tool knows about it --
+/// and a peak of 50-55 GiB has been measured. Leaving it unmeasured meant a
+/// build could die with ENOSPC while the disk report said nothing was wrong.
+///
+/// Nothing needs to check whether the drive is plugged in: with it absent this
+/// path is a plain directory on the system partition, so `statvfs` returns the
+/// same `f_fsid` as `/nix` and the dedup below drops it. Present, it is a
+/// separate loop device and reports separately. Both cases fall out of the
+/// existing logic.
+const BUILD_SCRATCH: &str = "/mnt/nix-tmp";
+
 /// Paths whose free space is reported, in display order.
 ///
-/// `/nix` is the one that matters -- it is where a switch writes -- but
-/// `/var/lib/flatpak` is measured alongside it because the Flatpak update this
-/// tool detaches at the end can pull several GiB and is the other way the
-/// partition fills without anyone noticing.
-const WATCHED: &[&str] = &["/nix", "/var/lib/flatpak"];
+/// `/nix` must stay FIRST: `primary_available` and therefore `is_low` read
+/// `mounts.first()`, and the low-water threshold below is sized for `/nix`
+/// alone. `/var/lib/flatpak` is measured because the Flatpak update this tool
+/// detaches at the end can pull several GiB and is the other way the partition
+/// fills without anyone noticing.
+const WATCHED: &[&str] = &["/nix", BUILD_SCRATCH, "/var/lib/flatpak"];
+
+/// Below this much free space on the build scratch, a large build is at risk.
+///
+/// Sized against the peak that justified the loop image existing at all:
+/// 40 GiB once failed to fit a parallel Rust build with LTO and a single
+/// codegen unit, and the image was raised to 80 GiB for a measured peak of
+/// 50-55 GiB. 20 GiB is well under that peak on purpose -- this is a "you are
+/// heading for trouble" line, not a guarantee, because the true requirement
+/// depends entirely on what is being built.
+///
+/// Deliberately NOT folded into `is_low`. That predicate implies `--reclaim`,
+/// and reclamation cannot help here: it delegates to vacuum, whose roots are
+/// `~` and `/spacecraft-software` and whose roots also bound its deletions, so
+/// this path is outside its reach entirely. The orphaned scratch trees that
+/// accumulate here are owned by a tmpfiles age rule instead. Triggering a
+/// remedy that provably cannot apply would be worse than reporting the fact.
+const SCRATCH_LOW_WATER_BYTES: u64 = 20 * 1024 * 1024 * 1024;
 
 /// Below this much free space on `/nix`, a rebuild is at real risk of failing
 /// part-way through, so `--reclaim` is implied rather than merely suggested.
@@ -58,6 +93,21 @@ impl Report {
 
     pub fn is_low(&self) -> bool {
         self.primary_available() < LOW_WATER_BYTES
+    }
+
+    /// The build scratch, when it is a filesystem of its own.
+    ///
+    /// `None` means the removable drive is absent and builds are falling back
+    /// to the system partition -- which is not an error, and is already
+    /// covered by the `/nix` figure, since the two are then one filesystem.
+    pub fn scratch(&self) -> Option<&Mount> {
+        self.mounts.iter().find(|m| m.path == BUILD_SCRATCH)
+    }
+
+    /// Whether the build scratch is tight enough to be worth saying so.
+    pub fn scratch_is_low(&self) -> bool {
+        self.scratch()
+            .is_some_and(|m| m.available_bytes < SCRATCH_LOW_WATER_BYTES)
     }
 }
 
@@ -222,5 +272,80 @@ pub fn render(report: &Report, heading: &str) -> String {
             );
         }
     }
+    // Carries its own severity tag rather than relying on color, per Standard
+    // §18.2.1, and says what to do -- reclamation is not the remedy here, as
+    // SCRATCH_LOW_WATER_BYTES explains.
+    if report.scratch_is_low() {
+        let _ = writeln!(
+            s,
+            "  [WARN] build scratch is low; a large build may fail with ENOSPC.\n\
+             {:9}`preflight disk reclaim` cannot help -- {BUILD_SCRATCH} is outside\n\
+             {:9}vacuum's roots. Free the drive or let the tmpfiles age rule run.",
+            "", ""
+        );
+    }
     s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mount(path: &str, avail: u64) -> Mount {
+        Mount {
+            path: path.to_owned(),
+            total_bytes: 100 * 1024 * 1024 * 1024,
+            available_bytes: avail,
+            used_percent: 0,
+        }
+    }
+
+    fn report(mounts: Vec<Mount>) -> Report {
+        Report {
+            mounts,
+            reclaimable_bytes: None,
+        }
+    }
+
+    const GIB: u64 = 1024 * 1024 * 1024;
+
+    #[test]
+    fn primary_is_the_first_mount_not_the_smallest() {
+        // `/nix` leads WATCHED and must keep leading the report: the whole
+        // low-water contract is expressed against it.
+        let r = report(vec![mount("/nix", 50 * GIB), mount(BUILD_SCRATCH, GIB)]);
+        assert_eq!(r.primary_available(), 50 * GIB);
+        assert!(!r.is_low());
+    }
+
+    #[test]
+    fn a_full_build_scratch_does_not_trigger_reclamation() {
+        // The load-bearing separation: `is_low` implies `--reclaim`, and
+        // reclamation provably cannot free this path (see
+        // SCRATCH_LOW_WATER_BYTES). Folding the two together would fire a
+        // remedy that cannot apply.
+        let r = report(vec![mount("/nix", 50 * GIB), mount(BUILD_SCRATCH, 0)]);
+        assert!(!r.is_low(), "scratch must not drive the reclaim predicate");
+        assert!(r.scratch_is_low(), "but it must still be reported");
+    }
+
+    #[test]
+    fn an_absent_drive_reports_no_scratch() {
+        // With the drive unplugged the dedup in `measure` drops the path, so
+        // no scratch mount exists and nothing warns -- builds are then falling
+        // back onto the partition `/nix` already accounts for.
+        let r = report(vec![mount("/nix", GIB)]);
+        assert!(r.scratch().is_none());
+        assert!(!r.scratch_is_low());
+        assert!(r.is_low(), "the /nix threshold still applies");
+    }
+
+    #[test]
+    fn a_roomy_scratch_is_quiet() {
+        let r = report(vec![
+            mount("/nix", 50 * GIB),
+            mount(BUILD_SCRATCH, 74 * GIB),
+        ]);
+        assert!(!r.scratch_is_low());
+    }
 }
