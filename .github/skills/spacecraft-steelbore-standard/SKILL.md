@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v1.50 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
+  The Steelbore Standard v1.51 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 1.50 | **Date:** 2026-08-22 | **Author:** Mohamed Hammad
+**Version:** 1.51 | **Date:** 2026-08-29 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -603,6 +603,36 @@ anywhere else.
 | Prefer carrying the patch | When an upstream change is needed, carry the patch in-tree (§4.2 preserves upstream copyright, license texts, and notices) rather than upstreaming it, unless the maintainer authorizes upstreaming. |
 | GNU posture does not exempt | An artifact under the free-software/GNU posture (§1) still requires explicit maintainer authorization before anything is sent to GNU, the FSF, or Savannah. That posture yields this standard's identity clauses (§2, §11–§12, §15); it does not yield this one. |
 | Withdraw mistakes promptly | An outbound submission made without authorization MUST be closed or withdrawn as soon as it is discovered, and the incident recorded. |
+
+### §6.5 — Text File Format (LF, UTF-8, final newline)
+
+Every text file in a Spacecraft Software source tree is a **POSIX text file**:
+UTF-8 encoded, LF-terminated, and ending with a newline. §6.1 requires POSIX
+compliance of the tools; this section requires it of the files those tools are
+written in.
+
+**Mandatory rules — violation blocks shipping:**
+
+| Rule | Detail |
+|------|--------|
+| LF line endings | Lines terminate with **LF** (U+000A). CRLF and a lone CR are prohibited — in source, configuration, scripts, documentation, and CI definitions alike. |
+| Final newline | Every text file ends with a newline. A file whose last line is unterminated is not a POSIX text file, and it makes every diff that touches the last line carry a spurious `\ No newline at end of file`. |
+| UTF-8, no BOM | Text files are encoded UTF-8. A byte-order mark is prohibited: it breaks shebang lines, `#`-comment parsing, and every config reader that expects the first byte of the file to be content. |
+| `.gitattributes` required | Every repository MUST ship `.gitattributes` at its root containing `* text=auto eol=lf`. This is the only mechanism that holds regardless of a contributor's `core.autocrlf` setting — which defaults to `true` on Windows and rewrites the working tree on checkout. Relying on per-clone Git configuration is not compliance. |
+| `.editorconfig` required | Every repository MUST ship `.editorconfig` at its root with `root = true` and, under `[*]`, at minimum `charset = utf-8`, `end_of_line = lf`, and `insert_final_newline = true`. It carries the rule to editors that never consult Git. |
+| CI gate | CI MUST fail when a tracked text file contains a CR byte. Both config files are advisory to the tools that read them; the gate is what makes the rule binding. `git grep -Il` needs no exclusion list — it skips binaries and honors `.gitattributes`, so a pinned exception is invisible to it. |
+| Exceptions | Vendored upstream files keep their upstream line endings (§4.2 — preserve what you build on). Windows-native scripts invoked by `cmd.exe` (`.bat`, `.cmd`) MAY use CRLF where the interpreter requires it. A format whose specification mandates CRLF keeps it. Every such exception is pinned explicitly in `.gitattributes` (`*.bat text eol=crlf`) rather than left to chance. Binary files are unaffected — `text=auto` never touches them. |
+
+**Scope note.** This section governs *files on disk*, not *bytes on a socket*.
+The CRLF that HTTP, SMTP, and the other line-oriented wire protocols require in
+their framing is unaffected — a protocol implementation emits what its
+specification demands.
+
+This is codification of existing practice rather than a new constraint: `anvil`
+and `bravais` already carry `* text=auto eol=lf`, and `loran` and `caliper`
+already carry the three `.editorconfig` keys. What §6.5 adds is that the
+convention is now uniform and enforced rather than rediscovered one repository
+at a time.
 
 ---
 
@@ -1763,6 +1793,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§5.6** Skill packaging: every `SKILL.md` `description` measures ≤ 1000 rendered characters (folded scalars counted as the loader sees them, not as raw lines); the cap is enforced by CI *and* by the command that produces the bundle, not only by a local git hook; every skill directory carries a `LICENSE` (§4.3 naming, byte-identical to the repo root, a regular file) and every bundle ships it — N/A for projects that ship no skills
 - [ ] **§5.7** Agent context files: `AGENTS.md` and `CLAUDE.md` both present at the repository root and version-controlled; `CLAUDE.md` is an `@AGENTS.md` import plus Claude-only content and restates nothing; neither file is gitignored; no credentials, private hostnames, or personal filesystem paths in either; managed blocks rendered into `AGENTS.md` only
 - [ ] **§6.1** POSIX-compliant CLI/system tools
+- [ ] **§6.5** Text files are LF-terminated, UTF-8 without BOM, and end with a newline; `.gitattributes` (`* text=auto eol=lf`) and `.editorconfig` (`charset`, `end_of_line`, `insert_final_newline`) present at the repository root; CI fails on a CR byte in a tracked text file; CRLF exceptions (vendored upstream, `cmd.exe` scripts) pinned explicitly in `.gitattributes`
 - [ ] **§7** Shell scripts are POSIX-compatible; Nushell/Ion native variants provided where shell-native idioms are required; no Bashisms in shared scripts
 - [ ] **§8** Texinfo manual present for user-facing programs (`doc/<project>.texi`); builds to `.info`, `.html`, and `.pdf`; `install-info` hook present in all three package manifests (§5.5) — N/A for scripts and internal tooling
 - [ ] **§9** PFA: no tracking, minimal permissions, local storage default
