@@ -259,6 +259,31 @@
         origin = "flathub";
       }
 
+      # ── Gaming ─────────────────────────────────────────────────────────────
+      # LibreQuake — a free-content Quake: BSD-3-Clause assets plus a bundled
+      # engine, so it needs no commercial pak files at all. Free data for a
+      # commercial engine's format, exactly as freedoom is for Doom.
+      #
+      # The one game here Flatpak is genuinely the RIGHT channel for. It is in
+      # NEITHER channel (checked stable and unstable at v0.09-beta), so this is
+      # the delivery policy's fallback case rather than a preference — unlike
+      # the parked entries below, which are parked precisely because nixpkgs
+      # carries them.
+      #
+      # Complements modules/packages/games.nix rather than duplicating it, and
+      # the distinction is worth keeping straight: that bundle ships Quake
+      # ENGINES (ironwail, vkquake) which still need id Software's own pak
+      # files under ~/Games/quake. This ships the game — data and engine
+      # together — and needs nothing supplied. Both can coexist; they share no
+      # data directory.
+      #
+      # Cost: 141.9 MB down, 276.4 MB installed. No new runtime — it targets
+      # org.freedesktop.Platform 25.08, which this host already carries.
+      {
+        appId = "io.github.lavenderdotpet.LibreQuake";
+        origin = "flathub";
+      }
+
       # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
       # ── Gaming ─────────────────────────────────────────────────────────────
       # DISABLED — commented out to reclaim disk space; re-enable to restore

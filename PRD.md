@@ -1153,7 +1153,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 | Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
-| Gaming              | com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
+| Gaming              | **io.github.lavenderdotpet.LibreQuake** (the only active entry — free BSD-3 Quake content plus a bundled engine; not in either channel, so Flatpak is the policy's fallback rather than a preference). Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
 | Retro / Classic     | com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.jotd666.gods-deluxe, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle |
 | Productivity        | io.github.Qalculate, org.kde.yakuake                 |
 
