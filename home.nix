@@ -502,22 +502,22 @@
     "org/gnome/Ptyxis/Profiles/steelbore" = {
       label = "Steelbore";
       palette = [
-        steelborePalette.voidNavy      # black
-        steelborePalette.redOxide      # red
-        steelborePalette.radiumGreen   # green
-        steelborePalette.moltenAmber   # yellow
-        steelborePalette.steelBlue     # blue
-        steelborePalette.steelBlue     # magenta
-        steelborePalette.liquidCool    # cyan
-        steelborePalette.moltenAmber   # white
-        steelborePalette.steelBlue     # bright black
-        steelborePalette.redOxide      # bright red
-        steelborePalette.radiumGreen   # bright green
-        steelborePalette.moltenAmber   # bright yellow
-        steelborePalette.liquidCool    # bright blue
-        steelborePalette.liquidCool    # bright magenta
-        steelborePalette.liquidCool    # bright cyan
-        steelborePalette.moltenAmber   # bright white
+        steelborePalette.voidNavy # black
+        steelborePalette.redOxide # red
+        steelborePalette.radiumGreen # green
+        steelborePalette.moltenAmber # yellow
+        steelborePalette.steelBlue # blue
+        steelborePalette.steelBlue # magenta
+        steelborePalette.liquidCool # cyan
+        steelborePalette.moltenAmber # white
+        steelborePalette.steelBlue # bright black
+        steelborePalette.redOxide # bright red
+        steelborePalette.radiumGreen # bright green
+        steelborePalette.moltenAmber # bright yellow
+        steelborePalette.liquidCool # bright blue
+        steelborePalette.liquidCool # bright magenta
+        steelborePalette.liquidCool # bright cyan
+        steelborePalette.moltenAmber # bright white
       ];
       background-color = steelborePalette.voidNavy;
       foreground-color = steelborePalette.moltenAmber;
