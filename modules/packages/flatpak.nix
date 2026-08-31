@@ -340,15 +340,20 @@
     # all Chromium apps that draw their own chrome, so claiming GNOME inside the
     # sandbox costs nothing. Each already carries `org.freedesktop.secrets=talk`
     # in its Flathub manifest, so no extra bus permission is needed.
-    services.flatpak.overrides.settings = lib.genAttrs [
-      "com.google.Chrome"
-      "com.microsoft.Edge"
-      "com.opera.Opera"
-      "com.brave.Browser"
-      "com.discordapp.Discord"
-      "io.wavebox.Wavebox"
-      "com.visualstudio.code"
-      "io.github.shiftey.Desktop"
-    ] (_: { Environment.XDG_CURRENT_DESKTOP = "GNOME"; });
+    services.flatpak.overrides.settings =
+      lib.genAttrs
+        [
+          "com.google.Chrome"
+          "com.microsoft.Edge"
+          "com.opera.Opera"
+          "com.brave.Browser"
+          "com.discordapp.Discord"
+          "io.wavebox.Wavebox"
+          "com.visualstudio.code"
+          "io.github.shiftey.Desktop"
+        ]
+        (_: {
+          Environment.XDG_CURRENT_DESKTOP = "GNOME";
+        });
   };
 }

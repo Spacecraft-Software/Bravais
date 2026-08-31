@@ -359,6 +359,6 @@ in
           XF86Bluetooth allow-when-locked=true { spawn "steelbore-bt-toggle"; }
           XF86RFKill    allow-when-locked=true { spawn "steelbore-airplane-toggle"; }
        }
-     '';
+    '';
   };
 }

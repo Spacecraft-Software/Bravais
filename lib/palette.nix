@@ -94,9 +94,7 @@ let
     builtins.isString v
     && builtins.stringLength v == 7
     && builtins.substring 0 1 v == "#"
-    && builtins.all (c: hexDigit ? ${c}) (
-      builtins.genList (i: builtins.substring (i + 1) 1 v) 6
-    );
+    && builtins.all (c: hexDigit ? ${c}) (builtins.genList (i: builtins.substring (i + 1) 1 v) 6);
 
   # `base` resolves against the REGISTERED set only. A local theme deriving
   # from another local theme would need cycle detection to be safe, and buys
@@ -302,7 +300,14 @@ let
   cubeVal = i: builtins.elemAt cubeLevels i;
 
   # The grayscale ramp (232–255) runs 8, 18, … 238 in steps of 10.
-  grayIdx = v: if v < 8 then 0 else if v > 238 then 23 else (v - 8 + 5) / 10;
+  grayIdx =
+    v:
+    if v < 8 then
+      0
+    else if v > 238 then
+      23
+    else
+      (v - 8 + 5) / 10;
   grayVal = i: 8 + 10 * i;
 
   sq = n: n * n;
@@ -369,9 +374,7 @@ let
   # `warning`, so it resolves to `error`) are dropped too: those hexes are
   # already spoken for by the pinned slots, and letting them back in is how
   # `yellow` ends up identical to `green`.
-  hueCandidates = builtins.filter (
-    hex: chromaOf hex >= 80 && hex != error && hex != success
-  ) [
+  hueCandidates = builtins.filter (hex: chromaOf hex >= 80 && hex != error && hex != success) [
     accent
     structure
     warning
@@ -509,13 +512,9 @@ in
   # declares WHICH theme and never supplies the hex (§11.6.4).
   resolution = {
     envVar = if hasResolution then data.resolution."env-var" else "SPACECRAFT_THEME";
-    systemFile =
-      if hasResolution then data.resolution."system-file" else "/etc/steelbore/theme.toml";
+    systemFile = if hasResolution then data.resolution."system-file" else "/etc/steelbore/theme.toml";
     userFile =
-      if hasResolution then
-        data.resolution."user-file"
-      else
-        "$XDG_CONFIG_HOME/steelbore/theme.toml";
+      if hasResolution then data.resolution."user-file" else "$XDG_CONFIG_HOME/steelbore/theme.toml";
     registry = if hasResolution then data.resolution.registry else "/etc/steelbore/themes.json";
     polarity = polarityTable;
     pair = pairTable;

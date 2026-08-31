@@ -187,151 +187,151 @@
       # LeftWM configuration
       home-manager.users.${primaryUser}.xdg.configFile = {
         "leftwm/config.ron".text = ''
-        // Steelbore LeftWM Configuration
-        // The Spacecraft Software Standard — X11 Tiling
+          // Steelbore LeftWM Configuration
+          // The Spacecraft Software Standard — X11 Tiling
 
-        #![enable(implicit_some)]
-        (
-            modkey: "Mod4",
-            mousekey: "Mod4",
-            workspaces: [],
-            tags: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
-            max_window_width: None,
-            // `layouts` intentionally omitted. lefthk-core 0.2.2 (bundled
-            // inside leftwm 0.5.4) ships its own config parser whose schema
-            // expects layouts as Vec<String>, while leftwm-core expects bare
-            // enum variants. Including the field in either form breaks one
-            // of the two parsers — when lefthk's parse fails, it silently
-            // falls back to a Mod+Shift+* default keymap, making every
-            // user-defined Mod-only binding (Mod+Return, Mod+D, Mod+Q…) a
-            // no-op. Omitting the field lets lefthk parse the rest of the
-            // config; leftwm still gets a working layout set from its
-            // built-in defaults. Re-add the explicit list once leftwm and
-            // lefthk-core ship a unified config schema.
-            layout_mode: Tag,
-            insert_behavior: Bottom,
-            scratchpad: [
-                // alacritty, not rio — rio renders blank under leftwm's
-                // startx-spawned Xorg (see the Mod+Return note below).
-                (name: "Terminal", value: "alacritty", x: 50, y: 50, width: 1200, height: 800),
-            ],
-            window_rules: [],
-            disable_current_tag_swap: false,
-            disable_tile_drag: false,
-            disable_window_snap: false,
-            focus_behaviour: Sloppy,
-            focus_new_windows: true,
-            single_window_border: true,
-            sloppy_mouse_follows_focus: true,
-            auto_derive_workspaces: true,
-            keybind: [
-                // Session
-                (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
-                (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
-                // Keyring unlock — see steelbore-keyring-unlock
-                // (modules/desktops/shared.nix) for why this is needed
-                // with fingerprint login enabled.
-                (command: Execute, value: "steelbore-keyring-unlock", modifier: ["modkey", "Shift"], key: "u"),
+          #![enable(implicit_some)]
+          (
+              modkey: "Mod4",
+              mousekey: "Mod4",
+              workspaces: [],
+              tags: ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+              max_window_width: None,
+              // `layouts` intentionally omitted. lefthk-core 0.2.2 (bundled
+              // inside leftwm 0.5.4) ships its own config parser whose schema
+              // expects layouts as Vec<String>, while leftwm-core expects bare
+              // enum variants. Including the field in either form breaks one
+              // of the two parsers — when lefthk's parse fails, it silently
+              // falls back to a Mod+Shift+* default keymap, making every
+              // user-defined Mod-only binding (Mod+Return, Mod+D, Mod+Q…) a
+              // no-op. Omitting the field lets lefthk parse the rest of the
+              // config; leftwm still gets a working layout set from its
+              // built-in defaults. Re-add the explicit list once leftwm and
+              // lefthk-core ship a unified config schema.
+              layout_mode: Tag,
+              insert_behavior: Bottom,
+              scratchpad: [
+                  // alacritty, not rio — rio renders blank under leftwm's
+                  // startx-spawned Xorg (see the Mod+Return note below).
+                  (name: "Terminal", value: "alacritty", x: 50, y: 50, width: 1200, height: 800),
+              ],
+              window_rules: [],
+              disable_current_tag_swap: false,
+              disable_tile_drag: false,
+              disable_window_snap: false,
+              focus_behaviour: Sloppy,
+              focus_new_windows: true,
+              single_window_border: true,
+              sloppy_mouse_follows_focus: true,
+              auto_derive_workspaces: true,
+              keybind: [
+                  // Session
+                  (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
+                  (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
+                  // Keyring unlock — see steelbore-keyring-unlock
+                  // (modules/desktops/shared.nix) for why this is needed
+                  // with fingerprint login enabled.
+                  (command: Execute, value: "steelbore-keyring-unlock", modifier: ["modkey", "Shift"], key: "u"),
 
-                // Applications
-                // Mod+Return launches alacritty — the default terminal across
-                // both Niri and LeftWM. rio's wgpu backend prefers Wayland and
-                // renders nothing visible under leftwm's startx-spawned Xorg, so
-                // alacritty's stable X11 backend is doubly the right choice here.
-                (command: Execute, value: "alacritty", modifier: ["modkey"], key: "Return"),
-                (command: Execute, value: "rlaunch", modifier: ["modkey"], key: "d"),
-                (command: Execute, value: "rofi -show drun", modifier: ["modkey", "Shift"], key: "d"),
+                  // Applications
+                  // Mod+Return launches alacritty — the default terminal across
+                  // both Niri and LeftWM. rio's wgpu backend prefers Wayland and
+                  // renders nothing visible under leftwm's startx-spawned Xorg, so
+                  // alacritty's stable X11 backend is doubly the right choice here.
+                  (command: Execute, value: "alacritty", modifier: ["modkey"], key: "Return"),
+                  (command: Execute, value: "rlaunch", modifier: ["modkey"], key: "d"),
+                  (command: Execute, value: "rofi -show drun", modifier: ["modkey", "Shift"], key: "d"),
 
-                // Window management
-                (command: CloseWindow, value: "", modifier: ["modkey"], key: "q"),
-                (command: ToggleFullScreen, value: "", modifier: ["modkey"], key: "f"),
-                (command: ToggleFloating, value: "", modifier: ["modkey", "Shift"], key: "f"),
+                  // Window management
+                  (command: CloseWindow, value: "", modifier: ["modkey"], key: "q"),
+                  (command: ToggleFullScreen, value: "", modifier: ["modkey"], key: "f"),
+                  (command: ToggleFloating, value: "", modifier: ["modkey", "Shift"], key: "f"),
 
-                // Focus / Move — only Up/Down survive. lefthk-core 0.2.2's
-                // BaseCommand enum is missing FocusWindowLeft, FocusWindowRight,
-                // MoveWindowLeft, and MoveWindowRight; including any of those
-                // panics lefthk's parser and disables every keybinding. With
-                // focus_behaviour: Sloppy, mouse hover already covers
-                // left/right focus; tile-drag handles left/right window moves.
-                (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "k"),
-                (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "j"),
-                (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "Up"),
-                (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "Down"),
-                (command: MoveWindowUp, value: "", modifier: ["modkey", "Shift"], key: "k"),
-                (command: MoveWindowDown, value: "", modifier: ["modkey", "Shift"], key: "j"),
+                  // Focus / Move — only Up/Down survive. lefthk-core 0.2.2's
+                  // BaseCommand enum is missing FocusWindowLeft, FocusWindowRight,
+                  // MoveWindowLeft, and MoveWindowRight; including any of those
+                  // panics lefthk's parser and disables every keybinding. With
+                  // focus_behaviour: Sloppy, mouse hover already covers
+                  // left/right focus; tile-drag handles left/right window moves.
+                  (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "k"),
+                  (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "j"),
+                  (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "Up"),
+                  (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "Down"),
+                  (command: MoveWindowUp, value: "", modifier: ["modkey", "Shift"], key: "k"),
+                  (command: MoveWindowDown, value: "", modifier: ["modkey", "Shift"], key: "j"),
 
-                // Layouts
-                (command: NextLayout, value: "", modifier: ["modkey"], key: "space"),
-                (command: PreviousLayout, value: "", modifier: ["modkey", "Shift"], key: "space"),
+                  // Layouts
+                  (command: NextLayout, value: "", modifier: ["modkey"], key: "space"),
+                  (command: PreviousLayout, value: "", modifier: ["modkey", "Shift"], key: "space"),
 
-                // Workspaces
-                // Accept the combo the side-button remap emits. modkey is
-                // Mod4, so ["modkey","Control"]+Left == Super+Ctrl+Left, which
-                // is what modules/desktops/mouse-workspace-nav.nix turns
-                // BTN_SIDE/BTN_EXTRA into — the same combo Plasma and COSMIC
-                // already use for this action by default. Typing it works too.
-                (command: FocusPreviousTag, value: "", modifier: ["modkey", "Control"], key: "Left"),
-                (command: FocusNextTag, value: "", modifier: ["modkey", "Control"], key: "Right"),
-                (command: GotoTag, value: "1", modifier: ["modkey"], key: "1"),
-                (command: GotoTag, value: "2", modifier: ["modkey"], key: "2"),
-                (command: GotoTag, value: "3", modifier: ["modkey"], key: "3"),
-                (command: GotoTag, value: "4", modifier: ["modkey"], key: "4"),
-                (command: GotoTag, value: "5", modifier: ["modkey"], key: "5"),
-                (command: GotoTag, value: "6", modifier: ["modkey"], key: "6"),
-                (command: GotoTag, value: "7", modifier: ["modkey"], key: "7"),
-                (command: GotoTag, value: "8", modifier: ["modkey"], key: "8"),
-                (command: GotoTag, value: "9", modifier: ["modkey"], key: "9"),
-                (command: MoveToTag, value: "1", modifier: ["modkey", "Shift"], key: "1"),
-                (command: MoveToTag, value: "2", modifier: ["modkey", "Shift"], key: "2"),
-                (command: MoveToTag, value: "3", modifier: ["modkey", "Shift"], key: "3"),
-                (command: MoveToTag, value: "4", modifier: ["modkey", "Shift"], key: "4"),
-                (command: MoveToTag, value: "5", modifier: ["modkey", "Shift"], key: "5"),
-                (command: MoveToTag, value: "6", modifier: ["modkey", "Shift"], key: "6"),
-                (command: MoveToTag, value: "7", modifier: ["modkey", "Shift"], key: "7"),
-                (command: MoveToTag, value: "8", modifier: ["modkey", "Shift"], key: "8"),
-                (command: MoveToTag, value: "9", modifier: ["modkey", "Shift"], key: "9"),
+                  // Workspaces
+                  // Accept the combo the side-button remap emits. modkey is
+                  // Mod4, so ["modkey","Control"]+Left == Super+Ctrl+Left, which
+                  // is what modules/desktops/mouse-workspace-nav.nix turns
+                  // BTN_SIDE/BTN_EXTRA into — the same combo Plasma and COSMIC
+                  // already use for this action by default. Typing it works too.
+                  (command: FocusPreviousTag, value: "", modifier: ["modkey", "Control"], key: "Left"),
+                  (command: FocusNextTag, value: "", modifier: ["modkey", "Control"], key: "Right"),
+                  (command: GotoTag, value: "1", modifier: ["modkey"], key: "1"),
+                  (command: GotoTag, value: "2", modifier: ["modkey"], key: "2"),
+                  (command: GotoTag, value: "3", modifier: ["modkey"], key: "3"),
+                  (command: GotoTag, value: "4", modifier: ["modkey"], key: "4"),
+                  (command: GotoTag, value: "5", modifier: ["modkey"], key: "5"),
+                  (command: GotoTag, value: "6", modifier: ["modkey"], key: "6"),
+                  (command: GotoTag, value: "7", modifier: ["modkey"], key: "7"),
+                  (command: GotoTag, value: "8", modifier: ["modkey"], key: "8"),
+                  (command: GotoTag, value: "9", modifier: ["modkey"], key: "9"),
+                  (command: MoveToTag, value: "1", modifier: ["modkey", "Shift"], key: "1"),
+                  (command: MoveToTag, value: "2", modifier: ["modkey", "Shift"], key: "2"),
+                  (command: MoveToTag, value: "3", modifier: ["modkey", "Shift"], key: "3"),
+                  (command: MoveToTag, value: "4", modifier: ["modkey", "Shift"], key: "4"),
+                  (command: MoveToTag, value: "5", modifier: ["modkey", "Shift"], key: "5"),
+                  (command: MoveToTag, value: "6", modifier: ["modkey", "Shift"], key: "6"),
+                  (command: MoveToTag, value: "7", modifier: ["modkey", "Shift"], key: "7"),
+                  (command: MoveToTag, value: "8", modifier: ["modkey", "Shift"], key: "8"),
+                  (command: MoveToTag, value: "9", modifier: ["modkey", "Shift"], key: "9"),
 
-                // Resize
-                (command: IncreaseMainWidth, value: "5", modifier: ["modkey"], key: "equal"),
-                (command: DecreaseMainWidth, value: "5", modifier: ["modkey"], key: "minus"),
+                  // Resize
+                  (command: IncreaseMainWidth, value: "5", modifier: ["modkey"], key: "equal"),
+                  (command: DecreaseMainWidth, value: "5", modifier: ["modkey"], key: "minus"),
 
-                // Scratchpad
-                (command: ToggleScratchPad, value: "Terminal", modifier: ["modkey"], key: "grave"),
+                  // Scratchpad
+                  (command: ToggleScratchPad, value: "Terminal", modifier: ["modkey"], key: "grave"),
 
-                // Multimedia + hardware hotkeys (mirror Niri). lefthk-core
-                // has no `allow-when-locked` analog — these will not fire
-                // while gtklock is engaged (the X locker grabs the keyboard).
-                // swayosd is Wayland-only (wlr-layer-shell), so volume +
-                // brightness route through steelbore-osd (a dunstify-based
-                // progress-bar popup) instead. Radio toggles + kbd-backlight
-                // cycle use the same shared wrappers as Niri.
-                (command: Execute, value: "steelbore-osd volume-up",      modifier: [], key: "XF86AudioRaiseVolume"),
-                (command: Execute, value: "steelbore-osd volume-down",    modifier: [], key: "XF86AudioLowerVolume"),
-                (command: Execute, value: "steelbore-osd volume-mute",    modifier: [], key: "XF86AudioMute"),
-                (command: Execute, value: "steelbore-osd mic-mute",       modifier: [], key: "XF86AudioMicMute"),
-                (command: Execute, value: "playerctl play-pause",        modifier: [], key: "XF86AudioPlay"),
-                (command: Execute, value: "playerctl next",              modifier: [], key: "XF86AudioNext"),
-                (command: Execute, value: "playerctl previous",          modifier: [], key: "XF86AudioPrev"),
-                (command: Execute, value: "steelbore-osd brightness-up",   modifier: [], key: "XF86MonBrightnessUp"),
-                (command: Execute, value: "steelbore-osd brightness-down", modifier: [], key: "XF86MonBrightnessDown"),
-                (command: Execute, value: "steelbore-kbd-light-cycle",    modifier: [], key: "XF86KbdLightOnOff"),
-                (command: Execute, value: "steelbore-bt-toggle",         modifier: [], key: "XF86Bluetooth"),
-                (command: Execute, value: "steelbore-airplane-toggle",    modifier: [], key: "XF86RFKill"),
-                // Screenshots (mirror Niri's Print / Mod+Print; maim is the
-                // X11 grabber — grim is Wayland-only). Print drag-selects a
-                // region (maim -s); Mod+Print grabs the whole screen. `&&`
-                // chaining means a cancelled selection (maim exits non-zero)
-                // writes no empty file and skips the clipboard. tee-free: maim
-                // writes $f directly, then xclip loads it into the clipboard as
-                // image/png. $HOME (not ~) so the shell always expands it.
-                (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -s $f && xclip -selection clipboard -t image/png $f", modifier: [], key: "Print"),
-                (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
-                // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
-                // Pipes a HM-rendered keybind summary through rofi -dmenu.
-                (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
-            ],
-            state_path: None,
-        )
+                  // Multimedia + hardware hotkeys (mirror Niri). lefthk-core
+                  // has no `allow-when-locked` analog — these will not fire
+                  // while gtklock is engaged (the X locker grabs the keyboard).
+                  // swayosd is Wayland-only (wlr-layer-shell), so volume +
+                  // brightness route through steelbore-osd (a dunstify-based
+                  // progress-bar popup) instead. Radio toggles + kbd-backlight
+                  // cycle use the same shared wrappers as Niri.
+                  (command: Execute, value: "steelbore-osd volume-up",      modifier: [], key: "XF86AudioRaiseVolume"),
+                  (command: Execute, value: "steelbore-osd volume-down",    modifier: [], key: "XF86AudioLowerVolume"),
+                  (command: Execute, value: "steelbore-osd volume-mute",    modifier: [], key: "XF86AudioMute"),
+                  (command: Execute, value: "steelbore-osd mic-mute",       modifier: [], key: "XF86AudioMicMute"),
+                  (command: Execute, value: "playerctl play-pause",        modifier: [], key: "XF86AudioPlay"),
+                  (command: Execute, value: "playerctl next",              modifier: [], key: "XF86AudioNext"),
+                  (command: Execute, value: "playerctl previous",          modifier: [], key: "XF86AudioPrev"),
+                  (command: Execute, value: "steelbore-osd brightness-up",   modifier: [], key: "XF86MonBrightnessUp"),
+                  (command: Execute, value: "steelbore-osd brightness-down", modifier: [], key: "XF86MonBrightnessDown"),
+                  (command: Execute, value: "steelbore-kbd-light-cycle",    modifier: [], key: "XF86KbdLightOnOff"),
+                  (command: Execute, value: "steelbore-bt-toggle",         modifier: [], key: "XF86Bluetooth"),
+                  (command: Execute, value: "steelbore-airplane-toggle",    modifier: [], key: "XF86RFKill"),
+                  // Screenshots (mirror Niri's Print / Mod+Print; maim is the
+                  // X11 grabber — grim is Wayland-only). Print drag-selects a
+                  // region (maim -s); Mod+Print grabs the whole screen. `&&`
+                  // chaining means a cancelled selection (maim exits non-zero)
+                  // writes no empty file and skips the clipboard. tee-free: maim
+                  // writes $f directly, then xclip loads it into the clipboard as
+                  // image/png. $HOME (not ~) so the shell always expands it.
+                  (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -s $f && xclip -selection clipboard -t image/png $f", modifier: [], key: "Print"),
+                  (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
+                  // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
+                  // Pipes a HM-rendered keybind summary through rofi -dmenu.
+                  (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
+              ],
+              state_path: None,
+          )
         '';
 
         # LeftWM theme — single symlink to a nix-store directory containing
@@ -344,60 +344,60 @@
         # this automatically). One line per bind; rofi -markup-rows
         # renders the leading `<b>...</b>` as bold.
         "leftwm/keybinds.txt".text = ''
-        <b>Session</b>
-        Mod+Shift+E           Exit LeftWM
-        Ctrl+Alt+L            Lock screen (gtklock)
-        Mod+Shift+U           Unlock keyring
+          <b>Session</b>
+          Mod+Shift+E           Exit LeftWM
+          Ctrl+Alt+L            Lock screen (gtklock)
+          Mod+Shift+U           Unlock keyring
 
-        <b>Applications</b>
-        Mod+Return            Terminal (alacritty)
-        Mod+D                 Launcher (rlaunch)
-        Mod+Shift+D           Launcher (rofi)
+          <b>Applications</b>
+          Mod+Return            Terminal (alacritty)
+          Mod+D                 Launcher (rlaunch)
+          Mod+Shift+D           Launcher (rofi)
 
-        <b>Window management</b>
-        Mod+Q                 Close focused window
-        Mod+F                 Toggle fullscreen
-        Mod+Shift+F           Toggle floating
-        Mod+K / Mod+Up        Focus window up
-        Mod+J / Mod+Down      Focus window down
-        Mod+Shift+K           Move window up
-        Mod+Shift+J           Move window down
+          <b>Window management</b>
+          Mod+Q                 Close focused window
+          Mod+F                 Toggle fullscreen
+          Mod+Shift+F           Toggle floating
+          Mod+K / Mod+Up        Focus window up
+          Mod+J / Mod+Down      Focus window down
+          Mod+Shift+K           Move window up
+          Mod+Shift+J           Move window down
 
-        <b>Layouts</b>
-        Mod+Space             Next layout
-        Mod+Shift+Space       Previous layout
+          <b>Layouts</b>
+          Mod+Space             Next layout
+          Mod+Shift+Space       Previous layout
 
-        <b>Workspaces</b>
-        Mod+1..9              Switch to workspace 1-9
-        Mod+Shift+1..9        Move window to workspace 1-9
+          <b>Workspaces</b>
+          Mod+1..9              Switch to workspace 1-9
+          Mod+Shift+1..9        Move window to workspace 1-9
 
-        <b>Resize</b>
-        Mod+Equal             Increase main width
-        Mod+Minus             Decrease main width
+          <b>Resize</b>
+          Mod+Equal             Increase main width
+          Mod+Minus             Decrease main width
 
-        <b>Scratchpad</b>
-        Mod+Grave             Toggle terminal scratchpad
+          <b>Scratchpad</b>
+          Mod+Grave             Toggle terminal scratchpad
 
-        <b>Screenshots</b>
-        Print                 Region select → file + clipboard (maim -s)
-        Mod+Print             Full screen → file + clipboard (maim)
+          <b>Screenshots</b>
+          Print                 Region select → file + clipboard (maim -s)
+          Mod+Print             Full screen → file + clipboard (maim)
 
-        <b>Multimedia / hardware keys</b>
-        XF86AudioRaiseVolume  Volume up (steelbore-osd)
-        XF86AudioLowerVolume  Volume down (steelbore-osd)
-        XF86AudioMute         Mute toggle (steelbore-osd)
-        XF86AudioMicMute      Mic mute toggle (steelbore-osd)
-        XF86AudioPlay         Play/pause (playerctl)
-        XF86AudioNext         Next track (playerctl)
-        XF86AudioPrev         Previous track (playerctl)
-        XF86MonBrightnessUp   Brightness up (steelbore-osd)
-        XF86MonBrightnessDown Brightness down (steelbore-osd)
-        XF86KbdLightOnOff     Keyboard backlight cycle
-        XF86Bluetooth          Bluetooth toggle (rfkill)
-        XF86RFKill             Airplane mode toggle (rfkill)
+          <b>Multimedia / hardware keys</b>
+          XF86AudioRaiseVolume  Volume up (steelbore-osd)
+          XF86AudioLowerVolume  Volume down (steelbore-osd)
+          XF86AudioMute         Mute toggle (steelbore-osd)
+          XF86AudioMicMute      Mic mute toggle (steelbore-osd)
+          XF86AudioPlay         Play/pause (playerctl)
+          XF86AudioNext         Next track (playerctl)
+          XF86AudioPrev         Previous track (playerctl)
+          XF86MonBrightnessUp   Brightness up (steelbore-osd)
+          XF86MonBrightnessDown Brightness down (steelbore-osd)
+          XF86KbdLightOnOff     Keyboard backlight cycle
+          XF86Bluetooth          Bluetooth toggle (rfkill)
+          XF86RFKill             Airplane mode toggle (rfkill)
 
-        <b>Help</b>
-        Mod+Shift+Slash        Show this keybinding help (rofi)
+          <b>Help</b>
+          Mod+Shift+Slash        Show this keybinding help (rofi)
         '';
 
         # ═══════════════════════════════════════════════════════════════════════════

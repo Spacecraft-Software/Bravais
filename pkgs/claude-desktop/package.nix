@@ -182,7 +182,12 @@ stdenv.mkDerivation (finalAttrs: {
     #  - Ozone hints: crisp rendering + client-side decorations under Wayland/Niri.
     makeWrapper $out/lib/claude-desktop/claude-desktop $out/bin/claude-desktop \
       "''${gappsWrapperArgs[@]}" \
-      --prefix PATH : ${lib.makeBinPath [ nodejs uv ]} \
+      --prefix PATH : ${
+        lib.makeBinPath [
+          nodejs
+          uv
+        ]
+      } \
       --add-flags "--disable-setuid-sandbox" \
       --add-flags "--ozone-platform-hint=auto" \
       --add-flags "--enable-features=WaylandWindowDecorations"

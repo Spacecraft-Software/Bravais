@@ -22,4 +22,3 @@
   skyroads = pkgs.callPackage ./skyroads/package.nix { };
   preflight = pkgs.callPackage ./preflight/package.nix { };
 }
-

@@ -64,12 +64,14 @@ let
   crdDir = "/opt/google/chrome-remote-desktop";
   # Runtime Python deps come straight from the .deb's Depends line:
   # python3-dbus, python3-psutil, python3-xdg, python3-packaging.
-  py = python3.withPackages (ps: with ps; [
-    dbus-python
-    psutil
-    pyxdg
-    packaging
-  ]);
+  py = python3.withPackages (
+    ps: with ps; [
+      dbus-python
+      psutil
+      pyxdg
+      packaging
+    ]
+  );
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "chrome-remote-desktop";
