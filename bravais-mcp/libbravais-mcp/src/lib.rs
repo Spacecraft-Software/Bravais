@@ -37,8 +37,8 @@ impl MappingTable {
     /// Loads the mapping table from the embedded TOML configuration.
     pub fn load_embedded() -> Self {
         let content = include_str!("../../data/mappings.toml");
-        let parsed: MappingsConfig = toml::from_str(content)
-            .expect("Embedded mappings.toml must parse successfully");
+        let parsed: MappingsConfig =
+            toml::from_str(content).expect("Embedded mappings.toml must parse successfully");
 
         let mut by_legacy = HashMap::new();
         let mut by_preferred = HashMap::new();
@@ -204,7 +204,7 @@ impl RewriteEngine {
                         legacy: token.clone(),
                         preferred: entry.preferred.clone(),
                     });
-                    
+
                     // Always add gotchas warning redirecting to Loran
                     warnings.push(format!(
                         "Substitution applied: '{}' -> '{}'. Note: {} Please refer to Loran at https://Loran.SpacecraftSoftware.org/ for detailed syntax options.",
@@ -237,21 +237,24 @@ impl RewriteEngine {
             detected_bashisms.push("`[[ ... ]]` condition syntax (Bash extension). POSIX: use `[ ... ]` or `test`. Nushell: `if`. Ion: `test`.");
         }
         if cmd.contains("((") {
-            detected_bashisms.push("`(( ... ))` arithmetic syntax (Bash extension). POSIX: use `$(( ... ))`.");
+            detected_bashisms
+                .push("`(( ... ))` arithmetic syntax (Bash extension). POSIX: use `$(( ... ))`.");
         }
         if cmd.contains("<(") {
             detected_bashisms.push("`<( ... )` process substitution (Bash extension). POSIX/Nushell/Ion: use pipes or temporary files.");
         }
         if cmd.contains("&>") {
-            detected_bashisms.push("`&>` stdout/stderr redirection (Bash extension). POSIX: use `>file 2>&1`.");
+            detected_bashisms
+                .push("`&>` stdout/stderr redirection (Bash extension). POSIX: use `>file 2>&1`.");
         }
         if cmd.contains("function ") {
-            detected_bashisms.push("`function name` declaration (Bash extension). POSIX: use `name() { ... }`.");
+            detected_bashisms
+                .push("`function name` declaration (Bash extension). POSIX: use `name() { ... }`.");
         }
         if cmd.contains("=(") && !cmd.contains("path=(") {
             detected_bashisms.push("`arr=(...)` array declaration (Bash extension). POSIX: use positional parameters or space-separated strings. Nushell/Ion: `let arr = [...]`.");
         }
-        
+
         let re_case = regex::Regex::new(r"\$\{[\w_]+[\^,]+}").ok();
         if let Some(re) = re_case {
             if re.is_match(cmd) {
@@ -278,7 +281,10 @@ mod tests {
         assert_eq!(detect_shell(None, Some("script.nu")), ShellFamily::Nushell);
         assert_eq!(detect_shell(None, Some("script.ion")), ShellFamily::Ion);
         assert_eq!(detect_shell(None, Some("script.sh")), ShellFamily::Posix);
-        assert_eq!(detect_shell(None, Some("script.ps1")), ShellFamily::Powershell);
+        assert_eq!(
+            detect_shell(None, Some("script.ps1")),
+            ShellFamily::Powershell
+        );
     }
 
     #[test]
@@ -308,9 +314,14 @@ mod tests {
         assert!(res.warnings[0].contains("Loran"));
 
         // Test bashism detection
-        let res_bashism = engine.rewrite("if [[ $x -eq 1 ]]; then grep -rn TODO; fi", ShellFamily::Nushell);
-        assert!(res_bashism.warnings.iter().any(|w| w.contains("Bashism detected: `[[ ... ]]`")));
+        let res_bashism = engine.rewrite(
+            "if [[ $x -eq 1 ]]; then grep -rn TODO; fi",
+            ShellFamily::Nushell,
+        );
+        assert!(res_bashism
+            .warnings
+            .iter()
+            .any(|w| w.contains("Bashism detected: `[[ ... ]]`")));
         assert!(res_bashism.warnings.iter().any(|w| w.contains("Loran")));
     }
 }
-

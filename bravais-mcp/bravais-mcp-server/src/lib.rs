@@ -238,7 +238,10 @@ fn handle_request(
         "tools/call" => {
             let params = req.params.unwrap_or(serde_json::Value::Null);
             let tool_name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
-            let arguments = params.get("arguments").cloned().unwrap_or(serde_json::Value::Null);
+            let arguments = params
+                .get("arguments")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null);
 
             match tool_name {
                 TOOL_ENV => {
@@ -267,8 +270,12 @@ fn handle_request(
                     }
                 }
                 TOOL_REFERENCE => {
-                    let search_name = arguments.get("tool_name").and_then(|v| v.as_str()).unwrap_or("");
-                    let entry = table.lookup_legacy(search_name)
+                    let search_name = arguments
+                        .get("tool_name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
+                    let entry = table
+                        .lookup_legacy(search_name)
                         .or_else(|| table.lookup_preferred(search_name));
 
                     let result = if let Some(e) = entry {
@@ -303,7 +310,10 @@ fn handle_request(
                     }
                 }
                 TOOL_REWRITE => {
-                    let command = arguments.get("command").and_then(|v| v.as_str()).unwrap_or("");
+                    let command = arguments
+                        .get("command")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
                     let shell_override = arguments.get("shell").and_then(|v| v.as_str());
                     let file_hint = arguments.get("file_hint").and_then(|v| v.as_str());
                     let shell = detect_shell(shell_override, file_hint);

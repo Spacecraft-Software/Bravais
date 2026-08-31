@@ -292,12 +292,7 @@ impl Out {
         } else {
             let tag = Level::Error.tag();
             if self.color {
-                let _ = writeln!(
-                    sink,
-                    "{}{tag}\x1b[0m {}",
-                    Level::Error.ansi(),
-                    err.message
-                );
+                let _ = writeln!(sink, "{}{tag}\x1b[0m {}", Level::Error.ansi(), err.message);
             } else {
                 let _ = writeln!(sink, "{tag} {}", err.message);
             }

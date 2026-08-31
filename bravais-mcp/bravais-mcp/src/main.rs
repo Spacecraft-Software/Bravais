@@ -38,7 +38,6 @@ struct Cli {
 
 #[derive(Subcommand, Debug, Clone)]
 enum Commands {
-
     #[command(about = "Report detected OS and shell environment")]
     Env,
 
@@ -110,13 +109,33 @@ fn main() {
             if is_json {
                 print_json(res);
             } else {
-                println!("{}", "Operating System:".bold().color(owo_colors::Rgb(75, 126, 176)));
+                println!(
+                    "{}",
+                    "Operating System:"
+                        .bold()
+                        .color(owo_colors::Rgb(75, 126, 176))
+                );
                 println!("  Steelbore OS Bravais");
-                println!("{}", "Detected Shell:".bold().color(owo_colors::Rgb(75, 126, 176)));
+                println!(
+                    "{}",
+                    "Detected Shell:"
+                        .bold()
+                        .color(owo_colors::Rgb(75, 126, 176))
+                );
                 println!("  {}", shell);
-                println!("{}", "Documentation Anchor:".bold().color(owo_colors::Rgb(75, 126, 176)));
+                println!(
+                    "{}",
+                    "Documentation Anchor:"
+                        .bold()
+                        .color(owo_colors::Rgb(75, 126, 176))
+                );
                 println!("  https://Bravais.SpacecraftSoftware.org/");
-                println!("{}", "Detailed Syntax & Translation:".bold().color(owo_colors::Rgb(75, 126, 176)));
+                println!(
+                    "{}",
+                    "Detailed Syntax & Translation:"
+                        .bold()
+                        .color(owo_colors::Rgb(75, 126, 176))
+                );
                 println!("  Query Loran at https://Loran.SpacecraftSoftware.org/");
             }
         }
@@ -133,7 +152,9 @@ fn main() {
                     );
                     println!("Notes: {}", entry.notes);
                     println!("Gotchas: {}", entry.gotchas.yellow());
-                    println!("For more details, check Loran (https://Loran.SpacecraftSoftware.org/).");
+                    println!(
+                        "For more details, check Loran (https://Loran.SpacecraftSoftware.org/)."
+                    );
                 }
             } else {
                 let err_msg = format!("No mapping found for '{}'", tool);
@@ -146,7 +167,9 @@ fn main() {
             }
         }
         Commands::List { category } => {
-            let entries: Vec<_> = table.all_entries().into_iter()
+            let entries: Vec<_> = table
+                .all_entries()
+                .into_iter()
                 .filter(|e| category.as_ref().map_or(true, |c| &e.category == c))
                 .collect();
 
@@ -191,7 +214,8 @@ fn main() {
             }
         }
         Commands::Reference { tool } => {
-            let entry = table.lookup_legacy(&tool)
+            let entry = table
+                .lookup_legacy(&tool)
                 .or_else(|| table.lookup_preferred(&tool));
 
             if let Some(e) = entry {
