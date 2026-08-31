@@ -170,7 +170,7 @@ fn main() {
             let entries: Vec<_> = table
                 .all_entries()
                 .into_iter()
-                .filter(|e| category.as_ref().map_or(true, |c| &e.category == c))
+                .filter(|e| category.as_ref().is_none_or(|c| &e.category == c))
                 .collect();
 
             if is_json {

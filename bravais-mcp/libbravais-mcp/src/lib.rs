@@ -135,7 +135,11 @@ pub fn detect_shell(sxt_override: Option<&str>, file_hint: Option<&str>) -> Shel
 
     // 3. SHELL environment variable
     if let Ok(shell_path) = std::env::var("SHELL") {
-        let basename = shell_path.split('/').last().unwrap_or("").to_lowercase();
+        let basename = shell_path
+            .split('/')
+            .next_back()
+            .unwrap_or("")
+            .to_lowercase();
         match basename.as_str() {
             "nushell" | "nu" => return ShellFamily::Nushell,
             "ion" => return ShellFamily::Ion,
