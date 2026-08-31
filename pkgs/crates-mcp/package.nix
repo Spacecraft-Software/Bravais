@@ -9,7 +9,13 @@
 # It is the last binary in mcp-servers/mcp.toml that used to resolve to an
 # imperative `cargo install` under ~/.cargo/bin. mcp.toml names it by BARE
 # NAME, so this derivation is what every MCP host now spawns.
-{ lib, rustPlatform, fetchCrate, pkg-config, openssl }:
+{
+  lib,
+  rustPlatform,
+  fetchCrate,
+  pkg-config,
+  openssl,
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "crates-mcp";

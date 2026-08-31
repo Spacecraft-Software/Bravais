@@ -23,18 +23,22 @@
       # due to an API change in libfprint 1.94.9+; we carry a local patch.
       tod = {
         enable = true;
-        driver = (pkgs.libfprint-2-tod1-vfs0090.overrideAttrs (old: {
-          # Fix API mismatch: fpi_ssm_next_state_delayed() dropped its
-          # third parameter (callback) in libfprint 1.94.9+.
-          postPatch = (old.postPatch or "") + ''
-            substituteInPlace vfs0090.c \
-              --replace-fail 'fpi_ssm_next_state_delayed (ssm, 200, NULL)' \
-                             'fpi_ssm_next_state_delayed (ssm, 200)' \
-              --replace-fail 'fpi_ssm_next_state_delayed (ssm, 100, NULL)' \
-                             'fpi_ssm_next_state_delayed (ssm, 100)'
-          '';
-          meta = (old.meta or {}) // { broken = false; };
-        }));
+        driver = (
+          pkgs.libfprint-2-tod1-vfs0090.overrideAttrs (old: {
+            # Fix API mismatch: fpi_ssm_next_state_delayed() dropped its
+            # third parameter (callback) in libfprint 1.94.9+.
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace vfs0090.c \
+                --replace-fail 'fpi_ssm_next_state_delayed (ssm, 200, NULL)' \
+                               'fpi_ssm_next_state_delayed (ssm, 200)' \
+                --replace-fail 'fpi_ssm_next_state_delayed (ssm, 100, NULL)' \
+                               'fpi_ssm_next_state_delayed (ssm, 100)'
+            '';
+            meta = (old.meta or { }) // {
+              broken = false;
+            };
+          })
+        );
       };
     };
 

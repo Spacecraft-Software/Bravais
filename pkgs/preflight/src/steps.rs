@@ -259,7 +259,11 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
         flatpak_detached(&mut r);
     } else if opts.no_flatpak {
-        r.record("flatpak-update", Outcome::Skipped, Some("--no-flatpak".into()));
+        r.record(
+            "flatpak-update",
+            Outcome::Skipped,
+            Some("--no-flatpak".into()),
+        );
     }
 
     let after = if opts.dry {
@@ -433,7 +437,8 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
         })
         .unwrap_or_default();
     for b in &blocked {
-        r.out.say(Level::Warn, &format!("mcpctl could not write: {b}"));
+        r.out
+            .say(Level::Warn, &format!("mcpctl could not write: {b}"));
     }
 
     if deploy {
@@ -455,7 +460,11 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
                 ),
             );
         }
-        r.record("mcpctl-drift", Outcome::Ok, Some(format!("{dirty} drifted")));
+        r.record(
+            "mcpctl-drift",
+            Outcome::Ok,
+            Some(format!("{dirty} drifted")),
+        );
     }
 }
 
@@ -483,9 +492,17 @@ fn antigravity_probe(r: &mut Runner) {
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned());
     match pinned {
         Some(rev) if !rev.is_empty() => {
-            r.record("antigravity", Outcome::Ok, Some(format!("pinned {}", &rev[..rev.len().min(12)])));
+            r.record(
+                "antigravity",
+                Outcome::Ok,
+                Some(format!("pinned {}", &rev[..rev.len().min(12)])),
+            );
         }
-        _ => r.record("antigravity", Outcome::Skipped, Some("probe unavailable".into())),
+        _ => r.record(
+            "antigravity",
+            Outcome::Skipped,
+            Some("probe unavailable".into()),
+        ),
     }
 }
 

@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — System Utilities and Modern Unix Tools
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options.steelbore.packages.system = {
@@ -10,15 +15,15 @@
   config = lib.mkIf config.steelbore.packages.system.enable {
     environment.systemPackages = with pkgs; [
       # Modern Unix (Rust preferred)
-      fd                         # Rust — find replacement
-      ripgrep                    # Rust — grep replacement
-      bat                        # Rust — cat replacement
-      eza                        # Rust — ls replacement
-      sd                         # Rust — sed replacement
-      zoxide                     # Rust — cd replacement
-      procs                      # Rust — ps replacement
-      dust                       # Rust — du replacement
-      dua                        # Rust — Interactive du
+      fd # Rust — find replacement
+      ripgrep # Rust — grep replacement
+      bat # Rust — cat replacement
+      eza # Rust — ls replacement
+      sd # Rust — sed replacement
+      zoxide # Rust — cd replacement
+      procs # Rust — ps replacement
+      dust # Rust — du replacement
+      dua # Rust — Interactive du
 
       # Coreutils reimplementation (Rust)
       uutils-coreutils
@@ -26,24 +31,24 @@
       uutils-findutils
 
       # File Management (Rust preferred)
-      yazi                       # Rust — TUI file manager
-      broot                      # Rust — Tree navigator
-      superfile                  # Go — TUI file manager
-      spacedrive                 # Rust — Cross-platform explorer
-      fclones                    # Rust — Duplicate finder
-      kondo                      # Rust — Project cleaner
-      pipe-rename                # Rust — Interactive rename
-      ouch                       # Rust — Archive tool
+      yazi # Rust — TUI file manager
+      broot # Rust — Tree navigator
+      superfile # Go — TUI file manager
+      spacedrive # Rust — Cross-platform explorer
+      fclones # Rust — Duplicate finder
+      kondo # Rust — Project cleaner
+      pipe-rename # Rust — Interactive rename
+      ouch # Rust — Archive tool
 
       # Disk Management (Rust preferred)
-      gptman                     # Rust — GPT manager
+      gptman # Rust — GPT manager
 
       # System Monitoring (Rust preferred)
-      bottom                     # Rust — htop replacement
-      kmon                       # Rust — Kernel manager
-      macchina                   # Rust — System fetch
-      bandwhich                  # Rust — Bandwidth monitor
-      mission-center             # Rust — Task manager
+      bottom # Rust — htop replacement
+      kmon # Rust — Kernel manager
+      macchina # Rust — System fetch
+      bandwhich # Rust — Bandwidth monitor
+      mission-center # Rust — Task manager
       htop
       btop
       gotop
@@ -52,46 +57,46 @@
       hw-probe
 
       # Text Processing (Rust preferred)
-      jaq                        # Rust — jq replacement
-      teip                       # Rust — Masking tool
-      htmlq                      # Rust — HTML selector
-      skim                       # Rust — Fuzzy finder
-      tealdeer                   # Rust — tldr client
-      mdcat                      # Rust — Markdown renderer
-      difftastic                 # Rust — Structural diff
+      jaq # Rust — jq replacement
+      teip # Rust — Masking tool
+      htmlq # Rust — HTML selector
+      skim # Rust — Fuzzy finder
+      tealdeer # Rust — tldr client
+      mdcat # Rust — Markdown renderer
+      difftastic # Rust — Structural diff
 
       # Shells (Rust preferred)
-      nushell                    # Rust — Modern shell
-      brush                      # Rust — Bash compatible
-      ion                        # Rust — Shell
-      starship                   # Rust — Prompt
-      atuin                      # Rust — Shell history
-      pipr                       # Rust — Pipeline builder
-      moor                       # Rust — Shell
+      nushell # Rust — Modern shell
+      brush # Rust — Bash compatible
+      ion # Rust — Shell
+      starship # Rust — Prompt
+      atuin # Rust — Shell history
+      pipr # Rust — Pipeline builder
+      moor # Rust — Shell
       powershell
 
       # Multiplexers
-      zellij                     # Rust — Terminal multiplexer
+      zellij # Rust — Terminal multiplexer
       screen
 
       # Recording
-      t-rec                      # Rust — Terminal recorder
+      t-rec # Rust — Terminal recorder
 
       # Containers & Virtualization
       distrobox
-      boxbuddy                   # Rust — Distrobox GUI
+      boxbuddy # Rust — Distrobox GUI
       qemu
       flatpak
       bubblewrap
 
       # System Management
-      topgrade                   # Rust — Universal updater
-      paru                       # Rust — AUR helper
+      topgrade # Rust — Universal updater
+      paru # Rust — AUR helper
       doas
       os-prober
       kbd
       numlockx
-      xremap                     # Rust — Key remapper
+      xremap # Rust — Key remapper
       input-leap
 
       # Archiving

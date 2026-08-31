@@ -204,7 +204,10 @@ pub fn reclaimable() -> Option<u64> {
             let safe = item.get("risk").and_then(|r| r.as_str()) == Some("safe");
             let cat_name = item.get("category").and_then(|c| c.as_str()).unwrap_or("");
             if safe && SAFE_CATEGORIES.contains(&cat_name) {
-                total += item.get("bytes").and_then(serde_json::Value::as_u64).unwrap_or(0);
+                total += item
+                    .get("bytes")
+                    .and_then(serde_json::Value::as_u64)
+                    .unwrap_or(0);
             }
         }
     }

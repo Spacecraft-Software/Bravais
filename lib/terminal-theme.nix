@@ -43,7 +43,16 @@ let
   at = builtins.elemAt;
 
   # Canonical ANSI slot names, shared by every named-color emitter.
-  ansiNames = [ "black" "red" "green" "yellow" "blue" "magenta" "cyan" "white" ];
+  ansiNames = [
+    "black"
+    "red"
+    "green"
+    "yellow"
+    "blue"
+    "magenta"
+    "cyan"
+    "white"
+  ];
 
   konsoleColorschemeWith =
     withPaletteComment:
@@ -471,10 +480,14 @@ in
   alacrittyColors =
     let
       names = ansiNames;
-      group = list: builtins.listToAttrs (builtins.genList (i: {
-        name = at names i;
-        value = at list i;
-      }) 8);
+      group =
+        list:
+        builtins.listToAttrs (
+          builtins.genList (i: {
+            name = at names i;
+            value = at list i;
+          }) 8
+        );
     in
     {
       primary = {
@@ -558,9 +571,7 @@ in
     let
       group =
         list:
-        builtins.concatStringsSep "\n" (
-          builtins.genList (i: "${at ansiNames i} = \"${at list i}\"") 8
-        );
+        builtins.concatStringsSep "\n" (builtins.genList (i: "${at ansiNames i} = \"${at list i}\"") 8);
     in
     ''
       # Steelbore Alacritty Configuration
