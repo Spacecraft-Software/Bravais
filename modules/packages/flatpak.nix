@@ -129,6 +129,35 @@
         origin = "flathub";
       }
 
+      # ── Phone connectivity ─────────────────────────────────────────────────
+      # Both come from the `cosmic` remote, and they are NOT two builds of the
+      # same thing -- their sandbox permissions say so. Connected has no
+      # network access at all (`shared=ipc`) and reads
+      # `xdg-cache/kdeconnect.daemon:ro`, i.e. it is a front-end rendering
+      # whatever KDE Connect daemon already runs on the HOST -- here nixpkgs'
+      # kdePackages.kdeconnect-kde, from modules/desktops/plasma.nix. hepp3n's
+      # app carries `shared=network` plus its own `xdg-config/kdeconnect`, so
+      # it IS a second, self-contained daemon.
+      #
+      # That makes the pair a deliberate overlap rather than an oversight, and
+      # fixes which one loses if they fight: two daemons cannot both hold the
+      # protocol's 1714-1764 range, and a sandboxed one writes its cache under
+      # ~/.var/app/ where Connected cannot read it. Keep the host daemon and
+      # drop this entry -- never the reverse.
+      #
+      # Neither pairs with a phone until 1714-1764/tcp+udp are open, and
+      # nothing in this tree opens them today: kdeconnect-kde is in
+      # systemPackages as a bare package, and `programs.kdeconnect.enable`
+      # (which is what carries the firewall rules) is not set anywhere.
+      {
+        appId = "io.github.nwxnw.cosmic-ext-connected";
+        origin = "cosmic";
+      } # Connected -- COSMIC phone applet, 102.3 MB installed
+      {
+        appId = "io.github.hepp3n.kdeconnect";
+        origin = "cosmic";
+      } # KDE Connect for COSMIC -- 142.9 MB installed
+
       # ── Networking / Internet ──────────────────────────────────────────────
       {
         appId = "de.haeckerfelix.Fragments";
@@ -284,6 +313,19 @@
         origin = "flathub";
       }
 
+      # Gods Deluxe -- a remake of the Bitmap Brothers platformer, engine and
+      # data in one package. In NEITHER channel (checked unstable), so this is
+      # the delivery policy's fallback case like LibreQuake above -- not a
+      # parked entry that nixpkgs already covers, which is why it moved up out
+      # of the Retro / Classic block rather than being uncommented in place.
+      #
+      # Cost: 108.5 MB down, 239.6 MB installed. No new runtime -- it targets
+      # org.freedesktop.Platform 25.08, which this host already carries.
+      {
+        appId = "io.github.jotd666.gods-deluxe";
+        origin = "flathub";
+      }
+
       # ── Parked (disabled to reclaim disk; re-enable by uncommenting) ──────
       # ── Gaming ─────────────────────────────────────────────────────────────
       # DISABLED — commented out to reclaim disk space; re-enable to restore
@@ -319,7 +361,6 @@
       # { appId = "com.remnantsoftheprecursors.ROTP";   origin = "flathub"; }
       # { appId = "eu.jumplink.Learn6502";              origin = "flathub"; }
       # { appId = "io.github.dosbox-staging";           origin = "flathub"; }
-      # { appId = "io.github.jotd666.gods-deluxe";      origin = "flathub"; }
       # { appId = "io.github.dman95.SASM";              origin = "flathub"; }  # Assembly IDE
       # { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
       # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
