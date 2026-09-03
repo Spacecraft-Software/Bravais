@@ -1135,9 +1135,9 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
 
-**Remote:** flathub (`https://dl.flathub.org/repo/flathub.flatpakrepo`)
+**Remotes:** flathub (`https://dl.flathub.org/repo/flathub.flatpakrepo`) and cosmic (`https://apt.pop-os.org/cosmic/cosmic.flatpakrepo`, System76's origin for the COSMIC applets — declared as the `.flatpakrepo` so the GPG key travels with it)
 
-**Packages (44):**
+**Packages (36 declared; parked entries below are commented out and not installed):**
 
 > VSCode (`com.visualstudio.code`) ships a declarative user-level flatpak override
 > at `~/.local/share/flatpak/overrides/com.visualstudio.code` (via HM `xdg.dataFile`
@@ -1149,12 +1149,13 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 | Terminals           | app.devsuite.Ptyxis (flatpak, alongside nixpkgs host install; GSettings schema org.gnome.Ptyxis — themed via shared host dconf) |
 | Browsers            | app.zen_browser.zen, com.microsoft.Edge, com.opera.Opera |
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
+| Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (Connected — COSMIC applet, no network permission; a front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (KDE Connect for COSMIC — carries `shared=network`, so it is a second daemon and overlaps nixpkgs' `kdePackages.kdeconnect-kde`). Both from the `cosmic` remote. Neither pairs with a phone until 1714-1764/tcp+udp are open, which nothing in this tree does yet |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |
 | Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
-| Gaming              | **io.github.lavenderdotpet.LibreQuake** (the only active entry — free BSD-3 Quake content plus a bundled engine; not in either channel, so Flatpak is the policy's fallback rather than a preference). Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
-| Retro / Classic     | com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.jotd666.gods-deluxe, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle |
+| Gaming              | **io.github.lavenderdotpet.LibreQuake** (free BSD-3 Quake content plus a bundled engine) and **io.github.jotd666.gods-deluxe** (Bitmap Brothers platformer remake, engine and data in one package) — the two active entries. Neither is in either channel, so Flatpak is the policy's fallback rather than a preference. Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
+| Retro / Classic     | com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle |
 | Productivity        | io.github.Qalculate, org.kde.yakuake                 |
 
 ### 11.11 Homebrew (`modules/packages/homebrew.nix`)
