@@ -23,6 +23,13 @@
     intel.enable = true;
   };
 
+  # Per-machine because the name is: this T490s reports its pointing stick as
+  # "Elan TrackPoint" (i2c Elan, event11 — `xremap --device-details` to confirm
+  # after a hardware change). Keeping xremap off it is what preserves libinput's
+  # pointing-stick default of middle-button scrolling; see the option's own
+  # description for why a grab silently destroys it.
+  steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" ];
+
   # Remote access into this machine (headless X11 virtual session via LeftWM).
   # One-time Google authorization is manual — see modules/services/chrome-remote-desktop.nix.
   steelbore.services.chromeRemoteDesktop = {
