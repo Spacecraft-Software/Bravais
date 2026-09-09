@@ -533,6 +533,13 @@ This document tracks the implementation status of the Bravais NixOS distribution
       assumption is wrong and udev rules come back
 - [ ] Pick real platform/build-tools versions when an actual project exists —
       the current `35`/`36` + `37.0.0` are sensible defaults, not requirements
+## Waydroid (2026-09-09)
+
+- [✓] `steelbore.services.waydroid` module; enabled on `bravais-thinkpad`
+- [✓] Confirmed XanMod already has binder built in — no extra modules needed
+- [ ] Run `sudo waydroid init` once (multi-hundred-MB image download)
+- [ ] Verify it starts under Niri; it CANNOT work under LeftWM (X11)
+- [ ] Test `waydroid app install` with a locally built APK
 
 ## Known Issues & Notes
 

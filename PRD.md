@@ -1329,6 +1329,37 @@ nixpkgs' ollama lags upstream badly (stable 26.05 = 0.24.0; current models 412-r
 
 ---
 
+### 12.6 Waydroid (`modules/services/waydroid.nix`)
+
+**Option:** `steelbore.services.waydroid.enable`
+
+`virtualisation.waydroid.enable` — a full Android userspace in an LXC container
+against the host kernel, for running Android apps and testing your own without a
+physical handset. Complements `steelbore.hardware.android` (§6.0), which is the
+*device* half; neither needs the other.
+
+No extra kernel work is required on this host: the XanMod kernel already builds
+in `CONFIG_ANDROID_BINDER_IPC=y`, `CONFIG_ANDROID_BINDERFS=y` and
+`CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"`, which is the usual
+Waydroid blocker on NixOS.
+
+**Wayland only.** Works under Niri, GNOME, COSMIC and Plasma's Wayland session;
+**not** under LeftWM, which is a startx/X11 session (`modules/login/default.nix`)
+and for which Waydroid has no backend.
+
+The Android system image is a deliberate one-time imperative step — a
+multi-hundred-MB download that no NixOS option fetches:
+
+```
+sudo waydroid init          # GAPPS variant: sudo waydroid init -s GAPPS
+waydroid session start
+waydroid show-full-ui
+waydroid app install ./app-debug.apk
+```
+
+`adb` reaches the container once a session is running, which is what makes
+`gradle installDebug` and Android Studio work against it.
+
 ## 13. User Configuration (Home Manager)
 
 ### 13.1 Basic Settings (`users/mj/home.nix`)
