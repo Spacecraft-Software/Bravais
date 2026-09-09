@@ -319,6 +319,10 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Declare Flatpak packages (44+ apps across browsers, communication, networking, security, development, gaming, retro, productivity, terminals, incl. de.haeckerfelix.Fragments torrent client and org.gnome.baobab disk usage analyzer)
 - [✓] Add app.devsuite.Ptyxis flatpak (alongside nixpkgs host install; both themed via shared host dconf `org/gnome/Ptyxis/Profiles/steelbore` — flatpak app id differs but GSettings schema is org.gnome.Ptyxis)
 - [✓] Fix VSCode flatpak launch — declarative user override (`xdg.dataFile`) prepends `/app/bin:/usr/bin` to PATH so the `code` entrypoint resolves (was `bwrap: execvp code: No such file or directory`)
+- [✓] Add io.github.jotd666.gods-deluxe (Gaming) — un-parked from the Retro / Classic block and moved to the active Gaming section, since it is in neither channel and so is a delivery-policy fallback rather than a nixpkgs duplicate
+- [✓] Add io.github.nwxnw.cosmic-ext-connected (Connected) and io.github.hepp3n.kdeconnect (KDE Connect for COSMIC), both from the `cosmic` remote — Connected has no network permission and front-ends a host daemon; the KDE Connect entry carries `shared=network` and so overlaps nixpkgs `kdePackages.kdeconnect-kde` (modules/desktops/plasma.nix)
+- [ ] Open KDE Connect ports 1714-1764/tcp+udp — neither phone-connectivity app can pair until then; `programs.kdeconnect.enable` (which carries the firewall rules) is not set anywhere, only the bare package is in systemPackages
+- [ ] Decide which KDE Connect daemon to keep — the nixpkgs one or the COSMIC Flatpak. Two daemons cannot both hold 1714-1764, and a sandboxed one writes its cache under `~/.var/app/` where Connected cannot read it
 
 ### homebrew.nix
 
