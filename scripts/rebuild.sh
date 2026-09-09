@@ -59,7 +59,12 @@ Options:
   --trace         add --show-trace --verbose (to diagnose eval failures)
   --skills-only   bump only `construct`; skip GC, the mirror and the probes
   --no-flatpak    skip the detached Flatpak update
+  --yes           skip the question about using `preflight` instead
   -h, --help      show this help
+
+Superseded by `preflight` (Rust), which takes all of the above and adds
+--reclaim, --gc-all, --journal-days, --mcp-deploy and --json.
+See: preflight --help
 
 Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 https://Bravais.SpacecraftSoftware.org/
@@ -74,11 +79,39 @@ while [ $# -gt 0 ]; do
         --trace)       trace=1 ;;
         --skills-only) skills_only=1 ;;
         --no-flatpak)  no_flatpak=1 ;;
+        --yes)         assume_yes=1 ;;
         -h|--help|help) usage; exit 0 ;;
         *) say "$C_ERR" "unknown argument '$1' — try: rebuild.sh --help"; exit 2 ;;
     esac
     shift
 done
+
+# ── Deprecation gate ────────────────────────────────────────────────────────
+# Mirrors the same gate in users/mj/rebuild.nu — change one, change the other
+# (see AGENTS.md). `preflight` (pkgs/preflight/, Rust) accepts every flag this
+# script does and adds --reclaim, --gc-all, --journal-days, --mcp-deploy and
+# --json, so it is a strict superset and the question is a real one.
+#
+# `[ -t 0 ]` is POSIX and is the whole reason this is safe to put in a script
+# that agents and rescue TTYs run: with stdin closed there is nobody to answer,
+# so refuse loudly rather than block on `read` forever or fall through and
+# rebuild unasked.
+if [ "${assume_yes:-0}" != "1" ]; then
+    if [ ! -t 0 ]; then
+        say "$C_ERR" "rebuild.sh: refusing to run non-interactively without --yes"
+        say "$C_DIM" "  prefer: preflight"
+        exit 2
+    fi
+    say "$C_WARN" "\`rebuild.sh\` is superseded by \`preflight\`, the Rust rebuild orchestrator."
+    say "$C_DIM" "  preflight takes the same flags and adds --reclaim, --gc-all,"
+    say "$C_DIM" "  --journal-days, --mcp-deploy and --json. See: preflight --help"
+    printf 'continue with rebuild.sh anyway? [y/N] '
+    read -r reply
+    case "$reply" in
+        y|Y|yes|YES|Yes) ;;
+        *) say "$C_OK" "aborted — run \`preflight\` instead"; exit 0 ;;
+    esac
+fi
 
 cd "$REPO"
 
