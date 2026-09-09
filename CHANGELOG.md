@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Android support: `steelbore.hardware.android` + a `nix develop .#android`
+  devShell.** The module installs `pkgs.android-tools` and accepts the SDK
+  licence; the SDK itself stays out of the system closure and lives in the
+  devShell, because platform and build-tools versions belong to a project
+  rather than to a machine.
+
+  Notably **not** `programs.adb.enable` — that option has been removed and now
+  fails evaluation, since systemd 260 handles uaccess automatically. No
+  `adbusers` group, and no re-login needed. Versions were read out of
+  androidenv's pinned `repo.json` rather than guessed: platforms `35`/`36`
+  (API 37 does not exist there) and build-tools `37.0.0`.
+
 ### Changed
 
 - **The fingerprint reader no longer autosuspends.** It sat at

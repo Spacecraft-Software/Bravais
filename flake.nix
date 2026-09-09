@@ -347,6 +347,47 @@
         }
       );
 
+      # ── Android SDK ───────────────────────────────────────────────────────
+      # A separate nixpkgs instance, not `devPkgs`: androidenv refuses to build
+      # unless `android_sdk.accept_license` is set, and that is a *pkgs config*
+      # flag. `nixpkgs.config.android_sdk.accept_license` in
+      # modules/hardware/android.nix covers the SYSTEM instance only — a flake
+      # output instantiates its own nixpkgs and inherits nothing from a NixOS
+      # module, so it has to be set again here. Neither setting covers the
+      # other; both are required.
+      androidPkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          android_sdk.accept_license = true;
+        };
+      };
+
+      # Versions are stated here rather than defaulted, because androidenv
+      # resolves them against a pinned repo.json and fails on anything absent.
+      # Measured against this nixpkgs (26.05): platform API levels 27-36 exist
+      # and 37 does NOT, despite repo.json's `latest.platforms = 37.0` — that
+      # field is a package revision, not an API level. Verify before bumping:
+      #   nix eval --raw .#nixosConfigurations.bravais-thinkpad.pkgs.path
+      #   then read pkgs/development/mobile/androidenv/repo.json
+      androidComposition = androidPkgs.androidenv.composeAndroidPackages {
+        platformVersions = [
+          "35"
+          "36"
+        ];
+        buildToolsVersions = [ "37.0.0" ];
+        # All three default to false and are left off deliberately: the NDK is
+        # only needed for native code, and the emulator plus system images add
+        # several GB for a machine that has a real handset on USB (see
+        # steelbore.hardware.android). Turn them on per project instead.
+        includeNDK = false;
+        includeEmulator = false;
+        includeSystemImages = false;
+      };
+
+      androidSdk = androidComposition.androidsdk;
+      androidSdkRoot = "${androidSdk}/libexec/android-sdk";
+
       # ── Channel selector ──────────────────────────────────────────────────
       # Maps a channel name to the correct nixpkgs and home-manager input.
       channels = {
@@ -567,13 +608,41 @@
       # alias warning never fires from devShell / formatter evaluation.
       formatter.${system} = devPkgs.nixfmt;
 
-      devShells.${system}.default = devPkgs.mkShell {
-        packages = [
-          nil.packages.${system}.default # Nix language server (from flake input)
-          devPkgs.nixfmt # Nix formatter (RFC-style; canonical attr)
-          devPkgs.statix # Nix linter / antipattern checker
-          devPkgs.deadnix # dead-code (unused binding) finder
-        ];
+      # `nix develop .#android -c nu` — Nushell is the login shell here, and
+      # `nix develop` would otherwise drop into bash. The SDK is NOT in
+      # environment.systemPackages on purpose; see modules/hardware/android.nix.
+      devShells.${system} = {
+        # Nix forbids two dynamic attribute paths sharing a key, so both shells
+        # are defined in ONE `devShells.${system}` attrset rather than as
+        # separate `devShells.${system}.<name>` assignments.
+        android = androidPkgs.mkShell {
+          packages = [
+            androidSdk
+            androidPkgs.jdk17 # AGP 8.x requires JDK 17+
+            androidPkgs.gradle
+          ];
+
+          ANDROID_HOME = androidSdkRoot;
+          ANDROID_SDK_ROOT = androidSdkRoot;
+          JAVA_HOME = androidPkgs.jdk17.home;
+
+          # `adb` comes from programs.adb (system-wide, with the udev rules) as
+          # well as from the SDK. Putting the SDK's platform-tools first keeps
+          # the client and the SDK in step; the udev rules are what actually
+          # matter for device access and are independent of which binary runs.
+          shellHook = ''
+            export PATH="${androidSdkRoot}/platform-tools:${androidSdkRoot}/cmdline-tools/latest/bin:$PATH"
+          '';
+        };
+
+        default = devPkgs.mkShell {
+          packages = [
+            nil.packages.${system}.default # Nix language server (from flake input)
+            devPkgs.nixfmt # Nix formatter (RFC-style; canonical attr)
+            devPkgs.statix # Nix linter / antipattern checker
+            devPkgs.deadnix # dead-code (unused binding) finder
+          ];
+        };
       };
 
       # `nix flake check` evaluates *and* builds both real machine configs

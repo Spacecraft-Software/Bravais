@@ -195,7 +195,7 @@ let
 
     if [ -z "$default_coll" ] || [ "$default_coll" = "/" ]; then
       say critical dialog-error "Keyring: no default collection" \
-        "The 'default' alias is unset — browsers cannot resolve a Safe Storage key at all. See USER_MANUAL 7.5 for the repair."
+        "The 'default' alias is unset — browsers cannot resolve a Safe Storage key at all. See USER_MANUAL 7.6 for the repair."
       exit 3
     fi
 

@@ -2,6 +2,7 @@
 # Steelbore Bravais — Hardware Module Entry Point
 {
   imports = [
+    ./android.nix
     ./audio-led.nix
     ./bluetooth.nix
     ./fingerprint.nix

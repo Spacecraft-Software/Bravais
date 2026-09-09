@@ -17,6 +17,7 @@
   networking.hostName = "bravais-thinkpad";
 
   steelbore.hardware = {
+    android.enable = true;
     audioLed.enable = true;
     bluetooth.enable = true;
     fingerprint.enable = true;

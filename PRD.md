@@ -446,6 +446,34 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 ## 6. Hardware Modules
 
+### 6.0 Android (`modules/hardware/android.nix`)
+
+**Option:** `steelbore.hardware.android.enable`
+
+Installs `pkgs.android-tools` (adb, fastboot) and sets
+`nixpkgs.config.android_sdk.accept_license = true`.
+
+**Not `programs.adb.enable`** — that option was removed and now fails
+evaluation: systemd 260 handles uaccess automatically, so the user logged in at
+the seat reaches an attached device with no group membership and no re-login.
+The `adbusers` group no longer exists in nixpkgs at all.
+
+The **SDK is not installed system-wide.** It lives in `devShells.<system>.android`
+(`flake.nix`), entered with `nix develop .#android -c nu` — Nushell is the login
+shell, and `nix develop` would otherwise drop into bash. Platform and
+build-tools versions belong to a project, not a machine, and the emulator plus
+system images would add several GB to every system closure.
+
+Versions are stated explicitly because `androidenv.composeAndroidPackages`
+resolves them against a pinned `repo.json` and fails on anything absent: on
+26.05 that means platform API levels **27-36** (37 does **not** exist there,
+despite `latest.platforms = 37.0`) and build-tools up to **37.0.0**. NDK,
+emulator and system images are off by default; turn them on per project.
+
+`accept_license` must be set **twice** — once in the module for the system pkgs
+instance, once in the flake's own `androidPkgs` — because a flake output
+instantiates its own nixpkgs and inherits nothing from a NixOS module.
+
 ### 6.1 Fingerprint Reader (`modules/hardware/fingerprint.nix`)
 
 **Option:** `steelbore.hardware.fingerprint.enable`
