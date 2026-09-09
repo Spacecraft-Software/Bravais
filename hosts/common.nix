@@ -176,6 +176,13 @@
     ];
 
     # Services
+    services.adguardvpn = {
+      enable = true;
+      # The route script only takes effect once the client's own routing mode
+      # is set to `script`, which lives in its encrypted config and cannot be
+      # declared here: `adguardvpn-cli config set-tun-routing-mode script`.
+      routeScript.enable = true;
+    };
     services.podman.enable = true;
     services.ollama.enable = true; # local LLM server (official prebuilt, CPU-only — version pinned in pkgs/ollama/)
 

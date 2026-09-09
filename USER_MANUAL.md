@@ -644,6 +644,71 @@ Two things to know:
 Enroll only *after* the login keyring is healthy (`steelbore-keyring-check`
 returns 0), since enrollment writes into the default collection.
 
+### 7.9 AdGuard VPN
+
+Connecting, logging in and choosing a location stay with the vendor client:
+
+```bash
+adguardvpn-cli connect -l US
+adguardvpn-cli status
+```
+
+**Disconnecting does not.** `adguardvpn-cli disconnect` hangs forever in TUN
+mode on this system and prints nothing while it does — it signals its own sudo
+shim, and sudo-rs blocks SIGTERM there, so the signal is never delivered and
+the client polls for an exit that never comes. Use:
+
+```bash
+steelbore-vpn tunnel status          # what is actually running (no privileges)
+steelbore-vpn tunnel stop --dry-run  # what a teardown would signal, and why
+sudo steelbore-vpn tunnel stop --yes # the teardown itself
+```
+
+If you ever do hit the hang, **do not Ctrl+C and then kill the pid the client
+gave you.** That pid is the shim; killing it makes `disconnect` report "VPN
+stopped" while leaving the real tunnel running as an orphan with `tun0` still
+up and nothing pointing at it. `steelbore-vpn tunnel stop` signals the tunnel
+instead, in the order that leaves nothing behind, and it is idempotent — running
+it when nothing is connected succeeds and says so.
+
+`steelbore-vpn tunnel list` shows the signal state that explains a hang: a
+process flagged both `sigterm-blocked` and `sigterm-pending` is holding a
+SIGTERM it can never handle.
+
+#### Routing mode
+
+TUN mode is only useful here in **SCRIPT** routing mode:
+
+| Mode | Routes | DNS | Verdict |
+|------|--------|-----|---------|
+| `auto` | client installs them | **rewrites `/etc/resolv.conf`** | displaces the DoT + DNSSEC resolver |
+| `none` | **none at all** | untouched | connects, protects nothing |
+| `script` | from our root-owned script | untouched | what this system uses |
+
+The script is installed for you, root-owned and mode 0700, by
+`steelbore.services.adguardvpn.routeScript`. The mode itself lives inside the
+client's encrypted config, so it is a one-time step Nix cannot do:
+
+```bash
+adguardvpn-cli config set-tun-routing-mode script
+adguardvpn-cli config show | grep -i routing     # expect: script
+steelbore-vpn tunnel status                      # expect: route hook ok (root, 0700)
+```
+
+Do **not** run `adguardvpn-cli config create-route-script` — it hangs the same
+way `disconnect` does, and writes a script the client then rejects as
+incorrectly permissioned.
+
+After connecting, the split default should be visible and DNS unchanged:
+
+```bash
+ip route | grep -E '0\.0\.0\.0/1|128\.0\.0\.0/1'   # both, via tun0
+resolvectl status | grep -i dnssec                    # still DoT + DNSSEC
+```
+
+SOCKS mode (`adguardvpn-cli config set-mode SOCKS`) remains the unprivileged
+alternative: no root, no sudo shim, and this whole failure mode cannot occur.
+
 ---
 
 ## 8. Steelbore Theme
