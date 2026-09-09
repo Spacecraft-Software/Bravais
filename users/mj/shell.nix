@@ -42,6 +42,63 @@ let
     '';
   };
 
+  # `su` reminder — one POSIX helper, bound in every shell below.
+  #
+  # Why a helper and not four implementations: the message and the reasoning
+  # must not drift, so they live in exactly one place and each shell only binds
+  # the NAME. Brush is Bash-family and reads ~/.bashrc (verified), so the bash
+  # binding covers Brush too — three bindings, four shells.
+  #
+  # Why not a wrapper binary on PATH, which would need no shell bindings at
+  # all: `/run/wrappers/bin` is FIRST in the session PATH (measured), ahead of
+  # every profile dir, so a `su` placed in the user or system profile could
+  # never shadow the setuid wrapper. Shell-level binding is also the more
+  # correct scope — it reaches interactive use only and cannot affect a script,
+  # a systemd unit, or PAM.
+  #
+  # It execs `/run/wrappers/bin/su` and NOT the store path: `su` here comes
+  # from sudo-rs, and only the wrappers copy carries setuid. Running the store
+  # binary directly as a normal user just fails.
+  suGuard = pkgs.writeShellScriptBin "steelbore-su-guard" ''
+    # POSIX subset under a bash shebang, per Standard §7.1 and the house
+    # pattern in scripts/rebuild.sh. Verify with:
+    #   nix run nixpkgs#shellcheck -- -s sh <this script>
+    set -u
+
+    real_su=/run/wrappers/bin/su
+
+    if [ ! -x "$real_su" ]; then
+      printf 'steelbore-su-guard: %s missing or not executable\n' "$real_su" >&2
+      exit 127
+    fi
+
+    # Exec straight through when there is nobody to ask, or when the caller
+    # opted out. This is a REMINDER, not a safety gate: a non-interactive `su`
+    # (a script, a unit, a pipe) must behave exactly as it always did rather
+    # than block on a `read` nobody can answer. That is the opposite choice
+    # from scripts/rebuild.sh, which refuses non-interactively -- there, an
+    # unattended full rebuild is the dangerous outcome; here it is the normal
+    # one.
+    if [ "''${STEELBORE_SU_OK:-0}" = "1" ] || [ ! -t 0 ]; then
+      exec "$real_su" "$@"
+    fi
+
+    printf '%s\n' "su authenticates ROOT; sudo -i authenticates YOU."
+    printf '%s\n' "  sudo -i   your password or fingerprint, and gated by execWheelOnly (wheel only)"
+    printf '%s\n' "  su        root's password; /etc/pam.d/su has no pam_wheel, so nothing gates who may try"
+    printf '%s\n' "  another user: sudo -u <name> -i"
+    printf '%s\n' "Skip this reminder: STEELBORE_SU_OK=1 (any shell), 'command su' (bash/brush), '^su' (nu)."
+    printf 'continue with su anyway? [y/N] '
+    read -r reply
+    case "$reply" in
+      y | Y | yes | YES | Yes) exec "$real_su" "$@" ;;
+      *)
+        printf '%s\n' "aborted — use: sudo -i"
+        exit 0
+        ;;
+    esac
+  '';
+
   # Handler roles (lib/default-apps.nix). `termEditor` is what $EDITOR runs;
   # `editor` — deliberately a separate role — is what a double-click opens.
   # Selection is one word per role in the repo-root default-apps.nix.
@@ -77,7 +134,10 @@ let
 in
 {
   # Session variables
-  home.packages = [ rebuildBin ];
+  home.packages = [
+    rebuildBin
+    suGuard
+  ];
 
   home.sessionVariables = {
     EDITOR = termEditor;
@@ -131,6 +191,12 @@ in
       bashrcExtra = ''
         export SSH_AUTH_SOCK="${gitwaySockPosix}"
         export PATH="$PATH:${posixPathAppend}"
+
+        # `su` reminder. A function, not an alias: an alias cannot take the
+        # "$@" that must reach the helper intact. Covers Brush as well, which
+        # is Bash-family and reads ~/.bashrc (verified empirically).
+        # `command su` bypasses this function and reaches the real su directly.
+        su() { ${suGuard}/bin/steelbore-su-guard "$@"; }
 
         # Grok CLI tab-completion. grok is installed out-of-band in
         # ~/.local/bin (not via Nix), so it may be absent on a fresh build —
@@ -368,6 +434,12 @@ in
     nushell = {
       enable = true;
       configFile.text = ''
+        # `su` reminder. `--wrapped` collects every argument, including flags
+        # Nushell would otherwise try to parse itself, and `^` calls the
+        # external helper rather than recursing into this definition. `^su`
+        # bypasses this and reaches the real su directly.
+        def --wrapped su [...rest] { ^${suGuard}/bin/steelbore-su-guard ...$rest }
+
         # Override SSH_AUTH_SOCK at every interactive shell start. PAM's
         # pam_gnome_keyring sets it to /run/user/$UID/keyring/ssh under
         # greetd, which (a) often points at a non-existent socket and
@@ -811,6 +883,12 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     "ion/initrc".text = ''
       # Steelbore Ion Shell Init
+
+      # `su` reminder. An ALIAS, not a function: Ion's `fn` requires a fixed
+      # arity and rejects a variadic wrapper outright ("invalid number of
+      # arguments supplied"), whereas an alias forwards every argument
+      # unchanged (verified). STEELBORE_SU_OK=1 skips the reminder.
+      alias su = ${suGuard}/bin/steelbore-su-guard
 
       # Override SSH_AUTH_SOCK back to gitway-agent's socket. PAM's
       # pam_gnome_keyring otherwise sets it to /run/user/$UID/keyring/ssh.
