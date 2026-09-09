@@ -49,11 +49,51 @@ let
 
   # Shared by the systemd unit and by the LeftWM theme hook, which cannot use a
   # unit at all (see below). One definition so the two can never drift.
-  xremapCommand = "${lib.getExe pkgs.xremap} --mouse --watch=device ${xremapConfig}";
+  xremapCommand = lib.concatStringsSep " " (
+    [
+      (lib.getExe pkgs.xremap)
+      "--mouse"
+    ]
+    ++ map (d: "--ignore ${lib.escapeShellArg d}") cfg.ignoredDevices
+    ++ [
+      "--watch=device"
+      "${xremapConfig}"
+    ]
+  );
 in
 {
   options.steelbore.desktops.mouseWorkspaceNav = {
     enable = lib.mkEnableOption "mouse side-button workspace navigation (via xremap)";
+
+    ignoredDevices = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "Elan TrackPoint" ];
+      description = ''
+        Device names passed to `xremap --ignore`, so it neither grabs them nor
+        re-emits their events.
+
+        This exists for POINTING STICKS specifically. libinput turns
+        middle-button scrolling on by DEFAULT only for devices carrying
+        `INPUT_PROP_POINTING_STICK` — that default is the entire reason a
+        ThinkPad TrackPoint scrolls when you hold the middle button and push the
+        nub. xremap EVIOCGRABs each device it listens to and replays it through
+        one virtual device that has `PROP=0`, so a grabbed TrackPoint reaches
+        the compositor as a plain mouse and silently loses the default. The
+        buttons and the pointer keep working, which is what makes it look like a
+        compositor bug rather than this unit.
+
+        Ignoring the stick costs nothing: a TrackPoint reports only
+        BTN_LEFT/BTN_RIGHT/BTN_MIDDLE, never the BTN_SIDE/BTN_EXTRA this module
+        remaps, so it could never have contributed to workspace nav.
+
+        Unlike `--device` (an allowlist, which is why it is not used here — see
+        the unit below), an entry naming an absent device is harmless, so this
+        list does not break when a different mouse is plugged in.
+
+        Names must match `xremap --device-details` exactly.
+      '';
+    };
 
     command = lib.mkOption {
       type = lib.types.str;
@@ -118,6 +158,9 @@ in
     # To narrow it to a single device later, add `--device` — run
     # `xremap --device-details` to see the names. Deliberately not hardcoded
     # here: a device name breaks the moment a different mouse is plugged in.
+    # `ignoredDevices` above is the inverse and does not carry that risk, which
+    # is why the TrackPoint is excluded that way rather than by allowlisting the
+    # mouse.
     #
     # --watch=device matters on a laptop. Without it a Bluetooth mouse that
     # reconnects after suspend is never picked up, and the buttons silently
