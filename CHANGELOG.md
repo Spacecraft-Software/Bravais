@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`steelbore-cosmic-unmax`** — the COSMIC counterpart to
+  `steelbore-niri-unmax`, reverting clients that maximize themselves right
+  after opening. COSMIC exposes no setting for this, and it is the client's
+  request that cosmic-comp is honouring, so no window rule can refuse it.
+  A Rust Wayland client using `zcosmic_toplevel_manager_v1.unset_maximized`,
+  run as a user service on `cosmic-session.target`.
+
+  The three protocol XMLs are vendored and compiled with `wayland-scanner`, so
+  the crate resolves from crates.io alone rather than needing a
+  `cargoLock.outputHashes` entry for the `cosmic-protocols` git repository.
+
+  One bug worth recording, found by running it against a live COSMIC session
+  rather than by reading it: `first_seen` is set when the toplevel handle is
+  created, which for windows that were *already open* is daemon startup — so
+  every one of them looked freshly appeared, and a window maximized hours
+  earlier would have been unmaximized seconds after login. Pre-existing
+  toplevels are now settled after one initial Wayland roundtrip.
+
+
 - **Android support: `steelbore.hardware.android` + a `nix develop .#android`
   devShell.** The module installs `pkgs.android-tools` and accepts the SDK
   licence; the SDK itself stays out of the system closure and lives in the

@@ -8,6 +8,7 @@
   steelbore-audio-led = pkgs.callPackage ./steelbore-audio-led/package.nix { };
   steelbore-beacon = pkgs.callPackage ./steelbore-beacon/package.nix { };
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
+  steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };

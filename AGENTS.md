@@ -108,7 +108,7 @@ users/mj/default-apps.nix  # THE ONLY xdg.mimeApps block + the FileManager1 D-Bu
 pkgs/default.nix           # callPackage index; also the flake's packages.* output
 pkgs/                      # In-tree packages — `pkgs/default.nix` is the authoritative index:
                            #   steelbore-audio-led, steelbore-beacon,
-                           #   steelbore-niri-unmax, claude-desktop,
+                           #   steelbore-niri-unmax, steelbore-cosmic-unmax, claude-desktop,
                            #   chrome-remote-desktop, ollama, github-copilot-app, bravais-mcp,
                            #   opencode-desktop, goose-desktop, codex-desktop,
                            #   adguardvpn-cli, crates-mcp, obscura, skyroads

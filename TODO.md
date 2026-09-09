@@ -541,6 +541,17 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify it starts under Niri; it CANNOT work under LeftWM (X11)
 - [ ] Test `waydroid app install` with a locally built APK
 
+## COSMIC un-maximize (2026-09-09)
+
+- [✓] `pkgs/steelbore-cosmic-unmax/` — Rust Wayland client, vendored protocol XML
+- [✓] `steelbore.desktops.cosmicUnmax` module on `cosmic-session.target`
+- [✓] Verified live on COSMIC: globals bind, handles upgrade, state decodes,
+      6 pre-existing windows correctly left alone
+- [ ] Verify the ACTING path end-to-end — open a self-maximizing client
+      (Chrome) with the daemon running and confirm it is unmaximized once
+- [ ] Verify the not-COSMIC fallback exits 0 under Niri/GNOME/Plasma (could
+      not be tested from a COSMIC session)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
