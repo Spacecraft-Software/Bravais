@@ -33,6 +33,10 @@
 
   # Remote access into this machine (headless X11 virtual session via LeftWM).
   # One-time Google authorization is manual — see modules/services/chrome-remote-desktop.nix.
+  # Waydroid is Wayland-only: it works under Niri, GNOME, COSMIC and Plasma's
+  # Wayland session, and NOT under LeftWM (startx/X11, no X11 backend exists).
+  steelbore.services.waydroid.enable = true;
+
   steelbore.services.chromeRemoteDesktop = {
     enable = true;
     user = primaryUser;

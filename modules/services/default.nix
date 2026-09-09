@@ -5,5 +5,6 @@
     ./chrome-remote-desktop.nix
     ./ollama.nix
     ./podman.nix
+    ./waydroid.nix
   ];
 }

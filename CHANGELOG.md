@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `adbusers` group, and no re-login needed. Versions were read out of
   androidenv's pinned `repo.json` rather than guessed: platforms `35`/`36`
   (API 37 does not exist there) and build-tools `37.0.0`.
+- **Waydroid: `steelbore.services.waydroid`.** Android apps in an LXC container
+  against the host kernel — for running apps and testing your own without a
+  handset. The counterpart to `steelbore.hardware.android` above, which is the
+  *device* half (adb to a real phone); neither needs the other. The usual NixOS blocker does not apply here: the XanMod kernel
+  already has `CONFIG_ANDROID_BINDER_IPC=y` and `CONFIG_ANDROID_BINDERFS=y`
+  built in, so no extra module packages are needed.
+
+  Wayland-only — works under Niri, GNOME, COSMIC and Plasma-Wayland, and **not**
+  under LeftWM, which is an X11 startx session with no Waydroid backend. The
+  Android system image is a one-time `sudo waydroid init`, a multi-hundred-MB
+  download that no NixOS option fetches for you.
 
 ### Changed
 
