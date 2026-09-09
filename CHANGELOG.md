@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **3-finger touchpad swipe switches workspaces under COSMIC**, matching niri.
+  cosmic-comp bound 4 fingers to workspace switching and 3 to nothing — its
+  3-finger arm is a literal upstream `// TODO: 3 finger gestures` returning
+  `None`. An overlay makes 3 share the 4 arm, so 4-finger keeps working.
+
+  Unifying on **3** rather than 4 loses nothing: moving niri to 4 would collide
+  with its Overview gesture and would also be a source patch, of the
+  compositor whose 4-finger arm is already useful.
+
+  **Cost:** cosmic-comp builds from source (~22 min), losing the binary cache.
+  `doCheck = false` is required, not a nicety — `buildPhase` finishes in
+  ~21m30s and then `cargoCheckHook` recompiles the crate at `-j 8` to run
+  upstream's tests, which exhausted memory twice on this machine (the first
+  attempt let the kernel OOM-kill both browsers). Same remedy as `nil`
+  (constraint #13). Upstream's tests say nothing about a gesture patch and
+  Hydra has already run them.
+
 ### Added
 
 - **`steelbore-cosmic-unmax`** — the COSMIC counterpart to
