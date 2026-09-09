@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **3-finger touchpad swipe now switches workspaces under COSMIC**, matching
+  niri. cosmic-comp bound 4 fingers to workspace switching and 3 to nothing —
+  its 3-finger arm is a literal upstream `// TODO: 3 finger gestures` returning
+  `None`. An overlay in `modules/core/nix.nix` makes 3 share the 4 arm, so
+  4-finger keeps working too.
+
+  Unifying on **3** rather than 4 is the direction that loses nothing: moving
+  niri to 4 would collide with its Overview gesture, and niri exposes no
+  finger-count config either (`gestures {}` has only `dnd-edge-view-scroll`,
+  `dnd-edge-workspace-switch`, `hot-corners`), so that route would have been a
+  source patch of a compositor whose 4-finger arm already does something
+  useful.
+
+  **Cost:** cosmic-comp now builds from source, losing the binary cache for a
+  large Rust package. There is no configuration path to this behaviour.
+
 ### Added
 
 - **Android support: `steelbore.hardware.android` + a `nix develop .#android`

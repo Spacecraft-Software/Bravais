@@ -541,6 +541,16 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify it starts under Niri; it CANNOT work under LeftWM (X11)
 - [ ] Test `waydroid app install` with a locally built APK
 
+## 3-finger swipe parity (2026-09-09)
+
+- [✓] Overlay patching cosmic-comp so 3 fingers switch workspaces (4 still works)
+- [✓] Confirmed niri already binds 3 = workspace, 4 = Overview, both hardcoded
+- [ ] Confirm the patched cosmic-comp builds (`--replace-fail` fails loudly if
+      upstream fills in the TODO) and that 3-finger actually switches in a
+      COSMIC session
+- [ ] Re-check the substitution after any cosmic-comp version bump — the arms
+      it targets are upstream source lines, not a stable interface
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
