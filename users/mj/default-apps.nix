@@ -20,6 +20,22 @@ let
   activePackages = map (r: r.package pkgs) (
     builtins.filter (r: r.package != null) (builtins.attrValues roles)
   );
+
+  # App-private deep-link schemes. These are NOT handler roles and must not
+  # become ones: a role owns a MIME list that several apps could fill, whereas
+  # `x-scheme-handler/claude` has exactly one possible handler by construction
+  # — the app that minted the scheme. The apps self-register these at launch by
+  # rewriting mimeapps.list; declaring them here means the `force = true` below
+  # overwrites that file with a superset rather than dropping working deep
+  # links on every rebuild. Add an entry only for a scheme whose owning app is
+  # installed by a modules/packages bundle.
+  selfRegisteredSchemes = {
+    "x-scheme-handler/antigravity" = "antigravity.desktop";
+    "x-scheme-handler/claude" = "com.anthropic.Claude.desktop";
+    "x-scheme-handler/codex" = "chatgpt.desktop";
+  };
+
+  mimeBindings = steelboreApps.mimeDefaults // selfRegisteredSchemes;
 in
 {
   # ═══════════════════════════════════════════════════════════════════════════
@@ -27,8 +43,7 @@ in
   # ═══════════════════════════════════════════════════════════════════════════
   # Read by desktop-agnostic xdg-open / xdg-mime and by the portals, so this
   # holds regardless of which of the six session desktops is active. Home
-  # Manager owns the file (a pre-existing one is displaced to
-  # mimeapps.list.backup) — do NOT hand-edit it, and do not add a second
+  # Manager owns the file — do NOT hand-edit it, and do not add a second
   # xdg.mimeApps block elsewhere: they merge silently until the day two of
   # them name the same type, which is an evaluation conflict.
   #
@@ -38,13 +53,25 @@ in
   # The bindings are generated from the ROLE's MIME list, never from the
   # application's own MimeType= line. That is the whole point — see the
   # header of lib/default-apps.nix for the x-zerosize case that forced it.
+  #
+  # `force = true` is load-bearing, not tidiness. Desktop apps rewrite
+  # ~/.config/mimeapps.list at runtime through GIO to register their own URL
+  # schemes, which replaces HM's symlink with a real file. Without `force`,
+  # the next activation displaces that file to mimeapps.list.backup, and the
+  # activation AFTER that aborts with "Existing file
+  # '…/mimeapps.list.backup' would be clobbered" — a two-rebuild fuse that
+  # strands EVERY Home Manager change while `nixos-rebuild` still reports
+  # success (see AGENTS.md constraint #30). Same treatment as the cosmic-term
+  # profiles, the VSCode Flatpak override and .gtkrc-2.0.
+  xdg.configFile."mimeapps.list".force = true;
+
   xdg.mimeApps = {
     enable = true;
-    defaultApplications = steelboreApps.mimeDefaults;
+    defaultApplications = mimeBindings;
 
     # Also register the active handler as an association, so it ranks first
     # in "Open with" menus instead of merely winning silently as the default.
-    associations.added = lib.mapAttrs (_: id: [ id ]) steelboreApps.mimeDefaults;
+    associations.added = lib.mapAttrs (_: id: [ id ]) mimeBindings;
   };
 
   home.packages = activePackages;
