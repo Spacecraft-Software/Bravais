@@ -54,6 +54,7 @@
     # Desktop environments
     desktops.gnome.enable = true;
     desktops.cosmic.enable = true; # stable pkgs (nixos-26.05)
+    desktops.cosmicUnmax.enable = true; # same post-open self-maximize revert, COSMIC side
     desktops.plasma.enable = true;
     desktops.niri.enable = true;
     desktops.niriUnmax.enable = true; # revert Chrome-style post-open self-maximize

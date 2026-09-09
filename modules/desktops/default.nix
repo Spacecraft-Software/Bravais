@@ -4,6 +4,7 @@
   imports = [
     ./gnome.nix
     ./cosmic.nix
+    ./cosmic-unmax.nix
     ./plasma.nix
     ./shared.nix
     ./niri.nix
