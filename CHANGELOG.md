@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The fingerprint reader no longer autosuspends.** It sat at
+  `power/control = auto` with a 2 s delay, and the vfs0090 firmware does not
+  survive being woken mid-scan — it drops off the USB bus and re-enumerates.
+  Measured within a single second on 2026-09-08: kernel `usb 1-9: USB
+  disconnect`, fprintd `device was disconnected`, cosmic-greeter's `pam_fprintd`
+  release failure, then a fresh enumeration. The user-visible symptom was the
+  COSMIC lock screen showing "place your finger on the reader" and withdrawing
+  it before a finger could arrive. A udev rule pins `power/control="on"` for
+  `06cb:00bd`.
+
+- **`cosmic-greeter` keeps fingerprint.** It was initially classified as a
+  session-entry path and denied, which would have removed the only fingerprint
+  surface actually in use. On this host greetd is the display manager, so
+  cosmic-greeter is *only* the COSMIC lock screen — where the 11400/12200
+  inversion is harmless, exactly as for `gtklock`. The classification now
+  follows `services.displayManager.cosmic-greeter.enable`, so it returns to
+  `fprintDeny` by itself if it ever becomes the greeter.
+
 - **Fingerprint is now an explicit allow/deny policy, not an inherited
   default.** `security.pam.services.<name>.fprintAuth` defaults to
   `services.fprintd.enable`, which had silently placed `pam_fprintd` in **28 of

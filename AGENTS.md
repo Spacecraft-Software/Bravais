@@ -278,7 +278,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 | Secure Boot | `sbctl` (Rust) installed; not yet enrolled. |
 | Encryption | `age`, `rage` (Rust), `sops` |
 | Secrets manager | `rapg` (local path-flake) for local-first secrets |
-| Fingerprint | `fprintd` + TOD (`libfprint-2-tod1-vfs0090`, locally patched). **Explicit** allow/deny policy in `modules/hardware/fingerprint.nix` — never for session entry (`greetd`, `login`, `cosmic-greeter`) or anything needing `PAM_OLDAUTHTOK` (`passwd`). Fingerprint authenticates; it cannot decrypt. |
+| Fingerprint | `fprintd` + TOD (`libfprint-2-tod1-vfs0090`, locally patched). **Explicit** allow/deny policy in `modules/hardware/fingerprint.nix` — never for session entry (`greetd`, TTY `login`) or anything needing `PAM_OLDAUTHTOK` (`passwd`). `cosmic-greeter` is allowed *because* it is only the COSMIC lock screen here — the classification follows `services.displayManager.cosmic-greeter.enable`, so it flips to denied automatically if it ever becomes the display manager. Fingerprint authenticates; it cannot decrypt. |
 | Keyring | gnome-keyring. Auto-unlocked by the greetd password via `pam_gnome_keyring`; `steelbore-keyring-check` (read-only, runs at session start) and `steelbore-keyring-unlock` (`Mod+Shift+U`, rescue) in `modules/desktops/shared.nix`. The gcr **3** prompter is load-bearing — see constraint #32. |
 
 **Security bug reporting:** do not open public issues. Email

@@ -492,7 +492,7 @@ both spawn one at session start; a bare TTY does not.
 
 - `sudo` / `sudo -i`
 - polkit dialogs (Flatpak installs, udisks mounts, fingerprint enrollment)
-- screen unlock — gtklock, and swaylock / xlock / vlock if ever used
+- screen unlock — gtklock, the COSMIC lock screen (`cosmic-greeter`), and swaylock / xlock / vlock if ever used
 - `gitway-add`, once enrolled — see §7.6
 
 **Where it is deliberately refused, and why.** Fingerprint *authenticates*; it
@@ -506,7 +506,7 @@ out on 2026-07-21 and Chrome on 2026-07-25.
 
 So fingerprint is refused for:
 
-- **session entry** — `greetd`, TTY `login`, `cosmic-greeter`
+- **session entry** — `greetd`, TTY `login` (and `cosmic-greeter` *only* if it is ever made the display manager; today it is just the COSMIC lock screen, where fingerprint works)
 - **anything needing the old password** — `passwd`, `chpasswd`. These re-key
   the login keyring, which is impossible without `PAM_OLDAUTHTOK`.
 - **account/identity mutation** — `chsh`, `chfn`, `useradd`, `userdel`,

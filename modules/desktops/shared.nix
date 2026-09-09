@@ -259,74 +259,80 @@ let
   #
   # Rust-first exception (AGENTS.md): Python is pragmatic today. The migration
   # target is `adit`, already reserved at flake.nix as the askpass replacement.
-  keyringUnlockHelper = pkgs.writers.writePython3Bin "steelbore-keyring-unlock-helper" {
-    libraries = [ pkgs.python3Packages.pygobject3 ];
-    # E402: gi.require_version must run before the gi.repository import.
-    flakeIgnore = [ "E501" "E402" ];
-  } ''
-    import sys
-    import gi
-    gi.require_version("Gio", "2.0")
-    from gi.repository import Gio, GLib
+  keyringUnlockHelper =
+    pkgs.writers.writePython3Bin "steelbore-keyring-unlock-helper"
+      {
+        libraries = [ pkgs.python3Packages.pygobject3 ];
+        # E402: gi.require_version must run before the gi.repository import.
+        flakeIgnore = [
+          "E501"
+          "E402"
+        ];
+      }
+      ''
+        import sys
+        import gi
+        gi.require_version("Gio", "2.0")
+        from gi.repository import Gio, GLib
 
-    BUS = "org.freedesktop.secrets"
-    SVC = "/org/freedesktop/secrets"
-    I_SVC = "org.freedesktop.Secret.Service"
-    I_COLL = "org.freedesktop.Secret.Collection"
-    I_PROMPT = "org.freedesktop.Secret.Prompt"
-    I_PROPS = "org.freedesktop.DBus.Properties"
+        BUS = "org.freedesktop.secrets"
+        SVC = "/org/freedesktop/secrets"
+        I_SVC = "org.freedesktop.Secret.Service"
+        I_COLL = "org.freedesktop.Secret.Collection"
+        I_PROMPT = "org.freedesktop.Secret.Prompt"
+        I_PROPS = "org.freedesktop.DBus.Properties"
 
-    conn = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-
-
-    def call(path, iface, method, args, rtype):
-        return conn.call_sync(
-            BUS, path, iface, method, args,
-            GLib.VariantType(rtype) if rtype else None,
-            Gio.DBusCallFlags.NONE, 30000, None)
-
-
-    alias = sys.argv[1] if len(sys.argv) > 1 else "default"
-    coll = call(SVC, I_SVC, "ReadAlias", GLib.Variant("(s)", (alias,)), "(o)")[0]
-    if coll == "/":
-        print("no-alias")
-        sys.exit(3)
-
-    # PyGObject auto-unpacks the reply, so indexing a "(v)" already yields the
-    # plain Python bool -- do NOT call .get_boolean() on it.
-    locked = call(coll, I_PROPS, "Get",
-                  GLib.Variant("(ss)", (I_COLL, "Locked")), "(v)")[0]
-    if not locked:
-        print("already-unlocked")
-        sys.exit(0)
-
-    _unlocked, prompt = call(SVC, I_SVC, "Unlock",
-                             GLib.Variant("(ao)", ([coll],)), "(aoo)")
-    if prompt == "/":
-        print("unlocked")
-        sys.exit(0)
-
-    loop = GLib.MainLoop()
-    state = {"dismissed": True}
+        conn = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 
 
-    def completed(_c, _sender, _path, _iface, _signal, params):
-        state["dismissed"] = params[0]
-        loop.quit()
+        def call(path, iface, method, args, rtype):
+            return conn.call_sync(
+                BUS, path, iface, method, args,
+                GLib.VariantType(rtype) if rtype else None,
+                Gio.DBusCallFlags.NONE, 30000, None)
 
 
-    conn.signal_subscribe(BUS, I_PROMPT, "Completed", prompt, None,
-                          Gio.DBusSignalFlags.NONE, completed)
-    # window_id "" = no parent window; gcr-prompter self-parents.
-    call(prompt, I_PROMPT, "Prompt", GLib.Variant("(s)", ("",)), None)
-    # gcr-prompter self-quits on a 10 s inactivity timeout, so a walked-away-from
-    # dialog never emits Completed. Bound the wait rather than hanging forever.
-    GLib.timeout_add_seconds(120, lambda: (loop.quit(), False)[1])
-    loop.run()
+        alias = sys.argv[1] if len(sys.argv) > 1 else "default"
+        coll = call(SVC, I_SVC, "ReadAlias", GLib.Variant("(s)", (alias,)), "(o)")[0]
+        if coll == "/":
+            print("no-alias")
+            sys.exit(3)
 
-    print("dismissed" if state["dismissed"] else "unlocked")
-    sys.exit(1 if state["dismissed"] else 0)
-  '';
+        # PyGObject auto-unpacks the reply, so indexing a "(v)" already yields the
+        # plain Python bool -- do NOT call .get_boolean() on it.
+        locked = call(coll, I_PROPS, "Get",
+                      GLib.Variant("(ss)", (I_COLL, "Locked")), "(v)")[0]
+        if not locked:
+            print("already-unlocked")
+            sys.exit(0)
+
+        _unlocked, prompt = call(SVC, I_SVC, "Unlock",
+                                 GLib.Variant("(ao)", ([coll],)), "(aoo)")
+        if prompt == "/":
+            print("unlocked")
+            sys.exit(0)
+
+        loop = GLib.MainLoop()
+        state = {"dismissed": True}
+
+
+        def completed(_c, _sender, _path, _iface, _signal, params):
+            state["dismissed"] = params[0]
+            loop.quit()
+
+
+        conn.signal_subscribe(BUS, I_PROMPT, "Completed", prompt, None,
+                              Gio.DBusSignalFlags.NONE, completed)
+        # window_id "" = no parent window; gcr-prompter self-parents.
+        call(prompt, I_PROMPT, "Prompt", GLib.Variant("(s)", ("",)), None)
+        # gcr-prompter self-quits on a 10 s inactivity timeout, so a walked-away-from
+        # dialog never emits Completed. Bound the wait rather than hanging forever.
+        GLib.timeout_add_seconds(120, lambda: (loop.quit(), False)[1])
+        loop.run()
+
+        print("dismissed" if state["dismissed"] else "unlocked")
+        sys.exit(1 if state["dismissed"] else 0)
+      '';
 
   # Thin wrapper: raise the prompt, translate the outcome, then hand off to the
   # read-only check so a successful unlock is also a verified one.

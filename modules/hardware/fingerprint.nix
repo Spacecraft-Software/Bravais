@@ -40,6 +40,24 @@ let
   #                                             # in reverse)
   # ---------------------------------------------------------------------------
 
+  # cosmic-greeter wears two hats, so its classification follows a config
+  # option rather than a comment nobody will re-read.
+  #
+  # On this host greetd is the display manager and
+  # `services.displayManager.cosmic-greeter.enable` is false, so cosmic-greeter
+  # is ONLY the COSMIC lock screen. That is confirmed live rather than assumed:
+  #   pam_fprintd(cosmic-greeter:auth): ReleaseDevice failed ...
+  # was logged mid-session, while a session was already running. As a lock
+  # screen it sits in exactly gtklock's position -- locking the screen does not
+  # lock the keyring, so the 11400/12200 inversion is harmless there and
+  # fingerprint is a pure win. It is the user's primary fingerprint use.
+  #
+  # The moment it becomes the display manager it is a SESSION-ENTRY path and
+  # inherits greetd's problem wholesale: a fingerprint login would mint a
+  # session with a locked keyring. Hence the toggle below rather than a fixed
+  # list membership.
+  cosmicGreeterIsLockScreen = !config.services.displayManager.cosmic-greeter.enable;
+
   # Pure authorization decisions. Nothing here has to decrypt anything, so a
   # fingerprint is a complete substitute for the password. pam_fprintd is
   # `sufficient` in every one, so a failed or unsupported scan falls through to
@@ -53,7 +71,8 @@ let
     "xlock"
     "vlock"
     "kde-fingerprint" # KDE's own dedicated fprint service; inert outside Plasma
-  ];
+  ]
+  ++ lib.optional cosmicGreeterIsLockScreen "cosmic-greeter";
 
   # Everything else, in three groups.
   fprintDeny = [
@@ -65,11 +84,11 @@ let
     #
     # `login` is the TTY path and carries enableGnomeKeyring at 12200, exactly
     # like greetd — and at a TTY there is no Mod+Shift+U to repair it
-    # afterwards. Note greetd and cosmic-greeter define their own PAM services
-    # and do NOT inherit the `login` service's default, so each is named.
+    # afterwards. Note greetd defines its own PAM service and does NOT inherit
+    # the `login` service's default, so it is named explicitly.
+    # cosmic-greeter is classified below, because it depends on a config option.
     "greetd"
     "login"
-    "cosmic-greeter"
 
     # --- Needs PAM_OLDAUTHTOK ------------------------------------------------
     # Authenticating by fingerprint never populates the OLD authentication
@@ -101,7 +120,8 @@ let
     "systemd-run0"
     "systemd-user"
     "cups"
-  ];
+  ]
+  ++ lib.optional (!cosmicGreeterIsLockScreen) "cosmic-greeter";
 in
 {
   options.steelbore.hardware.fingerprint = {
@@ -138,6 +158,32 @@ in
       };
     };
 
+    # Keep the reader out of USB runtime suspend.
+    #
+    # The Synaptics 06cb:00bd sits at `power/control = auto` with a 2 s
+    # autosuspend delay, and the vfs0090 firmware does not survive being woken
+    # mid-scan: instead of resuming it drops off the bus and re-enumerates.
+    # Measured on 2026-09-08 at 17:58:35, all within the same second --
+    #
+    #   kernel:  usb 1-9: USB disconnect, device number 5
+    #   fprintd: Device reported an error during identify: device was disconnected
+    #   cosmic-greeter: pam_fprintd(cosmic-greeter:auth): ReleaseDevice failed:
+    #                   This device has been removed from the system.
+    #   kernel:  usb 1-9: new full-speed USB device number 8
+    #
+    # From the user's side that reads as the lock screen showing "place your
+    # finger on the reader" and then withdrawing the prompt a moment later,
+    # before a finger can reach the sensor -- pam_fprintd gives up and falls
+    # through to the password field. Pinning power/control to "on" costs a few
+    # tens of milliwatts and removes the wake path entirely.
+    #
+    # TEST== guards the case where the attribute is absent, so the rule cannot
+    # fail the udev ruleset on a machine without this device.
+    services.udev.extraRules = ''
+      # Synaptics 06cb:00bd fingerprint reader — no USB runtime suspend.
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00bd", TEST=="power/control", ATTR{power/control}="on"
+    '';
+
     # Apply the policy declared above. Every name in both lists was taken from
     # a live `ls /etc/pam.d`, so this must not create any new PAM service —
     # diff the directory listing across the rebuild to prove it.
@@ -146,7 +192,11 @@ in
     # lives in modules/core/security.nix, because that is a keyring concern
     # rather than a fingerprint one. The two merge cleanly.
     security.pam.services =
-      lib.genAttrs fprintAllow (_: { fprintAuth = true; })
-      // lib.genAttrs fprintDeny (_: { fprintAuth = false; });
+      lib.genAttrs fprintAllow (_: {
+        fprintAuth = true;
+      })
+      // lib.genAttrs fprintDeny (_: {
+        fprintAuth = false;
+      });
   };
 }

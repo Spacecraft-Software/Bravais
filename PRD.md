@@ -464,8 +464,8 @@ services. The module replaces that inheritance with two explicit lists:
 
 | | Services |
 |---|---|
-| **`fprintAllow`** | `sudo`, `sudo-i`, `polkit-1`, `gtklock`, `swaylock`, `xlock`, `vlock`, `kde-fingerprint` |
-| **`fprintDeny`** | `greetd`, `login`, `cosmic-greeter`, `passwd`, `chpasswd`, `chsh`, `chfn`, `useradd`, `userdel`, `usermod`, `group*`, `su`, `su-l`, `runuser`, `runuser-l`, `systemd-run0`, `systemd-user`, `cups` |
+| **`fprintAllow`** | `sudo`, `sudo-i`, `polkit-1`, `gtklock`, `swaylock`, `xlock`, `vlock`, `kde-fingerprint`, and `cosmic-greeter` while it is only the COSMIC lock screen |
+| **`fprintDeny`** | `greetd`, `login`, `passwd`, `chpasswd`, `chsh`, `chfn`, `useradd`, `userdel`, `usermod`, `group*`, `su`, `su-l`, `runuser`, `runuser-l`, `systemd-run0`, `systemd-user`, `cups` |
 
 **The rule:** fingerprint *authenticates*, it cannot *decrypt*. Wherever it
 usefully touches a secret it gates release of something the **login keyring**
@@ -475,10 +475,18 @@ password-at-greetd is the root of trust and fingerprint is the layer above it.
 **The mechanism:** `pam_fprintd` is `sufficient` at PAM order 11400,
 `pam_gnome_keyring` at 12200. Any successful fingerprint short-circuits `auth`
 before the keyring module runs. Any service that starts a session, or needs
-`PAM_OLDAUTHTOK`, must therefore refuse it. `gtklock` is the one deliberate
-exception in `fprintAllow` — it has the same inversion, but locking the screen
-does not lock the keyring, so the keyring is already open (see the note in
-`modules/core/security.nix`).
+`PAM_OLDAUTHTOK`, must therefore refuse it. The **lock screens** are the
+deliberate exception: `gtklock` and `cosmic-greeter` carry the same inversion,
+but locking the screen does not lock the keyring — it is already open from the
+greetd password and stays open (see the note in `modules/core/security.nix`).
+
+`cosmic-greeter` is classified by `services.displayManager.cosmic-greeter.enable`
+rather than by fixed list membership, because it wears two hats. greetd is the
+display manager here, so cosmic-greeter is only the COSMIC **lock screen** —
+confirmed live by `pam_fprintd(cosmic-greeter:auth)` appearing mid-session — and
+it is the user's primary working fingerprint surface. Making it the greeter turns
+it into a session-entry path, and the toggle moves it to `fprintDeny` on its own
+rather than relying on a comment being re-read.
 
 Declaring a PAM service *creates* it (constraint #9 in reverse), so verify a
 rebuild with `ls /etc/pam.d | wc -l` (must stay 32) and

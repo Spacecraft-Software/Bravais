@@ -501,6 +501,12 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Enroll `gitway biometric` — **after** a healthy login keyring exists
       (`gitway biometric enroll ~/.ssh/id_ed25519`; do NOT add `--biometric`
       to the `gitway-add` spawn lines, it forces a prompt every login)
+- [✓] Keep fingerprint on the COSMIC lock screen (`cosmic-greeter` is the
+      lock screen here, not the greeter — classification follows the
+      display-manager option)
+- [✓] Stop the fingerprint reader USB-autosuspending (udev rule for 06cb:00bd)
+- [ ] Confirm the autosuspend fix across repeated lock/unlock cycles — the
+      disconnect was a single correlated occurrence, not yet a proven repeat
 - [ ] Test `pam_fprintd` conversation handling in `gtklock`, `swaylock` and
       `polkit-1` — "Place your finger" arrives as `PAM_TEXT_INFO` and blocks;
       if a dialog hangs rather than falling through to password, move that
