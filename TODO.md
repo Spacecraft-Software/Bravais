@@ -561,6 +561,17 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Confirm after activation that `su -` in a real Nushell prompt shows it
       (the tests bound the helper by hand; HM was not activated yet)
 
+## 3-finger swipe on COSMIC (2026-09-09)
+
+- [✓] Overlay patching cosmic-comp so 3 fingers switch workspaces (4 still works)
+- [✓] `doCheck = false` — checkPhase, not the compile, is what exhausts memory
+- [✓] Patched cosmic-comp BUILDS: 22 min, exit 0, `--replace-fail` matched
+- [ ] Rebuild + **log out and back in** — cosmic-comp is the compositor, so a
+      running session keeps the old binary until the session restarts
+- [ ] Confirm 3-finger left/right actually switches workspaces
+- [ ] Re-check the substitution after any cosmic-comp bump (`--replace-fail`
+      fails the build loudly if upstream fills in the TODO)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
