@@ -419,13 +419,14 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **sudo (C):** Disabled
 - **sudo-rs (Rust):** Enabled, `execWheelOnly = true`
 - **Polkit:** Enabled
-- **SSH agent:** `programs.ssh.startAgent = true`, GNOME keyring SSH agent disabled
+- **SSH agent:** **`programs.ssh.startAgent = false`** — `gitway-agent` owns `$SSH_AUTH_SOCK` at `${XDG_RUNTIME_DIR}/gitway-agent.sock` and the system `ssh-agent.service` would race it (constraint #8). `services.gnome.gcr-ssh-agent.enable = false` and a `Hidden=true` `gnome-keyring-ssh.desktop` shadow (`users/mj/desktop-theme.nix`) keep gnome-keyring off the socket too. `gitway` is built with its `biometric` feature: `gitway biometric enroll` stores the key passphrase in the login keyring behind an fprintd gate, so `gitway-add` stops using ksshaskpass — `tier: advisory`, convenience rather than a security boundary
 - **Tmpfiles rules:** `/tmp 1777`, `/var/tmp 1777`
 
 ### 5.6 Keyring (`modules/core/keyring.nix`)
 
 - **Secret Service provider:** `services.gnome.gnome-keyring.enable = true` — pinned here rather than inherited from a DE, since Niri and LeftWM are window managers and pull in nothing
-- **Unlock paths:** `security.pam.services.greetd.enableGnomeKeyring` (password login, `modules/login/`); `steelbore-keyring-unlock` bound to `Mod+Shift+U` (fingerprint login, `modules/desktops/shared.nix`)
+- **Unlock paths:** the primary one is `security.pam.services.greetd.enableGnomeKeyring` (`modules/login/`) — greetd authenticates by password (`greetd` is in `fprintDeny`, §6.1), so pam_gnome_keyring auto-unlocks at login. `steelbore-keyring-unlock` (`Mod+Shift+U`, `modules/desktops/shared.nix`) is a **rescue** path for a keyring locked mid-session; it drives the Secret Service `Unlock` prompt over D-Bus and never handles the password itself. Its read-only sibling `steelbore-keyring-check` runs ~5 s into every Niri/LeftWM session (exit `0` ok / `2` locked / `3` bad alias / `4` dangling)
+- **Prompter:** the unlock dialog is drawn by `gcr-prompter`, which ships in **gcr 3 only** — `pkgs.gcr_4` dropped it. `modules/core/keyring.nix` pins `services.dbus.packages = [ pkgs.gcr ]` and asserts the major version so an upstream move fails at eval rather than silently removing every keyring dialog
 - **Tools:** `libsecret` (`secret-tool` — store/lookup/clear round-trip is the "is the bus up?" diagnostic), `seahorse` (GUI manager)
 - **Chromium/Electron backend pinning:** Chromium reads `XDG_CURRENT_DESKTOP` to select a credential backend; under Niri/LeftWM it reads `niri`/`leftwm` → `DE_OTHER` → plaintext fallback ("An OS keyring couldn't be identified…"). Two routes, one cause:
   - **Nix-installed** (Cursor, Kiro, Antigravity Desktop + IDE): wrapped with `steelbore.keyring.chromiumFlag` = `--password-store=gnome-libsecret` (`modules/packages/editors.nix`)
@@ -449,7 +450,47 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 **Option:** `steelbore.hardware.fingerprint.enable`
 
-When enabled: `services.fprintd.enable = true`, package `fprintd` installed.
+**Driver.** `services.fprintd.enable` plus the **TOD** (Touch OEM Driver)
+framework with `libfprint-2-tod1-vfs0090`, for the Synaptics `06cb:00bd`
+sensor. The stock libfprint driver enrolls but cannot read prints back
+(`enroll-duplicate` / `NoEnrolledPrints`). Upstream marks the VFS0090 package
+`broken` because `fpi_ssm_next_state_delayed()` dropped its third (callback)
+parameter in libfprint 1.94.9+; the module carries a local `postPatch` for the
+arity change and overrides `meta.broken`.
+
+**Policy.** `security.pam.services.<name>.fprintAuth` defaults to
+`services.fprintd.enable`, which silently put `pam_fprintd` into 28 of 32 PAM
+services. The module replaces that inheritance with two explicit lists:
+
+| | Services |
+|---|---|
+| **`fprintAllow`** | `sudo`, `sudo-i`, `polkit-1`, `gtklock`, `swaylock`, `xlock`, `vlock`, `kde-fingerprint`, and `cosmic-greeter` while it is only the COSMIC lock screen |
+| **`fprintDeny`** | `greetd`, `login`, `passwd`, `chpasswd`, `chsh`, `chfn`, `useradd`, `userdel`, `usermod`, `group*`, `su`, `su-l`, `runuser`, `runuser-l`, `systemd-run0`, `systemd-user`, `cups` |
+
+**The rule:** fingerprint *authenticates*, it cannot *decrypt*. Wherever it
+usefully touches a secret it gates release of something the **login keyring**
+holds, and that keyring is opened by the password typed at greetd — so
+password-at-greetd is the root of trust and fingerprint is the layer above it.
+
+**The mechanism:** `pam_fprintd` is `sufficient` at PAM order 11400,
+`pam_gnome_keyring` at 12200. Any successful fingerprint short-circuits `auth`
+before the keyring module runs. Any service that starts a session, or needs
+`PAM_OLDAUTHTOK`, must therefore refuse it. The **lock screens** are the
+deliberate exception: `gtklock` and `cosmic-greeter` carry the same inversion,
+but locking the screen does not lock the keyring — it is already open from the
+greetd password and stays open (see the note in `modules/core/security.nix`).
+
+`cosmic-greeter` is classified by `services.displayManager.cosmic-greeter.enable`
+rather than by fixed list membership, because it wears two hats. greetd is the
+display manager here, so cosmic-greeter is only the COSMIC **lock screen** —
+confirmed live by `pam_fprintd(cosmic-greeter:auth)` appearing mid-session — and
+it is the user's primary working fingerprint surface. Making it the greeter turns
+it into a session-entry path, and the toggle moves it to `fprintDeny` on its own
+rather than relying on a comment being re-read.
+
+Declaring a PAM service *creates* it (constraint #9 in reverse), so verify a
+rebuild with `ls /etc/pam.d | wc -l` (must stay 32) and
+`grep -l pam_fprintd /etc/pam.d/* | sort` (must equal `fprintAllow`).
 
 ### 6.2 CPU Vendor (`modules/hardware/intel.nix`) + x86-64 Platform Flags (`modules/platform/x86-64.nix`)
 

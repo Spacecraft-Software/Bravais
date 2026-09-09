@@ -228,11 +228,12 @@
                   // Session
                   (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
                   (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
-                  // Keyring unlock — see steelbore-keyring-unlock
-                  // (modules/desktops/shared.nix) for why this is needed
-                  // with fingerprint login enabled.
+                  // Keyring unlock — a RESCUE path, not a routine one: greetd
+                  // authenticates by password, so pam_gnome_keyring auto-unlocks
+                  // at login. Use this when something locked the keyring
+                  // mid-session, or when steelbore-keyring-check (spawned by
+                  // leftwm-session-inner) reports trouble.
                   (command: Execute, value: "steelbore-keyring-unlock", modifier: ["modkey", "Shift"], key: "u"),
-
                   // Applications
                   // Mod+Return launches alacritty — the default terminal across
                   // both Niri and LeftWM. rio's wgpu backend prefers Wayland and

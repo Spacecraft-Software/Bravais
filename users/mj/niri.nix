@@ -145,6 +145,11 @@ in
       // Polkit authentication agent — shows password dialogs for privileged
       // ops (fingerprint enrollment, Flatpak installs, etc.).
       spawn-at-startup "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1"
+      // Diagnose the keyring before any browser can mint a fresh Safe Storage
+      // key off a broken one — the 2026-07-25 failure was invisible until the
+      // browsers had already destroyed their own keys. Read-only; notifies via
+      // dunst on trouble. The delay lets pam_gnome_keyring's daemon settle.
+      spawn-at-startup "sh" "-c" "sleep 5 && steelbore-keyring-check"
 
       input {
           keyboard {
@@ -186,8 +191,12 @@ in
           // note above for why the grp: toggle alone doesn't switch here).
           Mod+Space hotkey-overlay-title="Switch Keyboard Layout (us/ara)" { switch-layout "next"; }
 
-          // Keyring unlock — see steelbore-keyring-unlock (modules/desktops/
-          // shared.nix) for why this is needed with fingerprint login enabled.
+          // Keyring unlock — a RESCUE path, not a routine one: greetd
+          // authenticates by password, so pam_gnome_keyring auto-unlocks at
+          // login and the keyring is normally already open. Use this when
+          // something locked it mid-session, or when steelbore-keyring-check
+          // (run at startup above) reports trouble. Both live in
+          // modules/desktops/shared.nix.
           // (Mod+Shift+K is already move-window-up, so Unlock gets +U instead.)
           Mod+Shift+U hotkey-overlay-title="Unlock Keyring" { spawn "steelbore-keyring-unlock"; }
 

@@ -475,20 +475,110 @@ sudo nixos-rebuild switch --flake .#bravais
 
 ### 7.4 Fingerprint Enrollment
 
-To enroll your fingerprint:
+Enroll as **yourself**, not through `sudo` — `sudo fprintd-enroll` enrolls
+*root's* finger, which is not what you want:
 
 ```bash
-# Enroll a finger
-sudo fprintd-enroll
-
-# Verify enrollment
-fprintd-verify
+fprintd-enroll          # enroll a finger (needs a polkit agent — see below)
+fprintd-list "$USER"    # what is enrolled
+fprintd-verify          # test it
 ```
 
-Once enrolled, you can use your fingerprint for:
-- sudo authentication
-- Login (greetd supports PAM)
-- Screen unlock
+Enrollment needs a running polkit authentication agent, because
+`net.reactivated.fprint.device.enroll` is `auth_self_keep`. Niri and LeftWM
+both spawn one at session start; a bare TTY does not.
+
+**Where the fingerprint is accepted:**
+
+- `sudo` / `sudo -i`
+- polkit dialogs (Flatpak installs, udisks mounts, fingerprint enrollment)
+- screen unlock — gtklock, the COSMIC lock screen (`cosmic-greeter`), and swaylock / xlock / vlock if ever used
+- `gitway-add`, once enrolled — see §7.6
+
+**Where it is deliberately refused, and why.** Fingerprint *authenticates*; it
+cannot *decrypt*. Your login keyring is encrypted with the password you type at
+greetd, and `pam_fprintd` is `sufficient` at PAM order 11400 — ahead of
+`pam_gnome_keyring` at 12200 — so a fingerprint login short-circuits `auth`
+before the keyring module ever receives a password. The keyring would stay
+locked, and Chromium-family browsers, finding no reachable Safe Storage key,
+would mint a fresh one and drop every saved login. That is what logged Opera
+out on 2026-07-21 and Chrome on 2026-07-25.
+
+So fingerprint is refused for:
+
+- **session entry** — `greetd`, TTY `login` (and `cosmic-greeter` *only* if it is ever made the display manager; today it is just the COSMIC lock screen, where fingerprint works)
+- **anything needing the old password** — `passwd`, `chpasswd`. These re-key
+  the login keyring, which is impossible without `PAM_OLDAUTHTOK`.
+- **account/identity mutation** — `chsh`, `chfn`, `useradd`, `userdel`,
+  `usermod`, `group*`
+- **non-conversational contexts** — `su`, `runuser`, `systemd-run0`,
+  `systemd-user`, `cups`
+
+The authoritative list is `fprintAllow` / `fprintDeny` in
+`modules/hardware/fingerprint.nix`. Verify what actually shipped with:
+
+```bash
+grep -l pam_fprintd /etc/pam.d/* | sort   # must equal fprintAllow
+```
+
+### 7.5 Keyring
+
+The login keyring is unlocked automatically by the password you type at greetd.
+Two helpers exist for when that goes wrong:
+
+```bash
+steelbore-keyring-check     # read-only diagnosis; safe any time
+steelbore-keyring-unlock    # raise the unlock dialog (also Mod+Shift+U)
+```
+
+`steelbore-keyring-check` runs automatically ~5 s into every Niri and LeftWM
+session and notifies via dunst. Its exit codes:
+
+| Code | Meaning |
+|------|---------|
+| `0` | OK — `default` alias points at `login`, unlocked, no dangling items |
+| `2` | The default collection is locked. Run `steelbore-keyring-unlock`. |
+| `3` | The `default` alias is unset, or points somewhere other than `login` |
+| `4` | Dangling items — lookups fail with "No such secret item at path" |
+
+**Exit 3 is the dangerous one.** Chromium-family Safe Storage keys resolve
+through the `default` alias, so if it points at the wrong collection your
+browsers will store into a keyring that PAM does not manage. Repair it:
+
+```bash
+busctl --user call org.freedesktop.secrets /org/freedesktop/secrets \
+  org.freedesktop.Secret.Service SetAlias so default \
+  /org/freedesktop/secrets/collection/login
+```
+
+If a keyring file is ever unopenable, test candidate passwords **offline**
+rather than against the daemon — a broken daemon and a wrong password look
+identical through a prompt. gnome-keyring 50 derives its key with
+`egg_symkey_generate_simple(AES128, SHA256, password, salt, iterations)`, then
+AES-128-CBC, and validates with `MD5(plaintext[16:]) == plaintext[:16]`.
+
+### 7.6 SSH key unlock by fingerprint (gitway)
+
+`gitway` is built with its `biometric` feature. Enrolling stores the SSH key's
+passphrase in the login keyring and lets fprintd gate its release, so
+`gitway-add` stops prompting through ksshaskpass:
+
+```bash
+gitway biometric enroll ~/.ssh/id_ed25519
+gitway biometric list      # expect count: 1
+```
+
+Two things to know:
+
+- **Do not pass `--biometric` to `gitway-add`.** That flag means
+  *enroll-then-load* and forces a passphrase prompt every time. After the
+  one-time enroll above, plain `gitway-add` is already fingerprint-unlocked.
+- This is **convenience, not a security boundary**. `gitway biometric status`
+  reports `tier: advisory` — the passphrase is protected by your login keyring,
+  not by the sensor, so anyone with an unlocked session bypasses the gate.
+
+Enroll only *after* the login keyring is healthy (`steelbore-keyring-check`
+returns 0), since enrollment writes into the default collection.
 
 ---
 

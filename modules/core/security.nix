@@ -31,9 +31,37 @@
   # fresh Safe Storage key rather than reaching the existing one — silently
   # dropping every saved login. Same failure mode the greetd path guards against
   # (modules/hardware/fingerprint.nix).
+  #
+  # Ordering note — deliberate, not an oversight. gtklock is in `fprintAllow`
+  # (modules/hardware/fingerprint.nix), so pam_fprintd sits `sufficient` at
+  # order 11400, AHEAD of pam_gnome_keyring at 12200. A fingerprint unlock
+  # therefore short-circuits `auth` and never reaches the keyring module —
+  # the very inversion that makes `greetd` and `login` refuse fingerprint.
+  #
+  # It is tolerable HERE and only here, because locking the screen does not
+  # lock the keyring: the keyring is already open from the greetd password and
+  # stays open across a lock. enableGnomeKeyring remains for the password
+  # unlock path, and as repair if something locks the keyring mid-session; it
+  # costs nothing on the fingerprint path. Do NOT delete it because "the
+  # fingerprint path doesn't use it", and do NOT cite this service as
+  # precedent for allowing fingerprint on anything that starts a session.
   security.pam.services.gtklock = {
     enableGnomeKeyring = true;
   };
+
+  # `passwd(1)` uses its OWN PAM service, and it is the only place the login
+  # keyring can be re-keyed. Without `pam_gnome_keyring.so` in that service's
+  # *password* stanza, `passwd` changes the Unix password and leaves the
+  # keyring encrypted under the OLD one. Nothing warns: greetd's
+  # pam_gnome_keyring then silently fails to auto-unlock at every login, and
+  # every later prompt rejects the (correct) account password as wrong.
+  #
+  # The matching `passwd.fprintAuth = false` lives in the fingerprint policy
+  # (modules/hardware/fingerprint.nix) — without it this module is present and
+  # still does nothing, because authenticating by fingerprint never populates
+  # PAM_OLDAUTHTOK and pam_gnome_keyring cannot re-encrypt the keyring without
+  # the old password.
+  security.pam.services.passwd.enableGnomeKeyring = true;
 
   # SSH agent — provided by gitway-agent (NixOS module from the gitway flake;
   # imported in flake.nix). Disable system OpenSSH ssh-agent.service so it
