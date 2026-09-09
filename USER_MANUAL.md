@@ -505,7 +505,39 @@ To change which SDK pieces you get — other platform levels, the NDK, the
 emulator — edit `androidComposition` in `flake.nix`. Platform API levels 27-36
 are available on this channel; 37 is not.
 
-### 7.5 Fingerprint Enrollment
+### 7.5 `su` and `sudo -i`
+
+Running `su` prints a reminder and asks before continuing:
+
+```
+su authenticates ROOT; sudo -i authenticates YOU.
+  sudo -i   your password or fingerprint, and gated by execWheelOnly (wheel only)
+  su        root's password; /etc/pam.d/su has no pam_wheel, so nothing gates who may try
+  another user: sudo -u <name> -i
+continue with su anyway? [y/N]
+```
+
+Answer `y` and `su` runs exactly as before. It works in bash, Brush, Nushell
+and Ion.
+
+`sudo -i` is preferred for two concrete reasons, not style. It authenticates
+**you** — so it takes your fingerprint, which `su` cannot, because `su`
+authenticates the *target* user and root has no enrolled print. And it is
+gated by `security.sudo-rs.execWheelOnly`, whereas `/etc/pam.d/su` contains no
+`pam_wheel` entry, so nothing restricts who may attempt it.
+
+To skip the reminder:
+
+| | |
+|---|---|
+| any shell | `STEELBORE_SU_OK=1 su -` |
+| bash, Brush | `command su -` |
+| Nushell | `^su -` |
+
+Scripts, systemd units and pipes are never prompted — with no TTY the guard
+execs the real `su` straight through.
+
+### 7.6 Fingerprint Enrollment
 
 Enroll as **yourself**, not through `sudo` — `sudo fprintd-enroll` enrolls
 *root's* finger, which is not what you want:
@@ -525,7 +557,7 @@ both spawn one at session start; a bare TTY does not.
 - `sudo` / `sudo -i`
 - polkit dialogs (Flatpak installs, udisks mounts, fingerprint enrollment)
 - screen unlock — gtklock, the COSMIC lock screen (`cosmic-greeter`), and swaylock / xlock / vlock if ever used
-- `gitway-add`, once enrolled — see §7.7
+- `gitway-add`, once enrolled — see §7.8
 
 **Where it is deliberately refused, and why.** Fingerprint *authenticates*; it
 cannot *decrypt*. Your login keyring is encrypted with the password you type at
@@ -553,7 +585,7 @@ The authoritative list is `fprintAllow` / `fprintDeny` in
 grep -l pam_fprintd /etc/pam.d/* | sort   # must equal fprintAllow
 ```
 
-### 7.6 Keyring
+### 7.7 Keyring
 
 The login keyring is unlocked automatically by the password you type at greetd.
 Two helpers exist for when that goes wrong:
@@ -589,7 +621,7 @@ identical through a prompt. gnome-keyring 50 derives its key with
 `egg_symkey_generate_simple(AES128, SHA256, password, salt, iterations)`, then
 AES-128-CBC, and validates with `MD5(plaintext[16:]) == plaintext[:16]`.
 
-### 7.7 SSH key unlock by fingerprint (gitway)
+### 7.8 SSH key unlock by fingerprint (gitway)
 
 `gitway` is built with its `biometric` feature. Enrolling stores the SSH key's
 passphrase in the login keyring and lets fprintd gate its release, so
