@@ -98,12 +98,8 @@ let
     "passwd"
     "chpasswd"
 
-    # --- Account/identity mutation, and non-conversational contexts ----------
-    # For the account tools: prove you know the password before changing who
-    # someone is. For su/runuser/systemd-*: these run in TTY or wholly
-    # non-interactive contexts where fprintd's "Place your finger on the
-    # reader" arrives as PAM_TEXT_INFO and then blocks — a hang, not a
-    # convenience. Disabling costs nothing in either case.
+    # --- Account/identity mutation --------------------------------------
+    # Prove you know the password before changing who someone is.
     "chsh"
     "chfn"
     "useradd"
@@ -113,8 +109,37 @@ let
     "groupdel"
     "groupmod"
     "groupmems"
+
+    # --- su: authenticates the TARGET, and has no wheel gate --------------
+    # The obvious question is "sudo takes my fingerprint, why not su?", and the
+    # answer is that they authenticate different people. `sudo` authenticates
+    # the INVOKING user — you — which is why it asks for your password. `su`
+    # authenticates the TARGET user, which is why it asks for root's. So
+    # allowing fingerprint here would not let you use YOUR finger: it would
+    # require a fingerprint enrolled for ROOT. There is none —
+    # /var/lib/fprint/ holds only the primary user — so listing su in
+    # fprintAllow today would change nothing except adding a failed scan
+    # before the password prompt.
+    #
+    # Enrolling one for root is where it turns bad. `/etc/pam.d/su` contains
+    # ZERO pam_wheel entries, so nothing restricts who may attempt it: any
+    # local account could then become root by presenting that finger. `sudo`
+    # is gated by `security.sudo-rs.execWheelOnly = true`
+    # (modules/core/security.nix), so the same finger only escalates for wheel
+    # members. That asymmetry is the reason su stays denied, not any property
+    # of fingerprints.
+    #
+    # `sudo -i` is the wheel-gated equivalent of `su -`, and it is already in
+    # fprintAllow. Use that.
     "su"
     "su-l"
+
+    # --- Non-conversational contexts --------------------------------------
+    # These run with no interactive prompt to answer: fprintd's "Place your
+    # finger on the reader" arrives as PAM_TEXT_INFO and then blocks, which is
+    # a hang rather than a convenience. (Note this reasoning does NOT apply to
+    # `su` above — a terminal is perfectly interactive; su is denied for the
+    # target-user and wheel reasons instead.)
     "runuser"
     "runuser-l"
     "systemd-run0"
