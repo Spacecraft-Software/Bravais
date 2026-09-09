@@ -522,6 +522,18 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Port `steelbore-keyring-unlock-helper` from `writePython3` to `adit`
       (Rust) once that flake input ships
 
+## Android support (2026-09-09)
+
+- [✓] `steelbore.hardware.android` module — `pkgs.android-tools` + SDK licence
+- [✓] `devShells.<system>.android` in flake.nix (`nix develop .#android -c nu`)
+- [✓] Enabled on `bravais-thinkpad`; docs in PRD §6.0, USER_MANUAL §7.4
+- [✓] AGENTS constraint #33 — `programs.adb.enable` is removed, not deprecated
+- [ ] Confirm `adb devices` sees a real handset without any group membership
+      (systemd 260 uaccess); if it reports `no permissions`, the uaccess
+      assumption is wrong and udev rules come back
+- [ ] Pick real platform/build-tools versions when an actual project exists —
+      the current `35`/`36` + `37.0.0` are sensible defaults, not requirements
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.

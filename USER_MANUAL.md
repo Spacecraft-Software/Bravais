@@ -473,7 +473,39 @@ sudo nixos-rebuild switch --flake .#bravais
 | User config      | `/spacecraft-software/bravais/users/mj/home.nix`      |
 | Hardware config  | `/spacecraft-software/bravais/hosts/bravais/hardware.nix` |
 
-### 7.4 Fingerprint Enrollment
+### 7.4 Android development
+
+`adb` is installed system-wide. Plug a handset in, enable USB debugging on it,
+and:
+
+```nu
+adb devices
+```
+
+No group membership and no re-login are needed — systemd handles device access
+automatically on this release.
+
+The **SDK** is not installed system-wide; it lives in a devShell, so each
+project can pick its own platform and build-tools versions:
+
+```nu
+nix develop /spacecraft-software/bravais#android -c nu
+```
+
+That drops you into Nushell (not bash) with `ANDROID_HOME`, `ANDROID_SDK_ROOT`,
+`JAVA_HOME`, `gradle` and the SDK's `platform-tools` / `cmdline-tools` on
+`PATH`. Verify with:
+
+```nu
+$env.ANDROID_HOME
+sdkmanager --list_installed
+```
+
+To change which SDK pieces you get — other platform levels, the NDK, the
+emulator — edit `androidComposition` in `flake.nix`. Platform API levels 27-36
+are available on this channel; 37 is not.
+
+### 7.5 Fingerprint Enrollment
 
 Enroll as **yourself**, not through `sudo` — `sudo fprintd-enroll` enrolls
 *root's* finger, which is not what you want:
@@ -493,7 +525,7 @@ both spawn one at session start; a bare TTY does not.
 - `sudo` / `sudo -i`
 - polkit dialogs (Flatpak installs, udisks mounts, fingerprint enrollment)
 - screen unlock — gtklock, the COSMIC lock screen (`cosmic-greeter`), and swaylock / xlock / vlock if ever used
-- `gitway-add`, once enrolled — see §7.6
+- `gitway-add`, once enrolled — see §7.7
 
 **Where it is deliberately refused, and why.** Fingerprint *authenticates*; it
 cannot *decrypt*. Your login keyring is encrypted with the password you type at
@@ -521,7 +553,7 @@ The authoritative list is `fprintAllow` / `fprintDeny` in
 grep -l pam_fprintd /etc/pam.d/* | sort   # must equal fprintAllow
 ```
 
-### 7.5 Keyring
+### 7.6 Keyring
 
 The login keyring is unlocked automatically by the password you type at greetd.
 Two helpers exist for when that goes wrong:
@@ -557,7 +589,7 @@ identical through a prompt. gnome-keyring 50 derives its key with
 `egg_symkey_generate_simple(AES128, SHA256, password, salt, iterations)`, then
 AES-128-CBC, and validates with `MD5(plaintext[16:]) == plaintext[:16]`.
 
-### 7.6 SSH key unlock by fingerprint (gitway)
+### 7.7 SSH key unlock by fingerprint (gitway)
 
 `gitway` is built with its `biometric` feature. Enrolling stores the SSH key's
 passphrase in the login keyring and lets fprintd gate its release, so
