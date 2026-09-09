@@ -552,6 +552,15 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify the not-COSMIC fallback exits 0 under Niri/GNOME/Plasma (could
       not be tested from a COSMIC session)
 
+## `su` reminder (2026-09-09)
+
+- [✓] `steelbore-su-guard` POSIX helper; `shellcheck -s sh` zero findings
+- [✓] Bound in bash (covers Brush), Nushell (`def --wrapped`) and Ion (`alias`)
+- [✓] Verified in all four shells with a pty: reminder fires, `n` aborts,
+      `y` execs the real su, no-TTY and `STEELBORE_SU_OK=1` skip it
+- [ ] Confirm after activation that `su -` in a real Nushell prompt shows it
+      (the tests bound the helper by hand; HM was not activated yet)
+
 ## 3-finger swipe on COSMIC (2026-09-09)
 
 - [✓] Overlay patching cosmic-comp so 3 fingers switch workspaces (4 still works)

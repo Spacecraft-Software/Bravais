@@ -30,6 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`su` now reminds you to use `sudo -i`, in every shell.** One POSIX helper
+  (`steelbore-su-guard`) bound in bash, Brush, Nushell and Ion, so the message
+  and its reasoning live in exactly one place and cannot drift. Answering `y`
+  runs `su` as before.
+
+  It is a **reminder, not a gate**: with no TTY, or with `STEELBORE_SU_OK=1`,
+  it execs the real `su` straight through, so scripts, units and pipes behave
+  exactly as before. `command su` (bash/Brush) and `^su` (Nushell) also bypass
+  it.
+
+  A PATH wrapper would have needed no shell bindings at all, and cannot work
+  here: `/run/wrappers/bin` is first in the session PATH, so nothing in a
+  profile can shadow the setuid `su`. See AGENTS.md constraint #34, which also
+  records that Brush reads `~/.bashrc`, that Ion's `fn` is fixed-arity so Ion
+  needs an `alias`, and that Nushell needs `def --wrapped` plus `^`.
+
+
 - **`steelbore-cosmic-unmax`** — the COSMIC counterpart to
   `steelbore-niri-unmax`, reverting clients that maximize themselves right
   after opening. COSMIC exposes no setting for this, and it is the client's
