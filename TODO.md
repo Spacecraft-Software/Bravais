@@ -596,6 +596,19 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Confirm the client accepts the installed script (root:root 0700) rather
       than re-reporting "incorrect permissions"
 
+## Chrome Remote Desktop: dummy/void drivers (2026-09-10)
+
+- [✓] Root-caused the restart loop: `ModulePath` lacked `xf86-video-dummy`
+      and `xf86-input-void`, so the headless server found no screens
+- [✓] `buildEnv` union of the three module trees, `pathsToLink` scoped to
+      `/lib/xorg/modules`
+- [✓] Verified by running: both modules load, DUMMY(0) initialises a screen,
+      `xdpyinfo` against the test display reports 1 screen at 1024x768, and
+      zero fatal errors
+- [ ] Confirm `chrome-remote-desktop@mj.service` reaches `active (running)`
+      after the rebuild (it needs the host to still be authorized; a host that
+      was never authorized fails for a different reason)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.

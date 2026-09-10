@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Chrome Remote Desktop starts again.** Its headless X server asks for the
+  `dummy` video driver and the `void` input driver, neither of which lives in
+  `xorg-server`; `ModulePath` pointed only there, so the server died with
+  "no screens found" and the unit restart-looped — since 2026-09-03.
+
+  `ModulePath` now points at a `buildEnv` unioning `xorg-server`,
+  `xorg.xf86videodummy` and `xorg.xf86inputvoid`, because one `ModulePath`
+  cannot name three store paths.
+
+  Note this never made a rebuild fail: a unit that will not start makes
+  `switch-to-configuration` exit **4**, meaning "activated, some unit failed".
+  The generation was live and correct throughout.
+
 ### Added
 
 - **`steelbore-vpn` — an AdGuard VPN inspector and teardown helper**, because
