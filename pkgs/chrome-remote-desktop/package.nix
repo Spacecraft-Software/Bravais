@@ -53,7 +53,8 @@
   libxrandr,
   libxtst,
   xorg-server,
-  xorg,
+  xf86-video-dummy,
+  xf86-input-void,
   buildEnv,
   xrandr,
   xdpyinfo,
@@ -82,8 +83,8 @@ let
     name = "chrome-remote-desktop-xorg-modules";
     paths = [
       xorg-server
-      xorg.xf86videodummy
-      xorg.xf86inputvoid
+      xf86-video-dummy
+      xf86-input-void
     ];
     # Link only the module tree. Without this the env would also union bin/,
     # share/ and the pkg-config metadata of all three, and the ModulePath

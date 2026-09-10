@@ -593,8 +593,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Live: connect with `set-tun-routing-mode script` and confirm the split
       default appears (`ip route | grep -E '0.0.0.0/1|128.0.0.0/1'`) while
       `resolvectl status` still shows DoT + DNSSEC
-- [ ] Confirm the client accepts the installed script (root:root 0700) rather
-      than re-reporting "incorrect permissions"
+- [✓] Confirmed after the rebuild: the oneshot unit is active and installed
+      the script `-rwx------ root root`, and `steelbore-vpn tunnel status`
+      reports `route hook ok (root, 0700)`
+- [✓] Routing mode set to `script` (one-time, imperative); `config show`
+      confirms it alongside `Change system DNS: off`
 
 ## Chrome Remote Desktop: dummy/void drivers (2026-09-10)
 
@@ -605,9 +608,10 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Verified by running: both modules load, DUMMY(0) initialises a screen,
       `xdpyinfo` against the test display reports 1 screen at 1024x768, and
       zero fatal errors
-- [ ] Confirm `chrome-remote-desktop@mj.service` reaches `active (running)`
-      after the rebuild (it needs the host to still be authorized; a host that
-      was never authorized fails for a different reason)
+- [✓] Confirmed after the rebuild: `chrome-remote-desktop@mj.service` is
+      `active (running)`; the Google host authorization survived
+- [✓] Renamed to the top-level `xf86-video-dummy` / `xf86-input-void` attrs --
+      the `xorg.*` set is deprecated and warned on every evaluation
 
 ## Known Issues & Notes
 
