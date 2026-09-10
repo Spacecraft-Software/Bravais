@@ -53,6 +53,8 @@
   libxrandr,
   libxtst,
   xorg-server,
+  xorg,
+  buildEnv,
   xrandr,
   xdpyinfo,
   xauth,
@@ -62,6 +64,32 @@
 
 let
   crdDir = "/opt/google/chrome-remote-desktop";
+
+  # CRD's generated xorg.conf asks for the "dummy" video driver and the "void"
+  # input driver -- it is a HEADLESS X server, so there is no real GPU or
+  # keyboard to drive. Neither ships inside xorg-server, and on Debian they
+  # arrive as separate packages (`xserver-xorg-video-dummy`, which CRD even
+  # version-checks via dpkg-query). Pointing ModulePath at xorg-server alone
+  # therefore yields:
+  #
+  #     (EE) Failed to load module "dummy" (module does not exist, 0)
+  #     (EE) no screens found
+  #     Fatal server error
+  #
+  # and the unit restart-loops. A single ModulePath cannot name three store
+  # paths, so union the three module trees into one.
+  xorgModules = buildEnv {
+    name = "chrome-remote-desktop-xorg-modules";
+    paths = [
+      xorg-server
+      xorg.xf86videodummy
+      xorg.xf86inputvoid
+    ];
+    # Link only the module tree. Without this the env would also union bin/,
+    # share/ and the pkg-config metadata of all three, and the ModulePath
+    # substitution below would then point into a needlessly large closure.
+    pathsToLink = [ "/lib/xorg/modules" ];
+  };
   # Runtime Python deps come straight from the .deb's Depends line:
   # python3-dbus, python3-psutil, python3-xdg, python3-packaging.
   py = python3.withPackages (
@@ -148,7 +176,7 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail 'xdpyinfo' '${xdpyinfo}/bin/xdpyinfo' \
       --replace-fail 'xauth add :%d . `mcookie`' '${xauth}/bin/xauth add :%d . `${util-linux}/bin/mcookie`' \
       --replace-fail '"setxkbmap"' '"${setxkbmap}/bin/setxkbmap"' \
-      --replace-fail '/usr/lib/xorg/modules' '${xorg-server}/lib/xorg/modules' \
+      --replace-fail '/usr/lib/xorg/modules' '${xorgModules}/lib/xorg/modules' \
       --replace-fail '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
       --replace-fail '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
     runHook postPatch
