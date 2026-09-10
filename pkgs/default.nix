@@ -22,4 +22,5 @@
   obscura = pkgs.callPackage ./obscura/package.nix { };
   skyroads = pkgs.callPackage ./skyroads/package.nix { };
   preflight = pkgs.callPackage ./preflight/package.nix { };
+  steelbore-vpn = pkgs.callPackage ./steelbore-vpn/package.nix { };
 }

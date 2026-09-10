@@ -1079,7 +1079,13 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **DNS & Services:** dnsmasq, atftp, adguardhome
 
-**VPN:** adguardvpn-cli (vendored static binary, `pkgs/adguardvpn-cli/` — not in nixpkgs; distinct from `adguardhome`, which is a DNS blocker. Unfree. TUN mode requires privileges and overrides systemd-resolved's DoT/DNSSEC resolver; SOCKS mode does not.)
+**VPN:** adguardvpn-cli (vendored static binary, `pkgs/adguardvpn-cli/` — not in nixpkgs; distinct from `adguardhome`, which is a DNS blocker. Unfree.) Owned by `steelbore.services.adguardvpn` (`modules/services/adguardvpn.nix`), together with the route script and the teardown helper.
+
+TUN mode's routing mode decides whether it is usable here. `AUTO` rewrites `/etc/resolv.conf` and so displaces systemd-resolved's DoT + DNSSEC; `NONE` leaves resolved alone but installs no routes at all, so the tunnel carries nothing while still reporting "connected". **`SCRIPT` is the mode this system uses**: the client runs a root-owned, mode-0700 script (installed declaratively by the module, `$1` = tunnel interface) that adds the split default `0.0.0.0/1` + `128.0.0.0/1` and `2000::/3`, and touches no DNS. SOCKS mode remains the unprivileged alternative.
+
+The routing mode itself lives in the client's own encrypted config and cannot be declared in Nix — it is a one-time `adguardvpn-cli config set-tun-routing-mode script`.
+
+**Teardown:** `steelbore-vpn` (`pkgs/steelbore-vpn/`) replaces `adguardvpn-cli disconnect`, which hangs indefinitely: the client SIGTERMs its own sudo shim, and sudo-rs blocks SIGTERM there (AGENTS.md constraint #36). `steelbore-vpn tunnel status` and `tunnel list` are unprivileged; `sudo steelbore-vpn tunnel stop --yes` performs the teardown.
 
 ### 11.6 Multimedia (`modules/packages/multimedia.nix`)
 

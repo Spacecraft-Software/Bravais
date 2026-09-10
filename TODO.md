@@ -558,8 +558,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Bound in bash (covers Brush), Nushell (`def --wrapped`) and Ion (`alias`)
 - [✓] Verified in all four shells with a pty: reminder fires, `n` aborts,
       `y` execs the real su, no-TTY and `STEELBORE_SU_OK=1` skip it
-- [ ] Confirm after activation that `su -` in a real Nushell prompt shows it
-      (the tests bound the helper by hand; HM was not activated yet)
+- [✓] Confirmed after activation: `which su` at a config-loaded Nushell
+      resolves to a **custom** command from `~/.config/nushell/config.nu`,
+      not the external `/run/wrappers/bin/su`
 
 ## 3-finger swipe on COSMIC (2026-09-09)
 
@@ -571,6 +572,29 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Confirm 3-finger left/right actually switches workspaces
 - [ ] Re-check the substitution after any cosmic-comp bump (`--replace-fail`
       fails the build loudly if upstream fills in the TODO)
+
+## AdGuard VPN: SCRIPT routing + teardown helper (2026-09-09)
+
+- [✓] Root-caused the `disconnect` hang: the client SIGTERMs its sudo shim,
+      and sudo-rs blocks SIGTERM there (`SigBlk` bit 15, `ShdPnd` bit 15)
+- [✓] `steelbore-vpn` crate: `tunnel list` / `status` / `stop`, `schema`,
+      `describe`; CLI Standard envelope, exit codes and severity ladder
+- [✓] Thread-aware signal deliverability — the tunnel's leader thread blocks
+      SIGTERM while a sibling does not, so the leader's mask is the wrong answer
+- [✓] PID-reuse guard: `starttime` recorded at discovery, re-checked before
+      every signal
+- [✓] `cargo fmt`, `cargo clippy -- -D warnings` (pedantic) clean; `nix build
+      .#steelbore-vpn` exit 0
+- [✓] Live: `tunnel list`/`status` correctly identify the orphaned root tunnel,
+      `tun0`, and an unusable route script; `stop --yes` as a non-root user
+      exits 4 with the human-escalation hint
+- [ ] Live: `sudo steelbore-vpn tunnel stop --yes` against a real tunnel —
+      needs root, so it could not be exercised from the agent shell
+- [ ] Live: connect with `set-tun-routing-mode script` and confirm the split
+      default appears (`ip route | grep -E '0.0.0.0/1|128.0.0.0/1'`) while
+      `resolvectl status` still shows DoT + DNSSEC
+- [ ] Confirm the client accepts the installed script (root:root 0700) rather
+      than re-reporting "incorrect permissions"
 
 ## Known Issues & Notes
 

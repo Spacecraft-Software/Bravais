@@ -2,6 +2,7 @@
 # Steelbore Bravais — Services (opt-in system services)
 {
   imports = [
+    ./adguardvpn.nix
     ./chrome-remote-desktop.nix
     ./ollama.nix
     ./podman.nix

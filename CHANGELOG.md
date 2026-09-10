@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`steelbore-vpn` — an AdGuard VPN inspector and teardown helper**, because
+  `adguardvpn-cli disconnect` hangs indefinitely in TUN mode on this system.
+  The client records the pid of its **sudo shim** in `vpn.pid`, then SIGTERMs
+  that pid and polls until it exits; sudo-rs blocks SIGTERM there, so the
+  signal parks in the pending set and the poll never ends (constraint #36).
+
+  `steelbore-vpn tunnel stop` signals the **tunnel** instead, which does have a
+  thread able to receive SIGTERM, so the client's own route teardown runs. The
+  order matters: killing the shim first — the one thing an unprivileged user is
+  permitted to do — makes `disconnect` return "VPN stopped" while leaving the
+  tunnel orphaned to init with `tun0` still up.
+
+  `tunnel list` shows the blocked/pending signal pair that explains the hang,
+  and `tunnel status` checks the route script against the contract the client
+  enforces. Both are unprivileged; only `stop` needs root.
+
+- **SCRIPT-mode routing for AdGuard VPN TUN connections.** A root-owned,
+  mode-0700 route script installed declaratively at the path the client
+  expects, so TUN mode carries traffic *and* leaves systemd-resolved's DoT +
+  DNSSEC alone — the two goals that `AUTO` and `NONE` each satisfy only one of.
+
+  This replaces a `Tunnel routing mode: none` setting under which the VPN
+  installed no routes at all: connected, `tun0` present, and every packet still
+  going out the physical interface (constraint #37).
+
+  The mode itself lives in the client's encrypted config and cannot be
+  declared, so it stays a one-time `adguardvpn-cli config set-tun-routing-mode
+  script`. `steelbore-vpn tunnel status` reports whether the script is usable,
+  so the two halves cannot silently drift apart.
+
 ### Changed
 
 - **3-finger touchpad swipe switches workspaces under COSMIC**, matching niri.

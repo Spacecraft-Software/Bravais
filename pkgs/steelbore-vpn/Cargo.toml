@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "steelbore-vpn"
+version = "0.1.0"
+edition = "2021"
+description = "Steelbore OS AdGuard VPN tunnel inspector and teardown helper."
+license = "GPL-3.0-or-later"
+authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+jiff = "0.2"
+rustix = { version = "1", features = ["process"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Release tuning (Standard §3.2.1), matching preflight: LTO and one codegen unit
+# on a binary that is argument plumbing plus a /proc walk. `-C target-cpu=native`
+# stays off -- it breaks Nix build reproducibility and binary-cache reuse, and
+# there is no hot path here to buy anything back.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+# Doc comments on the clap types ARE the --help text, so a backtick pedantic
+# wants around "AdGuard" would be rendered literally in the terminal. The lint
+# is right about doc comments in general and wrong about these.
+doc_markdown = "allow"
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
