@@ -73,16 +73,21 @@ stdenv.mkDerivation (finalAttrs: {
   #   R_X86_64_RELATIVE' failed!
   # and, launched from the app menu, simply does nothing at all.
   #
-  # `usr/bin/github` is a 369 MB PIE with 155 677 dynamic relocations.
-  # autoPatchelfHook has to relocate `.dynstr`/`.rela.dyn`/`.dynamic` into
-  # fresh LOAD segments at the end of the file to fit the store RUNPATH, and
-  # the `strip -S` that nixpkgs' fixupPhase then runs over the result lays
-  # symbol-string bytes across the START of the moved `.rela.dyn`. Measured:
-  # it corrupts exactly the first 16 bytes -- r_offset and r_info of entry 0 --
+  # `usr/bin/github` is a PIE with 155 677 dynamic relocations, shipped
+  # UNSTRIPPED at 1003 MB. autoPatchelfHook has to relocate
+  # `.dynstr`/`.rela.dyn`/`.dynamic` into fresh LOAD segments at the end of
+  # the file to fit the store RUNPATH -- and it cannot do that correctly on a
+  # STRIPPED copy of this binary. The result has exactly the first 16 bytes of
+  # the moved `.rela.dyn` clobbered -- r_offset and r_info of entry 0 --
   # leaving that entry's addend and all 155 676 following entries intact.
   # glibc walks the first DT_RELACOUNT (154 824) entries down a fast path that
   # asserts every one is R_X86_64_RELATIVE, so one bad entry at index 0 aborts
   # the process.
+  #
+  # The order is strip-then-patchelf, not the reverse: nixpkgs strips in the
+  # per-output `fixupOutput` pass while autoPatchelfHook registers itself in
+  # `postFixupHooks`, which runs after it. So patchelf is the writer here and
+  # the stripped input is what defeats it.
   #
   # That tiny blast radius is what makes this so misleading: nothing fails at
   # build time, `readelf -d` looks correct, RELA lands exactly inside the last
@@ -93,10 +98,20 @@ stdenv.mkDerivation (finalAttrs: {
   # The cost is real and is NOT negligible: the binary goes from 369 MB
   # stripped to 1003 MB, so this trades ~634 MB of disk for an app that runs
   # at all. Worth knowing on a machine where /nix shares a 203 GiB partition
-  # (AGENTS.md constraint #28). If that ever matters, the shape to try is
-  # stripping in `preFixup` -- BEFORE autoPatchelfHook moves the sections --
-  # rather than re-enabling the strip that runs after it; untested here.
+  # (AGENTS.md constraint #28).
+  #
+  # Do NOT try to win that back by stripping earlier, in `preFixup`. That was
+  # measured on 2026-09-12 and it reproduces the failure EXACTLY -- entry 0
+  # comes out as the same (0x24, 0x4, 0xe09d9e0) and the binary aborts in
+  # ld.so identically -- which is the result that established the direction
+  # above. Stripping this binary at any point before autoPatchelfHook breaks
+  # it; there is no ordering that gives both a small binary and a working one.
   dontStrip = true;
+
+  # EXPERIMENT: strip before autoPatchelfHook instead of leaving it unstripped.
+  preFixup = ''
+    strip -S $out/bin/github
+  '';
 
   unpackPhase = ''
     runHook preUnpack
