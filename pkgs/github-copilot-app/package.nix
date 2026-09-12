@@ -67,6 +67,37 @@ stdenv.mkDerivation (finalAttrs: {
   dontConfigure = true;
   dontBuild = true;
 
+  # MANDATORY — without this the app dies before `main` with
+  #   Inconsistency detected by ld.so: ../sysdeps/x86_64/dl-machine.h: 498:
+  #   elf_machine_rela_relative: Assertion `ELFW(R_TYPE) (reloc->r_info) ==
+  #   R_X86_64_RELATIVE' failed!
+  # and, launched from the app menu, simply does nothing at all.
+  #
+  # `usr/bin/github` is a 369 MB PIE with 155 677 dynamic relocations.
+  # autoPatchelfHook has to relocate `.dynstr`/`.rela.dyn`/`.dynamic` into
+  # fresh LOAD segments at the end of the file to fit the store RUNPATH, and
+  # the `strip -S` that nixpkgs' fixupPhase then runs over the result lays
+  # symbol-string bytes across the START of the moved `.rela.dyn`. Measured:
+  # it corrupts exactly the first 16 bytes -- r_offset and r_info of entry 0 --
+  # leaving that entry's addend and all 155 676 following entries intact.
+  # glibc walks the first DT_RELACOUNT (154 824) entries down a fast path that
+  # asserts every one is R_X86_64_RELATIVE, so one bad entry at index 0 aborts
+  # the process.
+  #
+  # That tiny blast radius is what makes this so misleading: nothing fails at
+  # build time, `readelf -d` looks correct, RELA lands exactly inside the last
+  # LOAD segment, and the corruption is 16 bytes in a 369 MB file. Restoring
+  # just those 16 bytes by hand was enough to make the app start, which is how
+  # this was confirmed rather than guessed.
+  #
+  # The cost is real and is NOT negligible: the binary goes from 369 MB
+  # stripped to 1003 MB, so this trades ~634 MB of disk for an app that runs
+  # at all. Worth knowing on a machine where /nix shares a 203 GiB partition
+  # (AGENTS.md constraint #28). If that ever matters, the shape to try is
+  # stripping in `preFixup` -- BEFORE autoPatchelfHook moves the sections --
+  # rather than re-enabling the strip that runs after it; untested here.
+  dontStrip = true;
+
   unpackPhase = ''
     runHook preUnpack
     dpkg-deb --fsys-tarfile $src | tar -x --no-same-permissions --no-same-owner
