@@ -82,6 +82,15 @@
       # this pin breaks whenever OpenAI ships a build and the pinned artifact
       # cannot be refetched — see the header of pkgs/codex-desktop/package.nix.
       ++ [ (import ../../pkgs { inherit pkgs; }).codex-desktop ]
+      # Grok Bot — desktop agent, repackaged from the official .deb. Published
+      # by Cursor/Anysphere rather than xAI despite the name (Vendor:
+      # "SpaceXAI <hi@cursor.com>", Homepage: cursor.com). Not in nixpkgs on
+      # either channel — the only `grok` attribute is the unrelated `grok-cli`.
+      # Unfree; same allowUnfree gate as claude-desktop.
+      # NOTE: deliberately OUTSIDE update-vendored.nu — its URL carries an
+      # opaque build hash and upstream publishes no release feed, so a bump is
+      # manual. See the header of pkgs/grok-bot/package.nix.
+      ++ [ (import ../../pkgs { inherit pkgs; }).grok-bot ]
       # Obscura — headless browser for AI agents: fetch, run JS on a real V8
       # isolate, screenshot, scrape, and serve CDP — no Chromium, no Node.
       # Source-built rather than `unstablePkgs.obscura` because nixpkgs carries
