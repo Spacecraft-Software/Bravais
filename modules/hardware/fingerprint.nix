@@ -209,6 +209,48 @@ in
       ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00bd", TEST=="power/control", ATTR{power/control}="on"
     '';
 
+    # The OTHER disconnect, and the one that actually breaks the lock screen.
+    #
+    # The rule above stops the reader idling itself off the bus, and it works --
+    # power/control reads "on". It does nothing for S3, because EVERY USB device
+    # re-enumerates on resume by design: the reader comes back with a new device
+    # number and libfprint's handle to the old one is dead. fprintd enumerates
+    # devices once at startup and never re-scans, so a daemon that was already
+    # running before the suspend keeps pointing at a device that no longer
+    # exists, and every identify against it fails instantly.
+    #
+    # From the user's side that is indistinguishable from the autosuspend bug --
+    # the lock screen offers the fingerprint prompt and withdraws it about a
+    # second later -- which is why the 2026-09-08 fix looked like it had missed.
+    # It had not; this is a second, independent cause. Measured 2026-09-12, and
+    # the correlation over 14 days of journal is exact: every
+    #   cosmic-greeter: pam_fprintd(...): ReleaseDevice failed: ... removed
+    # shares its second with an
+    #   kernel: ACPI: PM: Waking up from system sleep state S3
+    #
+    # It also explains the "it worked once": fprintd idle-exits ~30 s after its
+    # last client, so an attempt made more than half a minute after resuming
+    # gets a FRESH daemon, which enumerates the current device and succeeds.
+    # Waiting is not a fix, but it is the tell.
+    #
+    # So: make sure no fprintd survives the suspend boundary. Stopping it is
+    # deliberately the whole action -- fprintd is D-Bus activated, so the next
+    # PAM attempt starts a new one at the moment it is needed, by which point
+    # the USB device has long since settled. Starting one here instead would
+    # race the re-enumeration and cache the failure we are trying to avoid.
+    #
+    # Both hooks, not just the resume one: stopping before sleep means nothing
+    # holds the device ACROSS the boundary, which closes the window where the
+    # greeter re-arms fingerprint faster than the resume hook can run.
+    # `|| true` on both because a fingerprint convenience must never be able to
+    # block a suspend or a resume.
+    powerManagement.powerDownCommands = ''
+      ${config.systemd.package}/bin/systemctl stop fprintd.service || true
+    '';
+    powerManagement.resumeCommands = ''
+      ${config.systemd.package}/bin/systemctl stop fprintd.service || true
+    '';
+
     # Apply the policy declared above. Every name in both lists was taken from
     # a live `ls /etc/pam.d`, so this must not create any new PAM service —
     # diff the directory listing across the rebuild to prove it.
