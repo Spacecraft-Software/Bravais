@@ -8,70 +8,6 @@
   ...
 }:
 
-let
-  # ---------------------------------------------------------------------------
-  # Bitwarden biometric unlock — the polkit action, declared here because the
-  # app cannot declare it itself.
-  #
-  # THE MECHANISM: Bitwarden's Linux "unlock with biometrics" is a polkit
-  # authorization check on the action `com.bitwarden.Bitwarden.unlock` with
-  # `allow_active = auth_self`. The vault key is NOT protected by the finger: it
-  # is offloaded to the Secret Service (gnome-keyring, modules/core/keyring.nix)
-  # and polkit merely gates its release. That is precisely the doctrine
-  # modules/hardware/fingerprint.nix states — fingerprint AUTHENTICATES, it
-  # cannot DECRYPT, and password-at-greetd stays the root of trust because it is
-  # what opened the login keyring.
-  #
-  # WHY IT IS HERE AND NOT INSTALLED BY THE APP: the desktop client normally
-  # writes this file itself through pkexec, but its own `canAutoSetup()` returns
-  # FALSE under Flatpak and Snap — "we cannot auto setup ... since the
-  # filesystem is sandboxed" — and com.bitwarden.desktop is a Flatpak here
-  # (modules/packages/flatpak.nix). Its hardcoded target
-  # `/usr/share/polkit-1/actions/` does not exist on NixOS either. polkitd's
-  # search path includes /run/current-system/sw/share/polkit-1/actions, so a
-  # writeTextDir in systemPackages is the declarative equivalent. The Flatpak
-  # already carries the two bus permissions this needs —
-  # `org.freedesktop.PolicyKit1=talk` on the system bus and
-  # `org.freedesktop.secrets=talk` on the session bus — so nothing else is
-  # required of it.
-  #
-  # WHY IT IS SAFE UNDER THE FINGERPRINT POLICY: `polkit-1` is already in
-  # fprintAllow, and /etc/pam.d/polkit-1 carries NO pam_gnome_keyring stanza —
-  # so the 11400-before-12200 short-circuit that governs that list cannot bite
-  # here. pam_fprintd is `sufficient`, so a failed or unsupported scan falls
-  # through to the password prompt and the vault can never be locked out.
-  # `auth_self` authenticates the INVOKING user, so no wheel membership and no
-  # root-enrolled print are implied (contrast the `su` reasoning in that file).
-  #
-  # The XML is upstream's verbatim, lifted from the `polkitPolicy` template
-  # literal in apps/desktop/src/key-management/biometrics/native-v2/
-  # os-biometrics-linux.service.ts — do not reformat it. nixpkgs'
-  # bitwarden-desktop extracts the same string with awk in its postInstall; if
-  # this ever moves to the nixpkgs client instead of the Flatpak, drop this
-  # binding rather than shipping the action twice.
-  #
-  # Verify after a rebuild:
-  #   pkaction --action-id com.bitwarden.Bitwarden.unlock --verbose
-  #   pkcheck -u --action-id com.bitwarden.Bitwarden.unlock --process $$
-  # ---------------------------------------------------------------------------
-  bitwardenPolkitPolicy = pkgs.writeTextDir "share/polkit-1/actions/com.bitwarden.Bitwarden.policy" ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE policyconfig PUBLIC
-     "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
-     "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
-    <policyconfig>
-        <action id="com.bitwarden.Bitwarden.unlock">
-          <description>Unlock Bitwarden</description>
-          <message>Authenticate to unlock Bitwarden</message>
-          <defaults>
-            <allow_any>no</allow_any>
-            <allow_inactive>no</allow_inactive>
-            <allow_active>auth_self</allow_active>
-          </defaults>
-        </action>
-    </policyconfig>
-  '';
-in
 {
   options.steelbore.packages.security = {
     enable = lib.mkEnableOption "Security and encryption tools";
@@ -92,7 +28,41 @@ in
         sequoia-sqv # Rust — Signature verifier
         sequoia-sqop # Rust — Stateless OpenPGP
 
-        # Password Managers
+        # ── Password Managers ──────────────────────────────────────────────
+        #
+        # The desktop client is the NIXPKGS package, not the Flatpak (which is
+        # commented out in modules/packages/flatpak.nix). Both are 2026.8.0, so
+        # this is not a version move — it is about the credential path.
+        #
+        # A Flatpak cannot reach the Secret Service for its OWN credential
+        # store. It asks the **Secret portal** for a per-app master key and
+        # encrypts `~/.var/app/<id>/data/keyrings/default.keyring` with it. That
+        # key lives in the login keyring as an "Application key for <app_id>"
+        # item, so anything that re-keys or replaces the login keyring destroys
+        # it — and the app then fails every credential read with `File backend
+        # error Incorrect secret`, locks the vault, reloads the renderer and
+        # loops, which reads as an unusable UI rather than a keyring fault.
+        # Measured 2026-09-15: that is exactly what happened here, the app key
+        # having been lost in the same event that re-keyed the browsers. The
+        # unsandboxed client talks to `org.freedesktop.secrets` directly
+        # (modules/core/keyring.nix pins gnome-keyring as THE provider), so this
+        # entire failure mode does not exist for it.
+        #
+        # **Do NOT also declare the `com.bitwarden.Bitwarden.unlock` polkit
+        # action here.** This package installs it itself — its postInstall awks
+        # the `polkitPolicy` template literal straight out of
+        # os-biometrics-linux.service.ts into
+        # `$out/share/polkit-1/actions/`. Shipping a second copy (the
+        # `writeTextDir` this module carried while the client was a Flatpak) is
+        # a `buildEnv` collision on an identical path, exit 25, same shape as
+        # constraint #12. The action is still required for biometric unlock; it
+        # simply arrives with the package now.
+        #
+        # Browser integration is unaffected by the move: the client copies
+        # `desktop_proxy` and opens its IPC socket inside each browser's own
+        # NativeMessagingHosts directory regardless of whether the client itself
+        # is sandboxed, so Flatpak Chrome still works (PRD §11.4).
+        bitwarden-desktop # TypeScript/Electron — official desktop client
         rbw # Rust — Bitwarden CLI (unofficial; kept for scripting)
         authenticator # Rust — 2FA/OTP
 
@@ -114,9 +84,6 @@ in
       # Secret managers from upstream flakes
       ++ [
         rapg.packages.${pkgs.stdenv.hostPlatform.system}.default # Go — AI-agent secret manager
-
-        # polkit action only — no binary, no closure. See the note above.
-        bitwardenPolkitPolicy
       ];
   };
 }

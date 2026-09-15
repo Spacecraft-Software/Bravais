@@ -521,18 +521,18 @@ Declaring a PAM service *creates* it (constraint #9 in reverse), so verify a
 rebuild with `ls /etc/pam.d | wc -l` (must stay 32) and
 `grep -l pam_fprintd /etc/pam.d/* | sort` (must equal `fprintAllow`).
 
-**Consumer: Bitwarden biometric unlock.** `modules/packages/security.nix` ships
-the polkit action `com.bitwarden.Bitwarden.unlock` (`allow_active = auth_self`),
-which is the whole of Bitwarden's Linux biometric-unlock mechanism — the vault
-key is offloaded to the Secret Service and polkit only gates its release, so
-this is the rule above restated in another application. The desktop client
-normally writes the action itself through `pkexec`, but its own
-`canAutoSetup()` returns false under Flatpak and Snap, and
-`com.bitwarden.desktop` is a Flatpak here; its hardcoded
-`/usr/share/polkit-1/actions/` does not exist on NixOS either. `polkitd` reads
-`/run/current-system/sw/share/polkit-1/actions`, so a `writeTextDir` in
-`environment.systemPackages` is the declarative equivalent — a policy file, no
-binary, no closure growth. `/etc/pam.d/polkit-1` carries no `pam_gnome_keyring`
+**Consumer: Bitwarden biometric unlock.** Bitwarden's Linux biometric unlock is
+a polkit `auth_self` check on `com.bitwarden.Bitwarden.unlock` — the vault key is
+offloaded to the Secret Service and polkit only gates its release, so this is the
+rule above restated in another application. The action file is installed by
+**`pkgs.bitwarden-desktop` itself** (its `postInstall` awks the `polkitPolicy`
+template literal out of `os-biometrics-linux.service.ts`), so nothing in this
+tree declares it. **Never add a second copy** — identical path, `buildEnv`
+collision, same shape as constraint #12. It *was* declared here as a
+`writeTextDir` while the client was the Flatpak, because a sandboxed client
+cannot install it: `canAutoSetup()` returns false under Flatpak and Snap, and the
+hardcoded `/usr/share/polkit-1/actions/` does not exist on NixOS. Either way
+`polkitd` reads `/run/current-system/sw/share/polkit-1/actions`. `/etc/pam.d/polkit-1` carries no `pam_gnome_keyring`
 stanza, so the 11400/12200 inversion does not apply here, and `pam_fprintd`
 stays `sufficient` so a failed scan falls through to the password prompt.
 Verify with `pkaction --action-id com.bitwarden.Bitwarden.unlock --verbose`.
@@ -1071,7 +1071,7 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **Sequoia PGP Stack (Rust):** sequoia-sq, sequoia-chameleon-gnupg, sequoia-wot, sequoia-sqv, sequoia-sqop
 
-**Password Managers:** rbw (Rust, Bitwarden CLI — kept for scripting), authenticator (Rust, 2FA/OTP). The Bitwarden **desktop client is the `com.bitwarden.desktop` Flatpak** (§11.10); `bitwarden-cli` and `bitwarden-desktop` are no longer nixpkgs packages in this module.
+**Password Managers:** bitwarden-desktop (TypeScript/Electron, official client), rbw (Rust, Bitwarden CLI — kept for scripting), authenticator (Rust, 2FA/OTP). The desktop client is the **nixpkgs package**; the `com.bitwarden.desktop` Flatpak is commented out in §11.10 (moved 2026-09-15 — same 2026.8.0, the move is about the credential path, not the version).
 
 #### Bitwarden biometric unlock
 
@@ -1079,8 +1079,18 @@ Unlocking by fingerprint has two halves, and only the first needs anything from
 this flake.
 
 **Desktop app** — a polkit `auth_self` check on `com.bitwarden.Bitwarden.unlock`,
-whose action file this module ships because the sandboxed client cannot install
-it itself. Mechanism and rationale in §6.1.
+whose action file arrives with `pkgs.bitwarden-desktop`. Mechanism, and why this
+tree must not declare it a second time, in §6.1.
+
+**Why not the Flatpak.** A Flatpak cannot use the Secret Service for its *own*
+credential store; it asks the **Secret portal** for a per-app master key and
+encrypts `~/.var/app/<id>/data/keyrings/default.keyring` with it. That key is an
+"Application key for `<app_id>`" item in the login keyring, so any re-key or
+replacement of that keyring destroys it — after which every credential read fails
+`File backend error Incorrect secret`, the vault locks, the renderer reloads, and
+it loops, presenting as an unusable UI rather than a keyring fault. Measured
+2026-09-15. The unsandboxed client talks to `org.freedesktop.secrets` directly
+and has none of this.
 
 **Browser extension** — needs no Nix change at all for the active browser, and
 the reason is worth recording because it is easy to re-derive wrongly. The
@@ -1099,13 +1109,24 @@ artifacts there:
 | `.app.<name>.socket` | extra IPC listener, beside the usual `~/.cache/com.bitwarden.desktop/s.<name>` |
 
 That directory is the browser's own config, so the browser sandbox sees it
-natively; the Bitwarden Flatpak reaches it because its `filesystems=` grants
-precisely that list of NMHS directories **and nothing else** — which is the tell
-that this is the whole mechanism. The copied proxy needs only
-`libgcc_s`/`libm`/`libc`/`ld-linux`, all present in `org.freedesktop.Platform
-25.08`, the runtime *both* Flatpaks use, so it runs inside the browser sandbox.
-The same trick is already live on this host as
-`~/.var/app/com.google.Chrome/plasma-browser-integration-host`.
+natively, and the unsandboxed client writes there needing no permission at all.
+(While the client was a Flatpak it reached those paths because its `filesystems=`
+granted precisely that list of NMHS directories **and nothing else** — which was
+the tell that this is the whole mechanism.) The same trick is already live on
+this host as `~/.var/app/com.google.Chrome/plasma-browser-integration-host`.
+
+**The nixpkgs client breaks this for a Flatpak browser, and the cause is the ELF
+interpreter.** With both sides Flatpaks the copied proxy ran inside the browser
+sandbox because it needs only `libgcc_s`/`libm`/`libc`/`ld-linux`, all present in
+`org.freedesktop.Platform 25.08` — the runtime *both* used. A nixpkgs-built
+`desktop_proxy` instead names a `/nix/store/…-glibc-…/lib/ld-linux-x86-64.so.2`
+interpreter, and `/nix` is not mounted in Chrome's sandbox, so the exec fails and
+the bridge never connects. **Nothing on the Bitwarden side logs this** — the
+proxy copy, the manifest and the socket are all created exactly as before. Three
+ways out, in order of preference: use a **host-installed browser** for the
+extension; grant the browser Flatpak `--filesystem=/nix/store:ro` via
+`services.flatpak.overrides` (cheap and declarative, but widens that sandbox); or
+accept desktop-app-only biometrics.
 
 Enabling it is therefore two runtime toggles, not a rebuild: **Allow browser
 integration** in the desktop app, then **Unlock with biometrics** in the
@@ -1295,7 +1316,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
 | Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (Connected — COSMIC applet, no network permission; a front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (KDE Connect for COSMIC — carries `shared=network`, so it is a second daemon and overlaps nixpkgs' `kdePackages.kdeconnect-kde`). Both from the `cosmic` remote. Neither pairs with a phone until 1714-1764/tcp+udp are open, which nothing in this tree does yet |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |
-| Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
+| Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — §11.4) |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
 | Gaming              | **io.github.lavenderdotpet.LibreQuake** (free BSD-3 Quake content plus a bundled engine) and **io.github.jotd666.gods-deluxe** (Bitmap Brothers platformer remake, engine and data in one package) — the two active entries. Neither is in either channel, so Flatpak is the policy's fallback rather than a preference. Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |

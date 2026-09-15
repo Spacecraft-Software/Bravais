@@ -165,10 +165,19 @@
       } # Rust BitTorrent client (GTK4/libadwaita)
 
       # ── Security & Remote ──────────────────────────────────────────────────
-      {
-        appId = "com.bitwarden.desktop";
-        origin = "flathub";
-      }
+      # Bitwarden moved to the nixpkgs package (modules/packages/security.nix)
+      # on 2026-09-15. Same 2026.8.0 — the move is about the credential path,
+      # not the version: a Flatpak cannot use the Secret Service for its own
+      # store and must go through the Secret portal's encrypted-file backend,
+      # whose master key is destroyed by any login-keyring re-key. The full
+      # reasoning, and why the polkit action must NOT be declared twice, is in
+      # the Password Managers comment in security.nix.
+      #
+      # `services.flatpak.uninstallUnmanaged` is not set here, so dropping this
+      # entry does NOT remove the installed app — run
+      # `flatpak uninstall com.bitwarden.desktop` by hand. Its data under
+      # ~/.var/app/com.bitwarden.desktop/ survives even that.
+      # { appId = "com.bitwarden.desktop";      origin = "flathub"; }  # DISABLED — using pkgs.bitwarden-desktop instead
       {
         appId = "com.rustdesk.RustDesk";
         origin = "flathub";

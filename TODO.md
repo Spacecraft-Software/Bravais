@@ -515,6 +515,17 @@ This document tracks the implementation status of the Bravais NixOS distribution
       (`modules/packages/security.nix`) — Bitwarden's biometric unlock is a
       polkit `auth_self` check, and the Flatpak client cannot install the
       action from inside its sandbox
+- [✓] Move Bitwarden from the Flatpak to `pkgs.bitwarden-desktop` (2026-09-15)
+      — unsandboxed, so it uses the Secret Service directly instead of the
+      Secret portal's encrypted-file backend, whose master key a login-keyring
+      re-key destroys. The package ships the polkit action itself, so the
+      `writeTextDir` above was removed to avoid a `buildEnv` collision
+- [ ] Decide the browser-extension path now that the client is unsandboxed: a
+      nixpkgs `desktop_proxy` cannot exec inside Flatpak Chrome (its
+      `/nix/store` ELF interpreter is not mounted there). Host browser, or
+      `--filesystem=/nix/store:ro` override, or desktop-only biometrics
+- [ ] `flatpak uninstall com.bitwarden.desktop` by hand — `uninstallUnmanaged`
+      is not set, so commenting the entry out does not remove the app
 - [ ] Confirm the autosuspend fix across repeated lock/unlock cycles — the
       disconnect was a single correlated occurrence, not yet a proven repeat
 - [ ] Test `pam_fprintd` conversation handling in `gtklock`, `swaylock` and
