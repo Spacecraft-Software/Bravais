@@ -267,6 +267,9 @@ in
   # cursor files for all backends in one package, so enabling every
   # propagation path costs nothing.
   home.pointerCursor = {
+    # Explicit since Home Manager deprecated inferring generation from the mere
+    # presence of `home.pointerCursor.*`; unstable warns, stable already accepts it.
+    enable = true;
     name = "Bibata-Modern-Classic";
     package = pkgs.bibata-cursors;
     size = 24;

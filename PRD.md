@@ -521,6 +521,22 @@ Declaring a PAM service *creates* it (constraint #9 in reverse), so verify a
 rebuild with `ls /etc/pam.d | wc -l` (must stay 32) and
 `grep -l pam_fprintd /etc/pam.d/* | sort` (must equal `fprintAllow`).
 
+**Consumer: Bitwarden biometric unlock.** Bitwarden's Linux biometric unlock is
+a polkit `auth_self` check on `com.bitwarden.Bitwarden.unlock` — the vault key is
+offloaded to the Secret Service and polkit only gates its release, so this is the
+rule above restated in another application. The action file is installed by
+**`pkgs.bitwarden-desktop` itself** (its `postInstall` awks the `polkitPolicy`
+template literal out of `os-biometrics-linux.service.ts`), so nothing in this
+tree declares it. **Never add a second copy** — identical path, `buildEnv`
+collision, same shape as constraint #12. It *was* declared here as a
+`writeTextDir` while the client was the Flatpak, because a sandboxed client
+cannot install it: `canAutoSetup()` returns false under Flatpak and Snap, and the
+hardcoded `/usr/share/polkit-1/actions/` does not exist on NixOS. Either way
+`polkitd` reads `/run/current-system/sw/share/polkit-1/actions`. `/etc/pam.d/polkit-1` carries no `pam_gnome_keyring`
+stanza, so the 11400/12200 inversion does not apply here, and `pam_fprintd`
+stays `sufficient` so a failed scan falls through to the password prompt.
+Verify with `pkaction --action-id com.bitwarden.Bitwarden.unlock --verbose`.
+
 ### 6.2 CPU Vendor (`modules/hardware/intel.nix`) + x86-64 Platform Flags (`modules/platform/x86-64.nix`)
 
 **Options:** `steelbore.hardware.intel.enable` is vendor-only (`kvm-intel`, microcode).
@@ -1055,7 +1071,77 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **Sequoia PGP Stack (Rust):** sequoia-sq, sequoia-chameleon-gnupg, sequoia-wot, sequoia-sqv, sequoia-sqop
 
-**Password Managers:** rbw (Rust, Bitwarden CLI), bitwarden-cli, bitwarden-desktop, authenticator (Rust, 2FA/OTP)
+**Password Managers:** bitwarden-desktop (TypeScript/Electron, official client), rbw (Rust, Bitwarden CLI — kept for scripting), authenticator (Rust, 2FA/OTP). The desktop client is the **nixpkgs package**; the `com.bitwarden.desktop` Flatpak is commented out in §11.10 (moved 2026-09-15 — same 2026.8.0, the move is about the credential path, not the version).
+
+#### Bitwarden biometric unlock
+
+Unlocking by fingerprint has two halves, and only the first needs anything from
+this flake.
+
+**Desktop app** — a polkit `auth_self` check on `com.bitwarden.Bitwarden.unlock`,
+whose action file arrives with `pkgs.bitwarden-desktop`. Mechanism, and why this
+tree must not declare it a second time, in §6.1.
+
+**Why not the Flatpak.** A Flatpak cannot use the Secret Service for its *own*
+credential store; it asks the **Secret portal** for a per-app master key and
+encrypts `~/.var/app/<id>/data/keyrings/default.keyring` with it. That key is an
+"Application key for `<app_id>`" item in the login keyring, so any re-key or
+replacement of that keyring destroys it — after which every credential read fails
+`File backend error Incorrect secret`, the vault locks, the renderer reloads, and
+it loops, presenting as an unusable UI rather than a keyring fault. Measured
+2026-09-15. The unsandboxed client talks to `org.freedesktop.secrets` directly
+and has none of this.
+
+**Browser extension** — needs no Nix change at all for the active browser, and
+the reason is worth recording because it is easy to re-derive wrongly. The
+extension reaches the desktop app over Chrome native messaging: the browser must
+*execute* a proxy binary, and that proxy must reach the app's IPC socket — across
+two different Flatpak sandboxes. Bitwarden does **not** solve this with
+`flatpak-spawn` (the Chrome Flatpak carries no `org.freedesktop.Flatpak`
+talk-name and could not use it). It uses the **browser's own
+`NativeMessagingHosts` directory as a rendezvous point**, putting all three
+artifacts there:
+
+| Artifact in `<NMHS>/` | Purpose |
+|---|---|
+| `.bitwarden_desktop_proxy` | copy of `desktop_proxy` (`linkOrCopy`; the hard link fails across the Flatpak mount and falls back to a copy) |
+| `com.8bit.bitwarden.json` | manifest whose `path` names that copy |
+| `.app.<name>.socket` | extra IPC listener, beside the usual `~/.cache/com.bitwarden.desktop/s.<name>` |
+
+That directory is the browser's own config, so the browser sandbox sees it
+natively, and the unsandboxed client writes there needing no permission at all.
+(While the client was a Flatpak it reached those paths because its `filesystems=`
+granted precisely that list of NMHS directories **and nothing else** — which was
+the tell that this is the whole mechanism.) The same trick is already live on
+this host as `~/.var/app/com.google.Chrome/plasma-browser-integration-host`.
+
+**The nixpkgs client breaks this for a Flatpak browser, and the cause is the ELF
+interpreter.** With both sides Flatpaks the copied proxy ran inside the browser
+sandbox because it needs only `libgcc_s`/`libm`/`libc`/`ld-linux`, all present in
+`org.freedesktop.Platform 25.08` — the runtime *both* used. A nixpkgs-built
+`desktop_proxy` instead names a `/nix/store/…-glibc-…/lib/ld-linux-x86-64.so.2`
+interpreter, and `/nix` is not mounted in Chrome's sandbox, so the exec fails and
+the bridge never connects. **Nothing on the Bitwarden side logs this** — the
+proxy copy, the manifest and the socket are all created exactly as before. Three
+ways out, in order of preference: use a **host-installed browser** for the
+extension; grant the browser Flatpak `--filesystem=/nix/store:ro` via
+`services.flatpak.overrides` (cheap and declarative, but widens that sandbox); or
+accept desktop-app-only biometrics.
+
+Enabling it is therefore two runtime toggles, not a rebuild: **Allow browser
+integration** in the desktop app, then **Unlock with biometrics** in the
+extension. Do not confuse Bitwarden's *"browser integration fingerprint
+validation"* — a shared pairing phrase — with fprintd.
+
+**The limitation.** The client keeps two hardcoded maps and they differ:
+`getLinuxNMHS()` (host installs) knows Firefox, Chrome, Chromium, Edge, Vivaldi,
+Brave and Helium, while `getFlatpakNMHS()` knows only Firefox, Chrome, Chromium
+and Edge — anything else logs `Flatpak <key> not supported, skipping`. **Brave and
+Opera are Flatpaks here (§11.10), so neither can drive the extension bridge**, and
+a `services.flatpak.overrides` filesystem grant would not help: the map is
+app-side, not a permission. A host-installed Brave would work; Opera is in neither
+map. Chrome — the `browser` role's active app (`default-apps.nix`) — is supported,
+which is why nothing is required here today.
 
 **SSH:** openssh_hpn (general-purpose fallback), gitway (Spacecraft Software SSH transport for Git, via flake input — primary path; `gitway-agent` owns `$SSH_AUTH_SOCK`, `gitway-keygen` is git's `gpg.ssh.program`, `gitway-add` replaces `ssh-add` in shell init)
 
@@ -1209,6 +1295,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 * `claude-desktop` — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.
 * `github-copilot-app` — official GitHub Tauri-based desktop application, repackaged from the official `.deb` in `pkgs/github-copilot-app/` (unfree). Bump per release with `nu pkgs/update-vendored.nu github-copilot-app`.
 * `opencode-desktop` — official OpenCode desktop application, repackaged from the official `.deb` in `pkgs/opencode-desktop/` (MIT license, strips unused Musl binaries to build under glibc; wrapper puts libglvnd/libgbm/vulkan-loader on `LD_LIBRARY_PATH` so Chromium's bundled ANGLE can `dlopen` the native EGL). Bump per release with `nu pkgs/update-vendored.nu opencode-desktop`.
+* `grok-bot` — Grok Bot desktop agent (Electron), repackaged from the official `.deb`. Published by Cursor/Anysphere rather than xAI despite the name (`Vendor: SpaceXAI <hi@cursor.com>`, `Homepage: cursor.com`); not in nixpkgs on either channel, where the only `grok` attribute is the unrelated `grok-cli`. Registers `x-scheme-handler/grokbot` and `x-scheme-handler/sand` (upstream's pre-release codename), both declared in `users/mj/default-apps.nix` as `selfRegisteredSchemes`. Deliberately outside `update-vendored.nu` — opaque build hash in the URL, no release feed; bump by hand.
 * `goose-desktop` — official Block AI agent desktop application, repackaged from the official `.deb` in `pkgs/goose-desktop/` (Apache-2.0 license; no Flathub listing — the `.flatpak` release asset is a self-contained bundle, not a Flathub app). Carries the same ANGLE/EGL `LD_LIBRARY_PATH` wrapper fix as `opencode-desktop`. Bump per release with `nu pkgs/update-vendored.nu goose-desktop`; note upstream moved `block/goose` → `aaif-goose/goose` (old URLs still redirect, but the updater queries the new org).
 
 ### 11.10 Flatpak (`modules/packages/flatpak.nix`)
@@ -1229,7 +1316,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 | Communication       | com.discordapp.Discord, im.riot.Riot, io.wavebox.Wavebox |
 | Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (Connected — COSMIC applet, no network permission; a front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (KDE Connect for COSMIC — carries `shared=network`, so it is a second daemon and overlaps nixpkgs' `kdePackages.kdeconnect-kde`). Both from the `cosmic` remote. Neither pairs with a phone until 1714-1764/tcp+udp are open, which nothing in this tree does yet |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |
-| Security & Remote   | com.bitwarden.desktop, com.rustdesk.RustDesk         |
+| Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — §11.4) |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
 | Gaming              | **io.github.lavenderdotpet.LibreQuake** (free BSD-3 Quake content plus a bundled engine) and **io.github.jotd666.gods-deluxe** (Bitmap Brothers platformer remake, engine and data in one package) — the two active entries. Neither is in either channel, so Flatpak is the policy's fallback rather than a preference. Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
