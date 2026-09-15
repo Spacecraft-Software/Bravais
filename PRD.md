@@ -521,6 +521,22 @@ Declaring a PAM service *creates* it (constraint #9 in reverse), so verify a
 rebuild with `ls /etc/pam.d | wc -l` (must stay 32) and
 `grep -l pam_fprintd /etc/pam.d/* | sort` (must equal `fprintAllow`).
 
+**Consumer: Bitwarden biometric unlock.** `modules/packages/security.nix` ships
+the polkit action `com.bitwarden.Bitwarden.unlock` (`allow_active = auth_self`),
+which is the whole of Bitwarden's Linux biometric-unlock mechanism — the vault
+key is offloaded to the Secret Service and polkit only gates its release, so
+this is the rule above restated in another application. The desktop client
+normally writes the action itself through `pkexec`, but its own
+`canAutoSetup()` returns false under Flatpak and Snap, and
+`com.bitwarden.desktop` is a Flatpak here; its hardcoded
+`/usr/share/polkit-1/actions/` does not exist on NixOS either. `polkitd` reads
+`/run/current-system/sw/share/polkit-1/actions`, so a `writeTextDir` in
+`environment.systemPackages` is the declarative equivalent — a policy file, no
+binary, no closure growth. `/etc/pam.d/polkit-1` carries no `pam_gnome_keyring`
+stanza, so the 11400/12200 inversion does not apply here, and `pam_fprintd`
+stays `sufficient` so a failed scan falls through to the password prompt.
+Verify with `pkaction --action-id com.bitwarden.Bitwarden.unlock --verbose`.
+
 ### 6.2 CPU Vendor (`modules/hardware/intel.nix`) + x86-64 Platform Flags (`modules/platform/x86-64.nix`)
 
 **Options:** `steelbore.hardware.intel.enable` is vendor-only (`kvm-intel`, microcode).
@@ -1055,7 +1071,56 @@ otherwise shadow silently; a strict buildEnv such as `home.packages` would fail 
 
 **Sequoia PGP Stack (Rust):** sequoia-sq, sequoia-chameleon-gnupg, sequoia-wot, sequoia-sqv, sequoia-sqop
 
-**Password Managers:** rbw (Rust, Bitwarden CLI), bitwarden-cli, bitwarden-desktop, authenticator (Rust, 2FA/OTP)
+**Password Managers:** rbw (Rust, Bitwarden CLI — kept for scripting), authenticator (Rust, 2FA/OTP). The Bitwarden **desktop client is the `com.bitwarden.desktop` Flatpak** (§11.10); `bitwarden-cli` and `bitwarden-desktop` are no longer nixpkgs packages in this module.
+
+#### Bitwarden biometric unlock
+
+Unlocking by fingerprint has two halves, and only the first needs anything from
+this flake.
+
+**Desktop app** — a polkit `auth_self` check on `com.bitwarden.Bitwarden.unlock`,
+whose action file this module ships because the sandboxed client cannot install
+it itself. Mechanism and rationale in §6.1.
+
+**Browser extension** — needs no Nix change at all for the active browser, and
+the reason is worth recording because it is easy to re-derive wrongly. The
+extension reaches the desktop app over Chrome native messaging: the browser must
+*execute* a proxy binary, and that proxy must reach the app's IPC socket — across
+two different Flatpak sandboxes. Bitwarden does **not** solve this with
+`flatpak-spawn` (the Chrome Flatpak carries no `org.freedesktop.Flatpak`
+talk-name and could not use it). It uses the **browser's own
+`NativeMessagingHosts` directory as a rendezvous point**, putting all three
+artifacts there:
+
+| Artifact in `<NMHS>/` | Purpose |
+|---|---|
+| `.bitwarden_desktop_proxy` | copy of `desktop_proxy` (`linkOrCopy`; the hard link fails across the Flatpak mount and falls back to a copy) |
+| `com.8bit.bitwarden.json` | manifest whose `path` names that copy |
+| `.app.<name>.socket` | extra IPC listener, beside the usual `~/.cache/com.bitwarden.desktop/s.<name>` |
+
+That directory is the browser's own config, so the browser sandbox sees it
+natively; the Bitwarden Flatpak reaches it because its `filesystems=` grants
+precisely that list of NMHS directories **and nothing else** — which is the tell
+that this is the whole mechanism. The copied proxy needs only
+`libgcc_s`/`libm`/`libc`/`ld-linux`, all present in `org.freedesktop.Platform
+25.08`, the runtime *both* Flatpaks use, so it runs inside the browser sandbox.
+The same trick is already live on this host as
+`~/.var/app/com.google.Chrome/plasma-browser-integration-host`.
+
+Enabling it is therefore two runtime toggles, not a rebuild: **Allow browser
+integration** in the desktop app, then **Unlock with biometrics** in the
+extension. Do not confuse Bitwarden's *"browser integration fingerprint
+validation"* — a shared pairing phrase — with fprintd.
+
+**The limitation.** The client keeps two hardcoded maps and they differ:
+`getLinuxNMHS()` (host installs) knows Firefox, Chrome, Chromium, Edge, Vivaldi,
+Brave and Helium, while `getFlatpakNMHS()` knows only Firefox, Chrome, Chromium
+and Edge — anything else logs `Flatpak <key> not supported, skipping`. **Brave and
+Opera are Flatpaks here (§11.10), so neither can drive the extension bridge**, and
+a `services.flatpak.overrides` filesystem grant would not help: the map is
+app-side, not a permission. A host-installed Brave would work; Opera is in neither
+map. Chrome — the `browser` role's active app (`default-apps.nix`) — is supported,
+which is why nothing is required here today.
 
 **SSH:** openssh_hpn (general-purpose fallback), gitway (Spacecraft Software SSH transport for Git, via flake input — primary path; `gitway-agent` owns `$SSH_AUTH_SOCK`, `gitway-keygen` is git's `gpg.ssh.program`, `gitway-add` replaces `ssh-add` in shell init)
 

@@ -511,6 +511,10 @@ This document tracks the implementation status of the Bravais NixOS distribution
       lock screen here, not the greeter — classification follows the
       display-manager option)
 - [✓] Stop the fingerprint reader USB-autosuspending (udev rule for 06cb:00bd)
+- [✓] Ship the `com.bitwarden.Bitwarden.unlock` polkit action
+      (`modules/packages/security.nix`) — Bitwarden's biometric unlock is a
+      polkit `auth_self` check, and the Flatpak client cannot install the
+      action from inside its sandbox
 - [ ] Confirm the autosuspend fix across repeated lock/unlock cycles — the
       disconnect was a single correlated occurrence, not yet a proven repeat
 - [ ] Test `pam_fprintd` conversation handling in `gtklock`, `swaylock` and
