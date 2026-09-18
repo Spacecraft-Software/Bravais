@@ -519,9 +519,14 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Remove the 2026-09-12 `powerDownCommands`/`resumeCommands` fprintd stop
       — it lost a race against the lock screen in both directions and the
       resume half had become the cause of the failure (AGENTS constraint #39)
-- [ ] Confirm persist across repeated suspend/resume cycles — verify with
-      `cat /sys/bus/usb/devices/1-9/power/persist` (want `1`) and a resume
-      that logs `usb 1-9: reset` rather than `usb 1-9: USB disconnect`
+- [✓] Confirm persist across repeated suspend/resume cycles (2026-09-18) —
+      two back-to-back `rtcwake -m mem -s 20` runs with `power/persist = 1`
+      both logged `usb 1-9: reset full-speed USB device number 15 using
+      xhci_hcd`, devnum unchanged at 15, no `USB disconnect` at all; the
+      reader now resumes identically to `1-6`, `1-8` and `1-10`
+- [ ] Confirm the COSMIC lock screen itself takes the print after a resume —
+      needs the rebuild first, because the running generation still carries
+      the `resumeCommands` stop that kills the greeter's in-flight daemon
 - [✓] Ship the `com.bitwarden.Bitwarden.unlock` polkit action
       (`modules/packages/security.nix`) — Bitwarden's biometric unlock is a
       polkit `auth_self` check, and the Flatpak client cannot install the
