@@ -511,6 +511,17 @@ This document tracks the implementation status of the Bravais NixOS distribution
       lock screen here, not the greeter — classification follows the
       display-manager option)
 - [✓] Stop the fingerprint reader USB-autosuspending (udev rule for 06cb:00bd)
+- [✓] Keep the reader alive across S3 (`ATTR{power/persist}="1"` for
+      06cb:00bd, 2026-09-18) — it is the ONLY USB device here with
+      `power/persist = 0`, so it alone is torn down and re-created on resume
+      while `1-6`/`1-8`/`1-10` reset in place; fprintd 1.90.9 has no hotplug
+      path, so a re-created device kills every running daemon's handle
+- [✓] Remove the 2026-09-12 `powerDownCommands`/`resumeCommands` fprintd stop
+      — it lost a race against the lock screen in both directions and the
+      resume half had become the cause of the failure (AGENTS constraint #39)
+- [ ] Confirm persist across repeated suspend/resume cycles — verify with
+      `cat /sys/bus/usb/devices/1-9/power/persist` (want `1`) and a resume
+      that logs `usb 1-9: reset` rather than `usb 1-9: USB disconnect`
 - [✓] Ship the `com.bitwarden.Bitwarden.unlock` polkit action
       (`modules/packages/security.nix`) — Bitwarden's biometric unlock is a
       polkit `auth_self` check, and the Flatpak client cannot install the

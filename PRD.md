@@ -487,6 +487,17 @@ sensor. The stock libfprint driver enrolls but cannot read prints back
 parameter in libfprint 1.94.9+; the module carries a local `postPatch` for the
 arity change and overrides `meta.broken`.
 
+**Power.** Two udev rules pin the sensor's power behaviour, both guarded by
+`TEST==` so an absent attribute cannot fail the ruleset elsewhere.
+`power/control = on` keeps it out of USB runtime suspend, whose wake path the
+vfs0090 firmware does not survive mid-scan. `power/persist = 1` keeps it alive
+across S3: it is the only USB device on this machine the kernel defaults to
+`0` (its interface binds no in-kernel driver), so it alone is torn down and
+re-created on resume while every other device resets in place — and fprintd
+1.90.9 enumerates once at startup with no hotplug path, so a re-created device
+leaves every running daemon holding a dead handle. See AGENTS constraint #39,
+which also records why the sleep hooks that preceded this were removed.
+
 **Policy.** `security.pam.services.<name>.fprintAuth` defaults to
 `services.fprintd.enable`, which silently put `pam_fprintd` into 28 of 32 PAM
 services. The module replaces that inheritance with two explicit lists:
