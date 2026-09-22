@@ -32,7 +32,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 ## Color Palette — Steelbore 2 (WCAG 2.2 AA Compliant)
 
-All foreground colors are verified for contrast **against the Void Navy (`#000027`)
+All foreground colors are verified for contrast **against the Void Navy
 background** — Platinum Mist 15.09:1, Plasma Orange 6.66:1, Pulse Violet 5.51:1,
 Acid Lime 16.75:1, Mars Red 5.77:1, Plasma Magenta 6.41:1. All pass Level AA.
 Per-surface ratios (vs Quantum Blue and Deep Matrix) are tabulated in Standard
@@ -47,19 +47,19 @@ measured that specific pair at ≥4.5:1 (Standard §11). Two measured restrictio
 carry over from §11.0.2: on Quantum Blue fills, Mars Red (4.12:1) and Pulse
 Violet (3.93:1) may only be used for large text, icons, and non-text UI.
 
-| Token          | Hex       | RGB                | Class      | Role                            |
-|----------------|-----------|--------------------|------------|---------------------------------|
-| Void Navy      | `#000027` | RGB(0, 0, 39)      | Canvas     | **Background — all surfaces**   |
-| Quantum Blue   | `#0E2A47` | RGB(14, 42, 71)    | Surface    | Elevated panels / cards         |
-| Deep Matrix    | `#0B1A12` | RGB(11, 26, 18)    | Surface    | Code blocks / terminal wells    |
-| Platinum Mist  | `#D9DEE5` | RGB(217, 222, 229) | Foreground | Body text / default readout     |
-| Plasma Orange  | `#FF5E00` | RGB(255, 94, 0)    | Foreground | Primary accent / active readout |
-| Pulse Violet   | `#8A6CFF` | RGB(138, 108, 255) | Foreground | Structure / links / borders     |
-| Acid Lime      | `#B4FF00` | RGB(180, 255, 0)   | Foreground | Success / safe status / focus   |
-| Mars Red       | `#FF3B3B` | RGB(255, 59, 59)   | Foreground | Error status                    |
-| Plasma Magenta | `#E445FF` | RGB(228, 69, 255)  | Foreground | Warning / attention             |
+| Token          | Class      | Role                            |
+|----------------|------------|---------------------------------|
+| Void Navy      | Canvas     | **Background — all surfaces**   |
+| Quantum Blue   | Surface    | Elevated panels / cards         |
+| Deep Matrix    | Surface    | Code blocks / terminal wells    |
+| Platinum Mist  | Foreground | Body text / default readout     |
+| Plasma Orange  | Foreground | Primary accent / active readout |
+| Pulse Violet   | Foreground | Structure / links / borders     |
+| Acid Lime      | Foreground | Success / safe status / focus   |
+| Mars Red       | Foreground | Error status                    |
+| Plasma Magenta | Foreground | Warning / attention             |
 
-**`#000027` (Void Navy) is the mandatory canvas under Steelbore Modern**, the default palette —
+**Void Navy is the mandatory canvas under Steelbore Modern**, the default palette —
 documents, terminals, editor themes, application UIs. No alternative background is
 permitted. Surface tokens are fills on Void Navy and are **never text colors**.
 
@@ -98,12 +98,16 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
    contract (§11.2) and carries an `info` token that is not one of §11.1's
    eleven roles, so emit it only for a platform whose schema fits that
    contract. Emitting is not defaulting: `steelbore` stays the default, and the
-   platform's theme-selection key must name it. Where the platform can follow
+   platform's theme-selection key must name it. Where the emitted config or its
+   launcher reads a theme from the environment, the variable is
+   **`SPACECRAFT_THEME`**, carrying a slug — never `STEELBORE_THEME`, which is
+   already a boolean shell flag, so `STEELBORE_THEME=true` would resolve to a
+   nonexistent theme and fall through in silence (§11.6). Where the platform can follow
    the system color scheme, pair the themes per `[resolution.pair]` so a light
    preference resolves to `steelbore-navywhite` (§11.6.2) — read the pairing,
    never hardcode it. For
-   Modern the lifts are `accent` → `#FF8A3D`, `structure`/`border` →
-   `#B3A1FF`, `error` → `#FF7A7A`, `warning` → `#EE7BFF`, with `foreground`
+   Modern the lifts are `accent` → Plasma Orange Lift, `structure`/`border` →
+   Pulse Violet Lift, `error` → Mars Red Lift, `warning` → Plasma Magenta Lift, with `foreground`
    and `success` verbatim; for every other palette take the lifts from
    `steelbore.toml`. `steelbore` remains the sole default; variants are
    additive siblings and never replace it. **The palette's own canvas stays
@@ -135,7 +139,7 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
   singleton of `readonly property color` bindings instead of the QSS. See
   `spacecraft-qt-guidelines`.
 - **Document formats** (DOCX, PDF): force the declared palette's canvas as the
-  page background (`#000027` under Modern, the default) and ISO
+  page background (Void Navy under Modern, the default) and ISO
   A4 (210 × 297 mm) page size; apply palette text colors per
   `spacecraft-document-format`.
 
@@ -145,8 +149,8 @@ Before shipping any generated theme:
 
 - All hex codes match the emitted palette's entry in `steelbore.toml`
   verbatim — no near-matches, and no tokens borrowed from a *different*
-  palette in the family (§11.4). Classic's tokens (`#D98E32`, `#4B7EB0`,
-  `#50FA7B`, `#FF5C5C`, `#8BE9FD`, lifts `#7FAEDC` / `#FF8080`) are valid
+  palette in the family (§11.4). Classic's tokens (Molten Amber, Steel Blue,
+  Radium Green, Red Oxide, Liquid Coolant, plus the Steel Blue and Red Oxide lifts) are valid
   only inside `steelbore-classic`.
 - All fonts are FOSS-licensed and listed in §12.
 - Every foreground token against the palette's canvas passes WCAG 2.2 Level
@@ -155,8 +159,7 @@ Before shipping any generated theme:
 - No generated theme places palette-colored text on a palette-colored fill
   without a measured ≥4.5:1 ratio for that specific pair. Honour each
   palette's restricted pairings: in Modern, no normal-size Mars Red or Pulse
-  Violet text on Quantum Blue; in Blue, no normal-size Electric Blue
-  `#0066FF` text anywhere (3.91:1 — large text, icons, and non-text UI only).
+  Violet text on Quantum Blue; in Blue, no normal-size Electric Blue text anywhere (3.91:1 — large text, icons, and non-text UI only).
 - Surface tokens are mapped only to background/fill keys — never to any text
   or foreground key.
 - Where the platform supports multiple themes, the `<slug>-high-contrast`

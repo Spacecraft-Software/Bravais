@@ -66,7 +66,7 @@ Direct paste into the Anthropic API:
 
 ```python
 client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-opus-5",
     tools=[<paste schema output here>],
     messages=[...]
 )

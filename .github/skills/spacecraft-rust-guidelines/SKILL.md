@@ -1,11 +1,14 @@
 ---
 name: spacecraft-rust-guidelines
 description: >
-  Expert guidance for crafting extremely high-performance, multi‑threaded,
-  concurrent Rust code that is safe, maintainable, and extracts the maximum
-  throughput from modern multi‑core hardware. Use this skill when you need to
-  design, implement, review, or optimise systems that demand low latency and
-  high scalability.
+  Concurrency and performance doctrine for Rust — designing, implementing, reviewing, or
+  optimising multi-threaded systems that demand low latency and high throughput on multi-core
+  hardware. Triggers on Rust concurrency and performance work: std::thread, Arc,
+  std::sync::RwLock, parking_lot locks, tokio and spawn_blocking, atomics, std::hint::spin_loop,
+  catch_unwind, false sharing, lock contention, or benchmarking a hot path. Load `microsoft-rust-
+  guidelines` FIRST — it is the mandatory base for any Rust work; this skill stacks on top of it
+  and is pulled in conditionally for parallel or latency-sensitive code, never as the front door.
+  Do NOT trigger for non-Rust languages. By Mohamed Hammad and Spacecraft Software.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/

@@ -33,6 +33,14 @@ let
     "x-scheme-handler/antigravity" = "antigravity.desktop";
     "x-scheme-handler/claude" = "com.anthropic.Claude.desktop";
     "x-scheme-handler/codex" = "chatgpt.desktop";
+    # Grok Bot registers BOTH of these. `sand` is upstream's pre-release
+    # codename -- the .deb still declares Conflicts/Provides/Replaces: sand --
+    # and is theirs, not a typo to tidy up. Confirmed self-registering rather
+    # than assumed: launching it logs
+    #   xdg-mime: .../mimeapps.list.new: Read-only file system
+    # as it tries to write the HM-managed file through GIO.
+    "x-scheme-handler/grokbot" = "grok-bot.desktop";
+    "x-scheme-handler/sand" = "grok-bot.desktop";
   };
 
   mimeBindings = steelboreApps.mimeDefaults // selfRegisteredSchemes;

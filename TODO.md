@@ -321,6 +321,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Fix VSCode flatpak launch — declarative user override (`xdg.dataFile`) prepends `/app/bin:/usr/bin` to PATH so the `code` entrypoint resolves (was `bwrap: execvp code: No such file or directory`)
 - [✓] Add io.github.jotd666.gods-deluxe (Gaming) — un-parked from the Retro / Classic block and moved to the active Gaming section, since it is in neither channel and so is a delivery-policy fallback rather than a nixpkgs duplicate
 - [✓] Add io.github.nwxnw.cosmic-ext-connected (Connected) and io.github.hepp3n.kdeconnect (KDE Connect for COSMIC), both from the `cosmic` remote — Connected has no network permission and front-ends a host daemon; the KDE Connect entry carries `shared=network` and so overlaps nixpkgs `kdePackages.kdeconnect-kde` (modules/desktops/plasma.nix)
+- [✓] Add grok-bot (Grok Bot desktop agent) — `pkgs/grok-bot/`, installed via `modules/packages/ai.nix`; not in nixpkgs so repackaged from the official `.deb`. Its two self-registered URL schemes (`grokbot`, `sand`) are declared in `users/mj/default-apps.nix` per constraint #30
+- [ ] Wire grok-bot into `pkgs/update-vendored.nu` once upstream publishes a discoverable release feed — today the URL carries an opaque build hash and must be refreshed by hand
 - [ ] Open KDE Connect ports 1714-1764/tcp+udp — neither phone-connectivity app can pair until then; `programs.kdeconnect.enable` (which carries the firewall rules) is not set anywhere, only the bare package is in systemPackages
 - [ ] Decide which KDE Connect daemon to keep — the nixpkgs one or the COSMIC Flatpak. Two daemons cannot both hold 1714-1764, and a sandboxed one writes its cache under `~/.var/app/` where Connected cannot read it
 
@@ -509,6 +511,37 @@ This document tracks the implementation status of the Bravais NixOS distribution
       lock screen here, not the greeter — classification follows the
       display-manager option)
 - [✓] Stop the fingerprint reader USB-autosuspending (udev rule for 06cb:00bd)
+- [✓] Keep the reader alive across S3 (`ATTR{power/persist}="1"` for
+      06cb:00bd, 2026-09-18) — it is the ONLY USB device here with
+      `power/persist = 0`, so it alone is torn down and re-created on resume
+      while `1-6`/`1-8`/`1-10` reset in place; fprintd 1.90.9 has no hotplug
+      path, so a re-created device kills every running daemon's handle
+- [✓] Remove the 2026-09-12 `powerDownCommands`/`resumeCommands` fprintd stop
+      — it lost a race against the lock screen in both directions and the
+      resume half had become the cause of the failure (AGENTS constraint #39)
+- [✓] Confirm persist across repeated suspend/resume cycles (2026-09-18) —
+      two back-to-back `rtcwake -m mem -s 20` runs with `power/persist = 1`
+      both logged `usb 1-9: reset full-speed USB device number 15 using
+      xhci_hcd`, devnum unchanged at 15, no `USB disconnect` at all; the
+      reader now resumes identically to `1-6`, `1-8` and `1-10`
+- [ ] Confirm the COSMIC lock screen itself takes the print after a resume —
+      needs the rebuild first, because the running generation still carries
+      the `resumeCommands` stop that kills the greeter's in-flight daemon
+- [✓] Ship the `com.bitwarden.Bitwarden.unlock` polkit action
+      (`modules/packages/security.nix`) — Bitwarden's biometric unlock is a
+      polkit `auth_self` check, and the Flatpak client cannot install the
+      action from inside its sandbox
+- [✓] Move Bitwarden from the Flatpak to `pkgs.bitwarden-desktop` (2026-09-15)
+      — unsandboxed, so it uses the Secret Service directly instead of the
+      Secret portal's encrypted-file backend, whose master key a login-keyring
+      re-key destroys. The package ships the polkit action itself, so the
+      `writeTextDir` above was removed to avoid a `buildEnv` collision
+- [ ] Decide the browser-extension path now that the client is unsandboxed: a
+      nixpkgs `desktop_proxy` cannot exec inside Flatpak Chrome (its
+      `/nix/store` ELF interpreter is not mounted there). Host browser, or
+      `--filesystem=/nix/store:ro` override, or desktop-only biometrics
+- [ ] `flatpak uninstall com.bitwarden.desktop` by hand — `uninstallUnmanaged`
+      is not set, so commenting the entry out does not remove the app
 - [ ] Confirm the autosuspend fix across repeated lock/unlock cycles — the
       disconnect was a single correlated occurrence, not yet a proven repeat
 - [ ] Test `pam_fprintd` conversation handling in `gtklock`, `swaylock` and

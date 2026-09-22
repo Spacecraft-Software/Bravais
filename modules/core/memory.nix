@@ -8,6 +8,7 @@
 # This module gives the system memory headroom plus a name-aware OOM guard that kills the
 # *build* instead of the multiplexer.
 {
+  options,
   ...
 }:
 
@@ -50,6 +51,16 @@
   # Diagnostics — so a recurrence is *capturable* (the last one left no proof: no persistent
   # evidence of what was killed). Both are NixOS defaults, affirmed here so they can't
   # silently regress.
-  services.journald.storage = "persistent";
+  # `services.journald.storage` was renamed to
+  # `services.journald.settings.Journal.Storage` on nixos-unstable, where the old
+  # spelling still resolves but warns. Stable 26.05 declares ONLY the old one, so a
+  # straight rename fails to evaluate there. Select on what the channel actually
+  # declares -- same shape as the package fallbacks in constraint #5 -- and delete
+  # the `else` branch once stable carries `settings`.
+  services.journald =
+    if options.services.journald ? settings then
+      { settings.Journal.Storage = "persistent"; }
+    else
+      { storage = "persistent"; };
   systemd.coredump.enable = true;
 }

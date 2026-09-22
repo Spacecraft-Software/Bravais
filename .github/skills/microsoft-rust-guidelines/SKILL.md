@@ -1,6 +1,6 @@
 ---
 name: microsoft-rust-guidelines
-description: 
+description: >-
   ALWAYS invoke this skill BEFORE writing or modifying ANY Rust code (.rs files),
   even for simple Hello World programs. Enforces Microsoft Pragmatic Rust Guidelines,
   requires consulting the appropriate guideline files before any coding activity.

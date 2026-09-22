@@ -34,10 +34,17 @@ Quick conversion ratios (GPT-4 / Claude tokenizer approximations):
 | 16 KB | 4,000           |
 | 64 KB | 16,000          |
 
-A 200K context window holds ~800 KB of total text. Reserving 100 KB for
+Context windows differ by an order of magnitude across the models that will
+drive your CLI — 1M tokens on the current frontier models, 200K on the small
+fast ones — so size the budget against the **smallest** window you expect, not
+the largest. A 200K window holds ~800 KB of total text. Reserving 100 KB for
 agent system prompts, conversation history, and tool definitions leaves
 ~700 KB for tool output. A list command returning 500 records of 1 KB
 each consumes 500 KB — 70% of the available window for ONE invocation.
+
+A 1M window moves the ceiling, not the discipline: the same 500 KB response
+still displaces the working context the agent needs to reason about your
+output, and it is still paid for on every subsequent turn that carries it.
 
 The Spacecraft Software agent-economy goal: **a typical CLI invocation should cost
 < 5 KB of output** unless the agent explicitly requests more. The levers

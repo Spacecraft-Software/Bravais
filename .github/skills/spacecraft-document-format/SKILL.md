@@ -11,8 +11,7 @@ description: >
   spacecraft-markdown-document. Every binary ODF/MS-Office deliverable MUST ship a
   same-named GFM (.md) companion; Texinfo is exempt (the .texi is already plain text). PDF
   is always an export, never hand-authored. Documents default to CC-BY-SA-4.0
-  (GFDL-1.3-or-later permitted for Texinfo manuals). All rich-text outputs apply Void Navy
-  (#000027) and the Standard §11 palette + §12 typography.
+  (GFDL-1.3-or-later permitted for Texinfo manuals). All rich-text outputs apply Void Navy and the Standard §11 palette + §12 typography.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
@@ -81,7 +80,7 @@ If both an ODF and an MS Office version of the same content are produced (rare),
 
 These bind every format you produce. Violations are blockers, not preferences.
 
-- **Page/slide/HTML background: Void Navy `#000027`** — Standard §11 mandate. Non-negotiable. The per-format recipes (the `spacecraft-texinfo-document` skill for HTML/PDF, `odf-authoring.md` §C, `ms-office-authoring.md` §B) are not optional shortcuts; the colour silently drops in major readers if the layers aren't all applied.
+- **Page/slide/HTML background: the palette's canvas — Void Navy under Steelbore Modern, the default.** Standard §11 mandate, and non-negotiable *within a palette*: the canvas travels with the palette and is never substituted or tinted. It is Void Navy unless the project declared an alternate in its `README.md` (§11.4) — most alternates are also dark, but `steelbore-navywhite` is a **light** canvas (Pearl Silver), which inverts every foreground in §4 below. Read the declared palette before setting a page colour; read its values from `steelbore-color-palette`. The per-format recipes (the `spacecraft-texinfo-document` skill for HTML/PDF, `odf-authoring.md` §C, `ms-office-authoring.md` §B) are not optional shortcuts; the colour silently drops in major readers if the layers aren't all applied.
 - **Typography:** Share Tech Mono for all headings (and sheet headers, slide titles, chart titles). Inconsolata for body, cell content, code, slide bullets, captions. Standard §12.
 - **Texinfo brand output.** Carry the palette and typography into Texinfo **HTML** via a bundled CSS (`makeinfo --css-include`); apply Void Navy as the **PDF** page colour where the TeX toolchain allows; `.info`/plain-text output inherits the reader/terminal theme (which already follows the palette on Steelbore OS). Details in the `spacecraft-texinfo-document` skill (`references/building.md`).
 - **Page geometry:**
@@ -98,17 +97,20 @@ These bind every format you produce. Violations are blockers, not preferences.
 
 This is a local cache for fast lookup. **The canonical definition is The Steelbore Standard §11.** If the two ever disagree, the Standard wins.
 
-| Token          | Hex       | Role                           |
-|----------------|-----------|--------------------------------|
-| Void Navy      | `#000027` | **Page / slide / HTML background** |
-| Quantum Blue   | `#0E2A47` | Callout-panel fill (surface — never a text colour) |
-| Deep Matrix    | `#0B1A12` | Code-block fill (surface — never a text colour) |
-| Platinum Mist  | `#D9DEE5` | Body text, cells, active readout |
-| Plasma Orange  | `#FF5E00` | Heading 1, accents, chart titles, visited links |
-| Acid Lime      | `#B4FF00` | Heading 2, success/safe status |
-| Pulse Violet   | `#8A6CFF` | Heading 3, structure, borders, unvisited links |
-| Mars Red       | `#FF3B3B` | Error status                   |
-| Plasma Magenta | `#E445FF` | Warning / attention            |
+**These nine tokens are Steelbore Modern**, the default palette — correct for any project that has not declared otherwise. §11 is a **family**: `steelbore-classic`, `steelbore-blue`, `steelbore-blackpinkpanther`, `steelbore-matrixgreen`, `steelbore-navywhite` (light canvas) and `tokyonight` are conforming alternates, with `solarized-dark`/`solarized-light` registered as §11.5 fidelity palettes that may never be adopted. A project uses **exactly one**, declared in its `README.md` (§11.4), and tokens are never mixed across palettes. When a document is produced for a project on an alternate, take that palette's eleven role tokens from
+[`steelbore-color-palette`](../steelbore-color-palette/) — every palette binds the same roles, so the heading/body/status mapping below carries over unchanged; only the values differ. **This skill names tokens, never values.** Every hex, RGB triple, and contrast ratio lives in one place — that skill's `assets/steelbore.toml` — and is read from there at authoring time (§11.4: values are read, never retyped). A document rendered in §18.1 accessible mode uses the `-high-contrast` sibling of whichever palette applies; `spacecraft-accessibility-support` owns that selection.
+
+| Token          | Role                                               |
+|----------------|----------------------------------------------------|
+| Void Navy      | **Page / slide / HTML background**                 |
+| Quantum Blue   | Callout-panel fill (surface — never a text colour) |
+| Deep Matrix    | Code-block fill (surface — never a text colour)    |
+| Platinum Mist  | Body text, cells, active readout                   |
+| Plasma Orange  | Heading 1, accents, chart titles, visited links    |
+| Acid Lime      | Heading 2, success/safe status                     |
+| Pulse Violet   | Heading 3, structure, borders, unvisited links     |
+| Mars Red       | Error status                                       |
+| Plasma Magenta | Warning / attention                                |
 
 ## §5 — Typography cheatsheet (cited from Standard §12)
 
@@ -143,14 +145,14 @@ load all of them** — that defeats the token-economy split.
 
 Within each format's native style system, map the Spacecraft Software styles as follows. Per-format implementation details live in the references.
 
-| Style    | Font            | Size | Weight | Colour     | Used for                            |
-|----------|-----------------|------|--------|------------|-------------------------------------|
-| Normal   | Inconsolata     | 11 pt | regular | `#D9DEE5` | Body, cells, bullets                |
-| H1       | Share Tech Mono | 16 pt | bold    | `#FF5E00` | Title, sheet name, slide title, `@chapter` |
-| H2       | Share Tech Mono | 14 pt | bold    | `#B4FF00` | Section heading, table header row, `@section` |
-| H3       | Share Tech Mono | format default | italic | `#8A6CFF` | Subsection, `@subsection`  |
-| Link (unvisited) | inherit | inherit | inherit | `#8A6CFF` | Hyperlinks before click        |
-| Link (visited)   | inherit | inherit | inherit | `#FF5E00` | Hyperlinks after click         |
+| Style            | Font            | Size           | Weight  | Token         | Used for                                      |
+|------------------|-----------------|----------------|---------|---------------|-----------------------------------------------|
+| Normal           | Inconsolata     | 11 pt          | regular | Platinum Mist | Body, cells, bullets                          |
+| H1               | Share Tech Mono | 16 pt          | bold    | Plasma Orange | Title, sheet name, slide title, `@chapter`    |
+| H2               | Share Tech Mono | 14 pt          | bold    | Acid Lime     | Section heading, table header row, `@section` |
+| H3               | Share Tech Mono | format default | italic  | Pulse Violet  | Subsection, `@subsection`                     |
+| Link (unvisited) | inherit         | inherit        | inherit | Pulse Violet  | Hyperlinks before click                       |
+| Link (visited)   | inherit         | inherit        | inherit | Plasma Orange | Hyperlinks after click                        |
 
 Heading levels lock-step across formats: a Texinfo `@chapter` / a `# H1` in a markdown companion / Heading 1 in an ODF source all correspond. Don't break that mapping.
 

@@ -99,14 +99,14 @@ instead.
 
 | Role | Token | Hex |
 |------|-------|-----|
-| Backgrounds, chrome fill | Void Navy | `#000027` |
-| Elevated panel / card fill (never text) | Quantum Blue | `#0E2A47` |
-| Body data values | Platinum Mist | `#D9DEE5` |
-| Borders, table headers, section dividers | Pulse Violet | `#8A6CFF` |
-| Selected / active / success | Acid Lime | `#B4FF00` |
-| Warnings | Plasma Magenta | `#E445FF` |
-| Errors, invalid input | Mars Red | `#FF3B3B` |
-| Metadata, type hints, dimmed text | Platinum Mist (dimmed) | `#D9DEE5` |
+| Backgrounds, chrome fill | Void Navy | Void Navy |
+| Elevated panel / card fill (never text) | Quantum Blue | Quantum Blue |
+| Body data values | Platinum Mist | Platinum Mist |
+| Borders, table headers, section dividers | Pulse Violet | Pulse Violet |
+| Selected / active / success | Acid Lime | Acid Lime |
+| Warnings | Plasma Magenta | Plasma Magenta |
+| Errors, invalid input | Mars Red | Mars Red |
+| Metadata, type hints, dimmed text | Platinum Mist (dimmed) | Platinum Mist |
 
 Font choice is terminal-driven; the TUI does not specify typography.
 (Spacecraft Software's Share Tech Mono / Inconsolata preferences apply to the user's

@@ -20,7 +20,7 @@ claude --continue         # continue last session
 | `-p` / `--print` | Non-interactive single turn |
 | `--resume` | Pick a session from history |
 | `--continue` | Continue most recent |
-| `--model NAME` | Override model (e.g. `claude-opus-4-7`) |
+| `--model NAME` | Override model (e.g. `claude-opus-5`) |
 | `--add-dir PATH` | Grant access to directory outside cwd |
 | `--mcp-config FILE` | Load MCP servers from file |
 | `--permission-mode MODE` | `default`, `acceptEdits`, `bypassPermissions`, `plan` |

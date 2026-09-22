@@ -43,13 +43,13 @@ Human mode targets a live terminal emulator with a sighted operator.
 ### Required characteristics
 
 - **Color palette.** Use the Spacecraft Software Steelbore 2 palette (Standard §11) via the §11.1 theme tokens, with semantic mapping:
-  - Success messages (`[OK]`) → `success` token — **Acid Lime** (`#B4FF00`)
-  - Warnings (`[WARN]`) → `warning` token — **Plasma Magenta** (`#E445FF`)
-  - Errors (`[ERROR]`) → `error` token — **Mars Red** (`#FF3B3B`)
-  - Informational text (`[INFO]`) → `structure` token — **Pulse Violet** (`#8A6CFF`)
-  - Hints → `accent` token — **Plasma Orange** (`#FF5E00`)
-  - Data values → `foreground` token — **Platinum Mist** (`#D9DEE5`)
-  - Backgrounds / neutral chrome → `background` token — **Void Navy** (`#000027`)
+  - Success messages (`[OK]`) → `success` token — **Acid Lime** (Acid Lime)
+  - Warnings (`[WARN]`) → `warning` token — **Plasma Magenta** (Plasma Magenta)
+  - Errors (`[ERROR]`) → `error` token — **Mars Red** (Mars Red)
+  - Informational text (`[INFO]`) → `structure` token — **Pulse Violet** (Pulse Violet)
+  - Hints → `accent` token — **Plasma Orange** (Plasma Orange)
+  - Data values → `foreground` token — **Platinum Mist** (Platinum Mist)
+  - Backgrounds / neutral chrome → `background` token — **Void Navy** (Void Navy)
 
   Every colored status line carries its `[TAG]` — color is never the sole
   carrier of meaning (Steelbore Standard §18.2.1). Severity semantics,

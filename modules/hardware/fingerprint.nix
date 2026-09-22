@@ -204,52 +204,89 @@ in
     #
     # TEST== guards the case where the attribute is absent, so the rule cannot
     # fail the udev ruleset on a machine without this device.
+    # The S3 disconnect, and the one that actually breaks the lock screen.
+    #
+    # The autosuspend rule below stops the reader idling itself off the bus,
+    # and it works -- power/control reads "on". It does nothing for S3, where
+    # this reader is the ONLY USB device on the machine that fails to survive.
+    # Measured 2026-09-18 across a single resume --
+    #
+    #   usb 1-6:  reset full-speed USB device number 3 using xhci_hcd
+    #   usb 1-8:  reset high-speed USB device number 4 using xhci_hcd
+    #   usb 1-10: reset full-speed USB device number 6 using xhci_hcd
+    #   usb 1-9:  USB disconnect, device number 14
+    #   usb 1-9:  new full-speed USB device number 15 using xhci_hcd
+    #
+    # Three devices reset IN PLACE and keep their device number; the reader
+    # alone is torn down and re-created. One attribute separates them:
+    #
+    #   1-3, 1-6, 1-8, 1-10   power/persist = 1
+    #   1-9  (06cb:00bd)      power/persist = 0
+    #
+    # Nothing in this tree and nothing in nixpkgs' udev rules sets that -- the
+    # kernel does. 1-9 is the only one of the five with no in-kernel driver
+    # bound to its interface (bDeviceClass ff, driven entirely from userspace
+    # through libusb/usbfs), and USB_PERSIST is what permits the kernel to
+    # re-probe a returning device in place instead of announcing a disconnect.
+    # Enabling it makes the resume path re-enumerate and verify against the
+    # stored descriptors and the serial number this device does publish
+    # (30e700b28e25); should that check fail, the kernel falls back to exactly
+    # today's logical disconnect, so the rule cannot leave things worse.
+    #
+    # It matters because fprintd 1.90.9 -- the TOD fork, pinned there because
+    # TOD support was dropped upstream after it -- enumerates devices ONCE at
+    # daemon startup and has no hotplug path. A re-created device leaves every
+    # running fprintd holding a handle to one that no longer exists, and every
+    # identify against it fails instantly. Keeping the device number stable
+    # removes that problem instead of papering over it.
+    #
+    # TEST== guards both, so an absent attribute cannot fail the ruleset on a
+    # machine without this device.
     services.udev.extraRules = ''
-      # Synaptics 06cb:00bd fingerprint reader — no USB runtime suspend.
+      # Synaptics 06cb:00bd fingerprint reader — no USB runtime suspend, and
+      # survive S3 in place rather than being torn down and re-created.
       ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00bd", TEST=="power/control", ATTR{power/control}="on"
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="06cb", ATTR{idProduct}=="00bd", TEST=="power/persist", ATTR{power/persist}="1"
     '';
 
-    # The OTHER disconnect, and the one that actually breaks the lock screen.
+    # NO powerDownCommands / resumeCommands HERE, DELIBERATELY.
     #
-    # The rule above stops the reader idling itself off the bus, and it works --
-    # power/control reads "on". It does nothing for S3, because EVERY USB device
-    # re-enumerates on resume by design: the reader comes back with a new device
-    # number and libfprint's handle to the old one is dead. fprintd enumerates
-    # devices once at startup and never re-scans, so a daemon that was already
-    # running before the suspend keeps pointing at a device that no longer
-    # exists, and every identify against it fails instantly.
+    # Between 2026-09-12 and 2026-09-18 this module stopped fprintd on both
+    # sides of the sleep boundary, on the theory that a daemon which cannot
+    # survive the suspend cannot be stale after it. It never worked, and by
+    # 2026-09-18 the resume hook had become the cause of the failure rather
+    # than its cure. The journal separates the two eras cleanly, because the
+    # error text changed with them:
     #
-    # From the user's side that is indistinguishable from the autosuspend bug --
-    # the lock screen offers the fingerprint prompt and withdraws it about a
-    # second later -- which is why the 2026-09-08 fix looked like it had missed.
-    # It had not; this is a second, independent cause. Measured 2026-09-12, and
-    # the correlation over 14 days of journal is exact: every
-    #   cosmic-greeter: pam_fprintd(...): ReleaseDevice failed: ... removed
-    # shares its second with an
-    #   kernel: ACPI: PM: Waking up from system sleep state S3
+    #   7x  to   2026-09-14  ReleaseDevice failed: ... has been removed from
+    #                        the system                      (stale device)
+    #   5x  from 2026-09-16  ReleaseDevice failed: Object does not exist at
+    #                        path .../Fprint/Device/0         (no daemon)
     #
-    # It also explains the "it worked once": fprintd idle-exits ~30 s after its
-    # last client, so an attempt made more than half a minute after resuming
-    # gets a FRESH daemon, which enumerates the current device and succeeds.
-    # Waiting is not a fix, but it is the tell.
+    # Both hooks lose a race against the lock screen, in opposite directions:
     #
-    # So: make sure no fprintd survives the suspend boundary. Stopping it is
-    # deliberately the whole action -- fprintd is D-Bus activated, so the next
-    # PAM attempt starts a new one at the moment it is needed, by which point
-    # the USB device has long since settled. Starting one here instead would
-    # race the re-enumeration and cache the failure we are trying to avoid.
+    #   suspend  cosmic-greeter arms pam_fprintd as it locks, which D-Bus
+    #            activates fprintd. systemd cancels a queued stop the moment a
+    #            start arrives, so the hook reports "Job for fprintd.service
+    #            canceled" and the daemon enters the freeze regardless. Where
+    #            the greeter is already mid-identify it instead logs "fprintd
+    #            name owner changed during operation!" -- the hook killing a
+    #            live attempt, a regression in its own right.
     #
-    # Both hooks, not just the resume one: stopping before sleep means nothing
-    # holds the device ACROSS the boundary, which closes the window where the
-    # greeter re-arms fingerprint faster than the resume hook can run.
-    # `|| true` on both because a fingerprint convenience must never be able to
-    # block a suspend or a resume.
-    powerManagement.powerDownCommands = ''
-      ${config.systemd.package}/bin/systemctl stop fprintd.service || true
-    '';
-    powerManagement.resumeCommands = ''
-      ${config.systemd.package}/bin/systemctl stop fprintd.service || true
-    '';
+    #   resume   the greeter does NOT re-arm after a resume; its PAM
+    #            conversation spans the sleep, so it gets exactly one attempt.
+    #            On 2026-09-18 the start job issued at 22:43:04 completed at
+    #            06:20:45 and the resume hook stopped it in that same second
+    #            -- `systemctl status fprintd` shows Started immediately
+    #            followed by Stopping -- so the one in-flight attempt lost its
+    #            daemon and fell through to the password field. That is
+    #            precisely the reported symptom: the prompt appears and is
+    #            withdrawn before a finger can reach the reader.
+    #
+    # The persist rule above removes the reason the hooks existed, leaving
+    # them nothing to do. Do not reintroduce them without first reading
+    # power/persist on the reader -- if the device is resetting in place, a
+    # stale daemon is not the problem in front of you.
 
     # Apply the policy declared above. Every name in both lists was taken from
     # a live `ls /etc/pam.d`, so this must not create any new PAM service —
