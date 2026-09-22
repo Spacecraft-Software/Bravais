@@ -109,6 +109,48 @@ let
     echo $(( (cur + 1) % (max + 1) )) > "/sys/class/leds/$dev/brightness"
   '';
 
+  # Output-scale stepper — walks the focused output's scale one rung along
+  # the 1.0…2.0 fractional ladder over niri's IPC and reports the result via
+  # dunst. Bound to Mod+Shift+Minus/Equal in users/mj/niri.nix. `niri msg
+  # output … scale` is a *temporary* change: niri forgets it on the next
+  # config reload, so the persistent value is the `output "eDP-1"` block in
+  # that same file and this is the preview control for it. Snaps to the
+  # nearest rung first because niri's `auto` scale can land anywhere.
+  outputScale = pkgs.writers.writeNuBin "steelbore-output-scale" ''
+    # SPDX-License-Identifier: GPL-3.0-or-later
+    # Steelbore Bravais — step the focused output's scale up or down.
+    const STEPS = [1.0 1.25 1.5 1.75 2.0]
+
+    # Move the focused output one rung along the scale ladder
+    def main [
+        direction: string # "up" or "down"
+    ] {
+        let out = (^niri msg --json focused-output | from json)
+        let cur = ($out.logical.scale | into float)
+        let idx = (
+            $STEPS
+            | enumerate
+            | each { |r| { index: $r.index dist: (($r.item - $cur) | math abs) } }
+            | sort-by dist
+            | first
+            | get index
+        )
+        let last = (($STEPS | length) - 1)
+        let next = (match $direction {
+            "up" => ([($idx + 1) $last] | math min)
+            "down" => ([($idx - 1) 0] | math max)
+            _ => { error make { msg: $"unknown direction '($direction)': expected up or down" } }
+        })
+        let scale = ($STEPS | get $next)
+        ^niri msg output $out.name scale $scale
+        # Physical pixels are invariant; report the new logical size.
+        let width = ($out.logical.width * $cur / $scale | math round)
+        let height = ($out.logical.height * $cur / $scale | math round)
+        (^${pkgs.dunst}/bin/dunstify -a Scale -r 9914 -i video-display
+            $"Scale ($scale)" $"($out.name): ($width)x($height) logical")
+    }
+  '';
+
   # Keyboard-layout state — emits the active layout's display name (e.g.
   # "English (US)" / "Arabic" on Niri, or the xkb layout code on X11).
   # Backs the Eww language indicator (both eww.nix and leftwm.nix).
@@ -486,6 +528,7 @@ in
           airplaneToggle
           caffeineToggle
           kbdLightCycle
+          outputScale
           osd
           layoutState
           keyringCheck

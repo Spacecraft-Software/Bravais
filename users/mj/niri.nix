@@ -92,6 +92,16 @@ in
           XDG_CURRENT_DESKTOP "niri"
       }
 
+      // The panel is 1920x1080 over 310 mm (~157 DPI). Left to `auto`, niri
+      // rounds that to a 1.25 scale and lays the desktop out as 1536x864,
+      // which blurs Xwayland and every client without fractional-scale
+      // support. Pin 1:1. Mod+Shift+Minus/Equal step it live through
+      // steelbore-output-scale, but niri forgets `niri msg output` changes on
+      // the next config reload — so whatever should persist goes here.
+      output "eDP-1" {
+          scale 1.0
+      }
+
       layout {
           gaps 8
           focus-ring {
@@ -328,6 +338,11 @@ in
           Mod+R     hotkey-overlay-title="Switch Preset Column Widths" { switch-preset-column-width; }
           Mod+Minus hotkey-overlay-title="Decrease Column Width" { set-column-width "-10%"; }
           Mod+Equal hotkey-overlay-title="Increase Column Width" { set-column-width "+10%"; }
+
+          // Output scale, one rung of 1.0/1.25/1.5/1.75/2.0 at a time. Live
+          // and temporary — see the `output "eDP-1"` block for the default.
+          Mod+Shift+Minus hotkey-overlay-title="Decrease Output Scale" { spawn "steelbore-output-scale" "down"; }
+          Mod+Shift+Equal hotkey-overlay-title="Increase Output Scale" { spawn "steelbore-output-scale" "up"; }
 
           // Screenshots
           Print     hotkey-overlay-title="Take a Screenshot" { screenshot; }

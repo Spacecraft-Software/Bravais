@@ -831,6 +831,10 @@ Key bindings (Mod = Super):
 - **Move:** `Mod+Shift+H/J/K/L` or `Mod+Shift+Arrows`
 - **Workspaces:** `Mod+1-5` focus, `Mod+Shift+1-5` move
 - **Resize:** `Mod+R` preset, `Mod+Minus/Equal` +/-10%
+- **Output scale:** pinned to `1.0` for `eDP-1` (niri's `auto` picks 1.25 for this ~157 DPI
+  panel, laying the desktop out as 1536x864 and blurring Xwayland); `Mod+Shift+Minus/Equal`
+  step it live one rung along 1.0/1.25/1.5/1.75/2.0 via `steelbore-output-scale`, a change
+  niri forgets on the next config reload
 - **Screenshots:** `Print` full, `Mod+Print` window, `Mod+Shift+Print` screen
 - **Dedicated / multimedia keys** (XF86, `allow-when-locked`, hidden from the hotkey overlay):
   - Display brightness `XF86MonBrightnessUp/Down` → `swayosd-client --brightness` (OSD)
