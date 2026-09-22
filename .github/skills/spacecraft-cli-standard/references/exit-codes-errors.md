@@ -173,7 +173,7 @@ error:
 The `[ERROR]` tag is mandatory even without color — color is never the
 sole carrier of meaning (Steelbore Standard §18.2.1). Colors via §11.1
 theme tokens: the `[ERROR]` tag in the `error` token (Mars Red
-`#FF3B3B` under `steelbore`), bold; the message body in `foreground`
+ under `steelbore`), bold; the message body in `foreground`
 (Platinum Mist); the `hint:` label and hint text in `accent` (Plasma
 Orange). Full color table, colorless behavior, and the `docs:` line:
 `diagnostics.md` §5.

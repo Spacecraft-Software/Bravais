@@ -23,7 +23,7 @@ Every MS Office deliverable still requires its GFM companion `.md` (see SKILL.md
 
 ## §B — Background recipe per MS Office shape
 
-The Void Navy `#000027` mandate (Standard §11) requires per-format care; the obvious property is necessary but not sufficient in any of the three formats.
+The Void Navy  mandate (Standard §11) requires per-format care; the obvious property is necessary but not sufficient in any of the three formats.
 
 ### §B.1 — `.docx` (Word)
 
@@ -69,9 +69,9 @@ Then reference fill index `1` in your cell `<xf>` styles. Every used cell gets t
 - CSV round-trip (the colour is lost in CSV but the structural data is preserved; on re-import to Excel, you re-apply the Spacecraft Software template).
 - Google Sheets import (Google Sheets reads `<fill patternType="solid">` correctly).
 
-**Path 2 (legacy, don't use):** Set a 1×1 PNG of `#000027` as the sheet background image via `<sheetView>` → `<picture>`. This is the only way to colour the area *outside* the used cell range, but it doesn't print, isn't displayed in print preview, and Google Sheets ignores it. Skip.
+**Path 2 (legacy, don't use):** Set a 1×1 PNG of Void Navy as the sheet background image via `<sheetView>` → `<picture>`. This is the only way to colour the area *outside* the used cell range, but it doesn't print, isn't displayed in print preview, and Google Sheets ignores it. Skip.
 
-Also set the sheet tab colour to a Spacecraft Software accent (`#FF5E00` Plasma Orange is the default choice) via `<sheetPr><tabColor rgb="FFFF5E00"/></sheetPr>` in each sheet's XML — cosmetic but matches the brand.
+Also set the sheet tab colour to a Spacecraft Software accent (Plasma Orange  is the default choice) via `<sheetPr><tabColor rgb="FFFF5E00"/></sheetPr>` in each sheet's XML — cosmetic but matches the brand.
 
 ### §B.3 — `.pptx` (PowerPoint)
 
@@ -219,7 +219,7 @@ If the grep returns 0, patch the settings.xml manually or your background won't 
 - **Forgotten `w:displayBackgroundShape` in DOCX** — the #1 Spacecraft Software-DOCX bug. Always verify post-generation.
 - **PPTX layout overrides** — setting the background on the master alone is not enough if any layout XML omits it. Set on the master and on every layout you use.
 - **XLSX cell-fill vs sheet-image** — only cell-fill works for print. Don't waste time on the legacy sheet-image path.
-- **OOXML hex format** — uses `AARRGGBB` (with alpha). `#000027` becomes `FF000027`. Omitting the alpha prefix produces a transparent fill that renders as white.
+- **OOXML hex format** — uses `AARRGGBB` (with alpha). Void Navy becomes `FF000027`. Omitting the alpha prefix produces a transparent fill that renders as white.
 - **Font availability on the reader's machine** — XLSX doesn't embed fonts; Inconsolata and Share Tech Mono fall back to system monospace if missing. Acceptable because both fonts are pre-installed on Spacecraft Software hosts and Google Fonts handles the web/Google Workspace case.
 
 ## §G — Acceptance checklist (MS Office deliverables)

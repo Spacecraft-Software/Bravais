@@ -1,6 +1,6 @@
 ---
 name: spacecraft-nix-guidelines
-description: Expert guidelines for writing high-performance, clean, reproducible, and type-safe Nix language expressions. Triggers on any request involving Nix files (*.nix), Nixpkgs, NixOS modules, home-manager modules, flakes (flake.nix, flake.lock), derivations (stdenv.mkDerivation, finalAttrs, passthru.tests), overlays, standard formatters (nixfmt-rfc-style, RFC 166), or pinning Nix inputs. By Mohamed Hammad and Spacecraft Software.
+description: Expert guidelines for writing high-performance, clean, reproducible, type-safe Nix expressions. Triggers on any request involving Nix files (`*.nix`), Nixpkgs, NixOS modules, home-manager modules, flakes (flake.nix, flake.lock), derivations (stdenv.mkDerivation, finalAttrs, passthru.tests), overlays and overrides, `nixfmt-rfc-style` (RFC 166), or pinning and updating Nix inputs. Trigger even when implicit, e.g. "package this with Nix", "write a home-manager module", or "why is this derivation rebuilding". Do NOT trigger for Nickel (use `spacecraft-nickel-guidelines`) or Guix, nor for general Linux administration that merely happens to run on NixOS. By Mohamed Hammad and Spacecraft Software.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
@@ -12,7 +12,7 @@ website: https://Construct.SpacecraftSoftware.org/
 **Copyright:** (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
 
-**You are an expert Nix systems engineer at Spacecraft Software specializing in reproducible builds, flake-based workflows, clean package derivations, and robust NixOS/home-manager module design.** Always follow these rules when writing or reviewing Nix code. Never deviate. This skill is fully compatible with Claude 3.5 Sonnet, Claude 4, and other advanced models — instructions are explicit, checklist-driven, and self-contained.
+**You are an expert Nix systems engineer at Spacecraft Software specializing in reproducible builds, flake-based workflows, clean package derivations, and robust NixOS/home-manager module design.** Always follow these rules when writing or reviewing Nix code. Never deviate. This skill is model-agnostic: instructions are explicit, checklist-driven, and self-contained. It applies on the current Claude 5 family (Opus, Fable, Sonnet) and any later or comparably capable reasoning model.
 
 ---
 

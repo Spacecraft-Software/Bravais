@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v1.51 (§13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.2 compiler flags; concurrency; §3.3 security-by-design) so
+  The Steelbore Standard v2.04 (§19-§26 assurance + requirements + V&V; §13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 1.51 | **Date:** 2026-08-29 | **Author:** Mohamed Hammad
+**Version:** 2.04 | **Date:** 2026-09-14 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -146,8 +146,11 @@ not the whole of Priority 1.**
   swallowed; no panics / `unwrap` / `expect` on untrusted or fallible input in production paths.
 - **Fault tolerance and graceful degradation** — components must survive partial failure,
   degrade gracefully under load or dependency loss, and recover rather than crash.
-- **Verified by testing** — stability properties must be backed by tests (unit, integration,
-  and fuzz/property where applicable) gating CI, not asserted by inspection alone.
+- **Verified** — stability properties must be backed by evidence under §21, at the level
+  §21.2 requires for the project's assurance category (§19), gating CI and traced to the
+  requirement it discharges (§21.3). Tests (unit, integration, and fuzz/property where
+  applicable) are the default method, never the only admissible one, and no property is
+  asserted by inspection alone unless inspection is its declared method.
 
 ### §3.1.1 — TypeScript over JavaScript
 
@@ -209,7 +212,9 @@ approach outperforms or is safer, it must be chosen and the trade-off documented
   under certain NixOS, cross-compilation, or static-linking setups) MUST be disabled.
   Stability (P1) outranks Performance (P2) — never ship a broken build for the sake
   of a flag.
-- Benchmarking is **mandatory** before and after any optimization work; regressions must
+- Performance figures are measured against declared budgets and margins (§22), so that a
+  benchmark answers whether the figure is **acceptable** and not only whether it moved.
+  Benchmarking is **mandatory** before and after any optimization work; regressions must
   be documented and justified — and it is the evidence by which the concurrency-vs-serial
   trade-off above is decided.
 
@@ -405,6 +410,7 @@ root, derived from the canonical Spacecraft Software templates:
 | `README.md`       | Includes a "Project Posture" section linking to the two below |
 | `NOTICE.md`       | Full no-warranty / no-liability statement; defers to the project's GPL/AGPL license (§4.1) for binding terms |
 | `CONTRIBUTING.md` | Contribution scope, PR-acceptance discretion, sign-off, security reporting, license-of-contributions |
+| `SECURITY.md`     | Private reporting channel, acknowledgement target, supported versions, and coordinated-disclosure terms (§26.1) |
 | `LICENSES/`       | REUSE license directory (§4.3): verbatim text of every license used (`GPL-3.0-or-later` or `AGPL-3.0-or-later`, plus any upstream licenses per §4.2). |
 | `LICENSE`         | Verbatim, canonical text of the project's primary license, as a regular file (§4.3). `LICENSES/<SPDX-id>.txt` for that license is a symbolic link back to it — `ln -s ../LICENSE LICENSES/GPL-3.0-or-later.txt` — so the text exists once. |
 
@@ -620,7 +626,7 @@ written in.
 | UTF-8, no BOM | Text files are encoded UTF-8. A byte-order mark is prohibited: it breaks shebang lines, `#`-comment parsing, and every config reader that expects the first byte of the file to be content. |
 | `.gitattributes` required | Every repository MUST ship `.gitattributes` at its root containing `* text=auto eol=lf`. This is the only mechanism that holds regardless of a contributor's `core.autocrlf` setting — which defaults to `true` on Windows and rewrites the working tree on checkout. Relying on per-clone Git configuration is not compliance. |
 | `.editorconfig` required | Every repository MUST ship `.editorconfig` at its root with `root = true` and, under `[*]`, at minimum `charset = utf-8`, `end_of_line = lf`, and `insert_final_newline = true`. It carries the rule to editors that never consult Git. |
-| CI gate | CI MUST fail when a tracked text file contains a CR byte. Both config files are advisory to the tools that read them; the gate is what makes the rule binding. `git grep -Il` needs no exclusion list — it skips binaries and honors `.gitattributes`, so a pinned exception is invisible to it. |
+| CI gate | CI MUST fail when a tracked text file is **stored** with CRLF. Both config files are advisory to the tools that read them; the gate is what makes the rule binding. The gate reads the index, not the working tree — `git ls-files --eol` reports the stored line ending as `i/lf`, `i/crlf` or `i/mixed`, and any `i/crlf` or `i/mixed` is a violation. A path pinned `-text` is declared binary and is not a text file at all, so it is skipped and its blob keeps whatever bytes it has. Grepping the working tree for a CR byte is **not** a correct implementation: a file pinned `eol=crlf` is stored LF and checked out CRLF by design, so a working-tree grep fails the very exception this section grants. |
 | Exceptions | Vendored upstream files keep their upstream line endings (§4.2 — preserve what you build on). Windows-native scripts invoked by `cmd.exe` (`.bat`, `.cmd`) MAY use CRLF where the interpreter requires it. A format whose specification mandates CRLF keeps it. Every such exception is pinned explicitly in `.gitattributes` (`*.bat text eol=crlf`) rather than left to chance. Binary files are unaffected — `text=auto` never touches them. |
 
 **Scope note.** This section governs *files on disk*, not *bytes on a socket*.
@@ -758,481 +764,29 @@ must be linear and the focused element visibly indicated. See §18.
 
 ## §11 — Spacecraft Software Color Palettes (WCAG-Compliant)
 
-Spacecraft Software ships a **palette family**. Every palette declares exactly
-one **canvas**, a full set of §11.1 role tokens, and a verified contrast
-matrix.
-
-**`Steelbore Modern` is the default and canonical palette.** Every artifact
-uses Modern unless its project explicitly declares an alternate under §11.4.
-
-| Theme slug | Palette | Canvas | Polarity | Status |
-|---|---|---|---|---|
-| `steelbore` | Steelbore Modern | `#000027` | Dark | **Default** — all artifacts unless declared |
-| `steelbore-classic` | Steelbore Classic | `#000027` | Dark | Legacy contract (§11.2) |
-| `steelbore-blue` | Steelbore Blue | `#0A1024` | Dark | Alternate (§11.3) |
-| `steelbore-blackpinkpanther` | Steelbore BlackPinkPanther | `#141418` | Dark | Alternate (§11.3) |
-| `steelbore-matrixgreen` | Steelbore MatrixGreen | `#0C1A2B` | Dark | Alternate (§11.3) |
-| `steelbore-navywhite` | Steelbore NavyWhite | `#E7E5E0` | **Light** | Alternate (§11.3) — the family's only light canvas |
-| `tokyonight` | Tokyo Night | `#1A1B26` | Dark | Alternate (§11.3) |
-
-**Polarity** is normative content: §11.6.2 pairs a dark palette with a light one
-so an application can follow the platform's color-scheme preference.
-
-### §11.0 — Steelbore Modern (canonical palette)
-
-The permitted colors for Steelbore Modern (the **Steelbore 2** generation):
-
-| Token          | Hex       | RGB                | Class      | Role                            |
-|----------------|-----------|--------------------|------------|---------------------------------|
-| Void Navy      | `#000027` | RGB(0, 0, 39)      | Canvas     | **Background — all surfaces**   |
-| Quantum Blue   | `#0E2A47` | RGB(14, 42, 71)    | Surface    | Elevated panels / cards         |
-| Deep Matrix    | `#0B1A12` | RGB(11, 26, 18)    | Surface    | Code blocks / terminal wells    |
-| Platinum Mist  | `#D9DEE5` | RGB(217, 222, 229) | Foreground | Body text / default readout     |
-| Plasma Orange  | `#FF5E00` | RGB(255, 94, 0)    | Foreground | Primary accent / active readout |
-| Pulse Violet   | `#8A6CFF` | RGB(138, 108, 255) | Foreground | Structure / links / borders     |
-| Acid Lime      | `#B4FF00` | RGB(180, 255, 0)   | Foreground | Success / safe status / focus   |
-| Mars Red       | `#FF3B3B` | RGB(255, 59, 59)   | Foreground | Error status                    |
-| Plasma Magenta | `#E445FF` | RGB(228, 69, 255)  | Foreground | Warning / attention             |
-
-**`#000027` (Void Navy) is the mandatory canvas for every surface under
-Steelbore Modern**, and Modern is the default, so Void Navy is the background
-of every artifact that has not declared an alternate under §11.4. Within a
-palette the canvas is non-negotiable: surface-class tokens are *fills placed
-on* the canvas, never replacements for it. Mixing tokens across palettes is
-forbidden (§11.4).
-
-### §11.0.1 — The Surface Class
-
-New in Steelbore 2. Surface tokens carry the following hard rules:
-
-- Surface tokens are **never text colors**. Quantum Blue is 1.40:1 and Deep
-  Matrix 1.14:1 against Void Navy — both are illegible as foregrounds anywhere.
-- A surface's edge against the canvas (1.40:1 / 1.14:1) does not meet the 3:1
-  non-text floor. Where the boundary is meaningful, it **must** be drawn — a
-  Pulse Violet border (5.51:1 vs canvas) is the canonical edge.
-- Surfaces never nest on each other without a measured boundary.
-
-### §11.0.2 — Scope of the Contrast Guarantee
-
-Every foreground token is verified with the WCAG relative-luminance formula
-against all three backgrounds it may legally appear on. AA floors: **4.5:1**
-normal text (1.4.3); **3:1** large text and non-text UI (1.4.3, 1.4.11).
-EN 301 549 V4.1.1 clause 11 (11.1.4.3, 11.1.4.11) inherits the same criteria
-for non-web software; the EAA has been enforceable since 2025-06-28.
-
-| Foreground     | vs Void Navy | vs Quantum Blue | vs Deep Matrix |
-|----------------|--------------|-----------------|----------------|
-| Platinum Mist  | 15.09:1      | 10.78:1         | 13.27:1        |
-| Plasma Orange  | 6.66:1       | 4.76:1          | 5.85:1         |
-| Pulse Violet   | 5.51:1       | **3.93:1** †    | 4.84:1         |
-| Acid Lime      | 16.75:1      | 11.97:1         | 14.73:1        |
-| Mars Red       | 5.77:1       | **4.12:1** †    | 5.07:1         |
-| Plasma Magenta | 6.41:1       | 4.58:1          | 5.63:1         |
-
-† **Restricted pairings.** On Quantum Blue, Pulse Violet and Mars Red fall
-below 4.5:1 and are limited to **large text (≥18.66 px bold / ≥24 px regular),
-icons, and non-text UI** (≥3:1). Normal-size error prose on a surface is set in
-Platinum Mist carrying the mandatory `[ERROR]` tag (§18.2), with Mars Red as
-border or icon accent only.
-
-The guarantee covers the eighteen pairings in the matrix above **only**, and
-only for Steelbore Modern. **Every palette carries its own verified matrix** —
-§11.2 for Classic, §11.3 for the alternates — measured the same way against
-that palette's own canvas and surfaces. Foreground tokens paired with *each
-other* mostly fail the 3:1 floor (Acid Lime on Platinum Mist is 1.11:1; Plasma
-Orange on Mars Red is 1.15:1). Therefore:
-
-- Rendering palette-colored **text on a palette-colored fill** (chip, badge,
-  filled button, selected row) is **forbidden** unless that specific pair is
-  measured at ≥4.5:1 for text, or ≥3:1 for non-text boundaries.
-- Color may never be the **sole** carrier of meaning — every colored status
-  also carries a text tag or symbol (§18.2). `[OK]` `[WARN]` `[ERROR]` `[INFO]`.
-- The visible **focus indicator** is Acid Lime (16.75:1) — comfortably above
-  the 3:1 indicator floor, satisfying WCAG 2.2 §2.4.11 on every background.
-
-For document/file generation → load the `spacecraft-document-format` skill.
-For IDE/terminal themes → load the `spacecraft-theme-factory` skill.
-
-### §11.1 — Steelbore Theme (Application Theming Standard)
-
-When building a new Spacecraft Software application (GUI, TUI, or web), all palette
-references **must** be accessed through a named theme called **`Steelbore`** rather than
-referenced as bare hex literals. The `Steelbore` theme is the canonical color contract:
-
-| Theme token   | Maps to palette token | Hex       |
-|---------------|-----------------------|-----------|
-| `background`  | Void Navy             | `#000027` |
-| `surface`     | Quantum Blue          | `#0E2A47` |
-| `surface-alt` | Deep Matrix           | `#0B1A12` |
-| `foreground`  | Platinum Mist         | `#D9DEE5` |
-| `accent`      | Plasma Orange         | `#FF5E00` |
-| `structure`   | Pulse Violet          | `#8A6CFF` |
-| `success`     | Acid Lime             | `#B4FF00` |
-| `error`       | Mars Red              | `#FF3B3B` |
-| `warning`     | Plasma Magenta        | `#E445FF` |
-| `focus`       | Acid Lime             | `#B4FF00` |
-| `border`      | Pulse Violet          | `#8A6CFF` |
-
-**Rationale:** isolating palette references behind the `Steelbore` theme name makes it
-trivial for end users to substitute a custom theme without touching application logic —
-swap the theme, not every hex literal.
-
-- The theme file/module **must** be named `steelbore` (snake_case) in the project's
-  theme registry, configuration layer, or equivalent (e.g., `themes/steelbore.json`,
-  `steelbore.toml`, a Rust `Theme::Steelbore` variant).
-- Hard-coding palette hex values directly in UI logic is **forbidden** for new apps.
-  Use theme tokens exclusively.
-- Existing apps are encouraged but not required to migrate; new apps are required.
-  Apps still shipping the v1.33 six-token palette remain compliant until their
-  next minor release, after which the Steelbore 2 contract applies.
-
-#### §11.1.1 — Accessibility Variants (additive siblings)
-
-`steelbore` is and remains the **sole default theme**. The variants below are
-**additive siblings** in the same registry, selected only by explicit user action
-or by the §18.1 accessible-mode toggle. They never alter, replace, or take
-precedence over `steelbore`, and the §11 canonical palette is unchanged.
-
-| Variant | Selected by | Behavior |
-|---------|-------------|----------|
-| `steelbore` | **Default** — always, unless overridden | Canonical §11 palette, unchanged |
-| `<palette>-high-contrast` | §18.1 accessible mode, or explicit selection | Every foreground role token lifted to ≥7:1 (WCAG AAA) on that palette's canvas |
-| `steelbore-mono` | Explicit selection, or `NO_COLOR` | 4-bit ANSI only — defers to the user's terminal palette |
-
-`steelbore-high-contrast` lifts **only the four tokens that need it**; tokens
-already ≥7:1 carry over untouched:
-
-| Theme token  | Base token     | Variant hex | Contrast vs Void Navy |
-|--------------|----------------|-------------|-----------------------|
-| `background` | Void Navy      | `#000027`   | (canvas)              |
-| `foreground` | Platinum Mist  | `#D9DEE5`   | 15.09:1               |
-| `accent`     | Plasma Orange  | **`#FF8A3D`** | 8.70:1              |
-| `structure`  | Pulse Violet   | **`#B3A1FF`** | 9.19:1              |
-| `success`    | Acid Lime      | `#B4FF00`   | 16.75:1               |
-| `error`      | Mars Red       | **`#FF7A7A`** | 8.08:1              |
-| `warning`    | Plasma Magenta | **`#EE7BFF`** | 8.66:1              |
-
-Only `accent`, `structure`, `error`, and `warning` shift; the other tokens are
-§11 values verbatim, with alias tokens following their bases (`focus` stays
-Acid Lime `#B4FF00`; `border` follows `structure` to `#B3A1FF`, keeping every
-foreground-class role token ≥7:1). In the variant, all four lifted tokens also clear 4.5:1
-on both surfaces (weakest pairing: `error` `#FF7A7A` on Quantum Blue, 5.77:1),
-so the §11.0.2 † restrictions do not apply under high contrast. **Void Navy
-remains the background in every variant** — high contrast comes from lifting
-foregrounds, never from abandoning the canvas. The lifted hexes are
-accessibility-derived lifts of existing role tokens, not new brand colors, and
-may not be used outside the variant.
-
-### §11.2 — Steelbore Classic Color Palette
-
-The original six-token palette, **preserved as a named family member** — not
-retired. (It was briefly retired at v1.34; v1.35 reinstates it.) Shares Void
-Navy with Modern, keeps its **legacy six-role contract**, and defines **no
-surface class**, so §11.0.1 does not apply and every foreground is measured
-against Void Navy alone.
-
-| Role | Token | Hex | vs Void Navy |
-|------|-------|-----|--------------|
-| `background` | Void Navy | `#000027` | (canvas) |
-| `foreground` | Molten Amber | `#D98E32` | 7.64:1 |
-| `accent` | Steel Blue | `#4B7EB0` | 4.77:1 |
-| `success` | Radium Green | `#50FA7B` | 14.87:1 |
-| `error` | Red Oxide | `#FF5C5C` | 6.74:1 |
-| `info` | Liquid Coolant | `#8BE9FD` | 14.74:1 |
-
-`steelbore-classic-high-contrast` lifts `accent` → `#7FAEDC` (8.73:1) and
-`error` → `#FF8080` (8.41:1); the other four are already ≥7:1. Classic's
-token-on-token failures are severe — Molten Amber on Red Oxide 1.13:1,
-Radium Green on Liquid Coolant 1.01:1.
-
-### §11.3 — Alternate Palettes
-
-Five alternates, each anchored on two colors that never change, each verified
-against its own canvas and surfaces. Full role tables and three-background
-matrices live in the `steelbore-color-palette` skill's
-`assets/steelbore.toml`; every token clears 4.5:1 on all three of its
-backgrounds unless marked †.
-
-| Palette | Slug | Canvas | Accent anchor | Note |
-|---------|------|--------|---------------|------|
-| Steelbore Blue | `steelbore-blue` | Orbit Navy `#0A1024` | Electric Blue `#0066FF` | Electric Blue is **†restricted** (3.91:1) — large text, icons, non-text UI only |
-| Steelbore BlackPinkPanther | `steelbore-blackpinkpanther` | Core Black `#141418` | Plasma Magenta `#E445FF` | No restricted pairings |
-| Steelbore MatrixGreen | `steelbore-matrixgreen` | Circuit Navy `#0C1A2B` | Solar Lime `#B6FF3B` | `surface-alt` (Ambient Black `#05070A`) is darker than the canvas — permitted |
-| Steelbore NavyWhite | `steelbore-navywhite` | Pearl Silver `#E7E5E0` | Lunar Navy `#111827` (foreground) | **Light canvas**; high contrast *darkens*. Lighter source tints are non-text fills only |
-| Tokyo Night | `tokyonight` | Night `#1A1B26` | Tokyo Blue `#7AA2F7` | Verbatim from the upstream editor theme; no restricted pairings. `surface` is the Storm background `#24283B`, `surface-alt` the Night `bg_dark` `#16161E` (darker than the canvas — permitted) |
-
-#### §11.3.5 — Tokyo Night
-
-Registered verbatim from [enkia/tokyo-night-vscode-theme](https://github.com/enkia/tokyo-night-vscode-theme).
-It needed **no Spacecraft-derived substitutes** — every role token clears 4.5:1
-on all three backgrounds — so it is a conforming alternate, not a §11.5 fidelity
-palette: `foreground` `#C0CAF5` 10.59:1, `accent` `#7AA2F7` 6.79:1, `structure`
-`#BB9AF7` 7.39:1, `success` `#9ECE6A` 9.35:1, `error` `#F7768E` 6.46:1,
-`warning` `#E0AF68` 8.55:1, `focus` `#7DCFFF` 9.96:1 (vs canvas).
-
-`tokyonight-high-contrast` lifts the two tokens below 7:1 on the canvas —
-`accent` → `#97B6F9` (8.44:1) and `error` → `#F998AA` (8.22:1); the other six
-carry over verbatim. The upstream comment tone `#565F89` (2.76:1) clears neither
-the 4.5:1 text floor nor the 3:1 non-text floor and is **not bindable to a role
-token**; boundaries are drawn in `structure` per §11.0.1.
-
-### §11.4 — Palette Selection
-
-- **Modern is the default.** An artifact that declares nothing uses
-  `steelbore`; no declaration is needed to be compliant.
-- **One palette per project**, declared in `README.md` beside the §5.2
-  posture section. That palette is the project's **default** (§11.6.3), not the
-  only theme it may render — §11.6.1 requires registering the family. Tokens are
-  never **combined in one interface** — the contrast guarantees are computed
-  per-palette and do not survive mixing. Replacing one palette's tokens with
-  another's, whole-surface and at once, is not combining; §11.6.2 governs it.
-- **Every palette ships its `<slug>-high-contrast` sibling** as the §18.1
-  accessible-mode target. `steelbore-mono` is palette-independent.
-- **A project may declare a light/dark pair.** `steelbore` is the family's dark
-  default and `steelbore-navywhite` its light one (§11.3.4 is the only
-  light-canvas member), or declare `light = none` with a stated reason to ship
-  dark-only. §11.6.2 defines how the pair is used.
-- **The canvas is mandatory within its palette.** Substituting a different
-  background for a declared palette is non-compliant. The rule binds whichever
-  palette is *in force*: when §11.6.2 switches, the new canvas comes with it.
-- **Values are read, never retyped** — from `assets/steelbore.toml`. An
-  OS-supplied theme registry (§11.6.4) is advisory, never authoritative.
-- **Fidelity palettes are not adoptable.** The §11.5 palettes are registered for
-  interoperability only; a project may not declare one, and they ship no
-  high-contrast sibling.
-- **Palettes have reference names** (§11.4.1) alongside their slugs. The slug
-  stays the machine identifier.
-
-#### §11.4.1 — Reference Names
-
-Additive. The slug remains the machine identifier used by theme lookups and
-`steelbore.toml` keys; the reference name is for prose and conversation. Both
-ship in the canonical file, the reference name as each palette's `reference` key.
-
-| Slug | Reference name |
-|------|----------------|
-| `steelbore` | `steelbore-color-palette` |
-| `steelbore-classic` | `steelboreclassic-color-palette` |
-| `steelbore-blue` | `blue-color-palette` |
-| `steelbore-blackpinkpanther` | `blackpinkpanther-color-palette` |
-| `steelbore-matrixgreen` | `matrixgreen-color-palette` |
-| `steelbore-navywhite` | `navywhite-color-palette` |
-| `tokyonight` | `tokyonight-color-palette` |
-| `solarized-dark` | `solarizeddark-color-palette` |
-| `solarized-light` | `solarizedlight-color-palette` |
-
-### §11.5 — Fidelity Palettes (registered, non-conforming)
-
-A **fidelity palette** reproduces a widely used external theme **exactly**, so
-Spacecraft Software tooling can meet a user who already works in it. Values are
-copied verbatim; no token is substituted, deepened, or lifted to make a number
-pass. The consequence is stated plainly: **a fidelity palette is not required to
-satisfy §11's contrast guarantee, and neither registered one does.** The ratios
-below are *the measurement, not a target*.
-
-| Palette | Slug | Canvas | Body text | Worst pairings |
-|---------|------|--------|-----------|----------------|
-| Solarized Dark | `solarized-dark` | `base03` `#002B36` | `base0` 4.75:1 | 12 below 4.5:1; `structure`/`border` 2.97:1 and `error` 2.81:1 below 3:1 on `base02` |
-| Solarized Light | `solarized-light` | `base3` `#FDF6E3` | `base00` **4.13:1 — under the AA floor** | `success` 2.97:1, `warning` 2.98:1, `focus` 2.93:1 below 3:1 — status cannot be signalled by color at all |
-
-Rules:
-
-- A project **MUST NOT** adopt a fidelity palette as its declared §11.4 palette.
-  §13 (WCAG 2.2 AA) and §18 (accessible mode) are unaffected by this section.
-- Offered as a *user-selectable* theme, a conforming palette stays the default
-  and `steelbore-mono` (§11.1.1) stays the accessible-mode path.
-- **No `-high-contrast` sibling.** Lifting the tokens would change the values the
-  palette exists to reproduce.
-- Recorded in `steelbore.toml` under `meta.fidelity-palettes`, with
-  `conformance = "non-conforming"` in each theme's `rules` table.
-- † marks a worst pairing of 3:1–4.5:1 (large text, icons, non-text UI only);
-  ‡ marks below 3:1, which carries no legible use at any size.
-
-Solarized (Ethan Schoonover, [ethanschoonover.com/solarized](https://ethanschoonover.com/solarized/))
-defines one elevated tone per mode, so `surface-alt` shares `surface`.
-
-### §11.6 — System Theme Declaration & Resolution
-
-Added in v1.45. §11.1 says *how* to reference a color; §11.4 says *which* palette
-is yours; §11.6 says **which member of the family renders on this machine, right
-now** — and how an OS declares that.
-
-**Scope.** Every application under the two §6.4 namespaces
-(`github.com/Spacecraft-Software`, `github.com/UnbreakableMJ`), in **GUI, TUI and
-CLI alike**. A CLI is not exempt: it already honors `NO_COLOR` (§18.2.1) and
-already emits ANSI, so it already has a theme. Artifacts with no user-facing
-output record §11.6 as N/A. **Games are not exempt** — §18.5 carves out §18 and
-§10, never §11 — but a game satisfies §11.6 in its menus, HUD and settings
-chrome, not in the world it simulates.
-
-#### §11.6.1 — Shipping the family
-
-A project **authors** against one palette and **registers** several. §11.4's
-one-palette rule governs only the first.
-
-| Obligation | Themes | Why |
-|---|---|---|
-| **MUST register** | The six conforming palettes — `steelbore`, `steelbore-blue`, `steelbore-blackpinkpanther`, `steelbore-matrixgreen`, `steelbore-navywhite`, `tokyonight` — each with its `-high-contrast` sibling, plus `steelbore-mono`. **Thirteen themes** | All bind the same eleven role tokens, so a layer that reads `steelbore.toml` registers them in a loop, and a declaration can always be answered |
-| **MAY register** | `steelbore-classic`, `steelbore-classic-high-contrast` | Classic keeps the legacy six-role contract (§11.2), defines no surface class, and carries an `info` token that is not one of §11.1's eleven roles — registrable only by an app that implements that contract too |
-| **MUST NOT register** | A §11.5 fidelity palette, except as an explicitly user-selectable extra | §11.5 bars adoption; this section is not a route around it |
-
-Three of the thirteen were already required (§11.4, §11.1.1), so this adds ten —
-all already written out in `steelbore.toml`.
-
-**Registering is not defaulting.** The default stays the project's §11.4 palette
-(§11.6.3 source 5).
-
-#### §11.6.2 — Light and dark
-
-`steelbore-navywhite` (§11.3.4) is the family's only light-canvas member, so a
-platform light preference can only be answered by rendering a **different
-palette**.
-
-**Switching is not mixing.** §11.4 forbids *combining* tokens from two palettes;
-a color-scheme switch combines nothing — the whole token set is replaced at once,
-the new canvas comes with it unaltered, and no frame ever carries a token from
-two palettes. Two hard rules:
-
-- **The switch is atomic and whole-surface.** One panel light and another dark,
-  or a canvas cached from the previous palette, is non-compliant. An app that
-  cannot re-theme atomically MUST resolve once at startup and hold.
-- **The canvas travels with the palette.** A light background under a dark
-  palette is the non-compliance §11.4 already names; it is not a light mode.
-
-| Platform preference | Family default | With a declared pair |
-|---|---|---|
-| Prefer dark | `steelbore` | The declared dark member |
-| Prefer light | `steelbore-navywhite` | The declared light counterpart |
-| No preference | Source 4 does not fire | Source 4 does not fire |
-
-- **A dark-only project declares it.** `light = none` plus a stated reason in
-  `README.md` — a documented exception on the §14.2.1 footing, reported under
-  `--verbose`. It does **not** get to ignore §18.
-- **Solarized is not the pair it looks like.** §11.5 bars both from adoption, so
-  neither is ever a source-4 target. Selected by a user at source 1 it stands as
-  a preference, not conformance.
-- Polarity and counterpart are recorded in `steelbore.toml` — read, never
-  retyped (§11.4).
-
-#### §11.6.3 — Resolution order
-
-Two stages: a **base palette**, then a **variant overlay**. Keeping them apart is
-what makes this composable — §18.1 and `NO_COLOR` choose a *sibling*, never a
-palette, so an accessibility signal can never silently change the brand.
-
-**Stage 1 — base palette**, highest first:
-
-| Source | Form |
-|---|---|
-| **1. In-app selection** | `--theme=<slug>`, or `[theme] name = "<slug>"` in the project config |
-| **2. Environment** | `SPACECRAFT_THEME=<slug>` — a slug, never a boolean |
-| **3. System declaration** | the `active` key of the highest-precedence §11.6.4 file |
-| **4. Platform color scheme** | the platform light/dark preference, mapped through §11.6.2 |
-| **5. Project default** | the project's declared §11.4 palette — `steelbore` where it declares none |
-
-- **An unusable slug is skipped, never fatal.** A non-conforming or unregistered
-  slug is discarded and resolution continues one source lower. A typo in `/etc`
-  never leaves a machine without a working interface (§3.1, graceful degradation).
-- **Fidelity slugs resolve only at source 1** — a system declaration is adoption,
-  and §11.5 bars it.
-- **Source 4 is graphical only.** A terminal exposes no portable color-scheme
-  query; probing for one is neither required nor relied upon. That is precisely
-  why source 3 exists.
-- Resolved theme, deciding stage-1 source, and stage-2 overlay MUST be reported
-  under `--verbose`.
-
-**Stage 2 — variant overlay.** Chooses which sibling of the stage-1 palette
-renders; never changes the palette.
-
-| Signal | Renders | Note |
-|---|---|---|
-| **1. Pinned variant** | as named | The user named a `-high-contrast`/`-mono` slug at stage-1 source 1 or 2. An explicit pin outranks every inferred signal |
-| **2. `NO_COLOR`** | `steelbore-mono` | Mono is the only variant that surrenders color outright, so it outranks high contrast |
-| **3. §18.1 accessible mode** | `<base>-high-contrast` | Resolved by §18.1, whose precedence this section neither restates nor modifies |
-| **4. Platform high contrast** | `<base>-high-contrast` | Read from the platform independently of the §18.1 toggle (§18.3) |
-| **5. None** | the stage-1 palette | The §11.1.1 default, unchanged |
-
-- `NO_COLOR` is **a color instruction, not an accessibility instruction**. It
-  selects mono whether or not it also enabled accessible mode as a §18.1
-  source-4 hint, and `SPACECRAFT_A11Y=0` does not undo it.
-- `steelbore-mono` is palette-independent, so the stage-1 palette does not
-  render under it — but it is still resolved and still reported.
-- A declaration's `high-contrast` key enters at signal 4 and selects a **theme
-  sibling only**. It MUST NOT be read as enabling accessible mode; §18.1 is the
-  sole switch.
-
-#### §11.6.4 — The system declaration
-
-Steelbore OS MUST let a **running** application read the active theme. The
-mechanism is a plain file, deliberately: it has to work for a CLI in a text
-console — no session bus, no portal, no daemon.
-
-| Path | Role |
-|---|---|
-| `$XDG_CONFIG_HOME/steelbore/theme.toml` | Per-user declaration (`$XDG_CONFIG_HOME` defaults to `~/.config`) |
-| `/etc/steelbore/theme.toml` | System declaration, written by the OS configuration |
-
-Keys are read from the highest-precedence file that supplies them — a per-user
-file setting only `active` does not erase the system file's `light`/`dark`.
-**Absence of both files is no declaration** (resolution moves to source 4); a
-file saying `active = "steelbore"` **is** a declaration *of Modern*, and the
-distinction matters because a system may need to pin Modern rather than inherit
-whatever the default later becomes.
-
-```toml
-# /etc/steelbore/theme.toml -- The Steelbore Standard, section 11.6
-[theme]
-active              = "steelbore"            # required: a conforming slug
-dark                = "steelbore"            # optional: the dark member
-light               = "steelbore-navywhite"  # optional: the light member
-follow-color-scheme = true                   # optional, default true
-high-contrast       = false                  # optional, default false
-
-[meta]
-standard = "11.6"                            # the clause this file targets
-source   = "bravais"                         # optional: what wrote it
-```
-
-- **The declaration carries slugs, never colors.** An OS declares *which* theme;
-  values come from `steelbore.toml` via the application's own copy (§11.4). Same
-  division §13 draws for component systems: the platform chooses the vocabulary,
-  never the colors.
-- An OS MAY install a resolved registry at `/etc/steelbore/themes.json`. It is
-  **advisory** — an app MUST NOT require it, and the app's own `steelbore.toml`
-  governs on disagreement.
-- `follow-color-scheme = false` disables source 4 for that scope.
-- An unparseable file, or one with unknown keys, is **ignored with a warning**
-  and the next source decides. Never fatal. `[meta] standard` lets a reader
-  recognize a later revision and fall back conservatively.
-- The variable is **`SPACECRAFT_THEME`**, in the same umbrella-wide
-  `SPACECRAFT_` namespace as §18.1's `SPACECRAFT_A11Y`, carrying a **slug**.
-  `STEELBORE_THEME` is **not** a Standard interface and MUST NOT be given slug
-  semantics — it is already a boolean shell flag, and overloading it would make
-  `STEELBORE_THEME=true` resolve to a nonexistent theme and fall through
-  silently.
-- Per-role color environment variables (`SPACECRAFT_BACKGROUND` and the like) are
-  **not** a Standard interface. A conforming app reads role values from
-  `steelbore.toml`, not the environment.
-
-#### §11.6.5 — Obligations on the declaring side
-
-Steelbore OS — every flavor: NixOS (Bravais), GNU Guix System (Ginx), or any
-successor — MUST:
-
-- **Render §11.6.4's declaration from its own theme selection**, so the one word
-  that themes the machine is the word applications read. Generated, never
-  hand-maintained alongside the selection.
-- **Export `SPACECRAFT_THEME`** into the session environment, reaching graphical
-  sessions and system services — not login shells alone.
-- **Keep the platform color-scheme preference in agreement** with the declared
-  palette's polarity. Declaring a light canvas while telling toolkits to prefer
-  dark is internally inconsistent, and third-party apps read only the platform
-  preference.
-- **Validate the slug at configuration-evaluation time**, so an unknown theme
-  fails the build rather than the boot.
-
-An OS with a theme-switching command SHOULD also write the per-user declaration,
-so a switch takes effect without a rebuild.
+**Full text: [`references/palettes.md`](references/palettes.md).** Load it
+before any color, theme, contrast, or palette-token decision.
+
+Spacecraft Software ships a **palette family** — nine palettes, each declaring
+one canvas, a full set of §11.1 role tokens, and a verified contrast guarantee.
+`references/palettes.md` carries §11.0 through §11.6 in full: Modern and
+Classic, the five alternates, the two Solarized fidelity palettes, the
+accessibility variants, and the system-theme contract.
+
+The rules that gate everyday work, and hold without loading the reference:
+
+- **One palette per project.** A project adopts exactly one and never mixes
+  tokens across palettes.
+- **Every reference goes through a named theme** — never a raw hex in
+  application code.
+- **Values are read, never retyped** (§11.4), from the
+  `steelbore-color-palette` skill's `assets/steelbore.toml`. That file is the
+  machine-readable form; an OS-supplied theme registry (§11.6.4) is advisory,
+  never authoritative.
+- **`steelbore` (Modern) is the default.** Classic, Blue, BlackPinkPanther,
+  MatrixGreen, NavyWhite, and Tokyo Night are opt-in (§11.4).
+- **Fidelity palettes are not adoptable.** The §11.5 Solarized pair is
+  registered for interoperability only and ships no high-contrast sibling.
 
 ---
 
@@ -1541,6 +1095,182 @@ SPDX headers (§4) cover license compliance mechanically; `CREDITS.md` is
 the human-readable narrative — who, what, and how the upstream work
 shaped the Spacecraft Software artifact.
 
+### §15.4 — Authoring Model Attribution
+
+§15.2 records who maintains a Spacecraft Software artifact and §15.3 records whose
+work it stands on. Neither records *what produced it*. When a language model drafts
+a requirements document, an implementation plan, or a task list — or codes a project
+outright — that fact stays legible for about as long as the session lasts. Which
+model, at what reasoning effort, served by which provider, driven by which harness:
+the answer lives in the maintainer's memory of the session and decays quickly.
+
+This section obligates a record. §15.5 specifies its form — an append-only log,
+`.agent-log.jsonl`, written by the harness.
+
+**The record is local, and deliberately so.** §15.5 requires the log to be
+git-ignored, so it never reaches a clone and makes no published claim about the
+artifact. It serves the working copy that produced the work: what the maintainer can
+ask, months later, about which model and configuration did what, how often tests
+passed on the first attempt, and what the work cost. An artifact that must tell
+*consumers* who stands behind it uses §15.2, which is unchanged.
+
+Commit trailers do not serve this purpose. A `Co-Authored-By` line is unstructured,
+is lost to squash-merges and to the history rewrites §6.3 permits, and names a
+product without the reasoning effort, the inference provider, the harness, or any
+measurement of the work. The §15.5 log is machine-readable and carries all of them.
+The two are independent, both MAY be used, and §15.4 does not displace the trailer
+convention.
+
+**Triggers** (any one obligates a record):
+
+- A Product Requirements Document (PRD).
+- An implementation plan.
+- A TODO or task list that drives implementation.
+- A project whose initial implementation was substantially produced by a model.
+
+**Not triggered by:**
+
+- Chat answers, scratch output, and anything that is not committed.
+- A model that only reviewed, critiqued, or reformatted an artifact it did not author.
+
+**Provider and harness are independent, and both are recorded.** The **provider** is
+the service that served the inference — `Anthropic`, `zAI`, `Ollama Cloud`,
+`OpenRouter`, `OpenCode Zen`, or a local `Ollama`. The **harness** is the agent
+client that drove it — `Claude Code`, `OpenCode`, `Codex`, `Orca`, `OpenClaude`,
+`ZCode`, `Antigravity IDE`, `Antigravity CLI`. The same model reaches a repository
+through many combinations of the two, and it is the combination, not the model alone,
+that makes a result reproducible.
+
+**Reasoning effort is recorded separately** in the `reasoning_effort` field, not
+folded into the model identifier. Where a model exposes a thinking or effort setting,
+the bare identifier is incomplete — the same weights at a different level produce
+materially different work. Where a model exposes no such setting, the field is omitted.
+
+**A record is not an authorship claim.** The copyright holder and maintainer remain
+as §15.2 states, and the artifact's license is unchanged. §15.4 records a production
+fact, not legal authorship: it MUST NOT appear in an `SPDX-FileCopyrightText` tag, in
+a `# Maintainer:` line, or in `--version` output, and it never displaces the §15.2
+attribution block.
+
+### §15.5 — Agent Work Log (`.agent-log.jsonl`)
+
+The record §15.4 obligates is an append-only JSON Lines log at the repository root,
+named `.agent-log.jsonl`. One line is appended per completed task. The file is
+created on first append; its absence is not an error, and a repository to which no
+trigger has applied carries none.
+
+**Append-only.** Each line is one complete JSON object, written once and never
+rewritten, reordered, or deleted. The file is not a JSON array: there is no enclosing
+bracket and no separating comma, so an append is a single write that cannot corrupt
+what precedes it. A process that rewrites earlier lines has destroyed the only
+property the format provides.
+
+**Git-ignored, and excluded from agent context.** A `.gitignore` entry for
+`.agent-log.jsonl` is REQUIRED. The log is working-copy state, not a published
+artifact, and committing it makes every branch that runs an agent session conflict on
+the same file. It SHOULD also be excluded from the file context agents are given
+(`.cursorignore` and the equivalent for other harnesses): it grows without bound, and
+an agent that reads its own log wastes context on data it cannot act upon.
+
+This does not conflict with §5.7, which requires `AGENTS.md` and `CLAUDE.md` to be
+tracked. Those are context files that carry project knowledge a fresh clone needs;
+the log is a local measurement record that a fresh clone has no use for.
+
+**The harness writes it, not the model.** Token counts are not observable by a model
+during its own session, and a model instructed to report them will supply plausible
+invented numbers. The log is therefore generated by the harness — a hook, wrapper, or
+client feature with access to the real session record. **A field the harness cannot
+determine is omitted, never estimated.** An absent field is a truthful statement that
+the value is unknown; a guessed one silently corrupts every later query.
+
+**Timestamps** are RFC 3339 UTC with a `Z` suffix, per §14.3, which already requires
+UTC + `Z` for all `jsonl` machine output.
+
+**Schema.** Unknown fields are permitted — a harness MAY record more than this table
+names — but the required fields MUST be present on every line.
+
+| Field                 | Type        | Required | Example                    |
+|-----------------------|-------------|----------|----------------------------|
+| `task_id`             | `string`    | Yes      | `"T-102"`                  |
+| `timestamp`           | `string`    | Yes      | `"2026-09-14T20:25:00Z"`   |
+| `model`               | `string`    | Yes      | `"claude-opus-5"`          |
+| `provider`            | `string`    | Yes      | `"Anthropic"`              |
+| `harness`             | `string`    | Yes      | `"Claude Code"`            |
+| `files_touched`       | `string[]`  | Yes      | `["src/adapters/db.rs"]`   |
+| `reasoning_effort`    | `string`    | No       | `"high"`                   |
+| `subagent_role`       | `string`    | No       | `"implementer"`            |
+| `test_pass_first_try` | `boolean`   | No       | `true`                     |
+| `iterations`          | `integer`   | No       | `2`                        |
+| `tokens_in`           | `integer`   | No       | `12450`                    |
+| `tokens_out`          | `integer`   | No       | `890`                      |
+
+`files_touched` holds repository-relative paths, so a log stays meaningful when the
+working copy moves. A file edited outside the repository root is recorded by absolute
+path instead: a relative path that escapes the root resolves nowhere once the working
+copy has moved, which is the failure the relative form exists to avoid. `task_id` is
+whatever identifier the surrounding process uses — an issue key, a plan milestone, or
+the harness session id where nothing better exists.
+
+**Example.** Two tasks, the second by a different model under a different harness:
+
+```jsonl
+{"task_id":"T-102","timestamp":"2026-09-14T20:25:00Z","model":"claude-opus-5","provider":"Anthropic","harness":"Claude Code","reasoning_effort":"high","subagent_role":"implementer","files_touched":["src/adapters/db.rs"],"test_pass_first_try":true,"tokens_in":12450,"tokens_out":890}
+{"task_id":"T-103","timestamp":"2026-09-14T21:10:00Z","model":"o3-mini","provider":"OpenAI","harness":"Codex","subagent_role":"auditor","files_touched":["tests/db_test.rs"],"test_pass_first_try":false,"iterations":2,"tokens_in":18200,"tokens_out":1450}
+```
+
+**Reference implementation.** A Claude Code `SessionEnd` hook, treating one session
+as one task. It reads the real transcript rather than asking the model anything, and
+omits `model` if the transcript never names one:
+
+```python
+#!/usr/bin/env python3
+"""SessionEnd hook: append one .agent-log.jsonl line per session."""
+import datetime, json, os, sys
+
+ev = json.load(sys.stdin)          # session_id, transcript_path, cwd
+tin = tout = 0
+model = None
+files = set()
+
+with open(ev["transcript_path"], encoding="utf-8") as fh:
+    for line in fh:
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue               # tolerate a torn final line
+        msg = rec.get("message") or {}
+        usage = msg.get("usage") or {}
+        tin += usage.get("input_tokens", 0)
+        tout += usage.get("output_tokens", 0)
+        model = msg.get("model") or model
+        for block in msg.get("content") or []:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                path = (block.get("input") or {}).get("file_path")
+                if path:
+                    rel = os.path.relpath(path, ev["cwd"])
+                    # A file outside the repository has no meaningful
+                    # relative path; record it absolute rather than as
+                    # a ../../.. chain that resolves nowhere.
+                    files.add(path if rel.startswith("..") else rel)
+
+entry = {
+    "task_id": os.environ.get("AGENT_TASK_ID", ev["session_id"]),
+    "timestamp": datetime.datetime.now(datetime.timezone.utc)
+                         .strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "model": model,
+    "provider": "Anthropic",
+    "harness": "Claude Code",
+    "files_touched": sorted(files),
+    "tokens_in": tin,
+    "tokens_out": tout,
+}
+
+with open(os.path.join(ev["cwd"], ".agent-log.jsonl"), "a",
+          encoding="utf-8") as fh:
+    fh.write(json.dumps({k: v for k, v in entry.items()
+                         if v is not None}) + "\n")
+```
+
 ---
 
 ## §17 — Development Progress Tracking & Reporting
@@ -1563,6 +1293,8 @@ TODO: [████████████░░░░░░░░]  60%
 PLAN: [████████████░░░░░░░░]  60%
 PRD:  [████████████░░░░░░░░]  60%
 ```
+
+**Percentages have a denominator.** Where the project maintains a requirement set (§20), each figure is the fraction of that milestone's baselined requirements whose status is `verified` (§20.3), read from the traceability matrix (§21.3) rather than estimated. Where no requirement set exists — Category D work, or a project below the §19.3 threshold — the figure is the maintainer's estimate and is understood as one. A percentage that cannot name what it is a fraction of is an impression, and impressions are what §17 exists to replace.
 
 **Row order** is fixed: milestone rows `M0`…`Mn` in ascending order, then `MVP`, then `TODO`, then `PLAN`, then `PRD`.
 
@@ -1588,6 +1320,56 @@ Progress must be reported:
 - At the start of a coding task (initial estimate/baseline)
 - At the completion of each logical component or milestone task
 - When summarizing the work done at the end of a turn/message
+
+### §17.4 — Closing TL;DR
+
+§17.1 through §17.3 govern the report a reader consults when they want the
+numbers. This section governs the two lines a reader gets when they want nothing
+else.
+
+**Every turn that hands control back to the user ends with a TL;DR block** —
+work finished, work stopped part-way, or a question that blocks further
+progress. The block is the last thing in the turn, after the prose and after any
+§17.1 progress block, and it is **exactly two lines** opening with the marker
+`TL;DR:`.
+
+**Two closing shapes, and the distinction is normative:**
+
+| Outcome | Closing line |
+|---------|--------------|
+| Work complete | The second line ends with a plain statement that the work is finished — `Job is done.` or an equivalent in the same register. No question mark, because nothing is being asked. |
+| Input required | The second line ends with a **question mark**, and the question is the actual decision the user has to make — named, answerable, and specific enough to answer in one word or one sentence. "Let me know how you want to proceed?" names nothing and does not satisfy this. A turn that stops without a question mark is asserting that nothing is blocked on the user, so a turn that needs an answer and ends in a period will simply not get one. |
+
+**Simplified English is a requirement, not a preference.** The two lines use
+short, common words and short sentences. Project jargon, unexplained
+abbreviations, section numbers, identifiers, and file paths stay in the prose
+above; a reader who skipped the entire turn must still understand what happened
+from the TL;DR alone. It is a summary for a person who is not reading closely,
+which is the condition under which most end-of-turn text is actually read.
+
+**`Job is done` is a claim about the work, not a closing pleasantry.** It is
+written only when the work is genuinely finished and verified — the same honesty
+rule §17.2 applies to a saturated bar, which shows twenty filled cells only at
+exactly 100%. Work that is partly done says so and says what remains. A TL;DR
+that reports completion the prose above it does not support is worse than no
+TL;DR at all, because it is the part the reader trusts.
+
+**Format template:**
+
+```
+TL;DR: The build is fixed and all tests pass.
+Job is done.
+```
+
+```
+TL;DR: I can rename the module, but two projects still import the old name.
+Should I update those imports too?
+```
+
+**The TL;DR never replaces what it summarizes.** It is added to the turn, never
+substituted for the detail, the file list, the caveats, or the §17.1 progress
+block. Two lines cannot carry a hand-off, and a turn that answers with a TL;DR
+alone has reported nothing.
 
 ---
 
@@ -1776,6 +1558,35 @@ game already decided to build — it requires no feature to exist.
 
 ---
 
+## §19–§26 — Assurance, Requirements, V&V and Operations
+
+**Full text: [`references/engineering-process.md`](references/engineering-process.md).**
+Load it when doing assurance, requirements, verification, interface-control,
+baseline, or operations work.
+
+§3 fixes the priority order for every artifact; it does not say how much
+*evidence* a given artifact owes. §19–§26 answer that, and the reference
+carries them in full:
+
+| §   | Covers |
+|-----|--------|
+| §19 | Assurance categories, tailoring, and how conformance is claimed |
+| §20 | Requirements engineering |
+| §21 | Verification, validation & traceability |
+| §22 | Resource budgets & margins |
+| §23 | Interface control |
+| §24 | Reuse & third-party qualification |
+| §25 | Baselines, anomalies & release acceptance |
+| §26 | Operations, maintenance & support |
+
+The entry point is §19: an artifact's **assurance category** determines the
+evidence it owes, a project may **tailor** with a justified register, and the
+conformance claim in `README.md` names the standard version, the category, and
+whether the claim is full or tailored. Everything downstream follows from that
+category — read §19 before assuming a §20–§26 obligation applies.
+
+---
+
 ## §16 — Compliance Checklist (Audit Gate)
 
 Before finalising **any** Spacecraft Software artifact, mentally verify:
@@ -1806,7 +1617,16 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§15** Attribution present: maintainer name (`Mohamed Hammad`), contact (`Mohamed.Hammad@SpacecraftSoftware.org`), and project URL in `--version` / README / About
 - [ ] **§15.3** Third-party work credited in `CREDITS.md` at project/skill root when triggers apply; deeper `references/ATTRIBUTION.md` present where reference content is adapted from external sources
 - [ ] **§17** Development progress tracked and reported continuously as the §17.1 labelled-row block — one 20-cell bar per track, milestone rows then MVP then TODO/PLAN/PRD, only the rows that apply; every row set in `█`/`░` with tight brackets, columns aligned, no ASCII bars
+- [ ] **§17.4** Every turn that hands control back to the user ends with a two-line `TL;DR:` block in simplified English, placed last: a plain statement of completion when the work is finished and verified, or a question mark naming the actual decision when the user's input is required; never substituted for the detail or the §17.1 block
 - [ ] **§18** Accessible mode implemented and off by default; §18.1 toggle honored with correct precedence; status never color-only; no animation or decorative art in accessible mode; TUI ships a linear mode and a non-interactive CLI path; GUI publishes accessible names and roles (AccessKit for Rust); verified with a real screen reader; existing projects carry a dated remediation entry in `PROJECTS.md` until they conform — N/A for projects registered as games (§18.5), which are exempt in full
+- [ ] **§19** Assurance category (A/B/C/D) declared in `README.md`, `AGENTS.md`, and `PROJECTS.md`, with any raised subsystem named; every *Recommended* obligation of §19.3 that is not implemented carries a dated tailoring-register entry (§19.5) in `COMPLIANCE.md` for Category A and B, or in `README.md` for C and D; the three gates of §19.4 passed with their evidence; the §19.6 conformance claim in `README.md` names the standard version, the category, and whether the claim is full or tailored
+- [ ] **§20** Requirements written at the level §19.3 requires (Texinfo `Requirements` node for A and B, `AGENTS.md` list for C); each carries a permanent identifier, rationale, source, priority, verification method, and status; §20.2 verbal forms used, with `shall` carrying obligation; the §20.4 characteristics gate run over each requirement and over the set; no unmeasurable adjective, open-ended clause, or escape hatch in requirement text (§20.5) — N/A for Category D
+- [ ] **§21** Every requirement declares one of the four §21.1 methods; verification evidence meets the §21.2 floor for the category; the traceability matrix is generated by tooling on every CI run, fails on an unverified requirement or an unknown identifier, and ships with the release; independence obtained from a §21.4 mechanism for Category A and B; validation performed at G3 against the needs, on the target platform, from installed packaging, and recorded (§21.5)
+- [ ] **§22** Budget ceilings declared at G2 for every applicable resource, each naming its reference machine and workload; measurement automated in CI; margins reported with their band; no red band at the release gate for Category A or B, and no ceiling re-baselined without a dated justification — N/A for Category D
+- [ ] **§23** Interface inventory complete across all seven classes; ICD present as an `Interfaces` node with identity, version, contract, error behaviour, stability class, committed schema, and known consumers; breaking changes carried in a major version after a deprecation period (§26.3); the ICD baselined at G3 — N/A for a project exposing no interface
+- [ ] **§24** Dependencies qualified at the depth §19.3 requires, with purpose, provenance, maintenance, security history, unsafe posture, transitive weight, alternatives, and exit plan recorded; `cargo audit` and `cargo deny` gate CI, not just adoption; lockfile and toolchain pinned; no unqualified software on a Category A path; an SBOM generated from the locked inputs in the release CI run and shipped with a checksum
+- [ ] **§25** Baselines cut at all three gates covering source, dependencies, toolchain, requirements, budgets, and interfaces; anomalies classified S1–S4 by consequence, S1 and S2 closed only by a committed regression test citing the anomaly, and open anomalies listed in the release notes; release manifest assembled with identity, artifacts and checksums, provenance, verification and validation summaries, budgets, known issues, and the conformance claim; installation verified from each of the three §5.5 package definitions in a clean environment before the tag is pushed
+- [ ] **§26** `SECURITY.md` present with reporting channel, acknowledgement target, scope, supported versions, disclosure terms, and credit policy; advisories published for fixed vulnerabilities and citing the SBOM; deprecations announced in `CHANGELOG.md`, the ICD, and at run time, with the notice period the category requires and a named replacement; support window stated for the project's posture; an ended project taken through the §26.4 EOL procedure rather than left silent
 - [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too
 - [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution
 

@@ -168,13 +168,13 @@ hex values below are the `steelbore` theme's and travel with the theme
 
 | Element | Theme token | `steelbore` value | Weight |
 |---------|-------------|-------------------|--------|
-| `[ERROR]` | `error` | Mars Red `#FF3B3B` | bold |
-| `[WARN]` | `warning` | Plasma Magenta `#E445FF` | bold |
-| `[OK]` | `success` | Acid Lime `#B4FF00` | normal |
-| `[INFO]` | `structure` | Pulse Violet `#8A6CFF` | normal |
-| `hint:` label + hint text | `accent` | Plasma Orange `#FF5E00` | normal |
-| `docs:` label + URL | `foreground` | Platinum Mist `#D9DEE5` | dim |
-| message body | `foreground` | Platinum Mist `#D9DEE5` | normal |
+| `[ERROR]` | `error` | Mars Red | bold |
+| `[WARN]` | `warning` | Plasma Magenta | bold |
+| `[OK]` | `success` | Acid Lime | normal |
+| `[INFO]` | `structure` | Pulse Violet | normal |
+| `hint:` label + hint text | `accent` | Plasma Orange | normal |
+| `docs:` label + URL | `foreground` | Platinum Mist | dim |
+| message body | `foreground` | Platinum Mist | normal |
 
 There is no `info` theme token in the §11.1 contract; `structure` is the
 informational color (consistent with `output-modes.md` §2). Do not mint

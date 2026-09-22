@@ -22,7 +22,7 @@ opencode "<prompt>"      # one-shot
 
 ## Examples
 1. Launch TUI: `opencode`
-2. Non-interactive with Anthropic: `opencode -m claude-opus-4-7 "add logging to this module"`
+2. Non-interactive with Anthropic: `opencode -m claude-opus-5 "add logging to this module"`
 3. Local model via Ollama: `opencode --provider ollama -m llama3.1 "…"`
 
 ## Gotchas

@@ -26,7 +26,7 @@ Approximate fidelity expectations when an ODF file is opened in a non-LibreOffic
 
 ## §C — Background recipe per ODF shape
 
-The Void Navy `#000027` background MUST be applied via the format's native mechanism. Below is the minimum XML each format requires.
+The Void Navy  background MUST be applied via the format's native mechanism. Below is the minimum XML each format requires.
 
 ### §C.1 — `.odt` (text document)
 
@@ -50,11 +50,11 @@ Set the background on the **page layout** in `styles.xml`. Setting it only on th
 </office:automatic-styles>
 ```
 
-Verify in LibreOffice via *Format → Page Style → Area → Color* — the swatch should read `#000027`.
+Verify in LibreOffice via *Format → Page Style → Area → Color* — the swatch should read Void Navy.
 
 ### §C.2 — `.ods` (spreadsheet)
 
-ODS has no per-page background by convention; the Void Navy mandate applies via **cell range fill** across every used cell. Apply `#000027` as the background fill to every cell in the active range (not just a sheet-level property).
+ODS has no per-page background by convention; the Void Navy mandate applies via **cell range fill** across every used cell. Apply Void Navy as the background fill to every cell in the active range (not just a sheet-level property).
 
 ```xml
 <office:automatic-styles>
@@ -66,7 +66,7 @@ ODS has no per-page background by convention; the Void Navy mandate applies via 
 
 Reference `ce-void-navy` as the `table:style-name` on each `<table:table-cell>` (or apply via a default cell style for the sheet). For print, LibreOffice respects the cell fill; Excel honours the same on opening.
 
-Optionally also set the sheet tab colour to a Spacecraft Software accent via `<table:table-properties tableooo:tab-color="#FF5E00"/>` — purely cosmetic in LibreOffice's sheet-tab strip.
+Optionally also set the sheet tab colour to a Spacecraft Software accent via `<table:table-properties tableooo:tab-color="Plasma Orange"/>` — purely cosmetic in LibreOffice's sheet-tab strip.
 
 ### §C.3 — `.odp` (presentation)
 
@@ -89,7 +89,7 @@ Set the background on the **slide master** so every slide inherits Void Navy:
 </office:automatic-styles>
 ```
 
-Then verify on each individual slide — if a slide-layout declares its own `draw:fill`, it overrides the master. The safest approach: also set `draw:fill="solid"` + `draw:fill-color="#000027"` on every `<draw:page>` so the chain is unambiguous.
+Then verify on each individual slide — if a slide-layout declares its own `draw:fill`, it overrides the master. The safest approach: also set `draw:fill="solid"` + `draw:fill-color="Void Navy"` on every `<draw:page>` so the chain is unambiguous.
 
 Slide geometry: 16:9 widescreen. In `styles.xml`:
 
@@ -192,7 +192,7 @@ In rough order of preference:
 In addition to SKILL.md §8 (general acceptance), specifically for ODF:
 
 - [ ] `unzip -l <file>.odt` (or `.ods` / `.odp`) shows: `mimetype` first, `META-INF/manifest.xml`, `content.xml`, `styles.xml`, font files in `Fonts/`.
-- [ ] `unzip -p <file>.odt content.xml | grep -c "Void Navy hex"` — well, `grep -c "#000027"` should return ≥ 1.
+- [ ] `unzip -p <file>.odt content.xml | grep -c "Void Navy hex"` — well, `grep -c "Void Navy"` should return ≥ 1.
 - [ ] Open in LibreOffice → Void Navy visible across the active surface (page / cells / slides).
 - [ ] Upload to Google Drive → open in Docs/Sheets/Slides → Void Navy still visible. (Drag-and-drop, then "Open with" the appropriate Google app.)
 - [ ] If MS Office is available on the host: open in Word/Excel/PowerPoint → Void Navy visible (acknowledged ~90/85/80% fidelity per §B).

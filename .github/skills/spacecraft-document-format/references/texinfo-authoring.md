@@ -7,7 +7,7 @@ That skill is the execution layer beneath this router and covers everything mech
 
 - **Authoring** the canonical skeleton (`@dircategory`/`@direntry`, `@copying`, `@titlepage`, `@node Top`/`@top`, per-chapter `@menu`), with ready templates (`assets/template.texi`, `assets/software-manual.texi`).
 - **Building** to Info/HTML/PDF (`makeinfo`/`texi2any`, `texi2pdf`) and the three `Makefile` targets.
-- **Brand output** — the bundled `assets/spacecraft.css` (Void Navy `#000027`, Share Tech Mono headings, Inconsolata body, palette links) for HTML, and A4 + colour caveats for PDF.
+- **Brand output** — the bundled `assets/spacecraft.css` (Void Navy, Share Tech Mono headings, Inconsolata body, palette links) for HTML, and A4 + colour caveats for PDF.
 - **Linting** node/menu errors, **converting** Markdown↔Texinfo, **packaging** (`install-info` hooks), and the Texinfo acceptance checklist.
 
 This file carries only the **routing decisions** this skill (`spacecraft-document-format`) owns; do

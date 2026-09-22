@@ -1,6 +1,9 @@
 ---
 name: spacecraft-nu-guidelines
-description: Expert guidelines for writing high-performance, clean, and type-safe Nushell (Nu) script code. Triggers on any request involving Nushell scripts, command definitions, custom pipelines, closures, modules, environment variables, or config.nu configurations. By Spacecraft Software.
+description: Expert guidelines for authoring high-performance, clean, type-safe Nushell (Nu) code. Triggers on any request involving Nushell scripts, `.nu` files, config.nu and env.nu, custom `def` commands with typed signatures, structured pipelines over tables and records, closures and blocks, `mut` and variable mutability, `let-env` and `with-env`, `complete`, error handling with try/catch, or Nu modules and overlays. Trigger even when implicit, e.g. "write a Nu script", "type this custom command", or "convert this pipeline to Nu". This skill governs Nu code you author; `spacecraft-cli-shell` owns whether a one-off shell command is syntactically correct for the shell that will execute it. By Spacecraft Software.
+license: GPL-3.0-or-later
+maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
+website: https://Construct.SpacecraftSoftware.org/
 ---
 
 # Spacecraft Nushell Guidelines

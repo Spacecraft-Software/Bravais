@@ -10,7 +10,7 @@ Universal LLM REPL + CLI. One tool for OpenAI, Claude, Gemini, local Ollama, lla
 |---------|---------|
 | `aichat` | Start REPL |
 | `aichat "PROMPT"` | One-shot |
-| `-m MODEL` | Model override (e.g. `claude:claude-opus-4-7`) |
+| `-m MODEL` | Model override (e.g. `claude:claude-opus-5`) |
 | `-r ROLE` | Predefined role (see `aichat --list-roles`) |
 | `-s SESSION` | Named session |
 | `-f FILE` | Attach file(s) |
