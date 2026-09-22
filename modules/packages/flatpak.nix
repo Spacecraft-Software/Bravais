@@ -104,7 +104,7 @@
         appId = "com.microsoft.Edge";
         origin = "flathub";
       }
-      # { appId = "org.mozilla.firefox";               origin = "flathub"; }
+      # org.mozilla.firefox → nixpkgs: `programs.firefox` in browsers.nix
       {
         appId = "com.opera.Opera";
         origin = "flathub";

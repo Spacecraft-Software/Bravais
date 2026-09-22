@@ -977,7 +977,8 @@ Home Manager additionally generates user-level configs in `~/.config/` for: niri
   a stale Tor Browser is an anonymity problem; the bundled updater is disabled upstream
   (`policies.DisableAppUpdate`), so `nix flake update nixpkgs-unstable` is the only thing
   that moves it. Deliberately not bound to the `webBrowser` role in `default-apps.nix`
-- **Firefox** (system-managed via `programs.firefox.enable`)
+- **Firefox** (system-managed via `programs.firefox.enable`) — from nixpkgs, not Flathub;
+  the march level never touches the system nixpkgs, so it substitutes from cache
 - google-chrome, brave, microsoft-edge, librewolf
 
 ### 11.1a Orca computer-use (`modules/packages/orca.nix`)
@@ -1275,7 +1276,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 
 **System Monitoring:** bottom (Rust), kmon (Rust), macchina (Rust), bandwhich (Rust), mission-center (Rust), htop, btop, gotop, fastfetch, i7z, hw-probe
 
-**Text Processing (Rust):** jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell (+en_US)
+**Text Processing (Rust):** jaq, jq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell (+en_US)
 
 **Shells:** nushell (Rust), brush (Rust), ion (Rust), starship (Rust), atuin (Rust), pipr (Rust), moor (Rust), powershell
 

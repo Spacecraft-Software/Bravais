@@ -31,8 +31,15 @@ in
   };
 
   config = lib.mkIf config.steelbore.packages.browsers.enable {
-    # Firefox (system-managed) → Flatpak: org.mozilla.firefox
-    # programs.firefox.enable = true;
+    # Firefox comes from nixpkgs, not Flathub. The "Firefox source build, too
+    # large for march configs" reasoning that sent the other browsers to
+    # Flatpak does not bind here: the march level only exports CFLAGS/RUSTFLAGS
+    # for user-driven builds (modules/platform/x86-64.nix) and leaves the
+    # system nixpkgs untouched, so `firefox` substitutes from cache.nixos.org
+    # (verified 2026-09-22). `programs.firefox` is used rather than a bare
+    # `environment.systemPackages` entry because it also carries the NixOS
+    # policy and native-messaging-host plumbing.
+    programs.firefox.enable = true;
 
     environment.systemPackages =
       (with pkgs; [
