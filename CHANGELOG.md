@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Output scale is pinned, and steppable.** niri's automatic scale picked
+  1.25 for the ThinkPad's 1920x1080 panel (about 157 DPI), so the desktop
+  was laid out as 1536x864 and looked oversized. The Niri config now pins
+  `eDP-1` to `scale 1.0`, and `Mod+Shift+Minus` / `Mod+Shift+Equal` step
+  the focused output one rung along 1.0/1.25/1.5/1.75/2.0 through
+  `steelbore-output-scale`, a Nushell helper over `niri msg output`. That
+  IPC change is temporary by design, forgotten on the next config reload,
+  which is why the persistent value lives in the config block.
+
 - **Firefox, from nixpkgs.** `programs.firefox.enable` in the browsers bundle.
   It had been commented out in favour of the Flathub build, which was itself
   never enabled, so no Firefox was installed at all. The Flatpak route was
