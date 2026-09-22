@@ -62,6 +62,7 @@
 
         # Text Processing (Rust preferred)
         jaq # Rust — jq replacement
+        jq # C — the reference JSON processor, for scripts pinned to its exact semantics
         teip # Rust — Masking tool
         htmlq # Rust — HTML selector
         skim # Rust — Fuzzy finder

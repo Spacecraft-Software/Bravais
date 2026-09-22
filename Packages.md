@@ -98,6 +98,7 @@
     * **zoxide** 🦀 `[CLI ⌨️]` *(Smarter `cd` command with history)*
 * **Text Processing & System Utils**
     * **jaq** 🦀 `[CLI ⌨️]` *(JSON processor / fast `jq` clone)*
+    * **jq** ⚠️ `[CLI ⌨️]` *(The reference JSON processor, for scripts pinned to its exact semantics)*
     * **uutils** 🦀 `[CLI ⌨️]` *(Cross-platform Rust Coreutils reimplementation)*
     * **rustybox** 🦀 `[CLI ⌨️]` *(100% Rust Busybox clone)*
     * **procs** 🦀 `[CLI ⌨️]` *(Modern `ps` alternative with colored output)*

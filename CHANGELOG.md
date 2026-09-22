@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Firefox, from nixpkgs.** `programs.firefox.enable` in the browsers bundle.
+  It had been commented out in favour of the Flathub build, which was itself
+  never enabled, so no Firefox was installed at all. The Flatpak route was
+  chosen on the assumption that a Firefox source build is too large under the
+  march pin; that pin only exports compiler flags for user-driven builds and
+  leaves the system nixpkgs alone, so the package substitutes from cache.
+
+- **`jq` beside `jaq`.** `jaq` stays the preferred JSON processor; `jq` is
+  the reference implementation, for scripts written against its exact
+  semantics (`jaq` has no auto-vivification, for one).
+
 - **`steelbore-vpn` — an AdGuard VPN inspector and teardown helper**, because
   `adguardvpn-cli disconnect` hangs indefinitely in TUN mode on this system.
   The client records the pid of its **sudo shim** in `vpn.pid`, then SIGTERMs
