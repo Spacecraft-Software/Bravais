@@ -26,7 +26,7 @@ MCP_REPO=/spacecraft-software/mcp-servers
 FLATPAK_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/flatpak-update.log"
 STAMP="$HOME/.cache/bravais-vendored-check"
 
-dry=0; no_update=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0
+dry=0; no_update=0; update_all=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0
 
 # Colors only when stdout is a terminal — a piped or logged run stays clean,
 # and NO_COLOR is honored (Standard §18.2.1).
@@ -55,6 +55,7 @@ switch aborts before the mirror.
 Options:
   --dry           nixos-rebuild dry-build only; skips GC and the /etc mirror
   --no-update     skip `nix flake update`
+  --update-all    bump every flake input, not just the tracked five
   --no-gc         skip garbage collection and the journal vacuum
   --trace         add --show-trace --verbose (to diagnose eval failures)
   --skills-only   bump only `construct`; skip GC, the mirror and the probes
@@ -75,6 +76,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --dry)         dry=1 ;;
         --no-update)   no_update=1 ;;
+        --update-all)  update_all=1 ;;
         --no-gc)       no_gc=1 ;;
         --trace)       trace=1 ;;
         --skills-only) skills_only=1 ;;
@@ -85,6 +87,10 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+if [ "$update_all" -eq 1 ] && { [ "$no_update" -eq 1 ] || [ "$skills_only" -eq 1 ]; }; then
+    say "$C_ERR" "--update-all conflicts with --no-update and --skills-only"; exit 2
+fi
 
 # ── Deprecation gate ────────────────────────────────────────────────────────
 # Mirrors the same gate in users/mj/rebuild.nu — change one, change the other
@@ -162,6 +168,9 @@ if [ "$no_update" -eq 0 ]; then
     gitway-add "$HOME/.ssh/id_ed25519"
     if [ "$skills_only" -eq 1 ]; then
         nix flake update construct
+    elif [ "$update_all" -eq 1 ]; then
+        # No input names = every input, stable nixpkgs and home-manager included.
+        nix flake update
     else
         nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
 

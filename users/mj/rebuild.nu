@@ -105,18 +105,20 @@ def antigravity-status [] {
 # switch aborts before the mirror.
 #   --dry        nixos-rebuild dry-build only; skips GC and the /etc mirror
 #   --no-update  skip `nix flake update`
+#   --update-all bump every flake input, not just the tracked five
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
-def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
+def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
   # Explicit usage rather than `help rebuild`. That resolved to nothing when
   # this file is run as the `rebuild` BINARY (where the outer command is
   # `main`), printing an empty response instead of help — so spell it out and
   # get identical behaviour from both the Nu command and the binary.
   if $topic == "help" {
-    print "Usage: rebuild [help] [--dry] [--no-update] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--yes]"
+    print "Usage: rebuild [help] [--dry] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--yes]"
     print ""
     print "  --dry          nixos-rebuild dry-build only; skips GC and the /etc mirror"
     print "  --no-update    skip `nix flake update`"
+    print "  --update-all   bump every flake input, not just the tracked five"
     print "  --no-gc        skip garbage collection + journal vacuum"
     print "  --trace        add --show-trace --verbose (to diagnose eval failures)"
     print "  --skills-only  bump only `construct`; skip GC, the /etc mirror and the mcpctl probe"
@@ -128,6 +130,9 @@ def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only
     return
   }
   if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
+  if $update_all and ($no_update or $skills_only) {
+    print $"(ansi red)--update-all conflicts with --no-update and --skills-only(ansi reset)"; return
+  }
 
   # Deprecation gate. `preflight` (pkgs/preflight/, Rust) is the supported
   # rebuild orchestrator: it accepts every flag this command does — --dry,
@@ -176,6 +181,9 @@ def rebuild [topic?: string, --dry, --no-update, --no-gc, --trace, --skills-only
     gitway-add ~/.ssh/id_ed25519
     if $skills_only {
       nix flake update construct
+    } else if $update_all {
+      # No input names = every input, stable nixpkgs and home-manager included.
+      nix flake update
     } else {
       nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
     }

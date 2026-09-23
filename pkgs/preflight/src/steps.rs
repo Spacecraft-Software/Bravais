@@ -92,6 +92,10 @@ pub struct RunReport {
 pub struct Options {
     pub dry: bool,
     pub no_update: bool,
+    /// Bump EVERY input with a bare `nix flake update` instead of the
+    /// curated [`FULL_INPUTS`]. Opt-in because it moves stable `nixpkgs`
+    /// and `home-manager`, which the curated list leaves alone on purpose.
+    pub update_all: bool,
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
@@ -185,9 +189,11 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         );
         let mut cmd = Command::new("nix");
         cmd.args(["flake", "update"]).current_dir(FLAKE_DIR);
+        // No input arguments at all is what makes `nix flake update` bump
+        // every input, so `--update-all` adds nothing to the command line.
         if opts.skills_only {
             cmd.arg("construct");
-        } else {
+        } else if !opts.update_all {
             cmd.args(FULL_INPUTS);
         }
         r.run("flake-update", &mut cmd);
