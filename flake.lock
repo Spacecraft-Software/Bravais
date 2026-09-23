@@ -313,6 +313,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "rapg": "rapg",
+        "theme": "theme",
         "vacuum": "vacuum"
       }
     },
@@ -373,6 +374,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "theme": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790159958,
+        "narHash": "sha256-aIRiAw6rNqpqfNH35HiaIvElcoAVH+wq3OGc5Pe0zZk=",
+        "owner": "Spacecraft-Software",
+        "repo": "Theme",
+        "rev": "19399c211d7aab301cd086179c9d73c550611759",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Spacecraft-Software",
+        "repo": "Theme",
         "type": "github"
       }
     },

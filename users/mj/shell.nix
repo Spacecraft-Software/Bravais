@@ -6,6 +6,7 @@
   lib,
   pkgs,
   steelborePalette,
+  themeAssets,
   steelboreApps,
   ...
 }:
@@ -205,230 +206,233 @@ in
       '';
     };
 
-    # Starship prompt — Steelbore powerline (mirrors
-    # /spacecraft-software/theme/Shells/Starship/starship.toml, kept inline so the
-    # config doesn't depend on an out-of-flake path at eval time).
-
-    # Starship prompt — Steelbore powerline (mirrors
-    # /spacecraft-software/theme/Shells/Starship/starship.toml, kept inline so the
-    # config doesn't depend on an out-of-flake path at eval time).
+    # Starship prompt — the Steelbore powerline preset.
+    #
+    # For a registered palette the config is the Theme repository's generated
+    # file for the active slug (`Shells/Starship/themes/<slug>.toml`, via the
+    # `theme` flake input), so the prompt tracks that repository's rendering
+    # exactly. A LOCAL theme (./themes/<slug>.nix) has no such file, so the
+    # same preset is kept inline below with its palette table resolved from
+    # role tokens — the two are the same preset with the same role mapping.
     starship = {
       enable = true;
-      settings = {
-        "$schema" = "https://starship.rs/config-schema.json";
-        scan_timeout = 10000;
+      settings =
+        if themeAssets.starship != null then
+          builtins.fromTOML (builtins.readFile themeAssets.starship)
+        else
+          {
+            "$schema" = "https://starship.rs/config-schema.json";
+            scan_timeout = 10000;
 
-        format = "[](red)$os$username[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$bun$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break$character";
+            format = "[](red)$os$username[](bg:peach fg:red)$directory[](bg:yellow fg:peach)$git_branch$git_status[](fg:yellow bg:green)$c$rust$golang$nodejs$bun$php$java$kotlin$haskell$python[](fg:green bg:sapphire)$conda[](fg:sapphire bg:lavender)$time[ ](fg:lavender)$cmd_duration$line_break$character";
 
-        palette = "steelbore";
+            palette = "steelbore";
 
-        os = {
-          disabled = false;
-          style = "bg:red fg:crust";
-          symbols = {
-            Windows = "";
-            Ubuntu = "󰕈";
-            SUSE = "";
-            Raspbian = "󰐿";
-            Mint = "󰣭";
-            Macos = "󰀵";
-            Manjaro = "";
-            Linux = "󰌽";
-            Gentoo = "󰣨";
-            Fedora = "󰣛";
-            Alpine = "";
-            Amazon = "";
-            Android = "";
-            AOSC = "";
-            Arch = "󰣇";
-            Artix = "󰣇";
-            CentOS = "";
-            Debian = "󰣚";
-            Redhat = "󱄛";
-            RedHatEnterprise = "󱄛";
+            os = {
+              disabled = false;
+              style = "bg:red fg:crust";
+              symbols = {
+                Windows = "";
+                Ubuntu = "󰕈";
+                SUSE = "";
+                Raspbian = "󰐿";
+                Mint = "󰣭";
+                Macos = "󰀵";
+                Manjaro = "";
+                Linux = "󰌽";
+                Gentoo = "󰣨";
+                Fedora = "󰣛";
+                Alpine = "";
+                Amazon = "";
+                Android = "";
+                AOSC = "";
+                Arch = "󰣇";
+                Artix = "󰣇";
+                CentOS = "";
+                Debian = "󰣚";
+                Redhat = "󱄛";
+                RedHatEnterprise = "󱄛";
+              };
+            };
+
+            username = {
+              show_always = true;
+              style_user = "bg:red fg:crust";
+              style_root = "bg:red fg:crust";
+              format = "[ $user]($style)";
+            };
+
+            directory = {
+              style = "bg:peach fg:crust";
+              format = "[ $path ]($style)";
+              truncation_length = 3;
+              truncation_symbol = "…/";
+
+              substitutions = {
+                Documents = "󰈙 ";
+                Downloads = " ";
+                Music = "󰝚 ";
+                Pictures = " ";
+                Developer = "󰲋 ";
+              };
+            };
+
+            git_branch = {
+              symbol = "";
+              style = "bg:yellow";
+              format = "[[ $symbol $branch ](fg:crust bg:yellow)]($style)";
+            };
+
+            git_status = {
+              style = "bg:yellow";
+              format = "[[($all_status$ahead_behind )](fg:crust bg:yellow)]($style)";
+            };
+
+            nodejs = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            bun = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            c = {
+              symbol = " ";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            rust = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            golang = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            php = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            java = {
+              symbol = " ";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            kotlin = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            haskell = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
+            };
+
+            python = {
+              symbol = "";
+              style = "bg:green";
+              format = "[[ $symbol( $version)(\\(#$virtualenv\\)) ](fg:crust bg:green)]($style)";
+            };
+
+            docker_context = {
+              symbol = "";
+              style = "bg:sapphire";
+              format = "[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)";
+            };
+
+            conda = {
+              symbol = "  ";
+              style = "fg:crust bg:sapphire";
+              format = "[$symbol$environment ]($style)";
+              ignore_base = false;
+            };
+
+            time = {
+              disabled = false;
+              time_format = "%R";
+              style = "bg:lavender";
+              format = "[[  $time ](fg:crust bg:lavender)]($style)";
+            };
+
+            line_break.disabled = true;
+
+            character = {
+              disabled = false;
+              success_symbol = "[❯](bold fg:green)";
+              error_symbol = "[❯](bold fg:red)";
+              vimcmd_symbol = "[❮](bold fg:green)";
+              vimcmd_replace_one_symbol = "[❮](bold fg:lavender)";
+              vimcmd_replace_symbol = "[❮](bold fg:lavender)";
+              vimcmd_visual_symbol = "[❮](bold fg:yellow)";
+            };
+
+            cmd_duration = {
+              show_milliseconds = true;
+              format = " in $duration ";
+              style = "bg:lavender";
+              disabled = false;
+              show_notifications = true;
+              min_time_to_notify = 45000;
+            };
+
+            # Steelbore palette — Catppuccin role keys preserved so the
+            # upstream powerline preset renders unchanged, but every hex
+            # value resolves to a token from the Steelbore canonical palette.
+            palettes.steelbore = {
+              # Powerline section accents
+              red = steelborePalette.error; # red_oxide     — OS / username cap
+              peach = steelborePalette.foreground; # molten_amber  — directory block
+              yellow = steelborePalette.structure; # git block
+              green = steelborePalette.success; # radium_green  — language runtimes
+              sapphire = steelborePalette.accent; # steel_blue    — docker / conda
+              lavender = steelborePalette.info; # liquid_cool   — time block
+
+              # Dark canvas (foreground text on bright section blocks)
+              crust = steelborePalette.background;
+              mantle = steelborePalette.background;
+              base = steelborePalette.background;
+
+              # Secondary surfaces
+              surface0 = steelborePalette.surface;
+              surface1 = steelborePalette.surface;
+              surface2 = steelborePalette.surface;
+
+              # Dim / muted scale
+              overlay0 = steelborePalette.structure;
+              overlay1 = steelborePalette.structure;
+              overlay2 = steelborePalette.structure;
+
+              # Foreground text scale
+              text = steelborePalette.foreground;
+              subtext0 = steelborePalette.foreground;
+              subtext1 = steelborePalette.foreground;
+
+              # Remaining catppuccin role keys mapped to nearest Steelbore semantic
+              rosewater = steelborePalette.error;
+              flamingo = steelborePalette.error;
+              pink = steelborePalette.error;
+              mauve = steelborePalette.error;
+              maroon = steelborePalette.error;
+              teal = steelborePalette.info;
+              sky = steelborePalette.info;
+              blue = steelborePalette.accent;
+            };
           };
-        };
-
-        username = {
-          show_always = true;
-          style_user = "bg:red fg:crust";
-          style_root = "bg:red fg:crust";
-          format = "[ $user]($style)";
-        };
-
-        directory = {
-          style = "bg:peach fg:crust";
-          format = "[ $path ]($style)";
-          truncation_length = 3;
-          truncation_symbol = "…/";
-
-          substitutions = {
-            Documents = "󰈙 ";
-            Downloads = " ";
-            Music = "󰝚 ";
-            Pictures = " ";
-            Developer = "󰲋 ";
-          };
-        };
-
-        git_branch = {
-          symbol = "";
-          style = "bg:yellow";
-          format = "[[ $symbol $branch ](fg:crust bg:yellow)]($style)";
-        };
-
-        git_status = {
-          style = "bg:yellow";
-          format = "[[($all_status$ahead_behind )](fg:crust bg:yellow)]($style)";
-        };
-
-        nodejs = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        bun = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        c = {
-          symbol = " ";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        rust = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        golang = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        php = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        java = {
-          symbol = " ";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        kotlin = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        haskell = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version) ](fg:crust bg:green)]($style)";
-        };
-
-        python = {
-          symbol = "";
-          style = "bg:green";
-          format = "[[ $symbol( $version)(\\(#$virtualenv\\)) ](fg:crust bg:green)]($style)";
-        };
-
-        docker_context = {
-          symbol = "";
-          style = "bg:sapphire";
-          format = "[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)";
-        };
-
-        conda = {
-          symbol = "  ";
-          style = "fg:crust bg:sapphire";
-          format = "[$symbol$environment ]($style)";
-          ignore_base = false;
-        };
-
-        time = {
-          disabled = false;
-          time_format = "%R";
-          style = "bg:lavender";
-          format = "[[  $time ](fg:crust bg:lavender)]($style)";
-        };
-
-        line_break.disabled = true;
-
-        character = {
-          disabled = false;
-          success_symbol = "[❯](bold fg:green)";
-          error_symbol = "[❯](bold fg:red)";
-          vimcmd_symbol = "[❮](bold fg:green)";
-          vimcmd_replace_one_symbol = "[❮](bold fg:lavender)";
-          vimcmd_replace_symbol = "[❮](bold fg:lavender)";
-          vimcmd_visual_symbol = "[❮](bold fg:yellow)";
-        };
-
-        cmd_duration = {
-          show_milliseconds = true;
-          format = " in $duration ";
-          style = "bg:lavender";
-          disabled = false;
-          show_notifications = true;
-          min_time_to_notify = 45000;
-        };
-
-        # Steelbore palette — Catppuccin role keys preserved so the
-        # upstream powerline preset renders unchanged, but every hex
-        # value resolves to a token from the Steelbore canonical palette.
-        palettes.steelbore = {
-          # Powerline section accents
-          red = steelborePalette.error; # red_oxide     — OS / username cap
-          peach = steelborePalette.foreground; # molten_amber  — directory block
-          yellow = "#6272A4"; # slag_grey     — git block
-          green = steelborePalette.success; # radium_green  — language runtimes
-          sapphire = steelborePalette.accent; # steel_blue    — docker / conda
-          lavender = steelborePalette.info; # liquid_cool   — time block
-
-          # Dark canvas (foreground text on bright section blocks)
-          crust = steelborePalette.background;
-          mantle = steelborePalette.background;
-          base = steelborePalette.background;
-
-          # Secondary surfaces
-          surface0 = "#050530";
-          surface1 = "#050530";
-          surface2 = "#050530";
-
-          # Dim / muted scale
-          overlay0 = "#6272A4";
-          overlay1 = "#6272A4";
-          overlay2 = "#6272A4";
-
-          # Foreground text scale
-          text = steelborePalette.foreground;
-          subtext0 = "#E6E6F0";
-          subtext1 = "#E6E6F0";
-
-          # Remaining catppuccin role keys mapped to nearest Steelbore semantic
-          rosewater = steelborePalette.error;
-          flamingo = steelborePalette.error;
-          pink = steelborePalette.error;
-          mauve = steelborePalette.error;
-          maroon = steelborePalette.error;
-          teal = steelborePalette.info;
-          sky = steelborePalette.info;
-          blue = steelborePalette.accent;
-        };
-      };
     };
-
-    # Nushell configuration
 
     # Nushell configuration
     nushell = {
@@ -459,6 +463,12 @@ in
         # it. The visible UX is identical except the indicator is uncolored.
         $env.PROMPT_MULTILINE_INDICATOR = "::: "
 
+        ${lib.optionalString (themeAssets.nushell != null) ''
+          # Colour config from the Theme repository's generated module for the
+          # active slug (`Shells/Nushell/themes/<slug>.nu`); `main` returns the
+          # color_config record. A local theme falls back to the inline table.
+          source "${themeAssets.nushell}"
+        ''}
         # Steelbore palette — interpolated from the canonical lib/palette.nix
         # (Nushell needs literal strings inside color_config records; Nix
         # interpolation bakes them in at build time).
@@ -475,68 +485,74 @@ in
           show_banner: false,
           ls: { use_ls_colors: true, clickable_links: true },
           cursor_shape: { emacs: block, vi_insert: block, vi_normal: block },
-          color_config: {
-            separator:        $steelbore.accent
-            leading_trailing_space_bg: { attr: "n" }
-            header:           { fg: $steelbore.foreground attr: "b" }
-            empty:            $steelbore.info
-            bool:             {|v| if $v { $steelbore.success } else { $steelbore.error } }
-            int:              $steelbore.foreground
-            filesize:         {|v| if $v == 0b { $steelbore.accent } else if $v < 1mb { $steelbore.info } else { $steelbore.foreground } }
-            duration:         $steelbore.foreground
-            date:             {|v| (date now) - $v | if $in < 1hr { { fg: $steelbore.success attr: "b" } } else if $in < 6hr { $steelbore.success } else if $in < 1day { $steelbore.foreground } else if $in < 3day { $steelbore.info } else if $in < 1wk { { fg: $steelbore.info attr: "b" } } else if $in < 6wk { $steelbore.accent } else if $in < 52wk { { fg: $steelbore.accent attr: "b" } } else { "dark_gray" } }
-            range:            $steelbore.foreground
-            float:            $steelbore.foreground
-            string:           $steelbore.foreground
-            nothing:          $steelbore.info
-            binary:           $steelbore.info
-            cell-path:        $steelbore.accent
-            row_index:        { fg: $steelbore.accent attr: "b" }
-            record:           $steelbore.foreground
-            list:             $steelbore.foreground
-            block:            $steelbore.foreground
-            hints:            "dark_gray"
-            search_result:    { fg: $steelbore.background bg: $steelbore.foreground }
+          color_config: ${
+            if themeAssets.nushell != null then
+              "(main)"
+            else
+              ''
+                    {
+                separator:        $steelbore.accent
+                leading_trailing_space_bg: { attr: "n" }
+                header:           { fg: $steelbore.foreground attr: "b" }
+                empty:            $steelbore.info
+                bool:             {|v| if $v { $steelbore.success } else { $steelbore.error } }
+                int:              $steelbore.foreground
+                filesize:         {|v| if $v == 0b { $steelbore.accent } else if $v < 1mb { $steelbore.info } else { $steelbore.foreground } }
+                duration:         $steelbore.foreground
+                date:             {|v| (date now) - $v | if $in < 1hr { { fg: $steelbore.success attr: "b" } } else if $in < 6hr { $steelbore.success } else if $in < 1day { $steelbore.foreground } else if $in < 3day { $steelbore.info } else if $in < 1wk { { fg: $steelbore.info attr: "b" } } else if $in < 6wk { $steelbore.accent } else if $in < 52wk { { fg: $steelbore.accent attr: "b" } } else { "dark_gray" } }
+                range:            $steelbore.foreground
+                float:            $steelbore.foreground
+                string:           $steelbore.foreground
+                nothing:          $steelbore.info
+                binary:           $steelbore.info
+                cell-path:        $steelbore.accent
+                row_index:        { fg: $steelbore.accent attr: "b" }
+                record:           $steelbore.foreground
+                list:             $steelbore.foreground
+                block:            $steelbore.foreground
+                hints:            "dark_gray"
+                search_result:    { fg: $steelbore.background bg: $steelbore.foreground }
 
-            shape_and:                { fg: $steelbore.success attr: "b" }
-            shape_binary:             { fg: $steelbore.info attr: "b" }
-            shape_block:              { fg: $steelbore.info attr: "b" }
-            shape_bool:               $steelbore.success
-            shape_closure:            { fg: $steelbore.success attr: "b" }
-            shape_custom:             $steelbore.success
-            shape_datetime:           { fg: $steelbore.info attr: "b" }
-            shape_directory:          $steelbore.info
-            shape_external:           $steelbore.foreground
-            shape_externalarg:        { fg: $steelbore.success attr: "b" }
-            shape_external_resolved:  { fg: $steelbore.info attr: "b" }
-            shape_filepath:           $steelbore.accent
-            shape_flag:               { fg: $steelbore.accent attr: "b" }
-            shape_float:              { fg: $steelbore.foreground attr: "b" }
-            shape_garbage:            { fg: $steelbore.error bg: $steelbore.background attr: "b" }
-            shape_glob_interpolation: { fg: $steelbore.info attr: "b" }
-            shape_globpattern:        { fg: $steelbore.info attr: "b" }
-            shape_int:                { fg: $steelbore.foreground attr: "b" }
-            shape_internalcall:       { fg: $steelbore.foreground attr: "b" }
-            shape_keyword:            { fg: $steelbore.success attr: "b" }
-            shape_list:               { fg: $steelbore.info attr: "b" }
-            shape_literal:            $steelbore.accent
-            shape_match_pattern:      $steelbore.success
-            shape_matching_brackets:  { attr: "u" }
-            shape_nothing:            $steelbore.info
-            shape_operator:           $steelbore.foreground
-            shape_or:                 { fg: $steelbore.success attr: "b" }
-            shape_pipe:               { fg: $steelbore.success attr: "b" }
-            shape_range:              { fg: $steelbore.foreground attr: "b" }
-            shape_record:             { fg: $steelbore.info attr: "b" }
-            shape_redirection:        { fg: $steelbore.success attr: "b" }
-            shape_signature:          { fg: $steelbore.success attr: "b" }
-            shape_string:             $steelbore.accent
-            shape_string_interpolation: { fg: $steelbore.info attr: "b" }
-            shape_table:              { fg: $steelbore.accent attr: "b" }
-            shape_variable:           $steelbore.accent
-            shape_vardecl:            $steelbore.accent
-            shape_raw_string:         $steelbore.accent
-            shape_garbage_unknown:    { fg: $steelbore.error attr: "b" }
+                shape_and:                { fg: $steelbore.success attr: "b" }
+                shape_binary:             { fg: $steelbore.info attr: "b" }
+                shape_block:              { fg: $steelbore.info attr: "b" }
+                shape_bool:               $steelbore.success
+                shape_closure:            { fg: $steelbore.success attr: "b" }
+                shape_custom:             $steelbore.success
+                shape_datetime:           { fg: $steelbore.info attr: "b" }
+                shape_directory:          $steelbore.info
+                shape_external:           $steelbore.foreground
+                shape_externalarg:        { fg: $steelbore.success attr: "b" }
+                shape_external_resolved:  { fg: $steelbore.info attr: "b" }
+                shape_filepath:           $steelbore.accent
+                shape_flag:               { fg: $steelbore.accent attr: "b" }
+                shape_float:              { fg: $steelbore.foreground attr: "b" }
+                shape_garbage:            { fg: $steelbore.error bg: $steelbore.background attr: "b" }
+                shape_glob_interpolation: { fg: $steelbore.info attr: "b" }
+                shape_globpattern:        { fg: $steelbore.info attr: "b" }
+                shape_int:                { fg: $steelbore.foreground attr: "b" }
+                shape_internalcall:       { fg: $steelbore.foreground attr: "b" }
+                shape_keyword:            { fg: $steelbore.success attr: "b" }
+                shape_list:               { fg: $steelbore.info attr: "b" }
+                shape_literal:            $steelbore.accent
+                shape_match_pattern:      $steelbore.success
+                shape_matching_brackets:  { attr: "u" }
+                shape_nothing:            $steelbore.info
+                shape_operator:           $steelbore.foreground
+                shape_or:                 { fg: $steelbore.success attr: "b" }
+                shape_pipe:               { fg: $steelbore.success attr: "b" }
+                shape_range:              { fg: $steelbore.foreground attr: "b" }
+                shape_record:             { fg: $steelbore.info attr: "b" }
+                shape_redirection:        { fg: $steelbore.success attr: "b" }
+                shape_signature:          { fg: $steelbore.success attr: "b" }
+                shape_string:             $steelbore.accent
+                shape_string_interpolation: { fg: $steelbore.info attr: "b" }
+                shape_table:              { fg: $steelbore.accent attr: "b" }
+                shape_variable:           $steelbore.accent
+                shape_vardecl:            $steelbore.accent
+                shape_raw_string:         $steelbore.accent
+                shape_garbage_unknown:    { fg: $steelbore.error attr: "b" }
+                    }''
           }
         }
 

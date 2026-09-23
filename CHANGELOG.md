@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The Theme repository is a flake input.** `theme`
+  (`github:Spacecraft-Software/Theme`, `flake = false`) ships the §11 palette
+  family pre-rendered into formats Bravais never generated itself, and
+  `lib/theme-assets.nix` maps the active `theme.nix` slug to those files:
+  the VS Code / Cursor / Antigravity IDE theme extension (all 24 themes,
+  linked into each editor's extensions root), Zed's theme family and Lapce's
+  themes (whole family, editors keep their pickers), libadwaita GTK 4 and
+  GTK 3 named-colour overrides on adw-gtk3, every KDE colour scheme with the
+  active one written to `kdeglobals`, the Starship powerline preset and
+  Nushell's `color_config`. A local theme in `./themes/` resolves every asset
+  to `null`, and each consumer falls back to the role-token rendering it had
+  before — Starship's inline preset now reads its muted/surface keys from
+  `structure`/`surface`/`foreground` instead of three pre-family hexes.
+
+- **Eleven registered palettes.** `theme.nix` documents the v2.08 family:
+  Magnetar, Biolume, Hanzo Steel, BlackPinkPanther, Green and Green Alt join
+  Modern, Classic, Blue, NavyWhite and Tokyo Night (construct already carries
+  steelbore.toml v3.5.0; nothing in `lib/palette.nix` changed).
+
 ### Fixed
 
 - **Chrome Remote Desktop starts again.** Its headless X server asks for the

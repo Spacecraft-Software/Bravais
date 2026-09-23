@@ -24,6 +24,7 @@
     ./eww.nix
     ./niri.nix
     ./desktop-theme.nix
+    ./editor-themes.nix
     # Plasma's clock keys + plasma-localerc formats (24h, ISO 8601). Separate
     # from desktop-theme.nix because it writes through kwriteconfig6 rather
     # than xdg.configFile — see the header comment there for why.
