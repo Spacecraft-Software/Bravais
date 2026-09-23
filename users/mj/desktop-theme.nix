@@ -6,6 +6,7 @@
   lib,
   pkgs,
   steelborePalette,
+  themeAssets,
   ...
 }:
 
@@ -227,6 +228,20 @@ in
       name = gtkThemeName;
       package = pkgs.adw-gtk3;
     };
+    # The palette's libadwaita / GTK named colours, from the Theme repository's
+    # generated `Desktops/GNOME/themes/<slug>/gtk.css` (GTK 4) and
+    # `Desktops/XFCE/themes/<slug>/gtk.css` (GTK 3). adw-gtk3 supplies the
+    # widget styling; these @define-color overrides recolour it to the active
+    # palette — accent, destructive, success, warning, window/view/headerbar/
+    # card/popover fills. Null for a local theme, which keeps adw-gtk3's own
+    # colours. (`gtk-4.0/gtk.css` is force-owned above because COSMIC rewrites
+    # it; this is the content HM writes there.)
+    gtk4.extraCss = lib.optionalString (themeAssets.gtk4Css != null) (
+      builtins.readFile themeAssets.gtk4Css
+    );
+    gtk3.extraCss = lib.optionalString (themeAssets.gtk3Css != null) (
+      builtins.readFile themeAssets.gtk3Css
+    );
     iconTheme = {
       name = iconThemeName;
       package = pkgs.papirus-icon-theme;

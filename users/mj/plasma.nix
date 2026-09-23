@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Home Manager: KDE Plasma date/time formatting
+# Steelbore Bravais — Home Manager: KDE Plasma date/time formatting and colour scheme
 {
   config,
   lib,
   pkgs,
+  themeAssets,
   ...
 }:
 
@@ -22,8 +23,35 @@ let
   # no companion customDateFormat.
   use24hFormat = "2";
   dateFormat = "isoDate";
+
+  # Every KDE colour scheme the Theme repository ships, installed under the
+  # display name KDE looks schemes up by (`Steelbore Blue.colors`), so System
+  # Settings › Colors lists the whole family. The active slug is written to
+  # kdeglobals below; a local theme installs the family but selects nothing.
+  schemeFiles = builtins.listToAttrs (
+    map (sch: {
+      name = "color-schemes/${sch.name}.colors";
+      value.source = sch.path;
+    }) themeAssets.kdeSchemes
+  );
 in
 {
+  xdg.dataFile = schemeFiles;
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Active colour scheme — the §11.6.5 polarity/palette agreement for Plasma
+  # ═══════════════════════════════════════════════════════════════════════════
+  # kdeglobals is rewritten by Plasma itself, so it is edited with
+  # kwriteconfig6 on activation rather than symlinked (same reasoning as the
+  # clock keys below). Plasma applies a changed ColorScheme on the next login;
+  # `plasma-apply-colorscheme` from a running session applies it live.
+  home.activation.plasmaColorScheme = lib.mkIf (themeAssets.kde != null) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kdeglobals" \
+        --group General --key ColorScheme "${themeAssets.name}"
+    ''
+  );
+
   # ═══════════════════════════════════════════════════════════════════════════
   # 24-hour time and ISO 8601 dates in Plasma
   # ═══════════════════════════════════════════════════════════════════════════

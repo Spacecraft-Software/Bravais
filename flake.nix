@@ -53,6 +53,14 @@
     construct.url = "github:Spacecraft-Software/Construct";
     construct.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
+    # Spacecraft-Software/Theme — the palette family rendered into every
+    # platform's native theme format (VS Code, Zed, Lapce, GTK, KDE, Starship,
+    # Nushell, …) by its generator from the SAME steelbore.toml construct
+    # ships. Not a flake: it is a static tree consumed by path through
+    # lib/theme-assets.nix. Bump it together with construct.
+    theme.url = "github:Spacecraft-Software/Theme";
+    theme.flake = false;
+
     # rapg — local-first secret manager for the AI-agent era.
     # Wrapper flake lives at flakes/rapg/flake.nix (upstream has no flake).
     # Populate hashes in flakes/rapg/flake.nix before first build.
@@ -133,6 +141,7 @@
       nix-flatpak,
       gitway,
       construct,
+      theme,
       rapg,
       antigravity-nix,
       nil,
@@ -208,10 +217,19 @@
           inherit slug localThemes;
         };
 
-      # Every selectable theme — registered (7 palettes + 7 high-contrast
-      # siblings) plus every local one. Drives both the per-theme
+      # Every selectable theme — the registered palettes and their
+      # high-contrast siblings plus every local one. Drives both the per-theme
       # nixosConfigurations and the registry the `theme` command reads.
       allThemes = (mkPalette defaultPalette).meta.family;
+
+      # The Theme repository's generated files for one slug (null-valued for a
+      # local theme, which only the role-token path can render).
+      mkAssets =
+        slug:
+        import ./lib/theme-assets.nix {
+          themeRoot = theme;
+          inherit slug localThemes;
+        };
 
       # ── Theme registry ───────────────────────────────────────────────────
       # Every theme, resolved, as JSON. Two consumers, one definition: the
@@ -433,6 +451,7 @@
         let
           ch = channels.${channel};
           steelborePalette = mkPalette palette;
+          themeAssets = mkAssets palette;
           # Always-unstable nixpkgs instantiation, threaded into modules
           # via specialArgs. Used for claude-code so even stable variants
           # ship the latest claude-code from nixpkgs-unstable instead of
@@ -455,6 +474,7 @@
           specialArgs = {
             inherit
               steelborePalette
+              themeAssets
               themeRegistry
               steelboreApps
               primaryUser
@@ -498,6 +518,7 @@
               home-manager.extraSpecialArgs = {
                 inherit
                   steelborePalette
+                  themeAssets
                   steelboreApps
                   primaryUser
                   gitway
