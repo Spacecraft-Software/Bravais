@@ -64,7 +64,7 @@ Options:
   -h, --help      show this help
 
 Superseded by `preflight` (Rust), which takes all of the above and adds
---reclaim, --gc-all, --journal-days, --mcp-deploy and --json.
+--reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and --json.
 See: preflight --help
 
 Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -95,8 +95,8 @@ fi
 # ── Deprecation gate ────────────────────────────────────────────────────────
 # Mirrors the same gate in users/mj/rebuild.nu — change one, change the other
 # (see AGENTS.md). `preflight` (pkgs/preflight/, Rust) accepts every flag this
-# script does and adds --reclaim, --gc-all, --journal-days, --mcp-deploy and
-# --json, so it is a strict superset and the question is a real one.
+# script does and adds --reclaim, --gc-all, --journal-days, --mcp-deploy,
+# --update-vendored and --json, so it is a strict superset and the question is a real one.
 #
 # `[ -t 0 ]` is POSIX and is the whole reason this is safe to put in a script
 # that agents and rescue TTYs run: with stdin closed there is nobody to answer,
@@ -110,7 +110,7 @@ if [ "${assume_yes:-0}" != "1" ]; then
     fi
     say "$C_WARN" "\`rebuild.sh\` is superseded by \`preflight\`, the Rust rebuild orchestrator."
     say "$C_DIM" "  preflight takes the same flags and adds --reclaim, --gc-all,"
-    say "$C_DIM" "  --journal-days, --mcp-deploy and --json. See: preflight --help"
+    say "$C_DIM" "  --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help"
     printf 'continue with rebuild.sh anyway? [y/N] '
     read -r reply
     case "$reply" in

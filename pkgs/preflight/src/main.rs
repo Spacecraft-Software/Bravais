@@ -50,6 +50,7 @@ use output::{AppError, ColorWhen, Exit, Format, Level, Out};
         "  preflight                     Full rebuild: update, switch, mirror, report\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
+        "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
@@ -102,6 +103,10 @@ struct Cli {
     /// Bump every flake input (bare `nix flake update`), not just the curated list
     #[arg(long, conflicts_with_all = ["no_update", "skills_only"])]
     update_all: bool,
+
+    /// Also bump the version+hash-pinned upstream binaries (pkgs/update-vendored.nu)
+    #[arg(long, conflicts_with = "skills_only")]
+    update_vendored: bool,
 
     /// Skip garbage collection and journal vacuum
     #[arg(long)]
@@ -199,6 +204,7 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
         dry: cli.dry,
         no_update: cli.no_update,
         update_all: cli.update_all,
+        update_vendored: cli.update_vendored,
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
@@ -295,6 +301,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--dry": "dry-build; make no changes",
                     "--no-update": "skip nix flake update",
                     "--update-all": "bump every flake input, including stable nixpkgs; conflicts with --no-update and --skills-only",
+                    "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
@@ -339,7 +346,7 @@ fn cmd_describe(out: Out) -> i32 {
             "disk-report",
             "disk-reclaim",
         ],
-        "external_tools": ["nixos-rebuild", "nix", "sudo", "rsync", "vacuum", "gitway-add", "mcpctl", "flatpak"],
+        "external_tools": ["nixos-rebuild", "nix", "sudo", "rsync", "vacuum", "gitway-add", "mcpctl", "flatpak", "nu", "git"],
     });
     let human = format!("{manifest:#}\n");
     out.emit("preflight describe", &manifest, false, &human);

@@ -126,7 +126,7 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     print "  --yes          skip the question about using `preflight` instead"
     print ""
     print "Superseded by `preflight` (Rust), which takes all of the above and adds"
-    print "--reclaim, --gc-all, --journal-days, --mcp-deploy and --json. See: preflight --help"
+    print "--reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help"
     return
   }
   if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
@@ -137,7 +137,8 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
   # Deprecation gate. `preflight` (pkgs/preflight/, Rust) is the supported
   # rebuild orchestrator: it accepts every flag this command does — --dry,
   # --no-update, --no-gc, --trace, --skills-only, --no-flatpak — and adds
-  # --reclaim, --gc-all, --journal-days, --mcp-deploy and --json on top. This
+  # --reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and
+  # --json on top. This
   # Nushell path is kept only as a fallback while preflight beds in, so make
   # choosing it deliberate rather than habitual.
   #
@@ -153,7 +154,7 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     }
     print $"(ansi yellow)`rebuild` is superseded by `preflight`, the Rust rebuild orchestrator.(ansi reset)"
     print $"(ansi dark_gray)  preflight takes the same flags and adds --reclaim, --gc-all,(ansi reset)"
-    print $"(ansi dark_gray)  --journal-days, --mcp-deploy and --json. See: preflight --help(ansi reset)"
+    print $"(ansi dark_gray)  --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help(ansi reset)"
     let answer = (input $"(ansi yellow)continue with rebuild anyway? [y/N] (ansi reset)")
     if ($answer | str trim | str downcase) not-in ["y" "yes"] {
       print $"(ansi green)aborted — run `preflight` instead(ansi reset)"

@@ -96,6 +96,9 @@ pub struct Options {
     /// curated [`FULL_INPUTS`]. Opt-in because it moves stable `nixpkgs`
     /// and `home-manager`, which the curated list leaves alone on purpose.
     pub update_all: bool,
+    /// Run `pkgs/update-vendored.nu` before the switch, bumping the
+    /// `version` + `hash` pins that no flake update can move.
+    pub update_vendored: bool,
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
@@ -176,7 +179,11 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         steps: Vec::new(),
     };
 
-    vendored_nag(&mut r);
+    // Asking for the bump is the check the nag exists to prompt, so the nag
+    // would only be noise on top of it.
+    if !opts.update_vendored {
+        vendored_nag(&mut r);
+    }
 
     // --- update ---------------------------------------------------------
     if opts.no_update {
@@ -226,6 +233,15 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
                 &format!("--vacuum-time={}d", opts.journal_days),
             ]),
         );
+    }
+
+    // --- vendored pins -------------------------------------------------
+    // After GC, not before: the script builds each bump with
+    // `nix build --no-link`, so nothing roots those outputs (or the fetched
+    // .deb/tarball sources), and a GC that ran afterwards would delete them
+    // only for the switch to download them again.
+    if opts.update_vendored {
+        update_vendored(&mut r, opts.dry);
     }
 
     // --- preflight disk --------------------------------------------------
@@ -344,13 +360,92 @@ fn vendored_nag(r: &mut Runner) {
     if stale {
         r.out.say(
             Level::Warn,
-            "vendored binaries unchecked for 30+ days — run: nu pkgs/update-vendored.nu --check",
+            "vendored binaries unchecked for 30+ days — run: nu pkgs/update-vendored.nu --check   (or: preflight --update-vendored)",
         );
         if let Some(parent) = stamp.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
         let _ = std::fs::write(&stamp, b"");
     }
+}
+
+/// Files `pkgs/update-vendored.nu` rewrites. `browseros` is the one pin that
+/// lives outside `pkgs/`, inline in the browsers bundle.
+const VENDORED_PATHS: &[&str] = &["pkgs", "modules/packages/browsers.nix"];
+
+/// Bump the vendored upstream binaries by running `pkgs/update-vendored.nu`.
+///
+/// The script stays the single implementation of the bump logic; this only
+/// drives it. Two consequences shape the step:
+///
+/// - Its stdout is sent to OUR stderr. The script prints a progress line and a
+///   summary table per package, and with `--json` this process's stdout must
+///   carry exactly one payload.
+/// - It exits 0 even when a package fails (`rebuild`'s monthly nag relies on
+///   that), so its status cannot say what happened. Instead the step reports
+///   which pinned files `git` sees as changed afterwards; per-package failures
+///   are in the script's own summary block, which it prints after the table.
+///
+/// A failure here is recorded but does not stop the switch. A bump that fails
+/// to build leaves its rewrite in place on purpose (see the vendored-binaries
+/// skill), so the switch that follows will fail on it too, which is the
+/// loud signal that is wanted.
+fn update_vendored(r: &mut Runner, dry: bool) {
+    let before = changed_vendored_files();
+    let mut cmd = Command::new("nu");
+    cmd.arg("pkgs/update-vendored.nu")
+        .current_dir(FLAKE_DIR)
+        .stdout(std::io::stderr());
+    // --dry promises no changes, and --check is exactly the script's
+    // report-only mode.
+    if dry {
+        cmd.arg("--check");
+    }
+    if !r.run("update-vendored", &mut cmd) {
+        return;
+    }
+
+    // The monthly nag measures time since the last check; this was one.
+    let stamp = home().join(".cache/bravais-vendored-check");
+    if let Some(parent) = stamp.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let _ = std::fs::write(&stamp, b"");
+
+    if dry {
+        return;
+    }
+    // Diff against the pre-run set, so files the working tree had already
+    // modified are not reported as bumps.
+    let bumped: Vec<String> = changed_vendored_files()
+        .into_iter()
+        .filter(|f| !before.contains(f))
+        .collect();
+    let detail = if bumped.is_empty() {
+        "no pins changed".to_owned()
+    } else {
+        format!("changed: {}", bumped.join(", "))
+    };
+    r.record("vendored-pins", Outcome::Ok, Some(detail));
+}
+
+/// Paths under [`VENDORED_PATHS`] that differ from `HEAD`. Empty if `git` is
+/// unavailable, which only costs the report its detail.
+fn changed_vendored_files() -> Vec<String> {
+    Command::new("git")
+        .args(["diff", "--name-only", "HEAD", "--"])
+        .args(VENDORED_PATHS)
+        .current_dir(FLAKE_DIR)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| {
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .map(ToOwned::to_owned)
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// Mirror the working tree into /etc/nixos.
