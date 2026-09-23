@@ -100,7 +100,7 @@ struct Cli {
     #[arg(long)]
     no_update: bool,
 
-    /// Bump every flake input (bare `nix flake update`), not just the curated list
+    /// Bump every flake input (bare `nix flake update`) and the vendored pins; implies --update-vendored
     #[arg(long, conflicts_with_all = ["no_update", "skills_only"])]
     update_all: bool,
 
@@ -204,7 +204,10 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
         dry: cli.dry,
         no_update: cli.no_update,
         update_all: cli.update_all,
-        update_vendored: cli.update_vendored,
+        // "Update everything" has to include the pins `nix flake update`
+        // cannot move, or it silently leaves the stalest things in the tree
+        // behind -- exactly what a user reaching for --update-all wants gone.
+        update_vendored: cli.update_vendored || cli.update_all,
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
@@ -300,7 +303,7 @@ fn cmd_schema(out: Out) -> i32 {
                 "flags": {
                     "--dry": "dry-build; make no changes",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "bump every flake input, including stable nixpkgs; conflicts with --no-update and --skills-only",
+                    "--update-all": "bump every flake input, including stable nixpkgs, and implies --update-vendored; conflicts with --no-update and --skills-only",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",

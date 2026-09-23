@@ -50,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`preflight --update-vendored`** bumps the version+hash-pinned upstream
   binaries (`pkgs/update-vendored.nu`) as part of a rebuild, after GC and
   before the switch; `--check` under `--dry`. Until now `preflight` only
-  nagged monthly to run the script by hand.
+  nagged monthly to run the script by hand. `--update-all` implies it, so
+  "update everything" also covers the pins `nix flake update` cannot move.
 
 - **Output scale is pinned, and steppable.** niri's automatic scale picked
   1.25 for the ThinkPad's 1920x1080 panel (about 157 DPI), so the desktop
