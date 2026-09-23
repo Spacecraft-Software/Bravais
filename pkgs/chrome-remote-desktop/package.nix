@@ -104,11 +104,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "chrome-remote-desktop";
-  version = "152.0.7977.9";
+  version = "154.0.8037.11";
 
   src = fetchurl {
     url = "https://dl.google.com/linux/chrome-remote-desktop/deb/pool/main/c/chrome-remote-desktop/chrome-remote-desktop_${finalAttrs.version}_amd64.deb";
-    sha256 = "fc6e10808f589a0475ce20a0038c902701e9e59cfb0ac810a45116f8c057f9e7";
+    sha256 = "572dee08ca024f922a4c35b4b028abda348c9b54f12888eaaae53f6870dd5924";
   };
 
   nativeBuildInputs = [
