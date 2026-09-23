@@ -20,14 +20,16 @@ website: https://Construct.SpacecraftSoftware.org/
 > is the **Steelbore 2** generation; the five v1.33 foreground tokens and the old
 > lifts are Classic's, not Modern's (§11.2) — Void Navy carries forward.
 >
-> **§11 is a palette family (v1.35).** Steelbore Modern is the default and is
-> what you emit unless the requester names another. Six more are registered:
+> **§11 is a palette family (v2.08).** Steelbore Modern is the default and is
+> what you emit unless the requester names another. Ten more are registered:
 > `steelbore-classic`, `steelbore-blue`, `steelbore-blackpinkpanther`,
-> `steelbore-matrixgreen`, `steelbore-navywhite`, and `tokyonight`; two
+> `steelbore-biolume`, `steelbore-navywhite`, `tokyonight`,
+> `steelbore-hanzosteel`, `steelbore-blackpinkpanther`, `steelbore-green` and
+> `steelbore-greenalt`; two
 > **fidelity palettes** (`solarized-dark`, `solarized-light`) are registered but
 > **non-conforming** and not adoptable (§11.5). **Read every value from the
 > `steelbore-color-palette` skill's `assets/steelbore.toml`** — it carries all
-> nine palettes, all 17 themes, and every measured matrix. Never mix tokens
+> thirteen palettes, all 25 themes, and every measured matrix. Never mix tokens
 > across palettes (§11.4).
 
 ## Color Palette — Steelbore 2 (WCAG 2.2 AA Compliant)
@@ -90,10 +92,10 @@ Never use proprietary fonts. Outfit, Inter, Roboto, and similar non-OFL fonts ar
    wherever the platform supports font selection.
 6. **Emit the §11.6.1 registered set** whenever the target platform supports
    more than one theme — not just the declared palette and its variants. The
-   must-emit list is `[meta] registered-set` in `steelbore.toml`: the six
+   must-emit list is `[meta] registered-set` in `steelbore.toml`: the ten
    conforming palettes, each with its `-high-contrast` sibling, plus
    `steelbore-mono` (4-bit ANSI, palette-independent, deferring to the user's
-   terminal palette). Thirteen themes; read them in a loop rather than writing
+   terminal palette). Twenty-one themes; read them in a loop rather than writing
    them out. Classic is **not** in the set — it binds the legacy six-role
    contract (§11.2) and carries an `info` token that is not one of §11.1's
    eleven roles, so emit it only for a platform whose schema fits that
