@@ -129,7 +129,7 @@ let
   # share the POSIX $(id -u) spelling, Nushell uses its native (id -u).
   # WHY (stated once): PAM's pam_gnome_keyring pins SSH_AUTH_SOCK to
   # /run/user/$UID/keyring/ssh at session start; gitway-agent owns the real
-  # socket (CLAUDE.md constraint #8), so every interactive shell re-points it.
+  # socket (CONSTRAINTS.md #8), so every interactive shell re-points it.
   gitwaySockPosix = "/run/user/$(id -u)/gitway-agent.sock";
 
 in

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`AGENTS.md` is split so every agent can read all of it.** It had grown
+  to 88.4k characters: Claude Code warns above 40k, and Codex stops reading
+  project docs at 32 KiB, which fell 112 bytes into "Known constraints" — so
+  Codex had never seen any of the forty constraints. The entries moved
+  verbatim to `CONSTRAINTS.md` under their existing numbers, and `AGENTS.md`
+  keeps a one-line rule for each; the rebuild, skill-pointer and
+  vendored-binary detail moved to `docs/`. `AGENTS.md` is now 31.7 KB.
+  References to "AGENTS.md constraint #N" point at `CONSTRAINTS.md`, and the
+  cosmic-comp note in `modules/core/nix.nix` now cites #35 rather than #34.
+
 ### Added
 
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing

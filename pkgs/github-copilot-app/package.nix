@@ -98,7 +98,7 @@ stdenv.mkDerivation (finalAttrs: {
   # The cost is real and is NOT negligible: the binary goes from 369 MB
   # stripped to 1003 MB, so this trades ~634 MB of disk for an app that runs
   # at all. Worth knowing on a machine where /nix shares a 203 GiB partition
-  # (AGENTS.md constraint #28).
+  # (CONSTRAINTS.md #28).
   #
   # Do NOT try to win that back by stripping earlier, in `preFixup`. That was
   # measured on 2026-09-12 and it reproduces the failure EXACTLY -- entry 0

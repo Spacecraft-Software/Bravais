@@ -307,7 +307,7 @@ location — the former `overlays/` reference copy was removed as dead code).
 
 **claude-code:** No longer overlaid. The npm-pinning overlay was dropped;
 claude-code is installed out-of-band via the official installer (see
-`CLAUDE.md` constraint #4), with `unstablePkgs.claude-code` as the re-enable
+`CONSTRAINTS.md` #4), with `unstablePkgs.claude-code` as the re-enable
 path in `modules/packages/ai.nix`.
 
 **bash→brush (not implemented):** Replacing `pkgs.bash` via a nixpkgs overlay is architecturally infeasible — every nixpkgs derivation uses `final.bash` as its build shell via stdenv, creating an unavoidable bootstrapping cycle. Bash is excluded from all login shell assignments; users get Nushell and root gets Brush.
@@ -393,7 +393,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **Experimental features:** `nix-command`, `flakes`
 - **Garbage collection:** automatic, weekly, `--delete-older-than 30d`
 - **nixpkgs.config:** `allowUnfree = true`
-- **Overlays:** defined inline; sequoia-wot test fix (`doCheck = false`). (The former claude-code npm-pinning overlay was retired — claude-code is out-of-band per CLAUDE.md constraint #4.)
+- **Overlays:** defined inline; sequoia-wot test fix (`doCheck = false`). (The former claude-code npm-pinning overlay was retired — claude-code is out-of-band per CONSTRAINTS.md #4.)
 
 ### 5.2 Boot (`modules/core/boot.nix`)
 
@@ -495,7 +495,7 @@ across S3: it is the only USB device on this machine the kernel defaults to
 `0` (its interface binds no in-kernel driver), so it alone is torn down and
 re-created on resume while every other device resets in place — and fprintd
 1.90.9 enumerates once at startup with no hotplug path, so a re-created device
-leaves every running daemon holding a dead handle. See AGENTS constraint #39,
+leaves every running daemon holding a dead handle. See CONSTRAINTS.md #39,
 which also records why the sleep hooks that preceded this were removed.
 
 **Policy.** `security.pam.services.<name>.fprintAuth` defaults to
@@ -1187,7 +1187,7 @@ TUN mode's routing mode decides whether it is usable here. `AUTO` rewrites `/etc
 
 The routing mode itself lives in the client's own encrypted config and cannot be declared in Nix — it is a one-time `adguardvpn-cli config set-tun-routing-mode script`.
 
-**Teardown:** `steelbore-vpn` (`pkgs/steelbore-vpn/`) replaces `adguardvpn-cli disconnect`, which hangs indefinitely: the client SIGTERMs its own sudo shim, and sudo-rs blocks SIGTERM there (AGENTS.md constraint #36). `steelbore-vpn tunnel status` and `tunnel list` are unprivileged; `sudo steelbore-vpn tunnel stop --yes` performs the teardown.
+**Teardown:** `steelbore-vpn` (`pkgs/steelbore-vpn/`) replaces `adguardvpn-cli disconnect`, which hangs indefinitely: the client SIGTERMs its own sudo shim, and sudo-rs blocks SIGTERM there (CONSTRAINTS.md #36). `steelbore-vpn tunnel status` and `tunnel list` are unprivileged; `sudo steelbore-vpn tunnel stop --yes` performs the teardown.
 
 ### 11.6 Multimedia (`modules/packages/multimedia.nix`)
 
@@ -1302,10 +1302,10 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 
 **Rust:** aichat, gemini-cli
 
-**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CLAUDE.md constraint #4; `unstablePkgs.claude-code` is the re-enable path)
+**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CONSTRAINTS.md #4; `unstablePkgs.claude-code` is the re-enable path)
 
 **Headless browser:**
-* `obscura` — headless browser for AI agents and web scraping (Rust, Apache-2.0), built from source in `pkgs/obscura/`. Fetches, executes JavaScript on a real V8 isolate via `deno_core`, and serves both CDP and MCP — no Chromium, no Node. Installs two binaries: `obscura` and `obscura-worker` (the parallel `scrape` command spawns the latter). Built with the `render` and `stealth` features: render adds real box geometry and PNG screenshots, stealth gives a Chrome TLS fingerprint plus tracker blocking. Source-built rather than taken from nixpkgs because nixpkgs pins a release predating the render crate entirely — see AGENTS.md constraint #24 for that and the other packaging traps. Bump per release with `nu pkgs/update-vendored.nu obscura`.
+* `obscura` — headless browser for AI agents and web scraping (Rust, Apache-2.0), built from source in `pkgs/obscura/`. Fetches, executes JavaScript on a real V8 isolate via `deno_core`, and serves both CDP and MCP — no Chromium, no Node. Installs two binaries: `obscura` and `obscura-worker` (the parallel `scrape` command spawns the latter). Built with the `render` and `stealth` features: render adds real box geometry and PNG screenshots, stealth gives a Chrome TLS fingerprint plus tracker blocking. Source-built rather than taken from nixpkgs because nixpkgs pins a release predating the render crate entirely — see CONSTRAINTS.md #24 for that and the other packaging traps. Bump per release with `nu pkgs/update-vendored.nu obscura`.
 
 **GUI:**
 * `claude-desktop` — official Anthropic Linux beta (2026), repackaged from the official `.deb` in `pkgs/claude-desktop/` (dpkg -x + `autoPatchelfHook` + a Wayland/MCP wrapper; unfree; no nixpkgs package). Bump per release with `nu pkgs/update-vendored.nu claude-desktop` (reads the apt `Packages` index, rewrites `version` + `src.hash`, builds); the Linux app doesn't self-update. Note: Niri has no system tray, so its SNI tray icon needs a tray host; the Code tab needs a paid plan.

@@ -105,7 +105,7 @@
       # attempt drove the machine into OOM and the guards killed both running
       # browsers (2026-09-09). Re-enabled at the user's explicit request with
       # no parallelism cap; build it with browsers closed, and expect the same
-      # exposure at every cosmic-comp bump. See AGENTS.md constraint #34.
+      # exposure at every cosmic-comp bump. See CONSTRAINTS.md #35.
       cosmic-comp = prev.cosmic-comp.overrideAttrs (old: {
         # checkPhase, not the compile, is what exhausts memory on this machine.
         # Measured twice: buildPhase finishes in ~21m30s, then cargoCheckHook
@@ -116,7 +116,7 @@
         # nothing about a one-line gesture patch, and Hydra has already run it
         # on a machine built for it -- so skip the phase rather than cap the
         # parallelism, which would slow the part that actually works.
-        # Same remedy as `nil` (AGENTS.md constraint #13).
+        # Same remedy as `nil` (CONSTRAINTS.md #13).
         doCheck = false;
 
         postPatch = (old.postPatch or "") + ''

@@ -23,7 +23,7 @@
 #   AUTO    the client installs routes AND rewrites /etc/resolv.conf itself.
 #           systemd-resolved owns that file here, running DoT + DNSSEC
 #           (modules/core/dns.nix), so AUTO displaces the encrypted resolver.
-#           This is the trap recorded as AGENTS.md constraint #19.
+#           This is the trap recorded as CONSTRAINTS.md #19.
 #   NONE    no routes, no DNS changes. Leaves resolved alone -- and carries no
 #           traffic either. Measured 2026-09-09 with the tunnel "connected":
 #           default route still via wlp0s20f3, no `ip rule` entries, no extra

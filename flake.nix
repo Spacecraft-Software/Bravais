@@ -34,7 +34,7 @@
     # To activate once it ships:
     #   1. Uncomment the two lines below.
     #   2. Add `adit` to the outputs arg list and to specialArgs / extraSpecialArgs
-    #      (same pattern as gitway per CLAUDE.md constraint #7).
+    #      (same pattern as gitway per CONSTRAINTS.md #7).
     #   3. Import adit.nixosModules.default in mkBravais and set
     #      programs.ssh.askPassword = "${adit.packages.${system}.default}/bin/adit"
     #      in modules/core/security.nix (replacing the ksshaskpass references).

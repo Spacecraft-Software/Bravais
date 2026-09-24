@@ -22,7 +22,7 @@ rustPlatform.buildRustPackage {
   # Every one is expected to be the user's own, resolved at run time: pinning
   # them into a store closure here would freeze `vacuum` and `mcpctl` at
   # whatever revision this derivation last built, which is exactly the drift the
-  # mcpctl probe exists to report on (AGENTS.md constraint #23 makes the same
+  # mcpctl probe exists to report on (CONSTRAINTS.md #23 makes the same
   # point about resolving MCP binaries by bare name).
   meta = {
     description = "Steelbore OS rebuild orchestrator: preflight checks, the switch, postflight disk accounting";

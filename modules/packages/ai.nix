@@ -53,7 +53,7 @@
         # claude-code intentionally disabled — installed out-of-band via the
         # official installer (npm `@anthropic-ai/claude-code` or the curl
         # one-shot) to get same-day upstream releases. Re-enable by
-        # uncommenting and rebuilding; see CLAUDE.md constraint #4 for the
+        # uncommenting and rebuilding; see CONSTRAINTS.md #4 for the
         # original rationale.
         # claude-code
         # mcp-nixos DISABLED — pulls fastmcp whose tests hang in Nix sandbox

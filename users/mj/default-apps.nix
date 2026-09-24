@@ -69,7 +69,7 @@ in
   # activation AFTER that aborts with "Existing file
   # '…/mimeapps.list.backup' would be clobbered" — a two-rebuild fuse that
   # strands EVERY Home Manager change while `nixos-rebuild` still reports
-  # success (see AGENTS.md constraint #30). Same treatment as the cosmic-term
+  # success (see CONSTRAINTS.md #30). Same treatment as the cosmic-term
   # profiles, the VSCode Flatpak override and .gtkrc-2.0.
   xdg.configFile."mimeapps.list".force = true;
 

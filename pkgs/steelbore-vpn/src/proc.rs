@@ -31,7 +31,7 @@ pub enum Role {
     /// The privileged tunnel itself: `adguardvpn-cli connect`, running as root.
     /// The only thing worth signalling.
     Tunnel,
-    /// A `sudo` process wrapping the tunnel. Blocks SIGTERM; see AGENTS.md.
+    /// A `sudo` process wrapping the tunnel. Blocks SIGTERM; see CONSTRAINTS.md #36.
     Shim,
     /// Any other `adguardvpn-cli` invocation -- `status`, `disconnect`, a
     /// hung `config` call. Reported so a stuck one is visible, never signalled.

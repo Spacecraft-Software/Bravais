@@ -5,7 +5,7 @@
 // ── Why this exists ───────────────────────────────────────────────────────────
 //
 // `adguardvpn-cli disconnect` hangs forever in TUN mode on this system, and the
-// reason is structural rather than incidental (AGENTS.md constraint #36).
+// reason is structural rather than incidental (CONSTRAINTS.md #36).
 // `connect` re-launches itself as root through `sudo -b` and records the pid of
 // the SUDO SHIM -- not the tunnel -- in `vpn.pid`. `disconnect` then sends that
 // pid a SIGTERM and polls `kill(pid, 0)` every 21 ms until it disappears. It

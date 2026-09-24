@@ -115,7 +115,7 @@ let
   # On unstable these are top-level (pkgs.xinit etc.) and the legacy
   # pkgs.xorg.* paths warn. On stable 25.11 only the xorg.* paths exist.
   # The `or`-fallback evaluates clean on both channels — same
-  # stable/unstable split as xfce4-terminal (CLAUDE.md known constraint #5).
+  # stable/unstable split as xfce4-terminal (CONSTRAINTS.md #5).
   xinitPkg = pkgs.xinit or pkgs.xorg.xinit;
   xauthPkg = pkgs.xauth or pkgs.xorg.xauth;
   xrdbPkg = pkgs.xrdb or pkgs.xorg.xrdb;

@@ -178,7 +178,7 @@ if [ "$no_update" -eq 0 ]; then
         # version pins inside it (artifacts/versions.json), so a rebuild can
         # report "unchanged" while the IDE is several releases behind. Reports
         # only, and never fails the rebuild: a brief Cloud Run outage must not
-        # abort a switch. See AGENTS.md constraint #27.
+        # abort a switch. See CONSTRAINTS.md #27.
         ag_rev=$(json_get '.nodes."antigravity-nix".locked.rev' < flake.lock 2>/dev/null || true)
         ag_pinned=""; ag_latest=""
         if [ -n "$ag_rev" ]; then
@@ -212,7 +212,7 @@ fi
 
 # /nix, not / — on this host / is a 16 GiB tmpfs that is always near-empty, so
 # `df -h /` reports 0% used while the nvme partition holding /nix and
-# /mnt/nix-tmp fills and builds fail. See AGENTS.md constraint #28.
+# /mnt/nix-tmp fills and builds fail. See CONSTRAINTS.md #28.
 [ "$skills_only" -eq 0 ] && { say "$C_INFO" "── disk before ──"; df -h /nix; }
 
 # ── Build and switch ────────────────────────────────────────────────────────

@@ -33,7 +33,7 @@ let
   # so a wrapper named plain `doom` HIJACKS it. And because
   # `config.system.path` is a buildEnv with ignoreCollisions = true, a wrapper
   # sharing an engine's binary name would not fail the build the way the
-  # Home-Manager buildEnv does in AGENTS.md constraint #12 — an arbitrary one
+  # Home-Manager buildEnv does in CONSTRAINTS.md #12 — an arbitrary one
   # would silently win, which is worse. One prefix also means `play-<TAB>`
   # enumerates everything playable, matching the `app …` / `theme …` /
   # `skills-*` command families.

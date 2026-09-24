@@ -21,7 +21,7 @@
 # but emit deprecation warnings. On stable 25.11 only the old names
 # exist. The `options.services.resolved ? settings` check picks the
 # right form per channel — same stable/unstable workaround pattern
-# as CLAUDE.md known constraint #5.
+# as CONSTRAINTS.md #5.
 {
   options,
   ...

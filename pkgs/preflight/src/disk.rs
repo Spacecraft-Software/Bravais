@@ -3,7 +3,7 @@
 // Disk accounting and reclamation.
 //
 // The whole reason this module exists as something other than a `df` call:
-// AGENTS.md constraint #28. On this host `/` is a 16 GiB tmpfs while `/nix`,
+// CONSTRAINTS.md #28. On this host `/` is a 16 GiB tmpfs while `/nix`,
 // `/var`, `/home` and `/spacecraft-software` are bind mounts of one 203 GiB
 // partition. Any free-space check aimed at `/` reports ~16 GiB free forever, no
 // matter how full the real disk is -- which is exactly how a rebuild came to

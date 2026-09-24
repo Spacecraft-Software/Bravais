@@ -36,7 +36,7 @@ let
   #   grep -l pam_fprintd /etc/pam.d/* | sort   # must equal fprintAllow exactly
   #   ls /etc/pam.d | wc -l                     # must NOT grow — declaring a
   #                                             # PAM service CREATES it
-  #                                             # (AGENTS.md constraint #9, read
+  #                                             # (CONSTRAINTS.md #9, read
   #                                             # in reverse)
   # ---------------------------------------------------------------------------
 

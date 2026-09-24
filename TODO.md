@@ -311,7 +311,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install OpenCode Desktop (official OpenCode app) — repackage the official `.deb` (`pkgs/opencode-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; deletes unused musl binaries; `LD_LIBRARY_PATH` carries libglvnd/libgbm/vulkan-loader for ANGLE's native-EGL `dlopen`)
 - [✓] Install Goose Desktop (official Block AI agent app) — no Flathub listing (upstream repo has since moved to `aaif-goose/goose`; the `block/goose` release URLs still redirect), so repackage the official `.deb` (`pkgs/goose-desktop/`, dpkg -x + `autoPatchelfHook` + wayland wrapper; fixes `Exec=`/`Icon=` paths in the `.desktop` file)
 - [✓] Goose Desktop `LD_LIBRARY_PATH` prefix (libglvnd/libgbm/vulkan-loader) — bundled ANGLE `libEGL.so` dlopens `libEGL.so.1`, and `DT_RUNPATH` isn't transitive, so `runtimeDependencies` alone left the GPU process dying with "Could not dlopen native EGL". Same fix opencode-desktop already carried
-- [✓] Install Obscura (headless browser for AI agents) — built from source in `pkgs/obscura/` with the `render` + `stealth` features. Not from nixpkgs: its 0.1.10 predates the `obscura-render` crate outright, so `render` cannot be switched on there. Needs its own `librusty_v8.nix` (v8 137.3.0; `deno.librusty_v8` is 147.4.0), `-p obscura-cli --bins` (virtual workspace rejects `--features` at the root), and `git` at build time for btls-sys's BoringSSL patching. System-wide so `mcp.toml` can resolve it by bare name. See AGENTS.md constraint #24
+- [✓] Install Obscura (headless browser for AI agents) — built from source in `pkgs/obscura/` with the `render` + `stealth` features. Not from nixpkgs: its 0.1.10 predates the `obscura-render` crate outright, so `render` cannot be switched on there. Needs its own `librusty_v8.nix` (v8 137.3.0; `deno.librusty_v8` is 147.4.0), `-p obscura-cli --bins` (virtual workspace rejects `--features` at the root), and `git` at build time for btls-sys's BoringSSL patching. System-wide so `mcp.toml` can resolve it by bare name. See CONSTRAINTS.md #24
 
 ### flatpak.nix
 
@@ -419,7 +419,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ## Phase 9: Overlays (inline in `modules/core/nix.nix`)
 
 - [✓] **sequoia-wot**: Disable failing tests (`doCheck = false`)
-- [✓] **claude-code overlay**: RETIRED — the npm-pinning overlay was dropped; claude-code is installed out-of-band via the official installer (`CLAUDE.md` constraint #4), `unstablePkgs.claude-code` is the re-enable path
+- [✓] **claude-code overlay**: RETIRED — the npm-pinning overlay was dropped; claude-code is installed out-of-band via the official installer (`CONSTRAINTS.md` #4), `unstablePkgs.claude-code` is the re-enable path
 - [✓] **overlay location**: Defined inline in `modules/core/nix.nix` (sole location; the dead `overlays/` reference copy and the `modules/core/brush-wrapper.nix` tombstone were deleted in Phase A of the engineering-elegance plan)
 - [✓] **bash→brush overlay**: Investigated and found infeasible — nixpkgs bootstrapping cycle prevents overriding `pkgs.bash` via any overlay
 
@@ -456,6 +456,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **ARCHITECTURE.md**: System diagrams and data flow
 - [✓] **TODO.md**: Implementation checklist (this file)
 - [✓] **PRD.md**: Product requirements (v3.0)
+- [✓] **AGENTS.md split** (2026-09-24): 88.4k → 31.7 KB, under Claude
+      Code's 40k warning and Codex's 32 KiB read limit. The forty constraints
+      moved verbatim to **CONSTRAINTS.md** (same numbers; AGENTS.md keeps one
+      rule line each); rebuild, skill-pointer and vendored-binary detail
+      moved to `docs/`.
 
 ---
 
@@ -504,7 +509,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Explicit `fprintAllow`/`fprintDeny` policy (28 → 8 PAM services)
 - [✓] Refuse fingerprint for `login` and `cosmic-greeter` (same inversion as greetd)
 - [✓] Polkit authentication agent for LeftWM
-- [✓] Docs: USER_MANUAL §7.4–7.6, PRD §5.5/§5.6/§6.1, AGENTS constraint #25
+- [✓] Docs: USER_MANUAL §7.4–7.6, PRD §5.5/§5.6/§6.1, CONSTRAINTS.md #25
 - [ ] Enroll `gitway biometric` — **after** a healthy login keyring exists
       (`gitway biometric enroll ~/.ssh/id_ed25519`; do NOT add `--biometric`
       to the `gitway-add` spawn lines, it forces a prompt every login)
@@ -519,7 +524,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
       path, so a re-created device kills every running daemon's handle
 - [✓] Remove the 2026-09-12 `powerDownCommands`/`resumeCommands` fprintd stop
       — it lost a race against the lock screen in both directions and the
-      resume half had become the cause of the failure (AGENTS constraint #39)
+      resume half had become the cause of the failure (CONSTRAINTS.md #39)
 - [✓] Confirm persist across repeated suspend/resume cycles (2026-09-18) —
       two back-to-back `rtcwake -m mem -s 20` runs with `power/persist = 1`
       both logged `usb 1-9: reset full-speed USB device number 15 using
@@ -561,7 +566,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] `steelbore.hardware.android` module — `pkgs.android-tools` + SDK licence
 - [✓] `devShells.<system>.android` in flake.nix (`nix develop .#android -c nu`)
 - [✓] Enabled on `bravais-thinkpad`; docs in PRD §6.0, USER_MANUAL §7.4
-- [✓] AGENTS constraint #33 — `programs.adb.enable` is removed, not deprecated
+- [✓] CONSTRAINTS.md #33 — `programs.adb.enable` is removed, not deprecated
 - [ ] Confirm `adb devices` sees a real handset without any group membership
       (systemd 260 uaccess); if it reports `no permissions`, the uaccess
       assumption is wrong and udev rules come back
@@ -651,7 +656,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
 
-2. **claude-code**: Installed out-of-band via the official installer (self-updating; release cadence outpaces nixpkgs). The former npm-pinning overlay was retired; `unstablePkgs.claude-code` in `modules/packages/ai.nix` is the declarative re-enable path. See `CLAUDE.md` constraint #4.
+2. **claude-code**: Installed out-of-band via the official installer (self-updating; release cadence outpaces nixpkgs). The former npm-pinning overlay was retired; `unstablePkgs.claude-code` in `modules/packages/ai.nix` is the declarative re-enable path. See `CONSTRAINTS.md` #4.
 
 3. **XanMod kernel**: Sourced from unstable channel for latest version.
 
@@ -663,11 +668,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 7. **Overlays** are defined inline in `modules/core/nix.nix` (sole location; the dead `overlays/` reference copy was deleted).
 
-8. **task-master-ai**: nixpkgs build is unfixable via overlay — upstream's `package-lock.json` omits the platform-specific optionalDependencies of `@biomejs/biome` and `esbuild`, and `npm ci`'s lockfile validation runs before any `--omit=optional` or fetcher-v2 logic. `modules/packages/ai.nix` ships a `task-master` shell wrapper that runs `npx -y --package=task-master-ai task-master "$@"` against `pkgs.nodejs` instead. See `CLAUDE.md` constraint #3.
+8. **task-master-ai**: nixpkgs build is unfixable via overlay — upstream's `package-lock.json` omits the platform-specific optionalDependencies of `@biomejs/biome` and `esbuild`, and `npm ci`'s lockfile validation runs before any `--omit=optional` or fetcher-v2 logic. `modules/packages/ai.nix` ships a `task-master` shell wrapper that runs `npx -y --package=task-master-ai task-master "$@"` against `pkgs.nodejs` instead. See `CONSTRAINTS.md` #3.
 
 9. **xdg-desktop-portal routing under multi-DE**: With GNOME, COSMIC, Plasma all enabled, each DE's NixOS module registers its own portal backends via `xdg.portal.extraPortals` and `configPackages`. The active backend is selected per-session via `XDG_CURRENT_DESKTOP`. Bravais adds explicit `xdg.portal.config.<de>.default` routing in `modules/desktops/cosmic.nix`, `modules/desktops/gnome.nix`, and `modules/desktops/plasma.nix` so Screenshot/ScreenCast/FileChooser interfaces resolve deterministically per session — without it, dbus startup popups and PrtSc "server crash" can occur in COSMIC.
 
-10. **Empty files are `application/x-zerosize`, not `text/plain`** -- and it is not a subclass, so a `text/plain` default does not cascade. A file manager's "New file" produces exactly this, which is how COSMIC Files opened gedit (whose desktop entry claims `x-zerosize`; cosmic-edit's does not) while `text/plain` pointed at cosmic-edit. Fixed by making the handler *role* own the MIME list in `lib/default-apps.nix` instead of trusting each app's `MimeType=` line. Diagnose with `gio info -a standard::content-type <file>`; `xdg-mime query filetype` reports `text/plain` for an empty file and will mislead you. See `CLAUDE.md` constraint #22.
+10. **Empty files are `application/x-zerosize`, not `text/plain`** -- and it is not a subclass, so a `text/plain` default does not cascade. A file manager's "New file" produces exactly this, which is how COSMIC Files opened gedit (whose desktop entry claims `x-zerosize`; cosmic-edit's does not) while `text/plain` pointed at cosmic-edit. Fixed by making the handler *role* own the MIME list in `lib/default-apps.nix` instead of trusting each app's `MimeType=` line. Diagnose with `gio info -a standard::content-type <file>`; `xdg-mime query filetype` reports `text/plain` for an empty file and will mislead you. See `CONSTRAINTS.md` #22.
 
 11. **Unified `start-<de>` commands**: All desktops expose a `start-<de>` launcher (`start-cosmic`, `start-gnome`, `start-plasma`, `start-plasma-x11`, `start-niri`, `start-leftwm`). `start-cosmic` comes from upstream `pkgs.cosmic-session`; the rest are `writeShellScriptBin` wrappers in `modules/login/default.nix`. `start-leftwm` invokes `startx leftwm` for X11 from a TTY.
 

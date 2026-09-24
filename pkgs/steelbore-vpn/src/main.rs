@@ -13,7 +13,7 @@
 //
 // This does NOT replace `adguardvpn-cli`. Connecting, logging in, locations and
 // configuration all stay with the vendor client; only the teardown is taken
-// over, because the vendor's own teardown hangs (AGENTS.md constraint #36).
+// over, because the vendor's own teardown hangs (CONSTRAINTS.md #36).
 //
 // Standard §3.1: no `unwrap`/`expect` on any fallible runtime path. A /proc
 // entry that vanishes mid-scan is ordinary -- processes exit -- so every read
