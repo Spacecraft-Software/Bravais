@@ -27,11 +27,16 @@ let
   extensionDirName = "spacecraft-software.spacecraft-software-2.0.0";
 
   # Every VS Code-family extensions root this user runs. The Flatpak VS Code
-  # (com.visualstudio.code, modules/packages/editors.nix) keeps its extensions
+  # (com.visualstudio.code, modules/packages/flatpak.nix) keeps its extensions
   # in its own sandboxed data directory; Cursor and Antigravity IDE in theirs.
+  # VSCodium ships twice (modules/packages/editors.nix): nixpkgs reads
+  # ~/.vscode-oss, and the Flatpak's wrapper passes
+  # `--extensions-dir $XDG_DATA_HOME/codium/extensions`.
   vscodeRoots = [
     ".vscode/extensions"
     ".var/app/com.visualstudio.code/data/vscode/extensions"
+    ".vscode-oss/extensions"
+    ".var/app/com.vscodium.codium/data/codium/extensions"
     ".cursor/extensions"
   ];
 

@@ -192,7 +192,14 @@
         appId = "com.visualstudio.code";
         origin = "flathub";
       }
-      # { appId = "dev.zed.Zed";                        origin = "flathub"; }  # DISABLED — using pkgs.zed-editor instead
+      # VSCodium is ALSO installed from nixpkgs (vscodium-fhs, editors.nix) —
+      # the one deliberate exception to "never both" above, by user request.
+      # Separate state from that copy; see the note there.
+      {
+        appId = "com.vscodium.codium";
+        origin = "flathub";
+      }
+      # { appId = "dev.zed.Zed";                       origin = "flathub"; }  # DISABLED — using pkgs.zed-editor instead
       {
         appId = "io.github.shiftey.Desktop";
         origin = "flathub";
@@ -400,6 +407,7 @@
           "com.discordapp.Discord"
           "io.wavebox.Wavebox"
           "com.visualstudio.code"
+          "com.vscodium.codium"
           "io.github.shiftey.Desktop"
         ]
         (_: {

@@ -75,6 +75,15 @@ in
         (withKeyring [ "kiro" ] unstablePkgs.kiro-fhs) # Kiro editor
         # vscode-fhs → Flatpak: com.visualstudio.code
 
+        # VSCodium — shipped BOTH here and as the Flatpak com.vscodium.codium
+        # (modules/packages/flatpak.nix), at the user's request: a deliberate
+        # exception to that file's "never both" delivery policy. The two keep
+        # separate state — this one ~/.config/VSCodium + ~/.vscode-oss, the
+        # Flatpak ~/.var/app/com.vscodium.codium — and both launchers are
+        # named "VSCodium"; the Flatpak's desktop id is com.vscodium.codium.
+        # Unstable: stable 26.05 trails upstream by ten monthly releases.
+        (withKeyring [ "codium" ] unstablePkgs.vscodium-fhs) # TypeScript/Electron — VS Code without MS telemetry
+
         # Antigravity 2.0 Desktop app — the standalone, agent-orchestration
         # app (antigravity-hub), distinct from the IDE below. No IDE required.
         (withKeyring [ "antigravity" ] agyPkgs.google-antigravity-desktop)

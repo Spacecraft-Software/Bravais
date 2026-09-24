@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **VSCodium, twice.** `unstablePkgs.vscodium-fhs` (keyring-wrapped like
+  Cursor and Kiro) and the `com.vscodium.codium` Flatpak, both at the
+  user's request — the one deliberate exception to the "never both"
+  delivery policy in `modules/packages/flatpak.nix`. The copies keep
+  separate settings and extensions. The Flatpak shares VS Code's override
+  (now `ideFlatpakOverride` in `users/mj/apps.nix`, the same bytes for
+  both) and its `XDG_CURRENT_DESKTOP=GNOME` keyring override. The theme
+  extension is linked into both copies' extensions roots.
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing
   it used to fail, and clap's did-you-mean offered `--no-update` — the
   opposite request.

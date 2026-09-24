@@ -430,8 +430,8 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 - **Prompter:** the unlock dialog is drawn by `gcr-prompter`, which ships in **gcr 3 only** — `pkgs.gcr_4` dropped it. `modules/core/keyring.nix` pins `services.dbus.packages = [ pkgs.gcr ]` and asserts the major version so an upstream move fails at eval rather than silently removing every keyring dialog
 - **Tools:** `libsecret` (`secret-tool` — store/lookup/clear round-trip is the "is the bus up?" diagnostic), `seahorse` (GUI manager)
 - **Chromium/Electron backend pinning:** Chromium reads `XDG_CURRENT_DESKTOP` to select a credential backend; under Niri/LeftWM it reads `niri`/`leftwm` → `DE_OTHER` → plaintext fallback ("An OS keyring couldn't be identified…"). Two routes, one cause:
-  - **Nix-installed** (Cursor, Kiro, Antigravity Desktop + IDE): wrapped with `steelbore.keyring.chromiumFlag` = `--password-store=gnome-libsecret` (`modules/packages/editors.nix`)
-  - **Flatpak** (Chrome, Edge, Opera, Brave, Discord, Wavebox, VS Code, GitHub Desktop): Flathub launchers accept no flags file, so `services.flatpak.overrides.settings.<app>.Environment.XDG_CURRENT_DESKTOP = "GNOME"` — scoped to the sandbox, so host portal-backend selection is untouched (`modules/packages/flatpak.nix`)
+  - **Nix-installed** (Cursor, Kiro, VSCodium, Antigravity Desktop + IDE): wrapped with `steelbore.keyring.chromiumFlag` = `--password-store=gnome-libsecret` (`modules/packages/editors.nix`)
+  - **Flatpak** (Chrome, Edge, Opera, Brave, Discord, Wavebox, VS Code, VSCodium, GitHub Desktop): Flathub launchers accept no flags file, so `services.flatpak.overrides.settings.<app>.Environment.XDG_CURRENT_DESKTOP = "GNOME"` — scoped to the sandbox, so host portal-backend selection is untouched (`modules/packages/flatpak.nix`)
 
 ### 5.7 DNS (`modules/core/dns.nix`)
 
@@ -1042,7 +1042,13 @@ Three things are specific to it:
 
 **GUI Editors (Rust):** zed-editor-fhs (FHS variant), lapce, neovide, cosmic-edit
 
-**GUI Editors (Standard):** emacs-pgtk, vscode-fhs, gedit
+**GUI Editors (Standard):** emacs-pgtk, gedit. VS Code is the Flatpak
+`com.visualstudio.code` (§11.10), not `vscode-fhs`.
+
+**GUI Editors (Unstable, FHS, keyring-wrapped):** code-cursor-fhs, kiro-fhs,
+vscodium-fhs. VSCodium is **also** the Flatpak `com.vscodium.codium` (§11.10) —
+the one deliberate exception to the "never both" delivery policy, by user
+request. The two copies keep separate settings and extensions.
 
 **Antigravity** (from the `antigravity-nix` flake input, not nixpkgs):
 `google-antigravity-desktop` (the standalone agent-orchestration app,
@@ -1320,9 +1326,10 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 
 **Packages (36 declared; parked entries below are commented out and not installed):**
 
-> VSCode (`com.visualstudio.code`) ships a declarative user-level flatpak override
-> at `~/.local/share/flatpak/overrides/com.visualstudio.code` (via HM `xdg.dataFile`
-> in `users/mj/home.nix`) that prepends `/app/bin:/usr/bin` to PATH so the `code`
+> VSCode (`com.visualstudio.code`) and VSCodium (`com.vscodium.codium`) share one
+> declarative user-level flatpak override, written to
+> `~/.local/share/flatpak/overrides/<app-id>` (via HM `xdg.dataFile` in
+> `users/mj/apps.nix`), that prepends `/app/bin:/usr/bin` to PATH so each
 > entrypoint resolves inside the sandbox.
 
 | Category            | App IDs                                              |
@@ -1333,7 +1340,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 | Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (Connected — COSMIC applet, no network permission; a front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (KDE Connect for COSMIC — carries `shared=network`, so it is a second daemon and overlaps nixpkgs' `kdePackages.kdeconnect-kde`). Both from the `cosmic` remote. Neither pairs with a phone until 1714-1764/tcp+udp are open, which nothing in this tree does yet |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client)  |
 | Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — §11.4) |
-| Development         | com.jetbrains.RustRover, com.visualstudio.code, dev.zed.Zed, io.github.shiftey.Desktop |
+| Development         | com.jetbrains.RustRover, com.visualstudio.code, com.vscodium.codium (also from nixpkgs — §11.2), dev.zed.Zed, io.github.shiftey.Desktop |
 | System & Utilities  | com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
 | Gaming              | **io.github.lavenderdotpet.LibreQuake** (free BSD-3 Quake content plus a bundled engine) and **io.github.jotd666.gods-deluxe** (Bitmap Brothers platformer remake, engine and data in one package) — the two active entries. Neither is in either channel, so Flatpak is the policy's fallback rather than a preference. Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam, info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
 | Retro / Classic     | com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle |

@@ -215,6 +215,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install standard TUI editors (Neovim, Vim, mg, mc)
 - [✓] Install Rust GUI editors (zed-editor-fhs, Lapce, Neovide, cosmic-edit)
 - [✓] Install standard GUI editors (Emacs-pgtk, VSCode-FHS, gedit)
+- [✓] Install VSCodium (`unstablePkgs.vscodium-fhs`, keyring-wrapped) alongside the `com.vscodium.codium` Flatpak — a user-requested exception to the "never both" delivery policy; theme extension linked into both extensions roots
 
 ### development.nix
 
@@ -320,6 +321,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Declare Flatpak packages (44+ apps across browsers, communication, networking, security, development, gaming, retro, productivity, terminals, incl. de.haeckerfelix.Fragments torrent client and org.gnome.baobab disk usage analyzer)
 - [✓] Add app.devsuite.Ptyxis flatpak (alongside nixpkgs host install; both themed via shared host dconf `org/gnome/Ptyxis/Profiles/steelbore` — flatpak app id differs but GSettings schema is org.gnome.Ptyxis)
 - [✓] Fix VSCode flatpak launch — declarative user override (`xdg.dataFile`) prepends `/app/bin:/usr/bin` to PATH so the `code` entrypoint resolves (was `bwrap: execvp code: No such file or directory`)
+- [✓] Add com.vscodium.codium (Development) — shares the VS Code override text (`ideFlatpakOverride` in `users/mj/apps.nix`) and the `XDG_CURRENT_DESKTOP=GNOME` keyring override; also installed from nixpkgs (editors.nix)
 - [✓] Add io.github.jotd666.gods-deluxe (Gaming) — un-parked from the Retro / Classic block and moved to the active Gaming section, since it is in neither channel and so is a delivery-policy fallback rather than a nixpkgs duplicate
 - [✓] Add io.github.nwxnw.cosmic-ext-connected (Connected) and io.github.hepp3n.kdeconnect (KDE Connect for COSMIC), both from the `cosmic` remote — Connected has no network permission and front-ends a host daemon; the KDE Connect entry carries `shared=network` and so overlaps nixpkgs `kdePackages.kdeconnect-kde` (modules/desktops/plasma.nix)
 - [✓] Add grok-bot (Grok Bot desktop agent) — `pkgs/grok-bot/`, installed via `modules/packages/ai.nix`; not in nixpkgs so repackaged from the official `.deb`. Its two self-registered URL schemes (`grokbot`, `sand`) are declared in `users/mj/default-apps.nix` per constraint #30

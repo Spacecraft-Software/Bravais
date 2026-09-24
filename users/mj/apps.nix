@@ -400,6 +400,22 @@ let
         }
     }
   '';
+
+  # FLATPAK — the VS Code-family override; see xdg.dataFile below for why each
+  # line is there and why `force` is set.
+  ideFlatpakOverride = {
+    force = true;
+    text = ''
+      [Context]
+      sockets=session-bus;system-bus;gpg-agent;inherit-wayland-socket;
+      devices=dri;kvm;shm;
+      features=multiarch;per-app-dev-shm;
+      filesystems=home;/home/mj/steelbore;host-etc;/run/current-system/sw/bin;/steelbore;host-os;
+
+      [Environment]
+      PATH=/app/bin:/usr/bin:/run/wrappers/bin:/home/mj/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/mj/.nix-profile/bin:/nix/profile/bin:/home/mj/.local/state/nix/profile/bin:/etc/profiles/per-user/mj/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
+    '';
+  };
 in
 {
 
@@ -551,12 +567,15 @@ in
 
   xdg.dataFile = {
     # ═══════════════════════════════════════════════════════════════════════════
-    # FLATPAK — VSCode per-app override
+    # FLATPAK — VS Code-family per-app overrides
     # User-level override (wins over system/NixOS overrides). PATH MUST keep
-    # /app/bin:/usr/bin first, otherwise flatpak's `code` entrypoint isn't found
+    # /app/bin:/usr/bin first, otherwise the Flatpak's entrypoint isn't found
     # and launch dies with `bwrap: execvp code: No such file or directory`. The
-    # host bin dirs follow so VSCode's integrated terminal still sees host tools
+    # host bin dirs follow so the integrated terminal still sees host tools
     # (/run/current-system/sw/bin is also filesystem-exposed below).
+    #
+    # One text for VS Code and VSCodium, so the two sandboxes cannot drift.
+    # Both entrypoints live in /app/bin (`code`, `com.vscodium.codium`).
     #
     # `force = true`: flatpak rewrites this file as a plain (read-only) file
     # out-of-band, so HM finds a foreign file at the path on the next switch
@@ -564,19 +583,8 @@ in
     # ("would be clobbered"). force makes HM overwrite unconditionally with
     # no backup attempt, so activation can't deadlock on this file again.
     # ═══════════════════════════════════════════════════════════════════════════
-    "flatpak/overrides/com.visualstudio.code" = {
-      force = true;
-      text = ''
-        [Context]
-        sockets=session-bus;system-bus;gpg-agent;inherit-wayland-socket;
-        devices=dri;kvm;shm;
-        features=multiarch;per-app-dev-shm;
-        filesystems=home;/home/mj/steelbore;host-etc;/run/current-system/sw/bin;/steelbore;host-os;
-
-        [Environment]
-        PATH=/app/bin:/usr/bin:/run/wrappers/bin:/home/mj/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/mj/.nix-profile/bin:/nix/profile/bin:/home/mj/.local/state/nix/profile/bin:/etc/profiles/per-user/mj/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin
-      '';
-    };
+    "flatpak/overrides/com.visualstudio.code" = ideFlatpakOverride;
+    "flatpak/overrides/com.vscodium.codium" = ideFlatpakOverride;
 
     # ═══════════════════════════════════════════════════════════════════════════
     # HALLOY — Rust + iced multi-server IRCv3 client (GUI)

@@ -202,6 +202,7 @@
     * **neovide** 🦀 `[GUI 🖱️]` *(No-nonsense graphical Neovim frontend)*
     * **emacs-pgtk** ⚠️ `[GUI 🖱️]` *(Emacs with pure GTK backend — Wayland-native)*
     * **vscode-fhs** ⚠️ `[GUI 🖱️]` *(VS Code in FHS-compatible wrapper)*
+    * **VSCodium** ⚠️ `[GUI 🖱️]` *(VS Code without Microsoft telemetry — `vscodium-fhs` from nixpkgs **and** the `com.vscodium.codium` Flatpak)*
 
 ### **13. Multimedia & Processing**
 * **Video/Audio Players**
