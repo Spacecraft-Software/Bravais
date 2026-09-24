@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`preflight --full-update`** is a visible alias of `--update-all`. Typing
+  it used to fail, and clap's did-you-mean offered `--no-update` — the
+  opposite request.
+
+### Added
+
 - **The Theme repository is a flake input.** `theme`
   (`github:Spacecraft-Software/Theme`, `flake = false`) ships the §11 palette
   family pre-rendered into formats Bravais never generated itself, and

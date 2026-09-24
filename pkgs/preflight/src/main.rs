@@ -50,6 +50,7 @@ use output::{AppError, ColorWhen, Exit, Format, Level, Out};
         "  preflight                     Full rebuild: update, switch, mirror, report\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
+        "  preflight --update-all        Bump every input and the vendored pins (alias: --full-update)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
@@ -101,7 +102,10 @@ struct Cli {
     no_update: bool,
 
     /// Bump every flake input (bare `nix flake update`) and the vendored pins; implies --update-vendored
-    #[arg(long, conflicts_with_all = ["no_update", "skills_only"])]
+    // `--full-update` is the spelling people reach for. Without the alias,
+    // clap's did-you-mean answered it with `--no-update` -- the opposite
+    // request, which a user following the tip would have run.
+    #[arg(long, visible_alias = "full-update", conflicts_with_all = ["no_update", "skills_only"])]
     update_all: bool,
 
     /// Also bump the version+hash-pinned upstream binaries (pkgs/update-vendored.nu)
@@ -303,7 +307,7 @@ fn cmd_schema(out: Out) -> i32 {
                 "flags": {
                     "--dry": "dry-build; make no changes",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "bump every flake input, including stable nixpkgs, and implies --update-vendored; conflicts with --no-update and --skills-only",
+                    "--update-all": "bump every flake input, including stable nixpkgs, and implies --update-vendored; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
@@ -354,4 +358,34 @@ fn cmd_describe(out: Out) -> i32 {
     let human = format!("{manifest:#}\n");
     out.emit("preflight describe", &manifest, false, &human);
     Exit::Success as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn the_flag_surface_is_well_formed() {
+        // Catches clashing names, dangling `conflicts_with` targets and the
+        // like at test time instead of at a user's first invocation.
+        Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn full_update_is_an_alias_for_update_all() {
+        let cli = Cli::try_parse_from(["preflight", "--full-update"]);
+        assert!(cli.is_ok_and(|c| c.update_all));
+    }
+
+    #[test]
+    fn full_update_keeps_the_update_all_conflicts() {
+        // An alias is the same argument, so it must refuse the same company.
+        for other in ["--no-update", "--skills-only"] {
+            assert!(
+                Cli::try_parse_from(["preflight", "--full-update", other]).is_err(),
+                "--full-update must conflict with {other}"
+            );
+        }
+    }
 }
