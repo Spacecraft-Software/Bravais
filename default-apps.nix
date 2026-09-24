@@ -10,7 +10,7 @@
 #
 # Registered slugs (see lib/default-apps.nix for the catalog):
 #   editor        cosmic-edit  gnome-text-editor  gedit  zed  lapce  vscode
-#                 kate  kwrite
+#                 vscodium  vscodium-flatpak  kate  kwrite
 #   browser       chrome  brave  opera  browseros
 #   fileManager   cosmic-files  nautilus
 #   imageViewer   oculante  loupe  gwenview  feh

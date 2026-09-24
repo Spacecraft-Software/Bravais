@@ -30,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separate settings and extensions. The Flatpak shares VS Code's override
   (now `ideFlatpakOverride` in `users/mj/apps.nix`, the same bytes for
   both) and its `XDG_CURRENT_DESKTOP=GNOME` keyring override. The theme
-  extension is linked into both copies' extensions roots.
+  extension is linked into both copies' extensions roots. Each copy is an
+  `editor` candidate: `app set editor vscodium` or `vscodium-flatpak`.
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing
   it used to fail, and clap's did-you-mean offered `--no-update` — the
   opposite request.

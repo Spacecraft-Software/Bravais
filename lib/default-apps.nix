@@ -191,6 +191,23 @@ let
       desktopId = "com.visualstudio.code.desktop";
       exec = _: "flatpak run com.visualstudio.code";
     };
+    # VSCodium ships twice (modules/packages/editors.nix and flatpak.nix), and
+    # the two keep separate settings, so each copy is its own entry.
+    vscodium = {
+      name = "VSCodium";
+      role = "editor";
+      desktopId = "codium.desktop";
+      # Bare name, not `${pkgs.vscodium}`: the installed copy is unstable's
+      # vscodium-fhs wrapped with the keyring flag in editors.nix, and naming
+      # stable's package here would pull in a second, unwrapped build.
+      exec = _: "codium";
+    };
+    vscodium-flatpak = {
+      name = "VSCodium (Flatpak)";
+      role = "editor";
+      desktopId = "com.vscodium.codium.desktop";
+      exec = _: "flatpak run com.vscodium.codium";
+    };
     kate = {
       name = "Kate";
       role = "editor";
