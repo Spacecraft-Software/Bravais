@@ -297,10 +297,13 @@ maintainer's discretion; see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 ## Quick Start
 
 ```bash
-# Check the configuration validation
-nix flake check
+# Validate: real stable build + unstable eval + the cheap checks
+# (bare `nix flake check` builds both channels' closures, >10 min — CONSTRAINTS.md #17)
+nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
+nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'
 
-# Show all flake outputs (includes all CPU profiles)
+# Show all flake outputs
 nix flake show
 
 # Dry-run build
@@ -321,9 +324,13 @@ sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable
 
 ## Documentation
 
+- [AGENTS.md](./AGENTS.md) — the agent-facing source of truth: build and test commands, architecture invariants, the numbered constraint rules
+- [CONSTRAINTS.md](./CONSTRAINTS.md) — long form of every numbered constraint (`### N.`)
+- [docs/](./docs/) — rebuild sequence, skill pointer, vendored-binary exceptions
 - [PRD.md](./PRD.md) — Product Requirements Document and module specifications
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — System architecture and data-flow diagrams
 - [TODO.md](./TODO.md) — Implementation task tracking
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — PR and commit conventions
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — v0-era architecture diagrams (historical; see the "Legacy v0 artifacts" paragraph under AGENTS.md "File layout")
 
 ## Package Statistics
 

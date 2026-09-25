@@ -345,7 +345,7 @@ path in `modules/packages/ai.nix`.
 ### 4.3 Typography
 
 Two font roles, both defined in `modules/theme/fonts.nix` (source of truth).
-**To change a font, follow the "Changing fonts" runbook in `CLAUDE.md`** — the
+**To change a font, follow the "Changing fonts" section in `AGENTS.md`** (procedure: the `changing-fonts` skill in `.claude/skills/`) — the
 family string for terminals lives once in `lib/terminal-theme.nix` (`theme.font`; all terminal configs are generated from it) and the exact Nerd Font
 family name must be read from the package, not guessed.
 
@@ -1308,7 +1308,7 @@ Deliberately **not** in `pkgs/update-vendored.nu`: the artifact has been frozen 
 
 **Rust:** aichat, gemini-cli
 
-**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CLAUDE.md), claude-code (out-of-band via the official installer — CONSTRAINTS.md #4; `unstablePkgs.claude-code` is the re-enable path)
+**Other:** opencode (Go), codex, github-copilot-cli, gpt-cli, mcp-nixos, task-master (npx wrapper — nixpkgs `task-master-ai` is unfixable, see CONSTRAINTS.md #3), claude-code (out-of-band via the official installer — CONSTRAINTS.md #4; `unstablePkgs.claude-code` is the re-enable path)
 
 **Headless browser:**
 * `obscura` — headless browser for AI agents and web scraping (Rust, Apache-2.0), built from source in `pkgs/obscura/`. Fetches, executes JavaScript on a real V8 isolate via `deno_core`, and serves both CDP and MCP — no Chromium, no Node. Installs two binaries: `obscura` and `obscura-worker` (the parallel `scrape` command spawns the latter). Built with the `render` and `stealth` features: render adds real box geometry and PNG screenshots, stealth gives a Chrome TLS fingerprint plus tracker blocking. Source-built rather than taken from nixpkgs because nixpkgs pins a release predating the render crate entirely — see CONSTRAINTS.md #24 for that and the other packaging traps. Bump per release with `nu pkgs/update-vendored.nu obscura`.
@@ -1613,8 +1613,11 @@ Managed via `programs.alacritty.enable = true` with structured Nix settings. She
 ### 16.1 Build Verification
 
 ```bash
-# Check flake validity
-nix flake check
+# Validate: real stable build + unstable eval + the cheap checks
+# (bare `nix flake check` builds both channels' closures, >10 min — CONSTRAINTS.md #17)
+nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
+nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'
 
 # Show flake outputs
 nix flake show

@@ -3,11 +3,12 @@
 // preflight — Steelbore OS rebuild orchestrator.
 //
 // Preflight checks, the switch, postflight accounting. A Rust port of the
-// Nushell `def rebuild` (users/mj/shell.nix) and scripts/rebuild.sh, which it
-// is meant to replace as the single implementation rather than join as a third
-// one: two copies of this sequence already drifted, and the AGENTS.md note
-// telling a maintainer to "change one and change the other" is the smell this
-// port exists to remove.
+// Nushell `rebuild` (users/mj/rebuild.nu, embedded by users/mj/shell.nix) and
+// scripts/rebuild.sh, which it is meant to replace as the single
+// implementation rather than join as a third one: two copies of this sequence
+// already drifted, and AGENTS.md still has to say "change one and change all
+// three". Retiring the two shells is the remaining step; docs/rebuild.md
+// describes the deprecation question both open with today.
 //
 // What it adds over both: disk accounting is a first-class step rather than a
 // pair of `df` banners. The report is always emitted; reclamation happens on

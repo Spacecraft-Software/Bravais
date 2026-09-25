@@ -19,7 +19,7 @@ let
   # wrappers around binutils ar/nm/ranlib). The wrapped pkgs.gcc does not
   # ship them, and on NixOS there is no /usr/lib/bfd-plugins for plain
   # `ar` to autoload liblto_plugin.so, so static-lib LTO breaks without
-  # these. See AGENTS.md §8.11.
+  # these.
   gccUnwrapped = pkgs.gcc.cc;
 
   # ── Common CFLAGS ─────────────────────────────────────────────────────────

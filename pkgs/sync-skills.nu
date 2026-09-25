@@ -37,16 +37,16 @@
 # happens in this repo — Nix modules, Nushell, the in-tree Rust packages, and
 # the CLI / theme / brand / Standard conventions.
 const SKILLS = [
-    "microsoft-rust-guidelines"        # pkgs/steelbore-audio-led, bravais-mcp (upstream MIT)
-    "spacecraft-agentic-cli"           # AGENTS.md / CLAUDE.md authoring
-    "spacecraft-brand-guidelines"      # Void Navy / Molten Amber identity
+    "microsoft-rust-guidelines"        # every Rust crate under pkgs/*/ and bravais-mcp (upstream GPL-3.0-or-later OR MIT)
+    "spacecraft-agentic-cli"           # AGENTS.md and the harness overlays (CLAUDE.md, copilot-instructions.md)
+    "spacecraft-brand-guidelines"      # house brand: palette role tokens + §12 typography
     "spacecraft-cli-preference"        # rg over grep, eza over ls, …
     "spacecraft-cli-shell"             # Nushell vs POSIX syntax
     "spacecraft-cli-standard"          # dual-mode self-documenting CLI
     "spacecraft-document-format"       # document deliverables
     "spacecraft-missing-pkg"           # packaging a missing dependency
     "spacecraft-nix-guidelines"        # every modules/**.nix in this repo
-    "spacecraft-nu-guidelines"         # users/mj/shell.nix, pkgs/*.nu
+    "spacecraft-nu-guidelines"         # users/mj/rebuild.nu, the shell.nix defs, pkgs/*.nu
     "spacecraft-rust-guidelines"       # house Rust style, pairs with the MS set
     "spacecraft-steelbore-standard" # The Steelbore Standard
     "spacecraft-theme-factory"         # lib/terminal-theme.nix emitters

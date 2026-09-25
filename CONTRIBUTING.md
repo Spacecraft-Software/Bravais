@@ -35,9 +35,14 @@ bounds set out below.
    code.
 2. **Read the Steelbore Standard.** Memory safety → performance → hardened security,
    in that order. Rust-first. GPL-3.0-or-later with SPDX headers on source files.
-3. **Test locally.** Validate with `nix flake check` and a dry-run rebuild:
+3. **Test locally.** Validate with a real toplevel build, the cheap flake
+   checks and a dry-run rebuild. Do not use bare `nix flake check` as the
+   gate — it builds both channels' full closures and exceeds 10 minutes
+   (see [`CONSTRAINTS.md`](./CONSTRAINTS.md) #17):
    ```sh
-   nix flake check
+   nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
+   nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+   nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'
    nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace
    ```
 4. **Follow existing conventions.** Module namespace is `steelbore.*`. Add packages to

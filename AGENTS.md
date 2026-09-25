@@ -14,6 +14,7 @@ A flake-based NixOS configuration implementing **The Spacecraft Software Standar
 # not a usable gate. Use the toplevel build + unstable eval (constraint #17).
 nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
 nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'  # SPDX + niri KDL; seconds
 nix build .#<name>                                      # One in-tree pkg (after `git add -A`)
 nix flake show                                          # List outputs
 nixos-rebuild dry-build --flake .#bravais-thinkpad      # Dry run
@@ -126,7 +127,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 - **Niri binds**: primary binds get `hotkey-overlay-title="..."` so they appear in `show-hotkey-overlay`; silent aliases (vim moves, mouse wheel, individual workspace 2-5 numbers) omit the title to keep the overlay readable.
 - **`unstablePkgs` for always-latest / unstable-only packages**: `flake.nix` re-instantiates `nixpkgs-unstable` with `config.allowUnfree = true` and threads it into modules and HM via `specialArgs`/`extraSpecialArgs`. Active uses: `uv` (development.nix), `steam-run` (system.nix), `code-cursor-fhs` and `kiro-fhs` (editors.nix). Reach for `unstablePkgs.<name>` whenever a package is unstable-only on 26.05 or whenever stable's version lags meaningfully behind upstream.
 - **`home.packages` for user-level packages**: Declared at the top of `users/mj/home.nix` (after `home.stateVersion`), always using `with unstablePkgs;`. Currently hosts the Rust toolchain (`rustup` + cargo subcommands). Use this instead of `environment.systemPackages` for packages that are user-specific rather than system-wide.
-- **PATH in home.nix**: Do **not** use `home.sessionPath` — it always prepends, causing user-local bins to shadow Nix-store ones. The out-of-band bin dirs are single-sourced in the `outOfBandDirs` list in `users/mj/home.nix` (let block) and rendered into all three managed shells (bash via `posixPathAppend`, Nushell via `nuPathAppend`, Ion via `posixPathAppend`). **Adding a new out-of-band CLI bin dir = one edit to `outOfBandDirs`.** Current dirs: `~/.local/bin`, `~/.cargo/bin`, `~/.kimi-code/bin`, `~/.npm-packages/bin`, `~/.opencode/bin`, `~/.kilo/bin`, `~/.mimocode/bin`, `~/.local/lib/qwen-code/bin`.
+- **PATH in shell.nix**: Do **not** use `home.sessionPath` — it always prepends, causing user-local bins to shadow Nix-store ones. The out-of-band bin dirs are single-sourced in the `outOfBandDirs` list in `users/mj/shell.nix` (let block) and rendered into all three managed shells (bash via `posixPathAppend`, Nushell via `nuPathAppend`, Ion via `posixPathAppend`). **Adding a new out-of-band CLI bin dir = one edit to `outOfBandDirs`.** Current dirs: `~/.local/bin`, `~/.cargo/bin`, `~/.kimi-code/bin`, `~/.npm-packages/bin`, `~/.opencode/bin`, `~/.kilo/bin`, `~/.mimocode/bin`, `~/.local/lib/qwen-code/bin`.
 
 ## Security
 
@@ -204,6 +205,7 @@ When making changes, keep these in sync:
 - **TODO.md** — implementation checklist with `[✓]` markers, known issues, phase progress table
 - **CONSTRAINTS.md** — a new constraint gets its entry there **and** a rule line under Known constraints here
 - **`docs/*.md`** — the long form of a section here; change the two together
+- **CHANGELOG.md** — a bullet under `[Unreleased]` for every user-visible change, under a Keep-a-Changelog type heading; never two adjacent identical headings
 
 Use `[✓]` (not `[x]`) for completed items in TODO.md.
 

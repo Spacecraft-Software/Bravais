@@ -77,7 +77,7 @@ A version bump can move files the `installPhase` hardcodes, and the failure only
 
 ### 17. `nix flake check` is not a usable gate here
 
-It builds the full closure of BOTH channels and exceeds 10 minutes. Use the pair that actually covers the ground instead: `nix build .#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel` (stable, real build) plus `nix eval --raw .#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath` (unstable, eval only).
+It builds the full closure of BOTH channels and exceeds 10 minutes. Use the pair that actually covers the ground instead: `nix build .#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel` (stable, real build) plus `nix eval --raw .#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath` (unstable, eval only), then `nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'` for the cheap checks the pair drops. The eval-only form `nix flake check --no-build` (what CI's copilot-setup-steps.yml runs) is fine; it is the bare, building form that is not a gate.
 
 ### 18. Alpaca must be pointed at the existing Ollama service
 

@@ -38,7 +38,7 @@ let
   # Sparse, so the .img only consumes what builds actually write.
   # Note: this only governs *fresh* image creation by the oneshot
   # service below; an already-existing .img must be grown imperatively
-  # via truncate + e2fsck + resize2fs (see CLAUDE.md / Round 11 plan).
+  # via truncate + e2fsck + resize2fs.
   imgSize = "80G";
 in
 {

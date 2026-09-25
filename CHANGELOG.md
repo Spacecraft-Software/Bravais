@@ -29,6 +29,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `~/.agents/skills` is a directory of per-skill links (`perSkillLinks`),
   not one symlink, and a skill a moved-ahead tree *adds* is not linked until
   the next activation.
+- **Stale pointers repointed.** `CONTRIBUTING.md`, the README Quick Start
+  and PRD §16.1 told contributors to run bare `nix flake check`, which
+  constraint #17 rules out; they now give the toplevel build, the unstable
+  eval and the two cheap `checks`. Seven "see CLAUDE.md" / "AGENTS.md
+  §8.11" pointers that resolved to the 144-byte import stub or to nothing
+  now name `AGENTS.md`, `CONSTRAINTS.md` or the skill they meant; the
+  "PATH in home.nix" convention is renamed for the file that holds it
+  (`users/mj/shell.nix`). The README documentation index lists
+  `AGENTS.md`, `CONSTRAINTS.md`, `docs/` and `CONTRIBUTING.md` and marks
+  `ARCHITECTURE.md` as v0 history. `CHANGELOG.md` joins the AGENTS.md
+  maintenance list.
+- **Vendored binaries and flake inputs bumped** — `claude-desktop` and
+  `goose-desktop` (versions in `pkgs/*/package.nix`), plus nixpkgs,
+  nixpkgs-unstable, home-manager, home-manager-unstable and
+  antigravity-nix in `flake.lock`.
 
 ### Added
 
@@ -44,9 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing
   it used to fail, and clap's did-you-mean offered `--no-update` — the
   opposite request.
-
-### Added
-
 - **The Theme repository is a flake input.** `theme`
   (`github:Spacecraft-Software/Theme`, `flake = false`) ships the §11 palette
   family pre-rendered into formats Bravais never generated itself, and

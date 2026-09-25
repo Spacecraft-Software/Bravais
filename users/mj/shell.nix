@@ -106,7 +106,7 @@ let
   termEditor = steelboreApps.roles.termEditor.exec pkgs;
   browserCmd = steelboreApps.roles.browser.exec pkgs;
 
-  # ── Shell-init single sources (CLAUDE.md "PATH in home.nix") ─────────────
+  # ── Shell-init single sources (AGENTS.md "PATH in shell.nix") ─────────────
   # Out-of-band tool dirs (self-updating CLIs installed outside Nix). Stated
   # ONCE here; rendered per shell below. APPENDED, never prepended, so Nix
   # store binaries always win. Adding a dir = one edit to this list.
@@ -156,7 +156,7 @@ in
     # src/cli.rs), with no XDG fallback — so every `engram` run from a directory
     # that does not pass --db silently mints a NEW, empty store in that cwd.
     # That had already happened twice, and one of them mattered: the
-    # `skill-description-1000` rule that /spacecraft-software/CLAUDE.md
+    # `skill-description-1000` rule that /spacecraft-software/AGENTS.md
     # documents as readable via `engram rule list --scope spacecraft-software`
     # existed ONLY in /spacecraft-software/engram/engram.db, so the documented
     # command returned nothing from every directory but that one.
