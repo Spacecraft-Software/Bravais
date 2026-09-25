@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vendored-binary detail moved to `docs/`. `AGENTS.md` is now 31.7 KB.
   References to "AGENTS.md constraint #N" point at `CONSTRAINTS.md`, and the
   cosmic-comp note in `modules/core/nix.nix` now cites #35 rather than #34.
+- **`AGENTS.md` trimmed to what the code cannot teach.** The technology
+  table, the module map, the plain file listing, the flake-input roll call
+  and five security rows only restated `flake.nix`, `modules/` and the
+  package lists — and six of those claims were already wrong. 27.0 KB now,
+  16.5% smaller. The skill-pointer prose in `AGENTS.md`,
+  `docs/skill-pointer.md` and `users/mj/home.nix` describes the real layout:
+  `~/.agents/skills` is a directory of per-skill links (`perSkillLinks`),
+  not one symlink, and a skill a moved-ahead tree *adds* is not linked until
+  the next activation.
 
 ### Added
 

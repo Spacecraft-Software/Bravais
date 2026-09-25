@@ -162,8 +162,8 @@ fi
 # --skills-only is the fast path for a prose-only skill change: skills come from
 # `construct` alone, so bumping the other four inputs drags unrelated rebuild
 # work into an edit that touched a Markdown file. It does NOT drop the switch —
-# ~/.agents/skills is a Home-Manager store link, so a system generation is still
-# the only way to move it.
+# a rebuild is what re-points `pinned`/`current` at the new lock; `skills-sync`
+# moves the pointer without one.
 if [ "$no_update" -eq 0 ]; then
     gitway-add "$HOME/.ssh/id_ed25519"
     if [ "$skills_only" -eq 1 ]; then

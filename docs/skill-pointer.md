@@ -5,16 +5,35 @@ layout, the commands that move it, and why each rule exists. Read it before
 changing `skills-sync`, the Construct Home Manager wiring, or the
 `constructSkills` binding in `flake.nix`.
 
-`~/.agents/skills` is **not** a store path. It is a symlink to
-`~/.local/state/construct/current`, and the layout is:
+`~/.agents/skills` is **not** a store path and **not** a single symlink. It is a
+real directory (`perSkillLinks.enable = true` in `users/mj/home.nix`) holding one
+symlink per Construct skill, each pointing through the mutable pointer:
 
 ```
 ~/.local/state/construct/pinned   -> /nix/store/…-construct-skills   # home.file; GC-rooted by the HM generation
 ~/.local/state/construct/built    -> /nix/store/…-construct-skills   # `nix build --out-link`; GC-rooted by its own auto root
 ~/.local/state/construct/current  -> …/pinned  (tracking the lock)  or  …/built  (moved ahead)
-~/.agents/skills                  -> ~/.local/state/construct/current
-~/.<agent>/skills  (×9)           -> ~/.agents/skills
+~/.agents/skills/                    real directory, owned by the activation script
+~/.agents/skills/<skill>          -> ~/.local/state/construct/current/<skill>   # one per Construct skill
+~/.agents/skills/<other>/            a real directory another installer owns (Orca's three) — ignored: never replaced or pruned
+~/.<agent>/skills                 -> ~/.agents/skills   # the `agentPaths` in home.nix; Antigravity's is ~/.gemini/config/skills
 ```
+
+Pruning removes only links that point INTO the tree whose skill the tree no
+longer carries. Names Construct does not carry are never visited; a real
+directory sitting on a name it DOES carry is reported (stderr) and that skill
+left unlinked. Moving `current` (`skills-sync`) re-targets every existing link
+at once, but a skill the new tree ADDS appears, and one it DROPS stops
+dangling, only at the next activation.
+
+**Known defect at the locked rev (construct 9e42067):** the pointer entry still
+carries the fossil guard from the directory-symlink era — `if [ -d
+~/.agents/skills ] && [ ! -L ~/.agents/skills ]; then mv … skills.pre-pointer.<ts>`
+— and under `perSkillLinks` the hub is exactly that: a real directory. So every
+activation moves the whole hub aside (42 backups, 140 MB by 2026-09-25) and
+rebuilds it with only the Construct links; every foreign entry (Orca's three,
+claude.ai's `synced/`, Codex's `.system/`) vanishes until its owner reinstalls
+it. The fix belongs in the pointer entry, not in the per-skill renderer.
 
 | Command | Effect |
 |---------|--------|
@@ -57,8 +76,9 @@ not tidiness — `construct` pins its own nixpkgs, this flake overrides it with
 build its own yields different store paths for a byte-identical tree and any
 pinned-vs-live comparison reports drift forever.
 
-Grok is the exception: `~/.grok/skills` is still a plain store link and still
-needs a rebuild. It holds one skill, so the asymmetry is cosmetic.
+Grok is the exception: `~/.grok/skills` is a real directory of per-skill links
+straight into the store — no pointer — so it still needs a rebuild. It holds
+one skill, so the asymmetry is cosmetic.
 
 Agents cache skills at session start — a sync mid-session is invisible until the
 harness restarts.

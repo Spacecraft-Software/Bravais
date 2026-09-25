@@ -176,8 +176,8 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
   # unrelated rebuild work into an edit that touched a Markdown file.
   # It also drops the GC, the /etc/nixos mirror and the mcpctl probe —
   # none of which a skill edit can affect. What it does NOT drop is the
-  # switch itself: ~/.agents/skills is a Home-Manager store link, so a
-  # system generation is still the only way to move it.
+  # switch itself: a rebuild is what re-points `pinned`/`current` at the
+  # new lock; `skills-sync` moves the pointer without one.
   if not $no_update {
     gitway-add ~/.ssh/id_ed25519
     if $skills_only {

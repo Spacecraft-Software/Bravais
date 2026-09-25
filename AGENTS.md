@@ -7,28 +7,6 @@ Authoritative agent context (Standard §5.7). Every agent reads this file;
 
 A flake-based NixOS configuration implementing **The Spacecraft Software Standard** (renamed from "Steelbore Standard" at Standard v1.7). The `mkBravais { host, channel }` function in `flake.nix` generates **per-machine nixosConfigurations**: `bravais-thinkpad` (stable 26.05) and `bravais-thinkpad-unstable` (nixos-unstable), plus a `bravais` alias → stable ThinkPad. The x86-64 march level is pinned inside each machine's host config (the ThinkPad's i7-8665U is x86-64-v3 — no AVX-512), not exploded into a v1–v4 matrix. Adding a machine = drop a `hosts/<machine>/` dir + two output lines in `flake.nix`.
 
-## Technology stack
-
-| Layer | Technology |
-|-------|-----------|
-| OS / package manager | NixOS (nixpkgs stable `nixos-26.05` + unstable `nixos-unstable`) |
-| Configuration format | Nix expressions (`.nix`) |
-| Flake entry point | `flake.nix` |
-| User environment | Home Manager (stable `release-26.05` + unstable) |
-| Declarative Flatpak | `nix-flatpak` |
-| Git SSH transport | `gitway` (Spacecraft Software flake input, tracks `main`) |
-| Agent skill hub | `construct` (Spacecraft Software flake input) |
-| Primary user shell | Nushell (Rust) |
-| Root shell | Brush (Rust, Bash-compatible) |
-| Kernel | XanMod latest (performance-optimized) |
-| Audio | PipeWire (PulseAudio disabled) |
-| DNS | systemd-resolved with DNS-over-TLS + DNSSEC enforced |
-| Containers | Podman (`dockerCompat`), runc default runtime, Youki (Rust) available |
-| Login manager | greetd + tuigreet |
-
-**No traditional language build tools** (Cargo, npm, etc.) build the project
-itself. The project is pure Nix.
-
 ## Build and test commands
 
 ```sh
@@ -56,58 +34,35 @@ Flags shared by all three: `--dry`, `--no-update`, `--update-all` (bare `nix fla
 
 ## Architecture
 
-- **Flake inputs**: nixpkgs (26.05), nixpkgs-unstable, home-manager (release-26.05), home-manager-unstable, nix-flatpak, gitway (`github:Spacecraft-Software/Gitway`, SSH-for-Git), construct (`github:Spacecraft-Software/Construct`), antigravity-nix (`github:UnbreakableMJ/antigravity-nix`, IDE only), rapg (path-flake wrapper at `flakes/rapg/`, since upstream `github:kanywst/rapg` ships no flake), mcp-servers (`github:Spacecraft-Software/mcp-servers`, provides `mcpctl`), vacuum (`github:Spacecraft-Software/Vacuum`, disk-space CLI/TUI), engram (`github:Spacecraft-Software/Engram`, chat memory + the `engram` MCP server), and theme (`github:Spacecraft-Software/Theme`, `flake = false` — the palette family pre-rendered into editor/GTK/KDE/Starship/Nushell formats, consumed by path through `lib/theme-assets.nix`; bump it together with construct, since both carry the same `steelbore.toml`). No third-party DE flakes.
-- **Module namespace**: All opt-in modules use `steelbore.*` with `lib.mkEnableOption`. Toggled in `hosts/common.nix` (shared) and per-machine `hosts/<machine>/default.nix` (hardware toggles + march pin).
+- **Flake inputs**: declared in `flake.nix`, one comment each. Bump `theme` together with `construct` (both carry the same `steelbore.toml`). No third-party DE flakes.
+- **Module namespace**: All opt-in modules use `steelbore.*` with `lib.mkEnableOption`. Toggled in `hosts/common.nix` (shared) and per-machine `hosts/<machine>/default.nix` (hardware toggles + march pin). `hosts/<machine>/default.nix` carries only what is genuinely per-machine (hostName, `steelbore.hardware.*`, CRD, the march pin); every other toggle goes in `hosts/common.nix`.
 - **Color palette**: Standard §11 is a *family* of eleven adoptable palettes (Modern, Classic, and nine alternates — `theme list` names them), plus any local ones in `themes/`. `lib/palette.nix` selects one by slug (`active` in **`theme.nix`**, currently `steelbore` = Steelbore Modern; use `theme set <slug>`, and `theme try <slug>` to build a theme without editing anything) and resolves it to the §11.1 **role** tokens — `background`, `surface`, `surfaceAlt`, `foreground`, `accent`, `structure`, `success`, `error`, `warning`, `info`, `focus`, `border` — threaded as `steelborePalette` via `specialArgs`/`extraSpecialArgs`. **Never name a brand color** (`moltenAmber`, `voidNavy`, …); those identifiers are gone and naming one defeats the whole point — switching palettes is one word in `flake.nix` precisely because no consumer knows which palette is active. Values are read from `steelbore.toml` in the `construct` input, never retyped (§11.4). Roles a palette omits fall back (`info` → `structure` → `accent`, `surface` → `background`, `warning` → `error`, `focus` → `success`). **`surface`/`surfaceAlt` are fills only, never text** (§11.0.1 — Quantum Blue is 1.40:1 on the canvas); putting status-colored text on a surface also drops `structure` and `error` below the 4.5:1 AA floor on Modern, which is why the eww bar and dunst deliberately stay on the canvas.
 - **Theme repository assets**: two rendering paths exist, on purpose. Bravais renders terminals, bars, WMs, the TTY and greetd from role tokens (`lib/terminal-theme.nix` and friends) — that path serves LOCAL themes too. For the formats Bravais never rendered — the VS Code / Antigravity extension, Zed and Lapce themes, libadwaita GTK 4 / GTK 3 named colours, KDE colour schemes, the Starship preset and Nushell's `color_config` — `lib/theme-assets.nix` maps the active slug to the Theme repository's generated file (`themeAssets.<x>`, threaded like `steelborePalette`). Each attribute is `null` for a local theme, and every consumer falls back to the token path (Starship, Nushell) or to the toolkit default (GTK, KDE). Editor themes are installed as the whole family (editors keep their own pickers); the active slug only selects the GTK/KDE/prompt rendering. Never copy a value out of a Theme file into Nix — read the file, or read the token.
 - **Primary user**: `primaryUser = "mj"` is stated once in `flake.nix` and threaded via `specialArgs`/`extraSpecialArgs`; modules use `users.users.''${primaryUser}` / `home-manager.users.''${primaryUser}` — never a literal `mj`. (The `users/mj/` directory name is a stable path, not a restatement.)
 - **Overlays**: Defined inline in `modules/core/nix.nix` — the sole location.
-- **Home Manager**: Single user `mj`, config at `users/mj/home.nix`. Uses `useGlobalPkgs`, `useUserPackages`, `backupFileExtension = "backup"`.
+- **Home Manager**: Single user `mj`, config at `users/mj/home.nix`. Uses `useGlobalPkgs`, `useUserPackages`, `backupFileExtension = "backup"`. One concern per `users/mj/*.nix`; `home.nix` is identity + imports only.
 
 ## File layout
 
+Only the entries that carry a rule; `eza -T --git-ignore` shows the rest, and `flake.nix` names every input.
+
 ```
-flake.nix                  # mkBravais, inputs, palette, per-machine configs
-hosts/common.nix           # Shared host: user, shell, steelbore.* toggles
-hosts/thinkpad/default.nix # ThinkPad: hostName, hardware toggles, march pin (v3)
-hosts/thinkpad/hardware.nix # Generated hardware config
-modules/core/              # Always-on: boot, nix, nix-tmp, locale, audio, security,
-                           #   dns, keyring, memory
-modules/core/nix.nix       # Overlays live here (inline)
-modules/core/nix-tmp.nix   # Loop-mounted /mnt/nix-tmp as builder TMPDIR (off system disk)
-modules/core/dns.nix       # systemd-resolved DoT + DNSSEC (Cloudflare malware-block)
-modules/theme/             # Palette env vars, TTY colors, fonts, dark-mode portal/dconf
-modules/desktops/          # gnome, cosmic, plasma, niri, leftwm (+ shared.nix dunst, assertions.nix guards,
-                           #   niri-unmax.nix, mouse-workspace-nav.nix side-button workspace nav)
-modules/hardware/          # steelbore.hardware.* vendor toggles: android (adb), bluetooth, fingerprint,
-                           #   intel (kvm-intel, microcode), audio-led daemon
-modules/platform/          # steelbore.platform.x86_64: marchLevel + compiler/linker flags (ISA, vendor-neutral)
-modules/login/             # greetd + tuigreet + shell sessions (single default.nix)
-modules/services/          # steelbore.services.*: podman (container runtime),
-                           #   ollama, chrome-remote-desktop
-modules/compat/            # steelbore.compat.*: appimage (binfmt auto-run)
-modules/packages/          # 14 opt-in bundles: ai, browsers, development, editors,
-                           #   flatpak, games, homebrew, multimedia, networking,
-                           #   orca, productivity, security, system, terminals
-users/mj/default.nix       # System user definition (users.users.${primaryUser})
-users/mj/home.nix          # HM core: identity + imports (~90 lines; Phase D split)
-users/mj/{git,shell,terminals,niri,desktop-theme,apps}.nix  # one-concern HM modules
+modules/core/nix.nix       # Overlays live here (inline) — the sole location
+modules/core/nix-tmp.nix   # Builder TMPDIR is a loop image at /mnt/nix-tmp, never /tmp (system-disk fallback; #28)
 users/mj/rebuild.nu        # THE Nushell `rebuild` — one text, used as both the
                            #   config.nu `def` and the `rebuild` binary (shell.nix)
 users/mj/default-apps.nix  # THE ONLY xdg.mimeApps block + the FileManager1 D-Bus shadow
 pkgs/default.nix           # callPackage index — THE list of in-tree packages; also packages.*
 pkgs/<name>/               # One in-tree package each; also a flake output: `nix build .#<name>`
 pkgs/update-vendored.nu    # Bumps the 10 version+hash-pinned upstream packages (see below)
-pkgs/sync-skills.nu        # Skill sync helper
+pkgs/sync-skills.nu        # Rewrites .github/skills/ from the locked construct rev — run after skills-sync (CI: Skills Drift)
 pkgs/preflight/            # THE supported rebuild orchestrator (Rust) — supersedes
                            #   `rebuild` and scripts/rebuild.sh; both now gate on it
 scripts/rebuild.sh         # POSIX/Bash port of `rebuild` (keep ALL THREE in step)
 theme.nix                  # THE ACTIVE THEME — one word; `theme set <slug>` rewrites it
 themes/<slug>.nix          # local themes (filename = slug); `base` to derive, or bind roles
-lib/palette.nix            # §11 palette family: slug -> role tokens + ANSI map + converters
 default-apps.nix           # THE ACTIVE HANDLERS — one word per role; `app set <role> <slug>`
 apps/<slug>.nix            # app drop-ins (filename = slug); may shadow a built-in entry
-lib/default-apps.nix       # handler roles: role -> MIME list, app catalog, resolver
 CONSTRAINTS.md             # Long form of "Known constraints" — read one `### N.` entry at a time
 docs/                      # Long form of AGENTS.md sections: rebuild, skill-pointer, vendored-binaries
 ```
@@ -120,32 +75,16 @@ Root `README.md`, `PRD.md`, `TODO.md`, `Packages.md`, `CHANGELOG.md`,
 `NOTICE.md`, `CONTRIBUTING.md`, `CONSTRAINTS.md` are current and tracked per "Documentation
 maintenance" below — don't confuse the two sets.
 
-## Module design pattern
-
-All opt-in modules follow the `steelbore.*` namespace — `options.steelbore.<area>.<name>`
-declared with `lib.mkEnableOption`, implementation behind `lib.mkIf cfg.enable`.
-Read any file under `modules/` for the shape.
-
-`lib/` holds `palette.nix` (§11 palette family: slug → role tokens + ANSI map +
-format converters), `default-apps.nix` (handler roles → MIME lists, app catalog,
-resolver) and `terminal-theme.nix` (terminal theme record + emitters); the former
-`lib/default.nix` helper was removed for simple cases.
-
-**Host toggles** live in `hosts/common.nix` under the `steelbore` attribute set —
-all 14 package bundles and all 5 desktop environments are enabled there.
-`hosts/thinkpad/default.nix` carries only what is genuinely per-machine:
-`networking.hostName`, the `steelbore.hardware.*` toggles, the CRD service and
-the march pin.
-
 ## First-time bootstrap
 
-Skills come from the `construct` flake input via `construct.homeManagerModules.default` (enabled as `spacecraft.construct` in `home.nix`). Every agent's `~/.<agent>/skills` links to `~/.agents/skills`; `.gemini` is intentionally omitted because Gemini reads `~/.agents/` directly. No manual clone is needed — `/spacecraft-software/construct` exists only for skill authoring.
+Skills come from the `construct` flake input via `construct.homeManagerModules.default` (enabled as `spacecraft.construct` in `home.nix`). The `agentPaths` in `home.nix` (`~/.<agent>/skills`, plus `~/.gemini/config/skills` for Antigravity) are symlinks to `~/.agents/skills`; `~/.gemini/skills` is omitted because Gemini reads `~/.agents/` directly. No manual clone is needed — a local Construct checkout is only for skill authoring.
 
-`~/.agents/skills` is **a pointer, not a store path**: it resolves through `~/.local/state/construct/current` to either `pinned` (the Home Manager link, tracking `flake.lock`) or `built` (a `nix build --out-link`, run ahead of the lock). `skills-sync` bumps `construct`, builds this flake's `.#skills` at the new lock and moves the pointer — no rebuild, no sudo; `skills-status` and `skills-reset` inspect and undo it; `rebuild --skills-only` does it through a full switch. Invariants that are easy to break:
+`~/.agents/skills` is **a real directory of per-skill symlinks, not a store path** (`perSkillLinks.enable`): each Construct entry points through `~/.local/state/construct/current/<skill>`, and `current` aims at either `pinned` (the Home Manager link, tracking `flake.lock`) or `built` (a `nix build --out-link`, run ahead of the lock). Names Construct does not carry stay free for other installers (Orca's three skills) and are never clobbered or pruned. `skills-sync` bumps `construct`, builds this flake's `.#skills` at the new lock and moves the pointer — no rebuild, no sudo; `skills-status` and `skills-reset` inspect and undo it; `rebuild --skills-only` does it through a full switch. `skills-sync` also moves `flake.lock`: follow it with `nu pkgs/sync-skills.nu` and commit both, or the Skills Drift workflow fails the next push (`.github/skills/` is the lock-derived copy the Copilot agent reads). Invariants that are easy to break:
 
 - `current` only ever points at `pinned` or `built` — never at a bare `/nix/store/…` path, which has no GC root and is deleted by the next GC out from under every agent.
 - Every activation re-points `current` at `pinned`; never make that seed conditional, or a later rebuild leaves agents on stale skills silently.
 - `flake.nix` binds `constructSkills` once and hands the same derivation to `packages.skills` and `spacecraft.construct.package`; two separate builds give different store paths for identical trees and report drift forever.
+- Moving `current` changes what every existing link resolves to, but a skill the moved-ahead tree **adds** is not linked, and one it **drops** dangles, until the next activation — `skills-sync` swaps the pointer only.
 
 Agents cache skills at session start, so a mid-session sync is invisible until the harness restarts. The link layout, the reasoning behind each rule and the Grok exception are in **`docs/skill-pointer.md`**.
 
@@ -194,14 +133,9 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 | Layer | Implementation |
 |-------|---------------|
 | Privilege escalation | `sudo-rs` (Rust), `execWheelOnly = true`. Standard `sudo` (C) is disabled. |
-| GUI auth | `polkit` |
-| PGP / signing | Sequoia PGP stack (Rust) — `sequoia-sq`, `sequoia-chameleon-gnupg`, etc. |
 | SSH agent | `gitway-agent` owns `$SSH_AUTH_SOCK` at `${XDG_RUNTIME_DIR}/gitway-agent.sock`. `programs.ssh.startAgent` must stay `false` to avoid racing. `openssh_hpn` remains installed for general SSH workflows. |
-| DNS | `systemd-resolved` with DoT + DNSSEC enforced. Cloudflare malware-blocking primary (`1.1.1.2`), plain Cloudflare fallback (`1.1.1.1`). |
 | Screen lock PAM | `security.pam.services.gtklock = {}` is required — packages shipping `etc/pam.d/<service>` are invisible to PAM without explicit declaration. |
 | Secure Boot | `sbctl` (Rust) installed; not yet enrolled. |
-| Encryption | `age`, `rage` (Rust), `sops` |
-| Secrets manager | `rapg` (local path-flake) for local-first secrets |
 | Fingerprint | `fprintd` + TOD (`libfprint-2-tod1-vfs0090`, locally patched). **Explicit** allow/deny policy in `modules/hardware/fingerprint.nix` — never for session entry (`greetd`, TTY `login`) or anything needing `PAM_OLDAUTHTOK` (`passwd`). `cosmic-greeter` is allowed only while it is merely the lock screen (the module derives this). Fingerprint authenticates; it cannot decrypt. |
 | Keyring | gnome-keyring. Auto-unlocked by the greetd password via `pam_gnome_keyring`; `steelbore-keyring-check` (read-only, runs at session start) and `steelbore-keyring-unlock` (`Mod+Shift+U`, rescue) in `modules/desktops/shared.nix`. The gcr **3** prompter is load-bearing — see constraint #32. |
 

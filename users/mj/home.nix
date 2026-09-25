@@ -39,11 +39,11 @@
   # github:Spacecraft-Software/Construct and symlinks every agent harness at
   # ~/.agents/skills.
   #
-  # Under mutablePointer that path is a symlink to
+  # Under mutablePointer every per-skill link there resolves through
   # ~/.local/state/construct/current rather than straight into the store, so
   # `skills-sync` applies a new skill set in seconds with no rebuild and no
-  # sudo. A rebuild still resets the pointer to whatever flake.lock pins, and
-  # `rebuild` reports the gap when the two disagree.
+  # sudo. A rebuild still resets the pointer to whatever flake.lock pins;
+  # `skills-status` (`construct skill status`) reports when it has moved ahead.
   #
   # Gemini CLI reads ~/.agents/ directly, so ".gemini/skills" stays omitted.
   # Antigravity does NOT — it scans ~/.gemini/config/skills (reached via the
