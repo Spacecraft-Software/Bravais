@@ -23,12 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`AGENTS.md` trimmed to what the code cannot teach.** The technology
   table, the module map, the plain file listing, the flake-input roll call
   and five security rows only restated `flake.nix`, `modules/` and the
-  package lists — and six of those claims were already wrong. 27.0 KB now,
-  16.5% smaller. The skill-pointer prose in `AGENTS.md`,
+  package lists — and six of those claims were already wrong. The
+  skill-pointer prose in `AGENTS.md`,
   `docs/skill-pointer.md` and `users/mj/home.nix` describes the real layout:
   `~/.agents/skills` is a directory of per-skill links (`perSkillLinks`),
-  not one symlink, and a skill a moved-ahead tree *adds* is not linked until
-  the next activation.
+  not one symlink, and a skill a moved-ahead tree *adds* is not linked, and
+  one it *drops* dangles, until the next activation.
 - **Stale pointers repointed.** `CONTRIBUTING.md`, the README Quick Start
   and PRD §16.1 told contributors to run bare `nix flake check`, which
   constraint #17 rules out; they now give the toplevel build, the unstable
@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing
   it used to fail, and clap's did-you-mean offered `--no-update` — the
   opposite request.
+- **REUSE compliance runs in CI.** `.github/workflows/reuse.yml` runs
+  `reuse lint` on every push and pull request. `checks.reuse-lint` in
+  `flake.nix` already existed but only fires under `nix flake check`, which
+  constraint #17 rules out, so it had never run.
 - **The Theme repository is a flake input.** `theme`
   (`github:Spacecraft-Software/Theme`, `flake = false`) ships the §11 palette
   family pre-rendered into formats Bravais never generated itself, and
@@ -328,9 +332,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the other vendored skills. `flake.lock` still pins a pre-rename Construct
   rev; the next `sync-skills` run after a flake bump regenerates the vendored
   tree verbatim.
-
-### Added
-
 - **Vacuum, Engram and crates-mcp are declarative.** All three were
   `cargo install` builds under `~/.cargo/bin`, so a fresh machine reproduced
   none of them. The Engram case was the sharp one: `mcp-servers/mcp.toml`
