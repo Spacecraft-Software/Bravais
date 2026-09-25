@@ -78,7 +78,7 @@ maintenance" below — don't confuse the two sets.
 
 ## First-time bootstrap
 
-Skills come from the `construct` flake input via `construct.homeManagerModules.default` (enabled as `spacecraft.construct` in `home.nix`). The `agentPaths` in `home.nix` (`~/.<agent>/skills`, plus `~/.gemini/config/skills` for Antigravity) are symlinks to `~/.agents/skills`; `~/.gemini/skills` is omitted because Gemini reads `~/.agents/` directly. No manual clone is needed — a local Construct checkout is only for skill authoring.
+Skills come from the `construct` flake input via `construct.homeManagerModules.default` (enabled as `spacecraft.construct` in `home.nix`). `agentPaths` in `home.nix` gives each harness a **mode**: `per-skill` (a real directory of one link per Construct skill) for the four that read only their own directory — Claude Code, Kiro, Qwen, Antigravity (`~/.gemini/config/skills`) — and `none` for the rest (hub readers, or no reader at all); never a directory symlink into the hub (#41). `~/.gemini/skills` is omitted because Gemini CLI reads `~/.agents/` directly. No manual clone is needed — a local Construct checkout is only for skill authoring.
 
 `~/.agents/skills` is **a real directory of per-skill symlinks, not a store path** (`perSkillLinks.enable`): each Construct entry points through `~/.local/state/construct/current/<skill>`, and `current` aims at either `pinned` (the Home Manager link, tracking `flake.lock`) or `built` (a `nix build --out-link`, run ahead of the lock). Names Construct does not carry stay free for other installers (Orca's three skills) and are never clobbered or pruned. `skills-sync` bumps `construct`, builds this flake's `.#skills` at the new lock and moves the pointer — no rebuild, no sudo; `skills-status` and `skills-reset` inspect and undo it; `rebuild --skills-only` does it through a full switch. `skills-sync` also moves `flake.lock`: follow it with `nu pkgs/sync-skills.nu` and commit both, or the Skills Drift workflow fails the next push (`.github/skills/` is the lock-derived copy the Copilot agent reads). Invariants that are easy to break:
 
@@ -188,6 +188,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 38. **Headless Xorg needs the `dummy` and `void` drivers**, which `xorg-server` lacks — the CRD package unions them; `switch-to-configuration` exit 4 means check `systemctl --failed`.
 39. **The fingerprint reader survives S3 only with `power/persist=1`** (udev rule) — never stop fprintd from sleep hooks.
 40. **Keep `dontStrip = true` on github-copilot-app** — strip plus autoPatchelf corrupts the first RELA entry and ld.so aborts, with no build-time signal.
+41. **An agent's skills directory is never a directory symlink into `~/.agents/skills`** — agent-private writes (claude.ai's `synced/`, Codex's `.system/`) land in the shared hub for every other agent to read, and the old pointer guard swept the whole hub aside on every activation; use `agentPaths` modes (`per-skill` / `none`).
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 

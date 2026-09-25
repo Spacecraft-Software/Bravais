@@ -47,6 +47,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `steelbore.hardware.intel.marchLevel`, `v0/`, NixOS 25.11, a retyped
   palette table — contradicted AGENTS.md inside one context window. Only
   the `.github/skills/` vendored-mirror rules remain.
+- **Per-agent skill directories, Vercel-shaped.** `agentPaths` entries carry
+  a mode: `per-skill` gives Claude Code, Kiro, Qwen and Antigravity a real
+  directory of one link per Construct skill; `none` gives Codex, OpenCode,
+  Copilot and the rest — which read `~/.agents/skills` natively — nothing,
+  and removes the directory symlink the old layout made. claude.ai's
+  `synced/` and Codex's `.system/` move into their owners' directories
+  once. CONSTRAINTS.md #41 records why: the symlinks exposed those private
+  trees to every agent, and Construct's pointer guard swept the hub aside
+  on every activation (42 backups, 124 MB). `construct` and `theme` bumped;
+  `.github/skills/` re-vendored (the brand-guidelines frontmatter fix).
 - **Agents list the skill hub once.** OpenCode, Kilo, Mimo and Grok read
   `~/.agents/skills` natively and also scanned `~/.claude/skills` as a
   Claude-compatibility path (Mimo also `~/.codex/skills` and

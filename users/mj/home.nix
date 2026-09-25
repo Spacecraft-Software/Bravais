@@ -2,6 +2,7 @@
 # Steelbore Bravais — Home Manager Configuration
 {
   config,
+  lib,
   pkgs,
   construct,
   constructSkills,
@@ -36,8 +37,8 @@
   ];
 
   # Construct skill hub — installs all cross-platform skills from
-  # github:Spacecraft-Software/Construct and symlinks every agent harness at
-  # ~/.agents/skills.
+  # github:Spacecraft-Software/Construct and wires each agent harness to that
+  # hub per `agentPaths` below: one link per skill, or nothing at all.
   #
   # Under mutablePointer every per-skill link there resolves through
   # ~/.local/state/construct/current rather than straight into the store, so
@@ -71,18 +72,98 @@
     # convenience: it is what makes "pinned vs live" an exact comparison
     # instead of a permanently-drifted one. See `constructSkills` in flake.nix.
     package = constructSkills;
+    # One entry per harness, with the mode its reader needs (CONSTRAINTS.md
+    # #41). `per-skill`: a REAL directory holding one link per Construct
+    # skill, for the four readers that see only their own directory — which
+    # is also what keeps Claude Code's claude.ai `synced/` inside
+    # ~/.claude/skills. `none`: nothing, for readers of ~/.agents/skills
+    # itself (the cross-vendor hub) and for paths no installed agent reads;
+    # it also lets Codex keep `.system/` in its own directory.
+    # Never `dir-symlink`: it exposed those private trees to every agent.
+    # `.gemini/skills` stays omitted; Gemini CLI reads ~/.agents/ directly.
     agentPaths = [
-      ".agent/skills"
-      ".ai/skills"
-      ".aichat/skills"
-      ".claude/skills"
-      ".codex/skills"
-      ".copilot/skills"
-      ".gemini/config/skills"
-      ".opencode/skills"
-      ".openclaude/skills"
+      # readers of their own directory only
+      {
+        path = ".claude/skills";
+        mode = "per-skill";
+      }
+      {
+        path = ".kiro/skills";
+        mode = "per-skill";
+      }
+      {
+        path = ".qwen/skills";
+        mode = "per-skill";
+      }
+      {
+        path = ".gemini/config/skills";
+        mode = "per-skill";
+      } # Antigravity IDE + CLI
+      # readers of ~/.agents/skills; `none` only removes the old symlink
+      {
+        path = ".codex/skills";
+        mode = "none";
+      }
+      {
+        path = ".opencode/skills";
+        mode = "none";
+      }
+      {
+        path = ".copilot/skills";
+        mode = "none";
+      }
+      {
+        path = ".aichat/skills";
+        mode = "none";
+      } # aichat loads no skills at all
+      {
+        path = ".agent/skills";
+        mode = "none";
+      } # no installed reader
+      {
+        path = ".ai/skills";
+        mode = "none";
+      } # no installed reader
+      {
+        path = ".openclaude/skills";
+        mode = "none";
+      } # no installed reader
     ];
   };
+
+  # One-time move of the two agent-private trees that landed in the hub
+  # through the old directory symlinks (CONSTRAINTS.md #41): claude.ai's
+  # `synced/` belongs to Claude Code, Codex's `.system/` to Codex. Runs after
+  # Construct has replaced the symlinks. Each tree moves when its owner's
+  # real directory exists and does not hold one yet; if the owner already
+  # re-created its own (claude.ai re-syncs every ten minutes, Codex rebuilds
+  # `.system/` at start), the hub copy is only the leak and is removed. A
+  # no-op forever after. Not previewable with a dry run: the guards read
+  # real state, and under DRY_RUN the old symlink is still in place.
+  home.activation.steelboreSkillDirMigration =
+    lib.hm.dag.entryAfter [ "spacecraft-construct-agent-symlinks" ]
+      ''
+        hub="$HOME/.agents/skills"
+        claude="$HOME/.claude/skills"
+        if [ -d "$hub/synced" ] && [ -d "$claude" ] && [ ! -L "$claude" ]; then
+          if [ ! -e "$claude/synced" ]; then
+            $DRY_RUN_CMD mv "$hub/synced" "$claude/synced"
+          else
+            echo "steelbore: ~/.claude/skills/synced already exists — removing the hub copy" >&2
+            $DRY_RUN_CMD rm -rf "$hub/synced"
+          fi
+        fi
+        codex="$HOME/.codex/skills"
+        if [ -d "$hub/.system" ] && [ ! -L "$codex" ]; then
+          if [ ! -e "$codex/.system" ]; then
+            $DRY_RUN_CMD mkdir -p "$codex"
+            $DRY_RUN_CMD mv "$hub/.system" "$codex/.system"
+          else
+            echo "steelbore: ~/.codex/skills/.system already exists — removing the hub copy" >&2
+            $DRY_RUN_CMD rm -rf "$hub/.system"
+          fi
+        fi
+      '';
 
   home.username = primaryUser;
   home.homeDirectory = "/home/${primaryUser}";

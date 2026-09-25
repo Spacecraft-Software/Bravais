@@ -422,19 +422,20 @@ in
   # ═══════════════════════════════════════════════════════════════════════════
   # ORCA — re-install the three Orca skills after Orca prunes them
   # ═══════════════════════════════════════════════════════════════════════════
-  # Orca deletes its own skills at startup. Measured 2026-08-26: boot 22:59:58,
-  # home-manager activation finished 23:00:06 having touched nothing, then
+  # The three Orca skills kept vanishing from ~/.agents/skills. Measured
+  # 2026-08-26: boot 22:59:58, home-manager activation at 23:00:06, then
   #
   #   23:01:34  Started Orca.
   #   23:01:38  [skills] scan roots=93 present=12 walked=93 skills=139
   #             ids=home-codex,home-agents,home-claude,...
   #
-  # and 23:01:38 is exactly the mtime of ~/.agents/skills, whose three real
-  # directories (computer-use, orca-cli, orchestration) were gone. `home-agents`
-  # is in that root list, so Orca scanned the shared skills directory and pruned
-  # the entries it does not consider installed. Nothing in this configuration
-  # removes them -- Construct's per-skill-links activation explicitly preserves
-  # real directories, and the timing rules it out anyway.
+  # This was first read as Orca pruning at startup, with the activation
+  # "having touched nothing". Wrong: ~/.agents/skills.pre-pointer.20260826T200006Z
+  # is that activation's 23:00:06, and it holds the three directories. The
+  # remover was Construct's pointer guard, which moved the whole hub aside on
+  # every activation under perSkillLinks (CONSTRAINTS.md #41; fixed in
+  # Construct at 9a7c7bb); 23:01:38 is Orca reinstalling them. The
+  # timer stays as a self-heal for anything else that prunes the hub.
   #
   # This cannot be ordered After= the Orca unit: Orca runs as a TRANSIENT unit
   # named app-orca@<random>.service, launched from

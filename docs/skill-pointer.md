@@ -16,7 +16,8 @@ symlink per Construct skill, each pointing through the mutable pointer:
 ~/.agents/skills/                    real directory, owned by the activation script
 ~/.agents/skills/<skill>          -> ~/.local/state/construct/current/<skill>   # one per Construct skill
 ~/.agents/skills/<other>/            a real directory another installer owns (Orca's three) — ignored: never replaced or pruned
-~/.<agent>/skills                 -> ~/.agents/skills   # the `agentPaths` in home.nix; Antigravity's is ~/.gemini/config/skills
+~/.claude/skills/<skill>          -> ~/.local/state/construct/current/<skill>   # `per-skill` agentPaths: Claude Code, Kiro, Qwen, Antigravity (~/.gemini/config/skills)
+~/.codex/skills, ~/.opencode/skills   nothing from Construct — `none`: those harnesses read ~/.agents/skills themselves
 ```
 
 Pruning removes only links that point INTO the tree whose skill the tree no
@@ -26,14 +27,11 @@ left unlinked. Moving `current` (`skills-sync`) re-targets every existing link
 at once, but a skill the new tree ADDS appears, and one it DROPS stops
 dangling, only at the next activation.
 
-**Known defect at the locked rev (construct 9e42067):** the pointer entry still
-carries the fossil guard from the directory-symlink era — `if [ -d
-~/.agents/skills ] && [ ! -L ~/.agents/skills ]; then mv … skills.pre-pointer.<ts>`
-— and under `perSkillLinks` the hub is exactly that: a real directory. So every
-activation moves the whole hub aside (42 backups, 140 MB by 2026-09-25) and
-rebuilds it with only the Construct links; every foreign entry (Orca's three,
-claude.ai's `synced/`, Codex's `.system/`) vanishes until its owner reinstalls
-it. The fix belongs in the pointer entry, not in the per-skill renderer.
+An agent's own skills directory is never a directory symlink into the hub
+(CONSTRAINTS.md #41 has the full story: agent-private writes leaked into the
+hub, and until Construct 9a7c7bb the pointer entry moved the whole
+hub aside on every activation). `per-skill` directories are rendered by the
+same script as the hub; `none` removes only the symlink this module once made.
 
 | Command | Effect |
 |---------|--------|

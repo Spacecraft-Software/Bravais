@@ -1,6 +1,19 @@
 ---
 name: spacecraft-brand-guidelines
-description: Applies the Spacecraft Software brand — the Steelbore palette family (Standard §11) and the §12 FOSS-licensed typography — to any artifact that should carry the house look: slide decks, diagrams, SVGs, dashboards, marketing pages, READMEs, or UI mockups. Triggers on brand colours, house style, visual formatting, "make this on-brand", token roles (canvas, surface, foreground, accent, structure, status), or the Share Tech Mono / Inconsolata pairing. This skill names tokens and their roles; it never carries values — every hex, RGB triple, and contrast ratio is read from `steelbore-color-palette`'s `assets/steelbore.toml`, the single source (§11.4). Do NOT use it to generate editor or terminal themes (use `spacecraft-theme-factory`), to author documents (use `spacecraft-document-format`), or to pick an accessible variant (use `spacecraft-accessibility-support`).
+description: >-
+  Applies the Spacecraft Software brand — the Steelbore palette family
+  (Standard §11) and the §12 FOSS-licensed typography — to any artifact that
+  should carry the house look: slide decks, diagrams, SVGs, dashboards,
+  marketing pages, READMEs, or UI mockups. Triggers on brand colours, house
+  style, visual formatting, "make this on-brand", token roles (canvas,
+  surface, foreground, accent, structure, status), or the Share Tech Mono /
+  Inconsolata pairing. This skill names tokens and their roles; it never
+  carries values — every hex, RGB triple, and contrast ratio is read from
+  `steelbore-color-palette`'s `assets/steelbore.toml`, the single source
+  (§11.4). Do NOT use it to generate editor or terminal themes (use
+  `spacecraft-theme-factory`), to author documents (use
+  `spacecraft-document-format`), or to pick an accessible variant (use
+  `spacecraft-accessibility-support`).
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/

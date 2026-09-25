@@ -48,8 +48,9 @@
     # kimi-cli.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     # Construct — Spacecraft Software agent skill catalogue (tracks main).
-    # Provides homeManagerModules.default which installs skills into
-    # ~/.agents/skills/ and symlinks every agent harness to it.
+    # Provides homeManagerModules.default, which renders the skill tree into
+    # ~/.agents/skills/ and gives each agent harness either a real directory
+    # of per-skill links or nothing (agentPaths modes, CONSTRAINTS.md #41).
     construct.url = "github:Spacecraft-Software/Construct";
     construct.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
