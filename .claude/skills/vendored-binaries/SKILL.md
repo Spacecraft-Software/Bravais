@@ -1,6 +1,6 @@
 ---
 name: vendored-binaries
-description: How to bump the nine version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, github-copilot-app, adguardvpn-cli, obscura, browseros). Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
+description: How to bump the ten version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, codex-desktop, github-copilot-app, adguardvpn-cli, obscura, browseros). Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
 ---
 
 Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot

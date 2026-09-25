@@ -22,10 +22,9 @@ path = [
     ".github/**",
     "flake.lock",
     "flakes/rapg/flake.lock",
-    "pkgs/steelbore-audio-led/Cargo.lock",
-    "pkgs/steelbore-niri-unmax/Cargo.lock",
+    "**/Cargo.lock",
+    ".claude/**",
     "pkgs/steelbore-niri-unmax/.gitignore",
-    "bravais-mcp/Cargo.lock",
     "bravais-mcp/.gitignore",
     "home.nix",
     "system.nix",
@@ -74,22 +73,42 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
-# Hand-written sources carry SPDX-License-Identifier inline; this stanza
-# supplies the copyright holder for them (aggregate = merged with the
-# in-file license tag), avoiding a 50-file header churn.
+# Vendored COSMIC protocol XML (pop-os/cosmic-protocols; see
+# pkgs/steelbore-cosmic-unmax/src/protocol.rs). Each file carries its own
+# <copyright> block — the upstream authors plus the "Permission to use, copy,
+# modify, distribute, and sell …" grant, which is SPDX HPND-sell-variant, NOT
+# the crate's MIT (upstream's src/LICENSE and Cargo.toml `license` cover the
+# Rust bindings in src/; the repo has no root LICENSE). REUSE already reads the
+# in-file copyright lines, so this supplies the license only, and deliberately
+# no copyright field (Standard §4.2: third-party work keeps its holders). Not
+# edited inline: the XML is a verbatim upstream copy.
+[[annotations]]
+path = ["pkgs/steelbore-cosmic-unmax/protocols/*.xml"]
+precedence = "closest"
+SPDX-License-Identifier = "HPND-sell-variant"
+
+# Hand-written sources carry the license tag inline; this stanza supplies
+# the copyright holder for them (aggregate = merged with the in-file license
+# tag), avoiding a per-file header churn.
 #
-# steelbore-niri-unmax/src/** is listed for the same reason as audio-led's.
-# It was passing `reuse lint` only by accident before: main.rs prints
-# "Copyright (C) 2026 …" in its --version output, and REUSE read that string
-# as the file's copyright notice. Covering it here makes it deliberate, so
-# rewording a println! cannot silently break compliance.
+# Globbed over pkgs/*/ on purpose. Per-crate entries were forgotten twice
+# (preflight, steelbore-beacon, steelbore-cosmic-unmax and steelbore-vpn all
+# landed without one), and two crates were passing `reuse lint` only by
+# accident: preflight's and steelbore-vpn's main.rs print "Copyright (C)
+# 2026 …" in their --version output, and REUSE read that string as the
+# file's copyright notice, so rewording a println! could silently break
+# compliance. A future third-party crate vendored under pkgs/<x>/src/ needs
+# its own `closest` stanza placed AFTER this one (last match wins), exactly
+# as .github/skills/** has above.
 [[annotations]]
 path = [
     "**/*.nix",
-    "pkgs/steelbore-audio-led/src/**",
-    "pkgs/steelbore-audio-led/Cargo.toml",
-    "pkgs/steelbore-niri-unmax/src/**",
-    "pkgs/steelbore-niri-unmax/Cargo.toml",
+    "pkgs/*/src/**",
+    "pkgs/*/Cargo.toml",
+    "pkgs/*/build.rs",
+    "scripts/*.sh",
+    "users/mj/*.nu",
+    "pkgs/*.nu",
     "bravais-mcp/**/*.rs",
     "bravais-mcp/**/*.toml",
 ]

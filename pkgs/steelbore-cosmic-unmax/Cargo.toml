@@ -5,6 +5,8 @@ name = "steelbore-cosmic-unmax"
 version = "0.1.0"
 edition = "2021"
 description = "Un-maximize windows that maximize themselves on open under the COSMIC compositor."
+# The crate's own code. The vendored protocols/*.xml under this directory are
+# HPND-sell-variant (see REUSE.toml and package.nix meta.license).
 license = "GPL-3.0-or-later"
 authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
 

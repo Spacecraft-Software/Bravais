@@ -23,7 +23,10 @@ rustPlatform.buildRustPackage {
 
   meta = {
     description = "Un-maximize windows that maximize themselves on open under the COSMIC compositor";
-    license = lib.licenses.gpl3Plus;
+    # The Rust is GPL; the vendored protocols/*.xml are HPND-sell-variant
+    # (see REUSE.toml). `meta` is not in the .drv, but this file sits inside
+    # `src` (cleanSource ./.), so editing it still rebuilds the crate.
+    license = with lib.licenses; [ gpl3Plus hpndSellVariant ];
     mainProgram = "steelbore-cosmic-unmax";
     platforms = lib.platforms.linux;
   };

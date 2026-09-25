@@ -87,6 +87,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`reuse lint` passes again** (Standard §4.3). Four newer crates
+  (`preflight`, `steelbore-beacon`, `steelbore-cosmic-unmax`,
+  `steelbore-vpn`), `scripts/rebuild.sh`, `users/mj/rebuild.nu`, every
+  `Cargo.lock` and the three project skills had fallen outside
+  `REUSE.toml`; the stanzas are now globs so the next crate cannot. The
+  vendored COSMIC protocol XML is declared under its real upstream license,
+  HPND-sell-variant (the text lands in `LICENSES/`), never relicensed; the
+  three `.claude/skills/` carry the `LICENSE` §5.6 requires; and the
+  AGENTS.md convention line no longer spells the tag REUSE parsed as an
+  invalid expression — it also describes the aggregate-copyright convention
+  the repo actually follows.
 - **Chrome Remote Desktop starts again.** Its headless X server asks for the
   `dummy` video driver and the `void` input driver, neither of which lives in
   `xorg-server`; `ModulePath` pointed only there, so the server died with

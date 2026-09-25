@@ -117,7 +117,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 
 ## Key conventions
 
-- **SPDX headers**: Every `.nix` file starts with `# SPDX-License-Identifier: GPL-3.0-or-later`
+- **SPDX / REUSE**: every hand-written source (`.nix`, `.rs`, `Cargo.toml`, `build.rs`, `.sh`, `.nu`) carries the `GPL-3.0-or-later` license tag inline as its first comment; the copyright tag comes from the copyright-only `aggregate` stanza at the bottom of `REUSE.toml` (globbed over `pkgs/*/`, `pkgs/*.nu`, `scripts/` and `users/mj/`). Header-less files (lockfiles, `.claude/**`, `.github/**`) go in the FIRST stanza, which carries both tags; third-party files keep their own stanza (the vendored protocol XML is HPND-sell-variant). Gate: `nix build --no-link '.#checks.x86_64-linux.reuse-lint'` — the same `reuse` CI builds — must pass (Standard §4.3).
 - **Rust-first**: Prefer memory-safe alternatives (sudo-rs over sudo, Sequoia over GnuPG, Nushell over bash, etc.)
 - **Shells**: User shell = Nushell, root shell = Brush. Bash module stays enabled (PAM requirement) but is not assigned as any user's login shell.
 - **Default terminal**: Alacritty (`Mod+Return`) under Niri and LeftWM. LeftWM *requires* it: rio's wgpu backend renders blank under startx-spawned Xorg (rationale in `modules/desktops/leftwm.nix`). Rio stays installed and themed.
