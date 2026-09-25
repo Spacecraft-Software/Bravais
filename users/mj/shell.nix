@@ -168,6 +168,20 @@ in
     # guarantee; this variable is the safety net for interactive use.
     ENGRAM_DB = "${config.xdg.dataHome}/engram/engram.db";
 
+    # Each agent below reads ~/.agents/skills natively AND scans
+    # ~/.claude/skills as a Claude-compatibility path (Mimo also ~/.codex/skills
+    # and ~/.opencode/skills). Both resolve to the same skills here, so every
+    # skill was listed twice, and the copies claude.ai syncs into
+    # ~/.claude/skills/synced were scanned as a third, stale set. The hub is
+    # the one source; the compatibility scans go off. Cursor and Goose have no
+    # such switch. Variable names verified in each binary (2026-09-25).
+    OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1";
+    KILO_DISABLE_CLAUDE_CODE_SKILLS = "1";
+    MIMOCODE_DISABLE_CLAUDE_CODE_SKILLS = "1";
+    MIMOCODE_DISABLE_CODEX_SKILLS = "1";
+    MIMOCODE_DISABLE_OPENCODE_SKILLS = "1";
+    GROK_CLAUDE_SKILLS_ENABLED = "false";
+
     # bitwarden-cli removed (Flatpak com.bitwarden.desktop used instead)
     # BITWARDENCLI_APPDATA_DIR = "${config.xdg.configHome}/bitwarden-cli";
   };
@@ -602,8 +616,32 @@ in
           ^construct skill sync --build
         }
 
-        # Where the live skill tree stands relative to what flake.lock pins.
-        def skills-status [] { ^construct skill status }
+        # Where the live skill tree stands relative to what flake.lock pins,
+        # then how far the claude.ai copies have fallen behind it. claude.ai
+        # syncs the skills enabled in the account into ~/.claude/skills/synced
+        # one-way, and they are uploaded by hand, so nothing else says when
+        # they go stale (they were 20 commits behind on 2026-09-25). A twin is
+        # a synced skill whose name Construct also carries.
+        def skills-status [] {
+          ^construct skill status
+          let current = ($env.HOME | path join ".local/state/construct/current")
+          let synced = (glob ($env.HOME | path join ".claude/skills/synced/*/*/SKILL.md"))
+          if ($synced | is-empty) { return }
+          let twins = ($synced | each { |f|
+            let name = ($f | path dirname | path basename)
+            let local = ($current | path join $name "SKILL.md")
+            if ($local | path exists) {
+              { name: $name same: ((open --raw $f | hash sha256) == (open --raw $local | hash sha256)) }
+            } else { null }
+          } | compact)
+          let stale = ($twins | where same == false | get name)
+          if ($stale | is-empty) {
+            print $"claude.ai: every SKILL.md of the ($twins | length) synced twins matches the locked Construct tree"
+          } else {
+            print $"(ansi yellow)claude.ai: ($stale | length) of ($twins | length) synced twins have a SKILL.md that differs from the locked Construct tree — re-upload them \(construct skill ship builds the bundles\)(ansi reset)"
+            print ($stale | str join ", ")
+          }
+        }
 
         # Discard a moved pointer — back to the flake-pinned skill tree.
         def skills-reset [] { ^construct skill reset }

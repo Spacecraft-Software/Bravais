@@ -47,6 +47,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `steelbore.hardware.intel.marchLevel`, `v0/`, NixOS 25.11, a retyped
   palette table — contradicted AGENTS.md inside one context window. Only
   the `.github/skills/` vendored-mirror rules remain.
+- **Agents list the skill hub once.** OpenCode, Kilo, Mimo and Grok read
+  `~/.agents/skills` natively and also scanned `~/.claude/skills` as a
+  Claude-compatibility path (Mimo also `~/.codex/skills` and
+  `~/.opencode/skills`), which resolves to the same skills here — every
+  skill appeared twice, and the stale claude.ai copies a third time. Their
+  compatibility scans are now off via `home.sessionVariables`
+  (`OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`, `KILO_DISABLE_CLAUDE_CODE_SKILLS`,
+  `MIMOCODE_DISABLE_{CLAUDE_CODE,CODEX,OPENCODE}_SKILLS`,
+  `GROK_CLAUDE_SKILLS_ENABLED=false`). Cursor and Goose have no switch.
 - **Vendored binaries and flake inputs bumped** — `claude-desktop` and
   `goose-desktop` (versions in `pkgs/*/package.nix`), plus nixpkgs,
   nixpkgs-unstable, home-manager, home-manager-unstable and
@@ -66,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`preflight --full-update`** is a visible alias of `--update-all`. Typing
   it used to fail, and clap's did-you-mean offered `--no-update` — the
   opposite request.
+- **`skills-status` reports claude.ai staleness.** claude.ai syncs the
+  account's skills into `~/.claude/skills/synced` one-way and they are
+  uploaded by hand, so nothing said when they fell behind (20 commits, on
+  2026-09-25). `skills-status` now hashes every synced twin against the
+  locked Construct tree and names the stale ones.
 - **REUSE compliance runs in CI.** `.github/workflows/reuse.yml` runs
   `reuse lint` on every push and pull request. `checks.reuse-lint` in
   `flake.nix` already existed but only fires under `nix flake check`, which
