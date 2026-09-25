@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `AGENTS.md`, `CONSTRAINTS.md`, `docs/` and `CONTRIBUTING.md` and marks
   `ARCHITECTURE.md` as v0 history. `CHANGELOG.md` joins the AGENTS.md
   maintenance list.
+- **`.github/copilot-instructions.md` is a thin overlay over `AGENTS.md`**
+  (Standard §5.7). Every Copilot surface loads both files with no
+  precedence order, so its stale project summary — `git commit -s`,
+  `nix flake check` as the gate, cargo/rustfmt/clippy beside rustup,
+  `steelbore.hardware.intel.marchLevel`, `v0/`, NixOS 25.11, a retyped
+  palette table — contradicted AGENTS.md inside one context window. Only
+  the `.github/skills/` vendored-mirror rules remain.
 - **Vendored binaries and flake inputs bumped** — `claude-desktop` and
   `goose-desktop` (versions in `pkgs/*/package.nix`), plus nixpkgs,
   nixpkgs-unstable, home-manager, home-manager-unstable and
