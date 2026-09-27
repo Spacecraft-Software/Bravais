@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **WaveTerm is no longer installed from nixpkgs.** nixpkgs-unstable removed
+  it (EOL Electron, no maintainer), which broke evaluation of
+  `bravais-thinkpad-unstable`. The AppImage in `~/Applications/` is the
+  installed copy; `/etc/waveterm/config.json` and `wavetermConfig` in
+  `lib/terminal-theme.nix` went with the package.
+
 ### Fixed
 
 - **`nixos-rebuild switch` no longer fails with `No space left on device`

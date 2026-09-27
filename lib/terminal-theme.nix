@@ -439,43 +439,6 @@ in
       }
     '';
 
-  # ── Waveterm (JSON attrset; render with builtins.toJSON) ────────────────
-  wavetermConfig = {
-    term = {
-      fontfamily = theme.font;
-      fontsize = 12;
-      theme = "custom";
-    };
-    themes.custom = {
-      display = {
-        name = "Steelbore";
-        order = 1;
-      };
-      terminal = {
-        background = theme.background;
-        foreground = theme.foreground;
-        cursor = theme.cursor.cursor;
-        selectionBackground = theme.selection.background;
-        black = at theme.ansi.normal 0;
-        red = at theme.ansi.normal 1;
-        green = at theme.ansi.normal 2;
-        yellow = at theme.ansi.normal 3;
-        blue = at theme.ansi.normal 4;
-        magenta = at theme.ansi.normal 5;
-        cyan = at theme.ansi.normal 6;
-        white = at theme.ansi.normal 7;
-        brightBlack = at theme.ansi.bright 0;
-        brightRed = at theme.ansi.bright 1;
-        brightGreen = at theme.ansi.bright 2;
-        brightYellow = at theme.ansi.bright 3;
-        brightBlue = at theme.ansi.bright 4;
-        brightMagenta = at theme.ansi.bright 5;
-        brightCyan = at theme.ansi.bright 6;
-        brightWhite = at theme.ansi.bright 7;
-      };
-    };
-  };
-
   # ── Alacritty (HM settings attrset; named-color records) ────────────────
   alacrittyColors =
     let
