@@ -180,13 +180,32 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
   # new lock; `skills-sync` moves the pointer without one.
   if not $no_update {
     gitway-add ~/.ssh/id_ed25519
-    if $skills_only {
-      nix flake update construct
-    } else if $update_all {
-      # No input names = every input, stable nixpkgs and home-manager included.
-      nix flake update
+    # Anonymous, Nix resolves `github:` inputs through the GitHub API at 60
+    # requests an hour, which a bare `nix flake update` exhausts (HTTP 403,
+    # 2026-09-27). Borrow the gh CLI's keyring token for the update only:
+    # it lives in this one child's environment, never in a file.
+    # `extra-access-tokens` keeps any configured tokens; see docs/rebuild.md.
+    let gh_token = (try {
+      let r = (^gh auth token --hostname github.com | complete)
+      if $r.exit_code == 0 { $r.stdout | str trim } else { "" }
+    } catch { "" })
+    let nix_env = if ($gh_token | is-empty) {
+      print $"(ansi dark_gray)github-token: no `gh auth token`; anonymous GitHub API limit \(60/h\)(ansi reset)"
+      {}
     } else {
-      nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+      let line = $"extra-access-tokens = github.com=($gh_token)"
+      let prior = ($env.NIX_CONFIG? | default "")
+      { NIX_CONFIG: (if ($prior | str trim | is-empty) { $line } else { $"($prior)\n($line)" }) }
+    }
+    with-env $nix_env {
+      if $skills_only {
+        nix flake update construct
+      } else if $update_all {
+        # No input names = every input, stable nixpkgs and home-manager included.
+        nix flake update
+      } else {
+        nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+      }
     }
     # Report only, and only on the full path: --skills-only does not
     # touch this input, and the probe costs a network round trip.
