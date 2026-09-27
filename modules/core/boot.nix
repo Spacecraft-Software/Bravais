@@ -9,6 +9,10 @@
   # Bootloader: systemd-boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # The ESP is 196 MiB and each XanMod kernel+initrd pair is ~54 MiB, so it
+  # holds three and no more; the installer prunes entries beyond the limit
+  # BEFORE copying the new kernel (constraint #42).
+  boot.loader.systemd-boot.configurationLimit = 3;
 
   # Kernel: XanMod Latest (performance-optimized)
   boot.kernelPackages = pkgs.linuxPackages_xanmod_latest;

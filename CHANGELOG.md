@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`nixos-rebuild switch` no longer fails with `No space left on device`
+  in the bootloader step.** The 196 MiB EFI partition kept every
+  generation's XanMod kernel and initrd (~54 MiB a pair) and filled on the
+  fourth; `boot.loader.systemd-boot.configurationLimit = 3` prunes old
+  entries before the new kernel is copied (constraint #42).
+
 ### Changed
 
 - **`AGENTS.md` is split so every agent can read all of it.** It had grown

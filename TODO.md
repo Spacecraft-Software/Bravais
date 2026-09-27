@@ -27,6 +27,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] **`default.nix`**: Core module entry point with imports
 - [✓] **`boot.nix`**: systemd-boot configuration, EFI variables writable
+- [✓] **`boot.nix`**: `configurationLimit = 3` so the 196 MiB ESP never fills (constraint #42)
 - [✓] **`boot.nix`**: XanMod kernel (`linuxPackages_xanmod_latest`)
 - [✓] **`boot.nix`**: bootloader + kernel choice only — module lists moved to their owners (initrd modules: generated `hardware.nix`; `kvm-intel`: `hardware/intel.nix`) in Phase B of the elegance plan
 - [✓] **`nix.nix`**: Enable flakes and nix-command
