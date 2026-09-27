@@ -31,7 +31,6 @@ in
       ptyxis
       # GNOME terminal (VTE-based) — host install so
       #   distrobox/container integration works out-of-box.
-      waveterm # AI-native terminal
       warp-terminal # AI-powered terminal
       termius # SSH client
       cosmic-term # COSMIC terminal
@@ -118,12 +117,6 @@ in
         padding: 10px;
       }
     '';
-
-    # ═══════════════════════════════════════════════════════════════════════════
-    # WAVETERM — AI-native terminal
-    # Uses JSON configuration
-    # ═══════════════════════════════════════════════════════════════════════════
-    environment.etc."waveterm/config.json".text = builtins.toJSON tt.wavetermConfig;
 
     # ═══════════════════════════════════════════════════════════════════════════
     # WARP TERMINAL — AI-powered terminal

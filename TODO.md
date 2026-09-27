@@ -203,7 +203,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install Rust terminals (Alacritty, WezTerm, Rio, Warp)
 - [✓] Install Ghostty (Zig)
 - [✓] Install GTK/VTE terminals (Ptyxis, GNOME Console)
-- [✓] Install AI-native terminals (WaveTerm)
+- [✓] Install AI-native terminals (WaveTerm) — now an AppImage in `~/Applications/`; nixpkgs removed it (EOL Electron)
 - [✓] Install KDE terminals (Konsole, Yakuake)
 - [✓] Install other terminals (Foot, XTerm, XFCE4 Terminal, Termius, COSMIC Term)
 - [✓] Write system-level configs for all 15 terminals with Steelbore theme

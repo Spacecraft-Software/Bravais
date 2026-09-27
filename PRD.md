@@ -912,7 +912,7 @@ All terminals are themed with the Steelbore palette. Both system-level and user-
 | Rio            | Rust     | Primary    |
 | Ghostty        | Zig      | Primary    |
 | Ptyxis         | C (VTE)  | GNOME — nixpkgs (host install for distrobox integration) |
-| WaveTerm       | Go       | AI-native  |
+| WaveTerm       | Go       | AI-native — AppImage in `~/Applications/`, not Nix (removed from nixpkgs: EOL Electron) |
 | Warp           | Rust     | AI-powered |
 | Termius        | Various  | SSH client |
 | COSMIC Term    | Rust     | COSMIC     |
@@ -939,7 +939,6 @@ Each terminal has a system-level config placed in `/etc/` with the full Steelbor
 | COSMIC Term    | `/etc/cosmic/com.system76.CosmicTerm/v1/default_profile`   | RON |
 | COSMIC Term    | `~/.config/cosmic/com.system76.CosmicTerm/v1/{profiles,default_profile}` (HM, `force`; the layer that actually applies — cosmic-config user keys win over `/etc`) | RON |
 | Ptyxis/VTE     | `/etc/gtk-4.0/gtk.css`                           | CSS     |
-| WaveTerm       | `/etc/waveterm/config.json`                      | JSON    |
 | Warp           | `/etc/warp/themes/steelbore.yaml`                | YAML    |
 | Konsole        | `/etc/xdg/konsole/Steelbore.colorscheme`         | INI     |
 | Konsole        | `/etc/xdg/konsole/Steelbore.profile`             | INI     |
