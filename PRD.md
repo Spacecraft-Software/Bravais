@@ -397,7 +397,7 @@ Set via `console.colors` -- 16 hex values without `#` prefix, in order: normal 0
 
 ### 5.2 Boot (`modules/core/boot.nix`)
 
-- **Bootloader:** systemd-boot, EFI variables writable
+- **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs (CONSTRAINTS.md #42)
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
 - **Module lists:** none here — one owner per fact (initrd modules: generated `hosts/<machine>/hardware.nix`; `kvm-intel`: `modules/hardware/intel.nix`)
 
