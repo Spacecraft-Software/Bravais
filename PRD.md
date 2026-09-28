@@ -82,7 +82,7 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Containers: Podman, AppImage (§12.1, §12.4) | Implemented | `docker` alias and AppImage binfmt checks open (TODO Phase 10) |
 | Vendored upstream binaries (§16.4) | Implemented | `pkgs/update-vendored.nu` |
 | Boot splash and startup sound (§5.2) | Implemented | builds and fits the ESP budget (CONSTRAINTS.md #43); not yet seen on a real boot (TODO Phase 10) |
-| Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`), not yet enrolled |
+| Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`); key enrollment open in TODO.md Phase 6 |
 | Waydroid (§12.7) | Planned | `waydroid init`, Niri start and APK install open (TODO.md) |
 | KDE Connect pairing | Planned | firewall ports 1714–1764 and daemon choice open (TODO.md) |
 | `gitway biometric` enrollment | Planned | open in TODO.md, after a healthy login keyring |

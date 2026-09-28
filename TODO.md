@@ -125,14 +125,14 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `steelbore.desktops.niri` option
 - [✓] Enable Niri compositor
-- [✓] Install companion packages (14: swaybg, xwayland-satellite, ironbar, waybar, etc.)
+- [✓] Install companion packages (xwayland-satellite, eww, anyrun, dunst, gtklock, swayidle, wl-clipboard, grim, slurp, swayosd, etc. — list in `modules/desktops/niri.nix`)
 - [✓] Write Niri config with Steelbore palette (single source: `~/.config/niri/config.kdl` via `users/mj/home.nix`; niri prefers the user config over `/etc/niri`)
-- [✓] Write `/etc/ironbar/config.yaml` and `/etc/ironbar/style.css`
+- [✓] eww bar (`users/mj/eww.nix`, shared with LeftWM) — replaced Ironbar; dunst replaced wired
 - [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → alacritty (default terminal)
 - [✓] Configure workspaces 1-5
 - [✓] Global `window-rule { open-maximized false; open-maximized-to-edges false; }` — Chrome/Cursor/Electron clients persist their own "was maximized" state and re-request it every launch, overriding `default-column-width`. Since niri 25.11 that request maps to "maximized to edges", refused only by `open-maximized-to-edges false` (`open-maximized false` alone is a no-op for it). `open-fullscreen` left unset so media players can still launch fullscreen.
 - [✓] `steelbore-niri-unmax` daemon (`pkgs/steelbore-niri-unmax/`, `modules/desktops/niri-unmax.nix`) — the `open-*` rules above are **map-time only**: Chrome maps at tile size, then requests maximize ~0.5–1 s later (measured 2026-07-25: 756x816 → 1536x832), which niri honours; `max-width` doesn't cap it either (tested live). The Rust daemon watches the niri event stream and toggles maximized-to-edges back off for windows inside a 3 s post-open grace window (settle 200 ms + re-confirm, since the action is a toggle). Manual maximizes are never touched (verified live). Geometric detection needs `gaps > 0`; fullscreen stays exempt.
-- [✓] Configure startup applications (swaybg, ironbar, wired)
+- [✓] Configure startup applications (wallpaper daemon, eww bar, dunst, swayosd-server, swayidle, gitway-add, polkit agent, keyring check — `spawn-at-startup` in `users/mj/niri.nix`)
 - [✓] Output scale pinned to 1.0 on `eDP-1` (auto chose 1.25) + live stepper `Mod+Shift+Minus/Equal` (`steelbore-output-scale`, Nushell, temporary until the next config reload)
 - [✓] Idle management: swayidle (auto gtklock + screen-off via `niri msg action power-off-monitors`, lock before-sleep) + Caffeine toggle `Mod+Shift+C` (`steelbore-caffeine` SIGSTOP/SIGCONTs swayidle)
 - [✓] Configure input (keyboard `us,ar` with `grp:ctrl_space_toggle`, touchpad)
@@ -208,7 +208,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install AI-native terminals (WaveTerm) — now an AppImage in `~/Applications/`; nixpkgs removed it (EOL Electron)
 - [✓] Install KDE terminals (Konsole, Yakuake)
 - [✓] Install other terminals (Foot, XTerm, XFCE4 Terminal, Termius, COSMIC Term)
-- [✓] Write system-level configs for all 15 terminals with Steelbore theme
+- [✓] Theme every installed terminal from `lib/terminal-theme.nix` (system-level `/etc/` configs where the format allows; Rio at user level, GNOME Console/Ptyxis via dconf)
 
 ### editors.nix
 
@@ -248,6 +248,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install pika-backup (Rust, Borg frontend)
 - [✓] Install sydbox (process sandboxing)
 - [✓] Install sbctl (Secure Boot)
+- [ ] Enroll Secure Boot keys with `sbctl` (create + enroll, sign the systemd-boot/kernel images) — installed but never enrolled
 
 ### networking.nix
 
@@ -403,7 +404,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`home.nix`**: Configure Nushell with aliases (telemetry, steelbore banner)
 - [✓] **`home.nix`**: Configure Ion shell init (`~/.config/ion/initrc`) with aliases
 - [✓] **`home.nix`**: Configure Alacritty with Steelbore colors (via `programs.alacritty`)
-- [✓] **`home.nix`**: Write user-level XDG configs (niri, ironbar, wezterm, rio, ghostty, foot, xfce4-terminal, konsole, yakuake, xresources)
+- [✓] **`home.nix`**: Write user-level XDG configs (niri, eww, wezterm, rio, ghostty, foot, xfce4-terminal, konsole, yakuake, xresources)
 - [✓] **`home.nix`**: Configure dconf settings (Ptyxis profile, GNOME Console)
 - [✓] **`home.nix`**: Configure containers (`~/.config/containers/containers.conf`, runc default)
 
@@ -445,7 +446,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify LeftWM session boots with the eww bar and dunst
 - [✓] Verify greetd/tuigreet login with session selection
 - [✓] Verify Steelbore palette on TTY
-- [~] Verify Steelbore palette on all themed terminals (15)
+- [~] Verify Steelbore palette on all themed terminals
 - [ ] Verify Steelbore palette on both eww bars (Niri and LeftWM) and dunst
 - [ ] Verify sudo-rs works for privilege escalation
 - [✓] Verify fingerprint authentication (fprintd)
@@ -461,7 +462,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **README.md**: Project overview and quick start
 - [✓] **ARCHITECTURE.md**: System diagrams and data flow
 - [✓] **TODO.md**: Implementation checklist (this file)
-- [✓] **PRD.md**: Product requirements (v3.0)
+- [✓] **PRD.md**: Product requirements (v3.2, 2026-09-28 — refreshed against the tree)
 - [✓] **AGENTS.md split** (2026-09-24): 88.4k → 31.7 KB, under Claude
       Code's 40k warning and Codex's 32 KiB read limit. The forty constraints
       moved verbatim to **CONSTRAINTS.md** (same numbers; AGENTS.md keeps one
@@ -688,18 +689,22 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| 1. Foundation | Complete | 12/12 |
-| 2. Core Modules | Complete | 20/20 |
-| 3. Theme Engine | Complete | 9/9 |
+| 1. Foundation | Complete | 14/14 |
+| 2. Core Modules | Complete | 31/31 |
+| 3. Theme Engine | Complete | 8/8 |
 | 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 33/33 |
-| 6. Package Modules | Complete | 73/73 |
-| 7. Hardware Modules | Complete | 8/8 |
-| 8. Host & User Config | Complete | 26/26 |
-| 9. Overlays | Complete | 2/2 |
-| 10. Testing | In Progress | 2/22 |
-| 11. Documentation | Complete | 4/4 |
-| **Total** | **91%** | **191/211** |
+| 5. Desktop Environments | Complete | 45/45 |
+| 6. Package Modules | In Progress | 134/141 |
+| 7. Hardware Modules | Complete | 12/12 |
+| 8. Host & User Config | Complete | 35/35 |
+| 9. Overlays | Complete | 4/4 |
+| 10. Testing | In Progress | 13/21 |
+| 11. Documentation | Complete | 5/5 |
+| **Total** | **95%** | **306/321** |
+
+Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
+excluded); the dated sections after Phase 11 track their own follow-ups and
+are not counted here.
 
 ---
 
