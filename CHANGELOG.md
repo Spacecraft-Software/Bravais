@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The Niri wallpaper is now
+  `~/Pictures/Wallpapers/Steelbore/Gemini_Generated_Image_6t0x936t0x936t0x.jpeg`**
+  (was `Steelbore_wallpaper_blue.png`). The solid-background fallback is
+  unchanged.
+
 ### Removed
 
 - **WaveTerm is no longer installed from nixpkgs.** nixpkgs-unstable removed

@@ -139,7 +139,7 @@ in
       // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
       // fall back to the solid Void Navy fill if it's ever missing.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
-      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Steelbore_wallpaper_blue.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
+      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Gemini_Generated_Image_6t0x936t0x936t0x.jpeg || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
       // OSD daemon for the dedicated brightness/volume keys (binds below).
