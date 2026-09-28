@@ -39,6 +39,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `ollama` moved to the versions pinned in their `pkgs/<name>/package.nix`.
   `.github/skills/` is re-synced to the new `construct` lock.
 
+- **`PRD.md` refreshed to v3.2 to match the current tree.** The palette
+  sections describe the Standard §11.1 role tokens resolved by
+  `lib/palette.nix` rather than named colours, Niri is documented with its
+  eww bar and dunst notifier, the x86-64 march level is pinned per machine
+  in its host config rather than built as a v1–v4 matrix, and the flake
+  inputs and directory layout follow `flake.nix` and the tree. A new §16
+  Operations & Tooling covers rebuild, skills delivery, the theme and app
+  registries and the vendored binaries; the Verification Plan moves to §17,
+  whose session checks now test running units and processes instead of
+  `--version`. §1 gains audience, supported hardware, workflows, non-goals
+  and a per-area implemented / verified / planned status table, and
+  operational detail that duplicated `AGENTS.md`, `docs/` and
+  `CONSTRAINTS.md` is replaced by pointers.
+
 - **The Niri wallpaper is now
   `~/Pictures/Wallpapers/Steelbore/Gemini_Generated_Image_6t0x936t0x936t0x.jpeg`**
   (was `Steelbore_wallpaper_blue.png`). The solid-background fallback is
