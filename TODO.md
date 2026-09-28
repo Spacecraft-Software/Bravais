@@ -67,6 +67,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
+- [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`users/mj/startup-sound.nix`**: once-per-boot startup sound at the first graphical login
 - Note: to change fonts later, follow the "Changing fonts" section in `AGENTS.md` (procedure: the `changing-fonts` skill in `.claude/skills/`)
 
 ---
@@ -450,6 +452,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify Podman with `docker` compat alias
 - [✓] Verify Flatpak apps install from Flathub
 - [ ] Verify AppImage binfmt execution
+- [ ] Verify the Plymouth boot animation renders on a real boot, and the startup sound plays once per boot
 
 ---
 
@@ -687,16 +690,16 @@ This document tracks the implementation status of the Bravais NixOS distribution
 |-------|--------|----------|
 | 1. Foundation | Complete | 12/12 |
 | 2. Core Modules | Complete | 20/20 |
-| 3. Theme Engine | Complete | 7/7 |
+| 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
 | 5. Desktop Environments | Complete | 33/33 |
 | 6. Package Modules | Complete | 73/73 |
 | 7. Hardware Modules | Complete | 8/8 |
 | 8. Host & User Config | Complete | 26/26 |
 | 9. Overlays | Complete | 2/2 |
-| 10. Testing | In Progress | 2/21 |
+| 10. Testing | In Progress | 2/22 |
 | 11. Documentation | Complete | 4/4 |
-| **Total** | **91%** | **189/208** |
+| **Total** | **91%** | **191/211** |
 
 ---
 

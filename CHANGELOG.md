@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Boot animation.** A Plymouth theme (`pkgs/steelbore-plymouth`,
+  `steelbore.boot.splash`) plays `assets/boot/splash.mp4` once, without
+  its audio, from early boot until the login screen, on the active
+  palette's canvas. The clip is cut to 12 fps, 640 px frames (~3 MiB) to
+  fit the ESP (constraint #43), and initrds are now compressed at zstd
+  level 19. Boot messages are hidden (`quiet splash`). The splash draws on
+  `simpledrm` from the first kernel second; `i915` takes the display over
+  later in boot, which may show as a brief flicker.
+- **Startup sound.** `assets/boot/startup-sound.mp3` plays once per boot
+  at the first graphical login (Niri, GNOME, COSMIC, Plasma; not LeftWM),
+  via the `steelbore-startup-sound` user service. Stop it with
+  `systemctl --user stop steelbore-startup-sound`.
+
 - **`preflight`, `rebuild` and `scripts/rebuild.sh` authenticate the flake
   update to GitHub.** Anonymous `github:` lookups are capped at 60 an hour,
   and `--update-all` ran out mid-update with `HTTP error 403`. The `gh`
