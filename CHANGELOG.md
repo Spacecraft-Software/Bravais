@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`preflight`, `rebuild` and `scripts/rebuild.sh` authenticate the flake
+  update to GitHub.** Anonymous `github:` lookups are capped at 60 an hour,
+  and `--update-all` ran out mid-update with `HTTP error 403`. The `gh`
+  CLI's keyring token is handed to `nix flake update` alone, as a
+  `NIX_CONFIG` `extra-access-tokens` entry, and is never written to a file
+  or printed. Without `gh` the update runs anonymously, as before.
+
 ### Changed
 
 - **The Niri wallpaper is now

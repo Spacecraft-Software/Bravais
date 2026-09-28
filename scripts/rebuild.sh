@@ -166,13 +166,31 @@ fi
 # moves the pointer without one.
 if [ "$no_update" -eq 0 ]; then
     gitway-add "$HOME/.ssh/id_ed25519"
+    # Anonymous, Nix resolves `github:` inputs through the GitHub API at 60
+    # requests an hour, which a bare `nix flake update` exhausts (HTTP 403,
+    # 2026-09-27). Borrow the gh CLI's keyring token for the update only:
+    # it lives in this one child's environment, never in a file.
+    # `extra-access-tokens` keeps any configured tokens; see docs/rebuild.md.
+    gh_token=$(gh auth token --hostname github.com 2>/dev/null || true)
+    if [ -z "$gh_token" ]; then
+        dim "github-token: no \`gh auth token\`; anonymous GitHub API limit (60/h)"
+    fi
+    flake_update() {
+        if [ -n "$gh_token" ]; then
+            gh_line="extra-access-tokens = github.com=$gh_token"
+            NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
+}$gh_line" nix flake update "$@"
+        else
+            nix flake update "$@"
+        fi
+    }
     if [ "$skills_only" -eq 1 ]; then
-        nix flake update construct
+        flake_update construct
     elif [ "$update_all" -eq 1 ]; then
         # No input names = every input, stable nixpkgs and home-manager included.
-        nix flake update
+        flake_update
     else
-        nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+        flake_update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
 
         # Antigravity staleness probe. Updating the INPUT cannot move the
         # version pins inside it (artifacts/versions.json), so a rebuild can

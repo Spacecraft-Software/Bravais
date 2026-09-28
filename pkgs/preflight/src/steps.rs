@@ -196,6 +196,7 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         );
         let mut cmd = Command::new("nix");
         cmd.args(["flake", "update"]).current_dir(FLAKE_DIR);
+        github_token(&mut r, &mut cmd);
         // No input arguments at all is what makes `nix flake update` bump
         // every input, so `--update-all` adds nothing to the command line.
         if opts.skills_only {
@@ -567,6 +568,44 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
             Some(format!("{dirty} drifted")),
         );
     }
+}
+
+/// Hand `cmd` the `gh` CLI's GitHub token as a Nix `access-tokens` entry.
+///
+/// Unauthenticated, Nix resolves every `github:` input through the GitHub
+/// REST API at 60 requests an hour per IP, and a bare `nix flake update`
+/// (`--update-all`) spends that in one run: 2026-09-27 died with
+/// `HTTP error 403 ... API rate limit exceeded` on `nixpkgs-unstable`.
+/// Authenticated, the limit is 5000.
+///
+/// The token comes from `gh auth token` (the keyring) on every run and lives
+/// only in this child's environment -- never in a file, the store, the step
+/// report or the log. `extra-access-tokens` appends to any configured tokens
+/// instead of replacing them, and an inherited `NIX_CONFIG` is kept. Never
+/// fatal: without `gh`, or logged out, the update runs anonymously as before.
+fn github_token(r: &mut Runner, cmd: &mut Command) {
+    let token = Command::new("gh")
+        .args(["auth", "token", "--hostname", "github.com"])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned())
+        .filter(|t| !t.is_empty());
+    let Some(token) = token else {
+        r.record(
+            "github-token",
+            Outcome::Skipped,
+            Some("no `gh auth token`; anonymous GitHub API limit (60/h)".into()),
+        );
+        return;
+    };
+    let line = format!("extra-access-tokens = github.com={token}");
+    let config = match std::env::var("NIX_CONFIG") {
+        Ok(prior) if !prior.trim().is_empty() => format!("{prior}\n{line}"),
+        _ => line,
+    };
+    cmd.env("NIX_CONFIG", config);
+    r.record("github-token", Outcome::Ok, Some("from gh".into()));
 }
 
 /// Warn when antigravity-nix pins an IDE older than what Google ships.
