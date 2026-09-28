@@ -122,7 +122,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 - **Shells**: User shell = Nushell, root shell = Brush. Bash module stays enabled (PAM requirement) but is not assigned as any user's login shell.
 - **Default terminal**: Alacritty (`Mod+Return`) under Niri and LeftWM. LeftWM *requires* it: rio's wgpu backend renders blank under startx-spawned Xorg (rationale in `modules/desktops/leftwm.nix`). Rio stays installed and themed.
 - **Default editor**: msedit (`EDITOR`/`VISUAL` in home.nix)
-- **Terminal configs**: All 15 terminals get Steelbore-themed system-level configs in `/etc/` with Nushell as shell
+- **Terminal configs**: Every terminal in `modules/packages/terminals.nix` is themed from `lib/terminal-theme.nix` — system-level configs in `/etc/` with Nushell as shell where the format allows (Rio at user level; Ptyxis/GNOME Console via dconf). Don't restate a count; WaveTerm is an AppImage outside Nix
 - **ISO 8601**: All date/time displays use `%Y-%m-%d %H:%M:%S` 24h format
 - **Niri binds**: primary binds get `hotkey-overlay-title="..."` so they appear in `show-hotkey-overlay`; silent aliases (vim moves, mouse wheel, individual workspace 2-5 numbers) omit the title to keep the overlay readable.
 - **`unstablePkgs` for always-latest / unstable-only packages**: `flake.nix` re-instantiates `nixpkgs-unstable` with `config.allowUnfree = true` and threads it into modules and HM via `specialArgs`/`extraSpecialArgs`. Active uses: `uv` (development.nix), `steam-run` (system.nix), `code-cursor-fhs` and `kiro-fhs` (editors.nix). Reach for `unstablePkgs.<name>` whenever a package is unstable-only on 26.05 or whenever stable's version lags meaningfully behind upstream.
