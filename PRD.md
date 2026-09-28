@@ -81,6 +81,7 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Security: sudo-rs, keyring, fingerprint (§5.5, §5.6, §6.1) | Implemented | fingerprint verified by hand; sudo-rs check open (TODO Phase 10) |
 | Containers: Podman, AppImage (§12.1, §12.4) | Implemented | `docker` alias and AppImage binfmt checks open (TODO Phase 10) |
 | Vendored upstream binaries (§16.4) | Implemented | `pkgs/update-vendored.nu` |
+| Boot splash and startup sound (§5.2) | Implemented | builds and fits the ESP budget (CONSTRAINTS.md #43); not yet seen on a real boot (TODO Phase 10) |
 | Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`), not yet enrolled |
 | Waydroid (§12.7) | Planned | `waydroid init`, Niri start and APK install open (TODO.md) |
 | KDE Connect pairing | Planned | firewall ports 1714–1764 and daemon choice open (TODO.md) |
