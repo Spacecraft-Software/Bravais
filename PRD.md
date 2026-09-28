@@ -73,7 +73,7 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Niri configuration (§9.4) | Verified | `checks.niri-config` runs `niri validate` on the rendered `config.kdl` — run manually per §17.1; not in CI |
 | `.github/skills/` Copilot copy (§16.2) | Verified | `.github/workflows/skills-drift.yml` runs `sync-skills.nu --check` |
 | Skills delivery via Home Manager (§16.2) | Implemented | `spacecraft.construct` in `users/mj/home.nix`; `docs/skill-pointer.md` |
-| Rebuild orchestrator `preflight` (§16.1) | Verified | `buildRustPackage` runs its unit tests at build time (`pkgs/preflight/`) |
+| Rebuild orchestrator `preflight` (§16.1) | Implemented | in daily use; its unit tests run at build time (`pkgs/preflight/`), but no `checks.*` output or CI workflow gates it |
 | Role-token theming and theme registry (§2.2, §4, §16.3) | Implemented | `lib/palette.nix`, `theme.nix`, `themeSystems` |
 | Default-application registry (§2.6) | Implemented | `lib/default-apps.nix`, `default-apps.nix` |
 | Desktop sessions and login (§8, §9) | Implemented | GNOME, COSMIC, Plasma boots checked by hand; Niri partial ([~]); LeftWM unchecked (TODO Phase 10) |
