@@ -438,15 +438,15 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Run `nixos-rebuild build --flake .#bravais-thinkpad` successfully
 - [✓] Run `nixos-rebuild switch --flake .#bravais-thinkpad` successfully
 - [✓] Verify unstable channel build (`nixos-rebuild build --flake .#bravais-thinkpad-unstable`)
-- [~] Verify Niri session boots with Ironbar
+- [~] Verify Niri session boots with the eww bar and dunst
 - [✓] Verify COSMIC session boots with panel
 - [✓] Verify GNOME session boots on Wayland
 - [✓] Verify KDE Plasma 6 session boots on Wayland
-- [ ] Verify LeftWM session boots with Polybar
+- [ ] Verify LeftWM session boots with the eww bar and dunst
 - [✓] Verify greetd/tuigreet login with session selection
 - [✓] Verify Steelbore palette on TTY
 - [~] Verify Steelbore palette on all themed terminals (15)
-- [ ] Verify Steelbore palette on Ironbar and Polybar
+- [ ] Verify Steelbore palette on both eww bars (Niri and LeftWM) and dunst
 - [ ] Verify sudo-rs works for privilege escalation
 - [✓] Verify fingerprint authentication (fprintd)
 - [ ] Verify Podman with `docker` compat alias
