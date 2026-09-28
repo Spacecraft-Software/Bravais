@@ -14,6 +14,18 @@ drive everything below:
 Provisioning policy lives in `spacecraft-missing-pkg`; shell syntax lives in
 `spacecraft-cli-shell`. This file does not restate either.
 
+**This file is written for local-host.** Classify the session first (Step −1,
+`execution-context.md`). **disposable-sandbox** needs a positive hosted marker
+(`CLAUDE_CODE_REMOTE=true`, or the harness or user stating a hosted sandbox)
+with no Nix/Guix, no local-container marker, and no personal login shell; a
+container signal alone — a local devcontainer, Codespace, toolbox, distrobox —
+is local-host. In a disposable-sandbox fact 3 does not hold for package and
+tool installs or scratch state outside the working tree (the repo checkout and
+its git history still count — §3), and every probe below describes the
+sandbox, not the user. In **no-execution** mode nothing below is run — emit
+the preferred form for the user's login shell, always with a one-line
+fallback note.
+
 ---
 
 ## 1. The availability probe
@@ -48,9 +60,14 @@ concluding a tool is genuinely absent.
 | present | — | Substitute | `rg "TODO" src/` |
 | present | absent | Substitute — the only option | `jaq '.name' pkg.json` where `jq` was never installed |
 | absent | present | Legacy + note | `dig +short example.com A  # preferred: dog` |
-| absent | absent | Ephemeral run via `spacecraft-missing-pkg` | `nix run nixpkgs#dog -- example.com A` |
+| absent | absent | Ephemeral run via `spacecraft-missing-pkg` | `nix run nixpkgs#dog -- example.com A` (local-host) |
 
-Never install a tool just to satisfy a preference. Falling back with a note
+In a **disposable-sandbox** the two `absent` rows change: Nix/Guix are not
+there, and the sandbox's own manager (`apt`, `pip`, `npm`, `cargo`, `gem`,
+`go`) may install the preferred tool without consent — nothing outlives the
+session. Prefer `npx` / `uvx` / `pipx run` for a one-shot. Do not assume root.
+
+On local-host: never install a tool just to satisfy a preference. Falling back with a note
 costs the user nothing; a durable install costs them disk, drift, and a cleanup
 task they didn't ask for.
 
@@ -60,7 +77,8 @@ task they didn't ask for.
 
 Never launch these in the agent's shell. When the goal is **information**, use
 the headless alternative. When the goal is **interaction**, hand the command to
-the user with the `!` prefix and let it run in their terminal.
+the user and let it run in their terminal — a fenced block for their login
+shell; in the Claude Code CLI, suggest the `!` prefix.
 
 | Tool | Why it needs a TTY | Headless alternative |
 |---|---|---|
@@ -82,12 +100,15 @@ the user with the `!` prefix and let it run in their terminal.
 | `viu` | Sixel/kitty graphics | — hand off; the transcript can't render it |
 | `claude`, `aichat`, `gemini`, `codex`, `grok`, `kimi`, `kiro`, `opencode`, `minimax` | Interactive agent REPLs | Their own non-interactive/`-p` flags where documented; otherwise hand off |
 
-Hand-off form:
+Hand-off form in the Claude Code CLI:
 
 ```
 ! gitui
 ! zellij attach
 ```
+
+Everywhere else — Claude Code on the web, hosted chat, other harnesses — `!`
+does not exist; give the plain command in a fenced block for the user to run.
 
 A tool being TTY-class does **not** demote it in §3. For a command the *user*
 will run, `gitui` is still the preferred answer to "show me git interactively".
@@ -120,6 +141,14 @@ Read-only subcommands of these tools are fine (`paru -Qs`, `podman ps`,
 `snap info`, `topgrade --dry-run`). The gate is on state change, not on the
 binary's name.
 
+The gate protects **the user's host** and **the user's work**. In a
+disposable-sandbox, package and tool installs and scratch state outside the
+working tree need no consent. Consent is still required for anything that
+leaves the sandbox (push, PR, publish, network write, an edit the user will
+commit) and for deleting or overwriting files in the repo checkout or
+rewriting git history (`rm -rf`, `git reset --hard`, `git clean -fdx`,
+`kondo -a`, `fclones remove`) — the session's uncommitted work is the user's.
+
 ---
 
 ## 4. Shell-integration tools
@@ -141,8 +170,10 @@ On a host without Home Manager, the equivalent is still the user's own
 config-management, not an agent-written rc edit. Propose the change and let the
 user apply it — see `spacecraft-missing-pkg`'s declarative band.
 
-For a one-off, most of these have a form that needs no shell integration at
-all: `zoxide query`, `atuin search`, `broot --cmd`, `GIT_SSH_COMMAND=gitway git …`.
+In a disposable-sandbox there is no config worth editing — skip it for the
+sandbox. If the user wants the tool on their own machine, propose the host
+config edit (the table above) as text. For a one-off, in any mode, most of these have a form
+that needs no shell integration at all: `zoxide query`, `atuin search`, `broot --cmd`, `GIT_SSH_COMMAND=gitway git …`.
 
 ---
 
@@ -158,6 +189,7 @@ Match the row to the host before quoting it:
 | Arch (non-declarative) | `paru` is genuinely appropriate | — |
 | macOS | `brew` | `paru`, `linutil` |
 | Unknown / mixed | Ask, or stay ephemeral | anything that installs durably |
+| Disposable-sandbox | The sandbox's own manager (`apt`, `pip`, `npm`, `cargo`, …) | Nix/Guix routes (absent); declarative config edits for the sandbox (nothing persists — propose one as text only if the user wants the tool on their own machine) |
 
 Detecting which applies is `spacecraft-missing-pkg`'s Step 1 — don't duplicate
 the probe, call it.

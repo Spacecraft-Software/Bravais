@@ -14,7 +14,8 @@ priority chain: prefer any higher-ranked manager that has the package.
 
 ## Syntax — the commands you hand to the user
 
-In Claude Code the user runs these in-session by prefixing `!`:
+In the Claude Code CLI the user runs these in-session by prefixing `!`;
+elsewhere, drop the `!` and hand them over as a fenced block:
 
 ```
 ! sudo snap install <pkg>

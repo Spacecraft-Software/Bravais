@@ -30,7 +30,8 @@ AppImage, and Snap all come up empty:
 1. **Re-check the ephemeral tiers first.** `npx`/`uvx` are Band A tier 3, not a
    fallback — a tool published to npm or PyPI should have been provisioned
    there, bootstrapping the runtime via `guix shell node -- npx --yes <pkg>` if
-   needed. Revisit [oneshot.md](oneshot.md) before concluding it is
+   needed (local-host; in a disposable sandbox, install the runtime with its
+   own manager — see [oneshot.md](oneshot.md)). Revisit [oneshot.md](oneshot.md) before concluding it is
    unavailable. Likewise re-check the nixpkgs attribute path: dotted paths
    (`nodePackages.<x>`, `python3Packages.<x>`) miss a naive top-level search.
 2. **Rule out a network problem** (below) before concluding the package does
@@ -73,7 +74,10 @@ Nix/Guix store, an ephemeral run may still succeed offline.
 
 ## Hard prohibitions
 
-Do **not** fall back to:
+On the user's host, do **not** fall back to the list below. In a disposable
+sandbox the sandbox's own managers are the route instead (see
+[execution-context.md](execution-context.md)) — except `curl … | sh`, which
+stays banned in every mode:
 
 - **System-distro managers:** `apt`, `dnf`, `yum`, `pacman`, `zypper`,
   `emerge`, `xbps`. They require root, write to `/usr`, and leave durable,

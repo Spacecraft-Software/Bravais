@@ -71,11 +71,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "codex-desktop";
-  version = "26.917.62051";
+  version = "26.924.22138";
 
   src = fetchurl {
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb";
-    hash = "sha256-dVNuPxl8bbiIGmNPi7mwUVGEqO/3zsm+X0CND0rm5pY=";
+    hash = "sha256-zjuxqoLM3+MDetov2NGHeW6koNXtAx0OTsitzotwFOc=";
   };
 
   nativeBuildInputs = [
@@ -233,7 +233,7 @@ stdenv.mkDerivation (finalAttrs: {
   # request that `--check` can make for free; when it still matches, nothing has
   # been published and the download is skipped entirely. It is metadata about
   # the pin, not an input to it: changing it cannot change what gets built.
-  passthru.upstreamETag = "0x8DF1949683FAFFE";
+  passthru.upstreamETag = "0x8DF1B9F11A37C6A";
 
   meta = {
     description = "OpenAI Codex Desktop — official ChatGPT/Codex app for Linux, repackaged from the .deb";

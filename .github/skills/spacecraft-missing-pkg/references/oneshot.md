@@ -56,8 +56,9 @@ pipx run <pkg> [<args>]           # pipx equivalent when uv is not installed
 ## Bootstrapping the runtime ephemerally
 
 A one-shot runner still needs its runtime (`node` / `uv`). When that runtime is
-itself missing, **do not** drop to a permanent install to get it — provide it
-ephemerally from Band A tier 1–2 and keep the whole operation stateless:
+itself missing on **local-host**, **do not** drop to a permanent install to get
+it — provide it ephemerally from Band A tier 1–2 and keep the whole operation
+stateless:
 
 ```bash
 # Node absent → borrow it from Guix or Nix for the duration of the command
@@ -67,6 +68,31 @@ nix-shell -p nodejs --run "npx --yes <pkg> [<args>]"
 # uv absent → same pattern
 guix shell uv   -- uvx <pkg> [<args>]
 nix-shell -p uv  --run "uvx <pkg> [<args>]"
+```
+
+This Guix/Nix bootstrap is **local-host only**. In a **disposable sandbox**
+Nix and Guix are absent, and nothing there outlives the session — install the
+runtime with the sandbox's own manager instead, no consent needed (as root, or
+via `sudo -n` when the sandbox grants it; see
+[execution-context.md](execution-context.md)):
+
+```bash
+# disposable sandbox only (positive hosted marker, Step −1) — never on the
+# user's host, never in distrobox / toolbox / Codespaces / a local devcontainer
+# (those are local-host)
+if [ "$(id -u)" -eq 0 ]; then
+  apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs npm
+elif sudo -n true 2>/dev/null; then
+  sudo -n apt-get update -qq && sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs npm
+else echo "no root in this sandbox — cannot apt-get nodejs" >&2
+fi && npx --yes <pkg> [<args>]
+# Python tools — one guarded chain, first branch that applies wins:
+if command -v uvx >/dev/null 2>&1; then uvx <pkg> [<args>]
+elif command -v pipx >/dev/null 2>&1; then pipx run <pkg> [<args>]
+elif pip install uv 2>/dev/null; then uvx <pkg> [<args>]
+else  # externally-managed Python → a venv outside the working tree (needs python3-venv; apt it under the guard above)
+  v="${TMPDIR:-/tmp}/venv-uv"; python3 -m venv "$v" && "$v/bin/pip" install uv && "$v/bin/uvx" <pkg> [<args>]
+fi
 ```
 
 ## Lookup

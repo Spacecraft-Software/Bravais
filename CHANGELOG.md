@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and two vendored binaries bumped.** `nixpkgs`,
+  `nixpkgs-unstable`, `home-manager-unstable`, `construct`,
+  `antigravity-nix` and `nix-flatpak` moved in `flake.lock`; `codex-desktop`
+  and `ollama` moved to the versions pinned in their `pkgs/<name>/package.nix`.
+  `.github/skills/` is re-synced to the new `construct` lock.
+
 - **The Niri wallpaper is now
   `~/Pictures/Wallpapers/Steelbore/Gemini_Generated_Image_6t0x936t0x936t0x.jpeg`**
   (was `Steelbore_wallpaper_blue.png`). The solid-background fallback is

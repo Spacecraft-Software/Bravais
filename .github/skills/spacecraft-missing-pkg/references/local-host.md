@@ -5,6 +5,10 @@ disposable sandbox. Three consequences drive everything below: durable changes
 outlive the session, the agent's shell is not the user's shell, and the agent's
 shell has no TTY and no privileges.
 
+This file is the **local-host** mode of Step −1. In a disposable sandbox or
+with no execution tool, [execution-context.md](execution-context.md) governs
+instead; nothing below is relaxed on the user's own machine.
+
 ---
 
 ## 1. Verify before you provision
@@ -61,8 +65,9 @@ the mapping before provisioning anything.
 
 ### When still ambiguous, ask
 
-Do not guess. In Claude Code the user can run a command in-session by prefixing
-it with `!`, and its output lands in the conversation:
+Do not guess. In the Claude Code CLI the user can run a command in-session by
+prefixing it with `!`, and its output lands in the conversation (any other
+harness: a fenced block they run in their own terminal):
 
 ```
 ! which <tool>
@@ -88,7 +93,8 @@ than work:
 ### Hand-off format
 
 Give the user the exact command, say why you can't run it, and say what you
-will do with the result:
+will do with the result. The `!` form is for the Claude Code CLI; elsewhere,
+drop the `!` and give a fenced block for the user's login shell:
 
 > `snap` needs root and I can't run `sudo`. Run this and tell me what it says:
 >

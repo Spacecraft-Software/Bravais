@@ -58,6 +58,16 @@ website: https://Construct.SpacecraftSoftware.org/
 > old Steel Blue and Red Oxide lifts now belong to **Steelbore Classic** (§11.2), which is
 > preserved as a family member — they are valid only inside that palette.
 > Hex values are canonically served by the `steelbore-color-palette` skill.
+>
+> **Resolving `steelbore.toml`.** Every pointer to the palette file above
+> resolves the same way. Read the sibling skill's
+> `../steelbore-color-palette/assets/steelbore.toml` first. If this skill
+> ships its own `assets/steelbore.toml` (a vendored copy some distributions
+> include), read it only when the sibling `steelbore-color-palette` skill is
+> absent. If neither is reachable, say so and ask
+> the user to install or attach the `steelbore-color-palette` skill — **never
+> recall, approximate, or invent a hex value**; name the token and leave the
+> value unresolved.
 
 ## Color Palette — Steelbore 2 (WCAG 2.2 AA Compliant)
 
