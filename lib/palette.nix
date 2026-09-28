@@ -260,18 +260,30 @@ let
   # xterm-256 index, computed from the hex.
   # ---------------------------------------------------------------------
   # Classic's six indices were hand-curated to preserve hue rather than
-  # minimise distance (Void Navy is 17, not the nearest 16, to keep the navy
-  # cast). Those picks are kept as an explicit by-hex override so the
-  # documented intent survives; every other color is derived, since a
-  # switchable family cannot carry a hand table per palette.
-  curatedX256 = {
-    "#000027" = 17; # Void Navy      — 17 over 16, keeps the navy cast
-    "#D98E32" = 172; # Molten Amber
-    "#4B7EB0" = 67; # Steel Blue
-    "#50FA7B" = 84; # Radium Green
-    "#FF5C5C" = 203; # Red Oxide
-    "#8BE9FD" = 123; # Liquid Coolant
+  # minimise distance (its canvas is 17, not the nearest 16, to keep the navy
+  # cast). Those picks are kept as an explicit override so the documented
+  # intent survives; every other color is derived, since a switchable family
+  # cannot carry a hand table per palette. The override is keyed by Classic's
+  # ROLES and its hex keys are read from steelbore.toml, so no value is typed
+  # here and a TOML change cannot leave a stale key behind (Standard §11.4).
+  curatedX256ByClassicRole = {
+    background = 17; # 17 over 16, keeps the navy cast
+    foreground = 172;
+    accent = 67;
+    success = 84;
+    error = 203;
+    info = 123;
   };
+  curatedX256 =
+    if themes ? "steelbore-classic" then
+      builtins.listToAttrs (
+        map (role: {
+          name = themes."steelbore-classic".${role};
+          value = curatedX256ByClassicRole.${role};
+        }) (builtins.attrNames curatedX256ByClassicRole)
+      )
+    else
+      { };
 
   # The 6×6×6 cube (indices 16–231) samples each channel at these levels;
   # the thresholds below are the midpoints between adjacent levels.
@@ -465,6 +477,16 @@ let
       data.resolution.pair
     else
       builtins.mapAttrs (_: pol: if pol == "light" then darkDefault else lightDefault) polarityTable;
+
+  # The counterpart in the other polarity. A local theme with no registered
+  # entry falls back on its own polarity.
+  pairSlug =
+    if pairTable ? ${baseSlug} then
+      pairTable.${baseSlug}
+    else if polarityOfHex background == "light" then
+      darkDefault
+    else
+      lightDefault;
 in
 {
   # The active palette, as §11.1 role tokens. This is the whole contract —
@@ -495,15 +517,17 @@ in
     # §11.6.2. Derived from the resolved canvas rather than looked up, so a
     # local theme in ./themes/ gets a correct answer for free.
     polarity = polarityOfHex background;
-    # The counterpart in the other polarity. A local theme with no registered
-    # entry falls back on its own polarity.
-    pair =
-      if pairTable ? ${baseSlug} then
-        pairTable.${baseSlug}
-      else if polarityOfHex background == "light" then
-        darkDefault
-      else
-        lightDefault;
+    # The counterpart slug in the other polarity (see `pairSlug`).
+    pair = pairSlug;
+  };
+
+  # The counterpart palette itself, resolved exactly like this one, for a
+  # consumer that must render BOTH polarities from one build — e.g. COSMIC's
+  # Light Builder, which it switches to by time of day. Lazy: nothing is
+  # resolved unless a consumer reads it.
+  counterpart = import ./palette.nix {
+    inherit tomlFile localThemes;
+    slug = pairSlug;
   };
 
   # §11.6 resolution contract, for the modules that render the system
@@ -562,10 +586,10 @@ in
   };
 
   convert = {
-    # "#000027" -> "000027" (Foot INI, TTY colors, awww clear, …)
+    # "#RRGGBB" -> "RRGGBB" (Foot INI, TTY colors, awww clear, …)
     bareHex = hex: builtins.substring 1 (builtins.stringLength hex - 1) hex;
 
-    # "#000027" -> "0,0,39" (Konsole colorscheme INI)
+    # "#RRGGBB" -> "R,G,B" in decimal 0–255 (Konsole colorscheme INI)
     rgbTriple =
       hex:
       let
@@ -573,7 +597,7 @@ in
       in
       "${toString c.r},${toString c.g},${toString c.b}";
 
-    # "#000027" -> "(red: 0.0, green: 0.0, blue: 0.15294118)"
+    # "#RRGGBB" -> "(red: R/255, green: G/255, blue: B/255)" to eight places
     # (COSMIC theme Builder RON; matches cosmic-settings' own formatting)
     srgbaFloat =
       hex:

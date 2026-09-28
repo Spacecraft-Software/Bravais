@@ -357,7 +357,7 @@ Every active input declared in `flake.nix` (commented-out inputs — `adit`, `ki
 
 ### 3.2 Steelbore Palette Resolution
 
-The palette is **not** defined in `flake.nix`. Registered palette values are imported from `steelbore.toml`, never retyped (Standard §11.4), and consumers use role tokens only. The one place a value is written by hand is a local theme under `themes/`, which may bind a role to a verified value (`themes/steelbore-warm.nix` sets `accent`); it is still consumed through its role. The pipeline:
+The palette is **not** defined in `flake.nix`. Registered palette values are imported from `steelbore.toml`, never retyped (Standard §11.4), and consumers use role tokens only. No colour value is typed in Bravais: none ships in `themes/`, and the curated xterm-256 indices in `lib/palette.nix` are keyed by Steelbore Classic's roles, with their hex keys read from the TOML. A local theme (step 2) is the one sanctioned place a hand-written value could appear, and it would sit outside the verified contrast matrices. The pipeline:
 
 1. **Selection** — `theme.nix` at the repo root holds one word, `active = "<slug>"` (currently `steelbore`, Steelbore Modern). `theme set <slug>` rewrites it; `theme try <slug>` builds a theme without editing it; `theme list` shows every selectable theme.
 2. **Local themes** — `flake.nix` collects every `themes/<slug>.nix` (optional directory; filename = slug) into `localThemes`. A local theme either derives from a registered palette via `base = "<slug>"` or binds its roles outright; a local theme may shadow a registered palette of the same name.
@@ -365,6 +365,7 @@ The palette is **not** defined in `flake.nix`. Registered palette values are imp
    - the twelve Standard §11.1 **role tokens** — `background`, `surface`, `surfaceAlt`, `foreground`, `accent`, `structure`, `success`, `error`, `warning`, `info`, `focus`, `border`, with fallbacks for roles a palette omits;
    - `ansi` — the 16-colour mapping (§4.2);
    - `convert` — notation converters (`bareHex`, `rgbTriple`, `srgbaFloat`, `srgbaChannels`, per-role `x256`) so no consumer ever restates a value in another notation;
+   - `counterpart` — the `pair` palette, resolved the same way, for a consumer that renders both polarities (COSMIC's Light Builder, §9.2);
    - `meta` (`slug`, `version`, `family`, `hasSurfaceClass`, `polarity`, `pair`) and `resolution` (the Standard §11.6 env-var name and file paths — slugs and paths only, never colours).
 4. **Threading** — `mkBravais` binds the result as `steelborePalette` and passes it to every NixOS module via `specialArgs` and to Home Manager via `extraSpecialArgs`. Consumers name roles only; **never a brand colour**, which is what makes switching palettes a one-word edit.
 5. **Theme repository assets** — `lib/theme-assets.nix` maps the same slug to the `theme` input's generated files and is threaded as `themeAssets`. Per-slug attributes (`starship`, `nushell`, `gtk4Css`, `gtk3Css`, `kde`, `claudeCode`) are store paths for a registered palette and `null` for a local theme, so every consumer falls back to the token path (Starship, Nushell) or the toolkit default (GTK, KDE). Family-wide attributes (`zedFamily`, `lapceThemes`, `vscodeExtension`, `antigravityExtension`, `kdeSchemes`) install every theme, because editors keep their own pickers.
@@ -425,7 +426,7 @@ claude-code is installed out-of-band via the official installer (see
 
 ### 4.1 Color Palette
 
-Standard §11 is a **family** of adoptable palettes, not one palette; `theme list` (or `lib/palette.nix`'s `meta.family`) names every selectable member, including each `<slug>-high-contrast` sibling (Standard §11.1.1) and any local theme. The active member is the slug in `theme.nix` (currently `steelbore`, Steelbore Modern). **Registered palette values live only in `steelbore.toml` in the `construct` input** (a local theme may bind a role to its own value, §3.2) — this document, like every module, refers to Standard §11.1 role tokens and never to a brand colour or hex value.
+Standard §11 is a **family** of adoptable palettes, not one palette; `theme list` (or `lib/palette.nix`'s `meta.family`) names every selectable member, including each `<slug>-high-contrast` sibling (Standard §11.1.1) and any local theme. The active member is the slug in `theme.nix` (currently `steelbore`, Steelbore Modern). **Palette values live only in `steelbore.toml` in the `construct` input** (a local theme could bind its own, §3.2; none ships) — this document, like every module, refers to Standard §11.1 role tokens and never to a brand colour or hex value.
 
 | Role          | Usage                                                                 | Fallback when the palette omits it |
 |---------------|-----------------------------------------------------------------------|------------------------------------|
@@ -1038,7 +1039,7 @@ Requires `hardware.uinput.enable` plus `uinput` group membership (`input` alone 
 
 Fully Rust-based desktop from System76. The upstream module wires portals, dconf and D-Bus; this module adds only explicit portal routing (Screenshot/ScreenCast → `cosmic`, FileChooser → `gtk`) — without it, with GNOME and Plasma also enabled, requests could resolve to the wrong backend.
 
-**Theming:** Home Manager writes cosmic-theme **Builder** overrides for Dark and Light derived from the Standard §11.1 role tokens via `lib/palette.nix`'s converter, so values cannot drift from the palette; `cosmic-settings-daemon` applies them without logout. `auto_switch` is on for time-of-day dark/light; `is_dark` is deliberately **not** managed, because the daemon must be able to flip it and cannot write a read-only store symlink.
+**Theming:** Home Manager writes cosmic-theme **Builder** overrides for Dark and Light from Standard §11.1 role tokens via `lib/palette.nix`'s converter: the active palette supplies its own polarity and its Standard §11.6.2 `counterpart` (Steelbore Modern → `steelbore-navywhite`) supplies the other, so both builders use registered, contrast-verified values and cannot drift from the palette; `cosmic-settings-daemon` applies them without logout. `auto_switch` is on for time-of-day dark/light; `is_dark` is deliberately **not** managed, because the daemon must be able to flip it and cannot write a read-only store symlink.
 
 ### 9.3 KDE Plasma 6 (Wayland)
 

@@ -30,8 +30,19 @@
 # Starship / Nushell files (lib/theme-assets.nix); a local theme gets only
 # what Bravais renders from role tokens itself.
 #
-# Local themes live in ./themes/ — one file per theme, filename is the slug.
-# A local theme may override a registered one of the same name.
+# Local themes live in ./themes/ (create it on demand) — one file per theme,
+# filename is the slug. A local theme may override a registered one of the
+# same name. None ship: every theme in use is a registered, verified palette.
+# The two accepted shapes, resolved by lib/palette.nix like a registered one:
+#
+#   { base = "steelbore"; accent = "…"; }   override roles of a registered palette
+#   { background = "…"; foreground = "…"; accent = "…"; success = "…"; error = "…"; }
+#                                           fully custom — the five required roles
+#
+# A value typed in a local theme sits outside steelbore.toml and carries no
+# verified contrast matrix (Standard §11.4). Prefer a registered palette or
+# its `-high-contrast` sibling, and propose anything new to Construct's
+# steelbore.toml instead.
 {
   active = "steelbore";
 }

@@ -15,25 +15,31 @@ let
   # diffs stay clean and the values can never drift from the palette.
   toRgb = steelborePalette.convert.srgbaFloat;
 
-  # Light-mode-only derived shades — NOT in Spacecraft Software Standard §8.
-  # Scoped to cosmic.nix; do not propagate to lib/palette.nix or
-  # modules/theme. Promote in the Standard first if they ever need to
-  # become canonical.
-  paperHex = "#F0F2F8"; # Light bg
-  successDeepHex = "#2EAB54"; # success on Paper
-  errorDeepHex = "#D63838"; # destructive on Paper
+  # COSMIC switches between a Dark and a Light Builder by time of day, so it
+  # needs BOTH polarities from one build. Each comes from a registered
+  # palette's role tokens: the active theme for its own polarity, and its
+  # Standard §11.6.2 counterpart (`meta.pair`, resolved as `counterpart`) for
+  # the other. Every value — and its verified contrast — is read from
+  # steelbore.toml; nothing is typed here (Standard §11.4).
+  dark =
+    if steelborePalette.meta.polarity == "dark" then steelborePalette else steelborePalette.counterpart;
+  light =
+    if steelborePalette.meta.polarity == "light" then
+      steelborePalette
+    else
+      steelborePalette.counterpart;
 
-  rgb = {
-    background = toRgb steelborePalette.background;
-    foreground = toRgb steelborePalette.foreground;
-    accent = toRgb steelborePalette.accent;
-    success = toRgb steelborePalette.success;
-    error = toRgb steelborePalette.error;
-    info = toRgb steelborePalette.info;
-    paper = toRgb paperHex;
-    successDeep = toRgb successDeepHex;
-    errorDeep = toRgb errorDeepHex;
+  rgbOf = p: {
+    background = toRgb p.background;
+    foreground = toRgb p.foreground;
+    accent = toRgb p.accent;
+    structure = toRgb p.structure;
+    success = toRgb p.success;
+    warning = toRgb p.warning;
+    error = toRgb p.error;
   };
+  rgb = rgbOf dark;
+  rgbLight = rgbOf light;
 
   # bg_color is the only Builder field that carries an alpha channel.
   mkBgColor =
@@ -49,9 +55,9 @@ let
           alpha: 1.0,
       ))'';
 
-  bgColorDark = mkBgColor steelborePalette.background;
+  bgColorDark = mkBgColor dark.background;
 
-  bgColorLight = mkBgColor paperHex;
+  bgColorLight = mkBgColor light.background;
 
   someRgb = body: "Some(${body})";
 
@@ -101,15 +107,16 @@ in
       "${darkBuilderDir}/text_tint".text = someRgb rgb.foreground;
       "${darkBuilderDir}/neutral_tint".text = someRgb rgb.accent;
 
-      # Light Builder — active during the day via auto_switch. Uses derived
-      # Paper bg + deep success/destructive shades that read on a light surface.
+      # Light Builder — active during the day via auto_switch. Every field is
+      # the light counterpart's own role, measured against its own canvas in
+      # steelbore.toml, so nothing here needs a hand-picked "on paper" shade.
       "${lightBuilderDir}/bg_color".text = bgColorLight;
-      "${lightBuilderDir}/accent".text = someRgb rgb.foreground;
-      "${lightBuilderDir}/success".text = someRgb rgb.successDeep;
-      "${lightBuilderDir}/warning".text = someRgb rgb.foreground;
-      "${lightBuilderDir}/destructive".text = someRgb rgb.errorDeep;
-      "${lightBuilderDir}/text_tint".text = someRgb rgb.background;
-      "${lightBuilderDir}/neutral_tint".text = someRgb rgb.accent;
+      "${lightBuilderDir}/accent".text = someRgb rgbLight.accent;
+      "${lightBuilderDir}/success".text = someRgb rgbLight.success;
+      "${lightBuilderDir}/warning".text = someRgb rgbLight.warning;
+      "${lightBuilderDir}/destructive".text = someRgb rgbLight.error;
+      "${lightBuilderDir}/text_tint".text = someRgb rgbLight.foreground;
+      "${lightBuilderDir}/neutral_tint".text = someRgb rgbLight.structure;
 
       # Auto-switch dark/light by time of day. We deliberately do NOT manage
       # is_dark — cosmic-settings-daemon needs to flip it on schedule, which
