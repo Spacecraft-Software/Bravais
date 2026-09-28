@@ -51,6 +51,11 @@
   # Steelbore module toggles (software set shared across machines; a machine
   # MAY override individual toggles in its own default.nix).
   steelbore = {
+    # Plymouth boot animation (modules/theme/boot-splash.nix). Each initrd grows
+    # ~6 MiB (frames + Plymouth's libraries), times the three the ESP keeps —
+    # the initrd has a ~49 MiB ceiling (constraint #43).
+    boot.splash.enable = true;
+
     # Desktop environments
     desktops.gnome.enable = true;
     desktops.cosmic.enable = true; # stable pkgs (nixos-26.05)

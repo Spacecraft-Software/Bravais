@@ -11,6 +11,7 @@
     ./fonts.nix
     ./dark-mode.nix
     ./declaration.nix
+    ./boot-splash.nix
   ];
 
   # The active slug has exactly ONE source: ./theme.nix, resolved through
