@@ -33,6 +33,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **No colour value is typed in Bravais any more; every one comes from
+  `steelbore.toml`.** COSMIC's Light Builder now uses the active palette's
+  Standard §11.6.2 light counterpart (`steelbore-navywhite` for Modern),
+  exposed as `steelborePalette.counterpart`. It used to use three
+  hand-picked "Paper" shades, so COSMIC's daytime colours change. The curated
+  xterm-256 indices for Steelbore Classic are keyed by Classic's roles and read
+  their hex keys from the TOML; the index output is unchanged. The
+  `steelbore-warm` example local theme is removed. It only borrowed the
+  accent of the registered `steelbore-high-contrast` palette, which remains
+  selectable. The local-theme shapes are documented in `theme.nix`.
+
 - **Flake inputs and two vendored binaries bumped again.** `nixpkgs`,
   `nixpkgs-unstable`, `construct` and `antigravity-nix` moved in
   `flake.lock`; `codex-desktop` and `opencode-desktop` moved to the
