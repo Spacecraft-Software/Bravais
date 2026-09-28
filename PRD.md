@@ -63,14 +63,15 @@ This PRD states requirements and the design decisions behind them, with enough "
 
 ### 1.6 Status
 
-**Verified** = a check output in `checks.x86_64-linux` that §17.1 runs, or a CI workflow. **Implemented** = configured and in daily use, no automated check. **Planned** = an open item.
+**Verified** = a check that has passed, recorded with its date and commit — a `checks.x86_64-linux` output run per §17.1, or a CI workflow. **Implemented** = present in the configuration and building; runtime validation is recorded separately (the Evidence column, `TODO.md` Phase 10). **Planned** = an open item.
 
 | Area | Status | Evidence |
 |------|--------|----------|
-| System build, stable + unstable (§2.4, §17.1) | Verified | `checks.bravais-thinkpad{,-unstable}`; stable toplevel build + unstable `drvPath` eval — run manually per §17.1; not in CI |
+| Stable system build (§2.4, §17.1) | Verified | `bravais-thinkpad` toplevel built at `343510b` (nixpkgs `5e2305d`), 2026-09-28 — run manually per §17.1; not in CI |
+| Unstable evaluation (§2.4, §17.1) | Verified (evaluation only) | `bravais-thinkpad-unstable` `drvPath` evaluated at `343510b` (nixpkgs-unstable `e158d9e`), 2026-09-28. This proves the configuration evaluates, not that it builds; a full unstable build is not part of the gate |
 | REUSE / SPDX compliance (§17.3) | Verified | `checks.reuse-lint`; `.github/workflows/reuse.yml` on push and PR |
 | LF line endings | Verified | `.github/workflows/text-file-format.yml` |
-| Niri configuration (§9.4) | Verified | `checks.niri-config` runs `niri validate` on the rendered `config.kdl` — run manually per §17.1; not in CI |
+| Niri configuration (§9.4) | Verified | `checks.niri-config` (`niri validate` on the rendered `config.kdl`) passed at `343510b`, 2026-09-28 — run manually per §17.1; not in CI |
 | `.github/skills/` Copilot copy (§16.2) | Verified | `.github/workflows/skills-drift.yml` runs `sync-skills.nu --check` |
 | Skills delivery via Home Manager (§16.2) | Implemented | `spacecraft.construct` in `users/mj/home.nix`; `docs/skill-pointer.md` |
 | Rebuild orchestrator `preflight` (§16.1) | Implemented | in daily use; its unit tests run at build time (`pkgs/preflight/`), but no `checks.*` output or CI workflow gates it |
@@ -356,7 +357,7 @@ Every active input declared in `flake.nix` (commented-out inputs — `adit`, `ki
 
 ### 3.2 Steelbore Palette Resolution
 
-The palette is **not** defined in `flake.nix`, and no hex value is typed anywhere in Bravais. Values are read, never retyped (Standard §11.4), and the whole pipeline is role-based:
+The palette is **not** defined in `flake.nix`. Registered palette values are imported from `steelbore.toml`, never retyped (Standard §11.4), and consumers use role tokens only. The one place a value is written by hand is a local theme under `themes/`, which may bind a role to a verified value (`themes/steelbore-warm.nix` sets `accent`); it is still consumed through its role. The pipeline:
 
 1. **Selection** — `theme.nix` at the repo root holds one word, `active = "<slug>"` (currently `steelbore`, Steelbore Modern). `theme set <slug>` rewrites it; `theme try <slug>` builds a theme without editing it; `theme list` shows every selectable theme.
 2. **Local themes** — `flake.nix` collects every `themes/<slug>.nix` (optional directory; filename = slug) into `localThemes`. A local theme either derives from a registered palette via `base = "<slug>"` or binds its roles outright; a local theme may shadow a registered palette of the same name.
@@ -424,7 +425,7 @@ claude-code is installed out-of-band via the official installer (see
 
 ### 4.1 Color Palette
 
-Standard §11 is a **family** of adoptable palettes, not one palette; `theme list` (or `lib/palette.nix`'s `meta.family`) names every selectable member, including each `<slug>-high-contrast` sibling (Standard §11.1.1) and any local theme. The active member is the slug in `theme.nix` (currently `steelbore`, Steelbore Modern). **Values live only in `steelbore.toml` in the `construct` input** — this document, like every module, refers to Standard §11.1 role tokens and never to a brand colour or hex value.
+Standard §11 is a **family** of adoptable palettes, not one palette; `theme list` (or `lib/palette.nix`'s `meta.family`) names every selectable member, including each `<slug>-high-contrast` sibling (Standard §11.1.1) and any local theme. The active member is the slug in `theme.nix` (currently `steelbore`, Steelbore Modern). **Registered palette values live only in `steelbore.toml` in the `construct` input** (a local theme may bind a role to its own value, §3.2) — this document, like every module, refers to Standard §11.1 role tokens and never to a brand colour or hex value.
 
 | Role          | Usage                                                                 | Fallback when the palette omits it |
 |---------------|-----------------------------------------------------------------------|------------------------------------|
@@ -2163,7 +2164,7 @@ A `--version` call proves only that a binary is on PATH, not that a session star
 - [✓] **Performance:** XanMod kernel (`linuxPackages_xanmod_latest`); x86-64 march level pinned per machine (ThinkPad = v3), with the per-level flags CachyOS/ALHP-derived in `modules/platform/x86-64.nix` (the module accepts v1–v4; there is no build matrix)
 - [✓] **Security:** Sequoia PGP, polkit, sudo-rs `execWheelOnly`, Secure Boot ready (`sbctl` installed, not yet enrolled)
 - [✓] **License:** GPL-3.0-or-later; SPDX tags via REUSE, gated by `nix build --no-link '.#checks.x86_64-linux.reuse-lint'` (Standard §4.3)
-- [✓] **Privacy:** No telemetry, local storage default
+- [✓] **Privacy — Bravais-owned components only:** the in-tree tools (`pkgs/preflight`, `pkgs/steelbore-*`, `bravais-mcp`) send no telemetry and link no HTTP-client crate (none of their `Cargo.lock` files carries `reqwest`, `hyper`, `ureq` or `curl`); their network use is the rebuild itself (`preflight`'s flake-input and Flatpak updates), and their state stays on the machine. **Out of scope:** third-party applications keep their vendors' telemetry defaults — browsers, Electron apps, the vendored desktop agents (§16.4) and the out-of-band AI CLIs (CONSTRAINTS.md #4). Bravais does not disable those system-wide; where a telemetry-free build exists it is installed alongside (VSCodium next to VS Code, §11.2)
 - [✓] **Key bindings:** CUA + Vim keys — full hjkl focus in Niri (moves use H/J/K; `Mod+Shift+L` is gtklock); j/k only in LeftWM, because lefthk-core has no Left/Right focus/move commands (§9.5)
 - [✓] **Color palette:** Standard §11.1 role tokens from the Standard §11 palette family, resolved by `lib/palette.nix` from `steelbore.toml` (the `construct` input); the `background` role on TTY, terminals, bars and notifications; no consumer names a brand colour
 - [✓] **Typography:** Hack Nerd Font (UI), JetBrainsMono Nerd Font (terminal) — pinned in `modules/theme/fonts.nix` and `lib/terminal-theme.nix`
