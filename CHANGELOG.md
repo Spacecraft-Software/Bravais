@@ -33,6 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and two vendored binaries bumped again.** `nixpkgs`,
+  `nixpkgs-unstable`, `construct` and `antigravity-nix` moved in
+  `flake.lock`; `codex-desktop` and `opencode-desktop` moved to the
+  versions pinned in their `pkgs/<name>/package.nix`. `.github/skills/`
+  needed no re-sync.
+
 - **Flake inputs and two vendored binaries bumped.** `nixpkgs`,
   `nixpkgs-unstable`, `home-manager-unstable`, `construct`,
   `antigravity-nix` and `nix-flatpak` moved in `flake.lock`; `codex-desktop`
