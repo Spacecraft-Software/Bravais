@@ -130,7 +130,8 @@ Two caveats, both consent-gated:
   host. Propose it through Band C (`home.packages = [ pkgs.direnv ];`), not an
   imperative install.
 - **`direnv allow` is a per-user trust decision.** It lets the repo execute
-  code on `cd`. The user runs it, not the agent:
+  code on `cd`. The user runs it, not the agent (`!` in the Claude Code CLI; a
+  fenced block elsewhere):
 
   ```
   ! direnv allow

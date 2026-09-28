@@ -16,6 +16,7 @@ description: >
   it is not, never launch a TUI in the agent's TTY-less shell, and get
   consent before any command that mutates or deletes.
 license: GPL-3.0-or-later
+compatibility: "Written for the user's own host (Nix/Guix, Nushell). Also runs in disposable sandboxes and with no shell tool; classify the context first per references/execution-context.md."
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
 ---
@@ -47,11 +48,23 @@ a command appears.
 If §3 has no specific row for the legacy tool, apply the cascading fallback in
 §1.5 (`uutils` for GNU coreutils, Brush for Bash-only scripts).
 
-**This runs on the user's own machine.** The preference stack below is
-unchanged, but on a real host a substitution is only correct if the tool is
+**This usually runs on the user's own machine.** The preference stack below
+is unchanged, but on a real host a substitution is only correct if the tool is
 actually installed, the agent's shell can actually execute it, and the command
 does not silently change or delete something. §1.1–§1.3 are those three gates;
 apply them before emitting anything.
+
+**Classify the execution context first.** Step −1 in
+**[references/execution-context.md](references/execution-context.md)** puts the
+session in one of three modes — **local-host** (default; everything below
+applies as written), **disposable-sandbox**, or **no-execution** — once per
+session, cached with the other probes. **disposable-sandbox** needs a
+positive hosted marker (`CLAUDE_CODE_REMOTE=true`, or the harness or user
+stating a hosted sandbox) with no Nix/Guix, no local-container marker, and no
+personal login shell; a container signal never qualifies on its own, and a
+local devcontainer, Codespace, toolbox, or distrobox is local-host. Ambiguous
+evidence resolves to local-host. Where a gate below behaves differently per
+mode, it says so.
 
 ### §1.0 — Substitution depends on the target
 
@@ -59,9 +72,9 @@ The same mapping table serves three audiences that need different behaviour:
 
 | Target | Rule |
 |---|---|
-| A command **the agent runs** in its own shell | Substitute only if the tool is present (§1.1), the command is headless-safe (§1.2), and it is non-destructive (§1.2). The agent's shell is a non-interactive Bash with no TTY — regardless of the user's interactive shell. |
+| A command **the agent runs** in its own shell | Substitute only if the tool is present (§1.1), the command is headless-safe (§1.2), and it is non-destructive (§1.2). The agent's shell is a non-interactive Bash with no TTY — regardless of the user's interactive shell. In a sandbox it is the sandbox's shell; in no-execution mode this row does not exist. |
 | A command **written into the user's repo** — script, CI job, `Justfile`, docs | Substitute only if the repo's own environment guarantees the tool: a devShell, a documented prerequisite, a CI image that ships it. Otherwise keep the portable form and add `# preferred: <tool>`. A committed `eza` breaks the build for every contributor without it. |
-| A command **suggested for the user to run** interactively | Full preference applies, TUIs included — this is where `gitui`, `yazi`, `bottom`, and `helix` belong. Hand it over with the `!` prefix rather than running it. |
+| A command **suggested for the user to run** interactively | Full preference applies, TUIs included — this is where `gitui`, `yazi`, `bottom`, and `helix` belong. Hand it over rather than running it: a **fenced block** for the user's login shell; in the Claude Code CLI, suggest the `!` prefix instead. |
 
 ### §1.1 — Check availability before substituting
 
@@ -73,7 +86,7 @@ it turns a working command into `command not found`. Probe first, then route:
 | present | — | **Substitute.** The happy path. |
 | present | absent | **Substitute** — it is the only option (e.g. `jaq` where `jq` was never installed). |
 | absent | present | **Use the legacy tool** and append `# preferred: <tool> — see references/<tool>.md`. Do not fail, do not silently install. |
-| absent | absent | **Route to `spacecraft-missing-pkg`** for an ephemeral run (`nix run nixpkgs#<pkg> -- …`). Neither form exists, so provisioning is the only way through. |
+| absent | absent | **Route to `spacecraft-missing-pkg`** for an ephemeral run (`nix run nixpkgs#<pkg> -- …` on local-host). Neither form exists, so provisioning is the only way through. In a **disposable-sandbox**, install it with the sandbox's own manager (`apt`, `pip`, `npm`, `cargo`, …) — no consent needed, nothing outlives the session. |
 
 ```sh
 command -v eza >/dev/null 2>&1 && echo substitute || echo fall-back
@@ -83,6 +96,14 @@ Probe once per session and reuse the answer — don't re-check before every
 command. `command -v` alone under-reports: Nushell `def`s, Bash functions, and
 non-default bin directories hide installed tools from it. Use
 `spacecraft-missing-pkg`'s Step 0 checklist rather than restating it here.
+
+Per mode (`references/execution-context.md` §2):
+
+| Mode | Probe | Absent preferred tool |
+|---|---|---|
+| **local-host** | As above — the result describes the user's machine | The matrix above, unchanged |
+| **disposable-sandbox** | Run it — the result describes **the sandbox, never the user**; do not report it as the user's environment | Legacy present → use it (no note needed when only the agent reads the output). Legacy absent too → MAY install with the sandbox's own manager, `npx` / `uvx` / `pipx run` first |
+| **no-execution** | **Skip.** Nothing can be probed | Emit the preferred form for the user's login shell, **always** with a one-line portable fallback note: `# fallback if absent: <legacy form>` |
 
 ### §1.2 — Execution classes
 
@@ -118,12 +139,23 @@ naming: **`kondo -a` deletes build artifacts with no confirmation** and
 **`fclones remove` deletes files**. **`sudo-rs` is never run by the agent** —
 same rule as `sudo`; hand it over.
 
+This consent protects **the user's host** and **the user's work**. In a
+**disposable-sandbox**, package and tool installs and scratch state outside the
+working tree need none. Consent is **still required** for anything that leaves
+the sandbox — a push, a PR, publishing, a network write, an edit the user will
+commit — and for deleting or overwriting files in the repo checkout or
+rewriting git history (`rm -rf`, `git reset --hard`, `git clean -fdx`,
+`kondo -a`, `fclones remove`): the session's uncommitted work is the user's.
+
 **Shell-integration — declarative config, never a hand-edited rc.** `zoxide`,
 `atuin`, `starship`, `broot --install`, `gitway --install` all work by writing
 init lines into the user's shell config. Do not edit `.bashrc` / `config.nu` /
-`.profile`. On a managed host these are `programs.<tool>.enable` in Home
-Manager — propose that edit and let the user apply it
-(`spacecraft-missing-pkg` Band C).
+`.profile`. On a managed local-host these are `programs.<tool>.enable` in
+Home Manager — propose that edit and let the user apply it
+(`spacecraft-missing-pkg` Band C). In a sandbox, skip it for the sandbox —
+nothing persists; use the one-off form (`zoxide query`, `atuin search`, …). If
+the user wants the tool on their own machine, propose the host config edit as
+text.
 
 ### §1.3 — Shell syntax: whose shell?
 
@@ -184,6 +216,13 @@ format: **Purpose → Flags → Examples → Gotchas**.
 - The command is trivially simple and you're confident (e.g. `rg "pattern"`).
 
 Read files with a plain file-view operation — each is short (typically 40–120 lines).
+
+Two reference files are cross-cutting, not per-tool:
+
+- **`references/execution-context.md`** — Step −1: classify the session as
+  local-host, disposable-sandbox, or no-execution before any probe (§1).
+- **`references/local-execution.md`** — availability probe, TTY-class tools,
+  destructive flags, shell-integration tools (§1.1–§1.2).
 
 ---
 
@@ -252,8 +291,10 @@ Read files with a plain file-view operation — each is short (typically 40–12
 
 > **Gate.** These rows say *which* manager is preferred, not that the agent may
 > run it. Provisioning policy belongs to **`spacecraft-missing-pkg`**: prefer
-> an ephemeral run, put persistent tools in the host's declarative config, and
-> get consent before any durable install. Never run a system-wide update
+> an ephemeral run, put persistent tools in the host's declarative config
+> (local-host; in a sandbox nothing persists — propose the edit as text if the
+> user wants the tool on their own machine), and get consent before any
+> durable install. Never run a system-wide update
 > unprompted.
 >
 > **Host-appropriateness matters.** `paru` is Arch-only; `topgrade`, `omni`,
@@ -408,12 +449,14 @@ xh https://api.github.com/repos/UnbreakableMJ/Understand-Anything
 dig +short example.com A        # preferred: dog — see references/dog.md
 
 # Both absent → ephemeral run via spacecraft-missing-pkg, not a failing command
+# (local-host; in a sandbox, install with its own manager instead)
 nix run nixpkgs#dog -- example.com A
 
 # TTY-class tool, agent needs the information → headless sibling
 procs rustc                     # not `btm`, which needs a terminal
 
 # TTY-class tool, user wants the interaction → hand off
+# (Claude Code CLI; elsewhere, a fenced block with plain `gitui`)
 ! gitui
 
 # Destructive default → propose, don't run
@@ -472,7 +515,8 @@ The `**Install:**` field names *what* the tool is published as — a crate, an
 npm package, a distro package, an upstream release — and defers the *how* to
 `spacecraft-missing-pkg`. It never carries a runnable install command:
 `cargo install`, `paru -S`, `npm install -g`, `pip install`, `nix-env`, and
-`nix profile install` are prohibited there, as they are everywhere else.
+`nix profile install` are prohibited in reference files, and on the user's
+host.
 
 ---
 

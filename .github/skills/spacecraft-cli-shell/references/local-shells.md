@@ -15,11 +15,19 @@ Three facts drive it:
 Provisioning belongs to `spacecraft-missing-pkg`; tool choice belongs to
 `spacecraft-cli-preference`. This file owns neither.
 
+It is written for **local-host**. Classify the session first (Step −1,
+`execution-context.md`): in a **disposable-sandbox** — which needs a positive
+hosted marker, never a container signal alone — the probe below measures the
+sandbox, never the user; in **no-execution** it is skipped. A local
+devcontainer, Codespace, toolbox, or distrobox is **local-host**, and this
+file applies as written.
+
 ---
 
 ## 1. The probe
 
-Run once per session, cache the result.
+Run once per session, after Step −1, and cache the result. On local-host it
+describes the user's environment; in a sandbox, only the sandbox's.
 
 ```sh
 getent passwd "$(id -un)" | awk -F: '{print $NF}'   # the USER's login shell
@@ -68,7 +76,7 @@ measurement. Use the `passwd` lookup when you need the login shell.
 | Path | Target | Consequence |
 |---|---|---|
 | Agent runs it via its shell tool | that shell (measure it — Bash in this harness) | Write POSIX; Bash accepts all of it |
-| User runs it (`!` prefix, or pasted into their terminal) | their login shell | POSIX may be *invalid* — Nushell and Ion are not POSIX shells |
+| User runs it (`!` prefix in the Claude Code CLI; a fenced block elsewhere) | their login shell (measured on local-host, inferred otherwise) | POSIX may be *invalid* — Nushell and Ion are not POSIX shells |
 | Written to a file | the shebang / extension | Independent of both of the above |
 
 Worked examples, on a host whose login shell is Nushell and whose agent shell
@@ -130,8 +138,9 @@ readlink -f /bin/sh
 ### Verifying properly
 
 Static analysis catches most of it, and a strict interpreter catches the rest.
-Neither `shellcheck` nor `dash` is installed on many hosts, so run them
-ephemerally rather than installing (see `spacecraft-missing-pkg`):
+Neither `shellcheck` nor `dash` is installed on many hosts, so on local-host
+run them ephemerally rather than installing (see `spacecraft-missing-pkg`); in a
+disposable sandbox, install them with its own manager instead:
 
 ```sh
 nix run nixpkgs#shellcheck -- -s sh script.sh    # flags bashisms statically
@@ -159,7 +168,9 @@ to **execute** it needs a gate.
 | `dash`, `ash` | **Frequently absent**, despite being the POSIX reference | `nix run nixpkgs#dash` — worth it for verification |
 | `zsh` | Common on macOS, patchy on Linux | ditto |
 
-Check `command -v` from the Step 0 probe before suggesting a run.
+Check `command -v` from the Step 0 probe before suggesting a run. The `nix run`
+routes are local-host; in a disposable sandbox use its own manager
+(`execution-context.md`).
 
 ---
 
