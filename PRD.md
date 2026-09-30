@@ -22,7 +22,7 @@ Bravais is a flake-based NixOS configuration implementing the Spacecraft Softwar
 - Terminals themed from role tokens through one source, `lib/terminal-theme.nix`, launching Nushell where the format allows it (§10)
 - Declarative Flatpak management via nix-flatpak (§11.10)
 - Podman (not Docker) with `dockerCompat`, and both Youki (Rust) and runc available as OCI runtimes (§12.1)
-- Nushell (Rust) as default user shell; Brush (Rust, Bash-compatible) as root shell; the Bash module stays enabled (PAM and activation need it) but Bash is no one's login shell
+- `mjsh` (Operator, a Rust shell built on Nushell) as the user login shell; Brush (Rust, Bash-compatible) as root shell; the Bash module stays enabled (PAM and activation need it) but Bash is no one's login shell
 - Agent skills delivered declaratively from the `construct` input through its Home Manager module (§16.2)
 - Rebuilds driven by `preflight` (Rust, `pkgs/preflight/`), the supported rebuild orchestrator (§16.1)
 
@@ -131,7 +131,7 @@ bravais/
 |   +-- packages/                  # Opt-in bundles: browsers, terminals, editors, development, security,
 |                                  #   networking, multimedia, productivity, system, ai, games, orca,
 |                                  #   flatpak, homebrew (distrobox escape hatch)
-+-- users/mj/                      # primaryUser: default.nix (account, Nushell login shell),
++-- users/mj/                      # primaryUser: default.nix (account, mjsh login shell),
 |                                  #   home.nix (identity + imports), one-concern HM modules;
 |                                  #   default-apps.nix holds the only xdg.mimeApps block;
 |                                  #   rebuild.nu (deprecated in favour of preflight)
@@ -876,9 +876,9 @@ The primary user is stated once in `flake.nix` as `primaryUser = "mj"` and passe
 
 `chrome-remote-desktop` is added to the configured CRD user's groups by `modules/services/chrome-remote-desktop.nix`, not here. There is no `adbusers` group: that option was removed from nixpkgs (CONSTRAINTS.md #33).
 
-- **Shell:** `pkgs.nushell` (Nushell, a Rust shell)
+- **Shell:** `mjsh` — Operator's standalone shell (Rust, built on Nushell), at `/home/<primaryUser>/.local/bin/mjsh`; installed out-of-band, not by Nix
 - **Root shell:** `pkgs.brush` (Brush, a Rust Bash-compatible shell), set in `hosts/common.nix`
-- **Valid login shells:** nushell, brush and ion, registered through `environment.shells`. Bash is left out of `environment.shells` and isn't assigned to any user. The bash module itself stays enabled, because NixOS activation and PAM tooling depend on it (CONSTRAINTS.md #1, #2)
+- **Valid login shells:** nushell, brush, ion and mjsh (added in `users/mj/default.nix`), registered through `environment.shells`. Bash is left out of `environment.shells` and isn't assigned to any user. The bash module itself stays enabled, because NixOS activation and PAM tooling depend on it (CONSTRAINTS.md #1, #2)
 
 ### 7.3 Hardware (`hosts/thinkpad/hardware.nix`)
 
@@ -1158,7 +1158,7 @@ Config and wrappers used by **both** bare window managers live here — active w
 
 ## 10. Terminal Emulators (`modules/packages/terminals.nix`)
 
-Enabled by `steelbore.packages.terminals.enable` (set in `hosts/common.nix`). Every Nix-installed terminal whose colours Bravais can set from a config file is themed from the active Steelbore palette's Standard §11.1 role tokens (via `steelborePalette`, resolved by `lib/palette.nix` from `steelbore.toml` in the `construct` input) — Termius is themed in-app only, and WaveTerm is an unthemed AppImage (§10.1) — and where Bravais sets or inherits the shell, it launches Nushell — most via an explicit `${pkgs.nushell}/bin/nu` at the system and user level, the rest by inheriting `$SHELL`, which is the Nushell login shell (see **Shell** in §10.3).
+Enabled by `steelbore.packages.terminals.enable` (set in `hosts/common.nix`). Every Nix-installed terminal whose colours Bravais can set from a config file is themed from the active Steelbore palette's Standard §11.1 role tokens (via `steelborePalette`, resolved by `lib/palette.nix` from `steelbore.toml` in the `construct` input) — Termius is themed in-app only, and WaveTerm is an unthemed AppImage (§10.1) — and where Bravais sets or inherits the shell, it launches Nushell — most via an explicit `${pkgs.nushell}/bin/nu` at the system and user level, the rest by inheriting `$SHELL`, which is the mjsh login shell (see **Shell** in §10.3).
 
 **Single source:** the terminal theme exists once, in `lib/terminal-theme.nix` — one data record (`theme`: the 16-colour ANSI table from `lib/palette.nix`, background/foreground, cursor and selection roles, font, opacity, scrollback) plus one small emitter per config format (`tt.foot`, `tt.ghostty`, `tt.weztermLua`, `tt.rioToml`, `tt.alacrittyToml`, `tt.alacrittyColors`, `tt.konsoleColorscheme`/`tt.konsoleColorschemePlain`, `tt.konsoleProfile`, `tt.xfce`, `tt.xresources`/`tt.xresourcesProps`, `tt.warpYaml`, `tt.cosmicTermScheme`, and `tt.ansi16`, the flat 16-entry list Ptyxis uses). Both `modules/packages/terminals.nix` and `users/mj/terminals.nix` import it, so a palette change is a one-file edit that reaches every terminal in lockstep. Font and opacity changes are too, except for literals in `users/mj/terminals.nix` that bypass the `theme` record and must be edited by hand: the Home Manager Alacritty font family and opacity, the Ptyxis font and opacity (dconf), and the GNOME Console font. All per-format colour conversion (bare hex, decimal R,G,B) happens inside the emitters. The emitters were migrated to reproduce the earlier hand-written configs byte-for-byte, so their formatting quirks are deliberate.
 
@@ -1225,7 +1225,7 @@ All values below come from the `theme` record and emitters in `lib/terminal-them
 - **Padding:** 10px — Alacritty, WezTerm, Ghostty (`window-padding-x/y`), XTerm (`internalBorder`), Ptyxis/VTE (`gtk.css`).
 - **Scrollback:** 10000 lines (`theme.scrollback`) — Foot, XTerm, XFCE4.
 - **Colour roles:** background/foreground from the matching role tokens; cursor = foreground on background; selection = accent background with background-coloured text. Alacritty's `/etc` TOML also uses `success` for the vi-mode cursor and focused search match, and `info` for search matches.
-- **Shell:** the explicit path `${pkgs.nushell}/bin/nu` goes to Alacritty, WezTerm, Ghostty, Rio, Foot, XFCE4 Terminal, Konsole and COSMIC Term (via each emitter's `shell` argument or the terminal's own shell/command key), plus Yakuake, which gets it through the Konsole `Steelbore.profile` `Command=` (its `yakuakerc` sets `DefaultProfile=Steelbore.profile`). GNOME Console, XTerm (`XTerm*loginShell: true` with no shell set) and Ptyxis (its dconf profile sets no custom command) get no explicit path and inherit `$SHELL` (the Nushell login shell; one started from a Nushell prompt gets bash, §13.7). Warp is outside both groups: only a theme YAML is shipped, so Bravais does not set its shell and it uses Warp's own default/login-shell detection.
+- **Shell:** the explicit path `${pkgs.nushell}/bin/nu` goes to Alacritty, WezTerm, Ghostty, Rio, Foot, XFCE4 Terminal, Konsole and COSMIC Term (via each emitter's `shell` argument or the terminal's own shell/command key), plus Yakuake, which gets it through the Konsole `Steelbore.profile` `Command=` (its `yakuakerc` sets `DefaultProfile=Steelbore.profile`). GNOME Console, XTerm (`XTerm*loginShell: true` with no shell set) and Ptyxis (its dconf profile sets no custom command) get no explicit path and inherit `$SHELL` (the mjsh login shell; one started from a Nushell prompt gets bash, §13.7). Warp is outside both groups: only a theme YAML is shipped, so Bravais does not set its shell and it uses Warp's own default/login-shell detection.
 - **Foot quirk:** colours are bare hex without a `#` prefix — handled inside the `tt.foot` emitter via `convert.bareHex` from `lib/palette.nix`.
 - **Konsole quirk:** colours are decimal `R,G,B` triples via `convert.rgbTriple`; the scheme carries Normal/Faint/Intense variants per slot (Intense = the bright ANSI colour, bold).
 - **Rio font config:** Mono variant (`"JetBrainsMono Nerd Font Mono"`) for regular/bold/italic/bold-italic with `weight = N` integers (400 regular, 700 bold) and no `style` key, plus `Symbols Nerd Font` / `Symbols Nerd Font Mono` extras. The Mono variant is enforced by `tt.rioToml` because the proportional face renders icons wider than one cell (CONSTRAINTS.md #11). The same constraint records Rio's upstream bug: closing it with the X or a WM close keybind hangs at 100% CPU on Wayland — type `exit` instead.
@@ -1808,7 +1808,7 @@ what makes `gradle installDebug` and Android Studio work against it.
 
 Home Manager runs as a NixOS module for the single user named by `primaryUser`
 (`mj`), with `useGlobalPkgs`, `useUserPackages` and `backupFileExtension = "backup"`.
-The system-side account (`users/mj/default.nix`) sets Nushell as the login shell and
+The system-side account (`users/mj/default.nix`) sets `mjsh` as the login shell and
 the groups `networkmanager`, `wheel`, `input`, `video`, `audio`, `seat` and `uinput`.
 
 ### 13.1 Basic Settings (`users/mj/home.nix`)

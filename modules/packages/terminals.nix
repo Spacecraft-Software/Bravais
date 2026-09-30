@@ -190,7 +190,7 @@ in
     # ═══════════════════════════════════════════════════════════════════════════
     # GNOME CONSOLE (kgx) — GNOME 4x minimal terminal
     # Color palette is fixed by theme; "night" is the closest dark option.
-    # Shell is inherited from $SHELL (Nushell login shell). Configured via dconf in home.
+    # Shell is inherited from $SHELL (the mjsh login shell). Configured via dconf in home.
     # ═══════════════════════════════════════════════════════════════════════════
   };
 }

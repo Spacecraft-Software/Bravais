@@ -178,7 +178,7 @@ in
 
     # ── GNOME Console (kgx) ─────────────────────────────────────────────────
     # kgx has limited theming: fixed "night"/"day"/"auto" themes only.
-    # Shell is inherited from $SHELL (nushell). Font can be customized.
+    # Shell is inherited from $SHELL (mjsh). Font can be customized.
     "org/gnome/Console" = {
       theme = "night";
       use-system-font = false;
