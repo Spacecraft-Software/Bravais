@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Login shell is now `mjsh`.** The primary user's login shell is
+  Operator's standalone shell at `~/.local/bin/mjsh` (out-of-band, not a
+  Nix package), appended to `/etc/shells`. Nushell, Brush and Ion stay
+  registered; root keeps Brush; terminals that set a shell still launch
+  Nushell.
+
 ### Added
 
 - **Boot animation.** A Plymouth theme (`pkgs/steelbore-plymouth`,
