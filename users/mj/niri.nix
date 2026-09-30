@@ -2,6 +2,7 @@
 # Steelbore Bravais — Home Manager: Niri compositor + bars + OSD/idle user configs
 # Split from home.nix in Phase D (elegance plan 3.1); zero behavior change.
 {
+  config,
   pkgs,
   steelborePalette,
   ...
@@ -137,9 +138,9 @@ in
       // Startup. The wallpaper daemon needs to bind its IPC socket before
       // any client command; the inline sleep gives it a moment before the
       // image is set. The wallpaper is a loose file in ~ (not Nix-managed), so
-      // fall back to the solid Void Navy fill if it's ever missing.
+      // fall back to the solid background-role fill if it's ever missing.
       spawn-at-startup "${wallpaperPkg}/bin/${wallpaperBin}-daemon"
-      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img /home/mj/Pictures/Wallpapers/Steelbore/Gemini_Generated_Image_6t0x936t0x936t0x.jpeg || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
+      spawn-at-startup "sh" "-c" "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img ${config.home.homeDirectory}/Pictures/Wallpapers/Steelbore/ChatGPT_Image_2026-09-30_16-46-13.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
       spawn-at-startup "eww" "open" "bar"
       spawn-at-startup "dunst"
       // OSD daemon for the dedicated brightness/volume keys (binds below).

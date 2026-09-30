@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Niri wallpaper.** The startup wallpaper is now
+  `~/Pictures/Wallpapers/Steelbore/ChatGPT_Image_2026-09-30_16-46-13.png`
+  (still a loose file, with the background-role fill as fallback).
 - **Login shell is now `mjsh`.** The primary user's login shell is
   Operator's standalone shell at `~/.local/bin/mjsh` (out-of-band, not a
   Nix package), appended to `/etc/shells`. Nushell, Brush and Ion stay
