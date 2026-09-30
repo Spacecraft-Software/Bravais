@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and four vendored binaries bumped.** `nixpkgs`,
+  `nixpkgs-unstable`, `home-manager`, `home-manager-unstable` and
+  `antigravity-nix` moved in `flake.lock`; `claude-desktop`,
+  `codex-desktop`, `github-copilot-app` and `ollama` moved to the versions
+  pinned in their `pkgs/<name>/package.nix`. `.github/skills/` needed no
+  re-sync.
+
 - **Niri wallpaper.** The startup wallpaper is now
   `~/Pictures/Wallpapers/Steelbore/ChatGPT_Image_2026-09-30_16-46-13.png`
   (still a loose file, with the background-role fill as fallback).
