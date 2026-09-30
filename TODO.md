@@ -203,6 +203,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `steelbore.packages.terminals` option
 - [✓] Install Rust terminals (Alacritty, WezTerm, Rio, Warp)
+- [✓] Warp: drop nixpkgs `warp-terminal` in favour of the self-updating AppImage in `~/Applications/` (one menu entry)
 - [✓] Install Ghostty (Zig)
 - [✓] Install GTK/VTE terminals (Ptyxis, GNOME Console)
 - [✓] Install AI-native terminals (WaveTerm) — now an AppImage in `~/Applications/`; nixpkgs removed it (EOL Electron)

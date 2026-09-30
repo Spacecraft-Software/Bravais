@@ -88,6 +88,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Nix `warp-terminal`.** Warp now comes only from its self-updating
+  AppImage in `~/Applications/`; the nixpkgs build lagged months behind
+  and showed a second "Warp" in the app menu. The theme YAML stays.
 - **WaveTerm is no longer installed from nixpkgs.** nixpkgs-unstable removed
   it (EOL Electron, no maintainer), which broke evaluation of
   `bravais-thinkpad-unstable`. The AppImage in `~/Applications/` is the
