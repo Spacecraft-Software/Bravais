@@ -1166,7 +1166,7 @@ Enabled by `steelbore.packages.terminals.enable` (set in `hosts/common.nix`). Ev
 
 ### 10.1 Terminal Package List
 
-Taken from `environment.systemPackages` in `modules/packages/terminals.nix`, plus WaveTerm (installed outside Nix).
+Taken from `environment.systemPackages` in `modules/packages/terminals.nix`, plus Warp and WaveTerm (AppImages, installed outside Nix).
 
 | Terminal       | Package                     | Language | Category   |
 |----------------|-----------------------------|----------|------------|
@@ -1175,7 +1175,7 @@ Taken from `environment.systemPackages` in `modules/packages/terminals.nix`, plu
 | Rio            | `rio`                       | Rust     | Primary    |
 | Ghostty        | `ghostty`                   | Zig      | Primary    |
 | Ptyxis         | `ptyxis`                    | C (VTE)  | GNOME — host install so distrobox/container integration works out of the box |
-| Warp           | `warp-terminal`             | Rust     | AI-powered |
+| Warp           | — (AppImage in `~/Applications/`) | Rust | AI-powered — not a Nix package: the self-updating AppImage replaced nixpkgs' `warp-terminal`, which lagged months behind and put a second "Warp" in the app menu; Bravais still ships its theme YAML |
 | Termius        | `termius`                   | —        | SSH client (no system-level theming; configured in-app) |
 | COSMIC Term    | `cosmic-term`               | Rust     | COSMIC     |
 | Konsole        | `kdePackages.konsole`       | C++      | KDE        |

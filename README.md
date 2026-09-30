@@ -173,7 +173,7 @@ All terminals are themed with the Steelbore color palette and launch **nushell +
 | WezTerm | Rust / GPU | Lua-configurable, full tab bar |
 | Rio | Rust / GPU | Native GPU rendering |
 | Ghostty | Zig / GPU | Memory-safe, fast |
-| Warp | Rust / AI | AI-powered terminal |
+| Warp | Rust / AI | AI-powered terminal — self-updating AppImage in `~/Applications/` |
 | WaveTerm | Go / AI | AI-native terminal — AppImage in `~/Applications/` (dropped from nixpkgs) |
 | COSMIC Term | Rust | COSMIC desktop terminal |
 | Konsole | C++ / KDE | Steelbore colorscheme + profile |

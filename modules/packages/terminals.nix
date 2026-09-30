@@ -31,7 +31,6 @@ in
       ptyxis
       # GNOME terminal (VTE-based) — host install so
       #   distrobox/container integration works out-of-box.
-      warp-terminal # AI-powered terminal
       termius # SSH client
       cosmic-term # COSMIC terminal
 
@@ -120,7 +119,9 @@ in
 
     # ═══════════════════════════════════════════════════════════════════════════
     # WARP TERMINAL — AI-powered terminal
-    # Uses YAML configuration
+    # Installed as a self-updating AppImage in ~/Applications, not from
+    # nixpkgs (whose build lagged months behind and duplicated the menu
+    # entry). Only the theme is shipped here.
     # ═══════════════════════════════════════════════════════════════════════════
     environment.etc."warp/themes/steelbore.yaml".text = tt.warpYaml;
 
