@@ -81,6 +81,7 @@
         ion # Rust — Shell
         starship # Rust — Prompt
         atuin # Rust — Shell history
+        carapace # Go — Multi-shell argument completer
         pipr # Rust — Pipeline builder
         moor # Rust — Shell
         powershell

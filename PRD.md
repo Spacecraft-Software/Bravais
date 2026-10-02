@@ -1560,7 +1560,8 @@ their own modules.
   texinfo (C), pandoc (Haskell), reuse (Python — SPDX/REUSE checker), hunspell
   (+ `hunspellDicts.en_US`)
 - **Shells:** nushell (Rust), brush (Rust), ion (Rust), starship (Rust), atuin
-  (Rust), pipr (Rust), moor (Rust), powershell
+  (Rust), carapace (Go — completer for Nushell and Bash via `programs.carapace`),
+  pipr (Rust), moor (Rust), powershell
 - **Multiplexers:** zellij (Rust), screen
 - **Recording:** t-rec (Rust)
 - **Containers & Virtualization:** steam-run (FHS environment, `unstablePkgs`), distrobox,
