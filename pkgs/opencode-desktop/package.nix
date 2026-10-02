@@ -59,11 +59,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "opencode-desktop";
-  version = "1.18.33";
+  version = "1.18.34";
 
   src = fetchurl {
     url = "https://github.com/anomalyco/opencode/releases/download/v${finalAttrs.version}/opencode-desktop-linux-amd64.deb";
-    hash = "sha256-uYgfdGxYaAEma6akwihJulyz2snw8BiUbBRK6BIHIiI=";
+    hash = "sha256-aEt1tjy7tt+b+5GQh19JaMy4kC/Yo+WgtpSvjLziM9w=";
   };
 
   nativeBuildInputs = [

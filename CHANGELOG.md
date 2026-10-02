@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and four more vendored binaries bumped.** `nixpkgs`,
+  `nixpkgs-unstable`, `home-manager-unstable`, `antigravity-nix` and
+  `construct` (with its `mcp-servers` input) moved in `flake.lock`;
+  `chrome-remote-desktop`, `codex-desktop`, `github-copilot-app` and
+  `opencode-desktop` moved to the versions pinned in their
+  `pkgs/<name>/package.nix`. `.github/skills/` was already in sync.
 - **Flake inputs and four vendored binaries bumped.** `nixpkgs`,
   `nixpkgs-unstable`, `home-manager`, `home-manager-unstable` and
   `antigravity-nix` moved in `flake.lock`; `claude-desktop`,
