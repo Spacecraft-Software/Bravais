@@ -111,7 +111,7 @@ bravais/
 +-- hosts/                         # Machine configurations
 |   +-- common.nix                 # Shared by every machine: networking, X11/XKB, shells, steelbore.* toggles
 |   +-- thinkpad/                  # ThinkPad (i7-8665U, Whiskey Lake)
-|       +-- default.nix            # hostName, steelbore.hardware.*, CRD, Waydroid, march pin (v3)
+|       +-- default.nix            # hostName, steelbore.hardware.*, CRD (off), Waydroid, march pin (v3)
 |       +-- hardware.nix           # Hardware configuration (generated)
 +-- modules/                       # NixOS modules (steelbore.* namespace)
 |   +-- core/                      # Always-enabled: boot, memory, nix (the sole overlay location),
@@ -852,7 +852,7 @@ The machine is an Intel i7-8665U (Whiskey Lake). A T490s-specific comment in thi
 - **Hostname:** `bravais-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.{android,audioLed,bluetooth,fingerprint,intel}.enable`
 - **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" ]`. This is per-machine because the device name is. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick (CONSTRAINTS.md #29)
-- **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = true; user = primaryUser; }` (a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
+- **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = false; user = primaryUser; }` (disabled since 2026-10-02; when enabled, a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
 - **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }`. The i7-8665U supports x86-64-v3 (AVX2/BMI2/FMA) but has **no AVX-512**, so v4 would emit illegal instructions on this CPU
 
 The platform module (`modules/platform/x86-64.nix`) accepts `marchLevel` as an enum of `v1`…`v4`, with a default of `v2`. The default is deliberately not v4, because a v4 default would SIGILL on any CPU without AVX-512. Every host is expected to pin its real level. There is no v1–v4 build matrix: each machine builds at exactly one level.
