@@ -448,6 +448,15 @@ in
           };
     };
 
+    # Carapace — multi-shell argument completer. The Nushell integration is
+    # appended via `extraConfig`, i.e. AFTER the `$env.config = { … }`
+    # assignment below, so its `completions.external` upsert survives.
+    carapace = {
+      enable = true;
+      enableNushellIntegration = true;
+      enableBashIntegration = true;
+    };
+
     # Nushell configuration
     nushell = {
       enable = true;

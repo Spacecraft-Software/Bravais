@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Carapace.** The multi-shell argument completer (`carapace`, Go,
+  from nixpkgs) is installed system-wide and wired in through Home
+  Manager's `programs.carapace`: Nushell gets it as its external
+  completer and Bash/Brush source its completions. Ion has no
+  integration.
 - **Boot animation.** A Plymouth theme (`pkgs/steelbore-plymouth`,
   `steelbore.boot.splash`) plays `assets/boot/splash.mp4` once, without
   its audio, from early boot until the login screen, on the active
