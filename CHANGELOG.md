@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Windows no longer appears in the boot menu.** systemd-boot kept
+  auto-detecting the leftover `EFI/Microsoft` loader on the ESP after
+  Windows was removed. A `systemd-boot.extraInstallCommands` hook in
+  `modules/core/boot.nix` now deletes it on every bootloader install, so
+  preflight, `rebuild` and `scripts/rebuild.sh` all apply it on their next
+  switch; it also frees ESP space.
+
 ### Changed
 
 - **Flake inputs and four vendored binaries bumped.** `nixpkgs`,
