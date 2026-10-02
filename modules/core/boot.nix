@@ -20,12 +20,13 @@
   # NixOS installer only manages EFI/nixos and loader/. Deleting the directory
   # here runs on every switch (preflight, `rebuild` and rebuild.sh alike) and
   # frees ESP space toward constraint #42. Remove this if Windows is ever
-  # reinstalled: the hook would delete the new install's loader too.
+  # reinstalled: the hook would delete the new install's loader too. The hook
+  # runs with an empty PATH, so every command is a store path.
   boot.loader.systemd-boot.extraInstallCommands = ''
     windows_loader="${config.boot.loader.efi.efiSysMountPoint}/EFI/Microsoft"
     if [ -d "$windows_loader" ]; then
       echo "removing stale Windows loader at $windows_loader"
-      rm -rf -- "$windows_loader"
+      ${pkgs.coreutils}/bin/rm -rf -- "$windows_loader"
     fi
   '';
   # zstd -19 rather than the default level: ~4 MiB smaller per initrd, which
