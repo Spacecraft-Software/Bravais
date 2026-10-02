@@ -536,7 +536,7 @@ Set via `console.colors` in `modules/theme/default.nix`: the 16-entry list `ansi
 
 ### 5.2 Boot (`modules/core/boot.nix`)
 
-- **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs, and the installer prunes entries beyond the limit before copying the new kernel (CONSTRAINTS.md #42)
+- **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs, and the installer prunes entries beyond the limit before copying the new kernel (CONSTRAINTS.md #42). Single-boot: an `extraInstallCommands` hook deletes any `EFI/Microsoft` loader on each install, since systemd-boot would otherwise auto-list it as "Windows Boot Manager"
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
 - **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` once as 12 fps / 640 px quantized frames on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
 - **Startup sound:** `users/mj/startup-sound.nix` — `pw-play` of `assets/boot/startup-sound.mp3` once per boot at the first graphical login (marker in `/tmp`)
