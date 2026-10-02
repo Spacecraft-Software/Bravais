@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Chrome Remote Desktop disabled.** `steelbore.services.chromeRemoteDesktop`
+  is off on the ThinkPad, and `~/.chrome-remote-desktop-session` is only
+  written while it is on.
+- **New boot animation clip.** `assets/boot/splash.mp4` is replaced by a
+  new 10 s clip; the initrd grows from 46.4 to 47.5 MiB, still inside the
+  constraint #43 budget.
 - **Flake inputs and four more vendored binaries bumped.** `nixpkgs`,
   `nixpkgs-unstable`, `home-manager-unstable`, `antigravity-nix` and
   `construct` (with its `mcp-servers` input) moved in `flake.lock`;

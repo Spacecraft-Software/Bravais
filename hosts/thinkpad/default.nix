@@ -37,8 +37,10 @@
   # Wayland session, and NOT under LeftWM (startx/X11, no X11 backend exists).
   steelbore.services.waydroid.enable = true;
 
+  # Disabled 2026-10-02; flip back to re-enable (the host registration in
+  # ~/.config/chrome-remote-desktop is left in place).
   steelbore.services.chromeRemoteDesktop = {
-    enable = true;
+    enable = false;
     user = primaryUser;
   };
 
