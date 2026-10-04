@@ -3,6 +3,7 @@
 # Split from home.nix in Phase D (elegance plan 3.1); zero behavior change.
 {
   lib,
+  osConfig,
   pkgs,
   steelborePalette,
   ...
@@ -810,7 +811,7 @@ in
   # Wayland — CRD can't drive them). Launch leftwm directly under a fresh D-Bus,
   # NOT via the startx-based start-leftwm, which would spawn a second physical
   # Xorg that collides with CRD's virtual X.
-  home.file.".chrome-remote-desktop-session" = {
+  home.file.".chrome-remote-desktop-session" = lib.mkIf osConfig.steelbore.services.chromeRemoteDesktop.enable {
     executable = true;
     text = ''
       #!${pkgs.runtimeShell}
