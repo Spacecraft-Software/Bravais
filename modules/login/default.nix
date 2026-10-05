@@ -3,6 +3,7 @@
 {
   config,
   pkgs,
+  primaryUser,
   steelborePalette,
   gitway,
   ...
@@ -85,6 +86,17 @@ let
     sessionName = "brush";
     exec = "${pkgs.brush}/bin/brush";
     comment = "Drop to Brush shell";
+  };
+
+  # Operator's mjsh — the primary user's login shell, out-of-band at the
+  # path users/mj/default.nix sets as `shell`, so it is read back from there
+  # rather than restated. If the binary is missing, the Nushell/Brush/Ion
+  # sessions remain.
+  mjsh-session = mkShellSession {
+    name = "mjsh";
+    sessionName = "mjsh";
+    exec = config.users.users.${primaryUser}.shell;
+    comment = "Drop to mjsh (Operator)";
   };
 
   # Unified `start-<de>` launchers. Every desktop in Bravais exposes the same
@@ -348,6 +360,7 @@ in
     brush-session
   ])
   ++ [
+    mjsh-session
     leftwm-xsession
     plasma-x11-xsession
   ];
@@ -364,6 +377,7 @@ in
     nu
     brush
     ion
+    ${config.users.users.${primaryUser}.shell}
   '';
 
   environment.systemPackages =

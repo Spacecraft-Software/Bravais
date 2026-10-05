@@ -77,8 +77,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] **`default.nix`**: greetd + tuigreet with Steelbore branding
 - [✓] **`default.nix`**: Session memory and ISO 8601 time display
-- [✓] **`default.nix`**: Shell sessions (Ion, Nushell, Brush) via `mkShellSession`
-- [✓] **`default.nix`**: Register session packages (niri, cosmic, ion, nushell, brush)
+- [✓] **`default.nix`**: Shell sessions (Ion, Nushell, Brush, mjsh) via `mkShellSession`
+- [✓] **`default.nix`**: Register session packages (niri, cosmic, ion, nushell, brush, mjsh)
 - [✓] **`default.nix`**: PAM gnome-keyring integration
 
 ---

@@ -18,8 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   preflight, `rebuild` and `scripts/rebuild.sh` all apply it on their next
   switch; it also frees ESP space.
 
+### Added
+
+- **mjsh login session.** greetd now offers an `mjsh` session beside
+  Nushell, Brush and Ion (wrapped in cage + rio like them), and
+  `/etc/greetd/environments` lists mjsh by its full path.
+
 ### Changed
 
+- **Boot animation clip replaced again.** `assets/boot/splash.mp4` is the
+  2026-10-05 clip. Its frames are heavier, so the Plymouth theme now cuts
+  them at 480 px instead of 640 px to keep the initrd (48.5 MiB) under the
+  constraint #43 ceiling.
 - **Chrome Remote Desktop disabled.** `steelbore.services.chromeRemoteDesktop`
   is off on the ThinkPad, and `~/.chrome-remote-desktop-session` is only
   written while it is on.
