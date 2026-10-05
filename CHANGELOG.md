@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and three vendored binaries bumped.** `nixpkgs`,
+  `home-manager`, `home-manager-unstable` and `antigravity-nix` moved in
+  `flake.lock`; `codex-desktop`, `goose-desktop` and `ollama` moved to the
+  versions pinned in their `pkgs/<name>/package.nix`. `construct` did not
+  move, so `.github/skills/` needed no re-sync.
 - **Boot animation clip replaced again.** `assets/boot/splash.mp4` is the
   2026-10-05 clip. Its frames are heavier, so the Plymouth theme now cuts
   them at 480 px instead of 640 px to keep the initrd (48.5 MiB) under the
