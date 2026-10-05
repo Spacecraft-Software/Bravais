@@ -538,7 +538,7 @@ Set via `console.colors` in `modules/theme/default.nix`: the 16-entry list `ansi
 
 - **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs, and the installer prunes entries beyond the limit before copying the new kernel (CONSTRAINTS.md #42). Single-boot: an `extraInstallCommands` hook deletes any `EFI/Microsoft` loader on each install, since systemd-boot would otherwise auto-list it as "Windows Boot Manager"
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
-- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` once as 12 fps / 640 px quantized frames on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
+- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` once as 12 fps / 480 px quantized frames on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
 - **Startup sound:** `users/mj/startup-sound.nix` — `pw-play` of `assets/boot/startup-sound.mp3` once per boot at the first graphical login (marker in `/tmp`)
 - **Module lists:** none here (initrd modules: generated `hosts/<machine>/hardware.nix`; `kvm-intel`: `modules/hardware/intel.nix`). The generated `hosts/thinkpad/hardware.nix` also declares `kvm-intel` and `hardware.cpu.intel.updateMicrocode`; the list options merge and the microcode line is the same `mkDefault`, so the duplication is harmless
 
@@ -929,6 +929,9 @@ Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that 
 | Nushell      | `nushell`   | `nu`    | Drop to Nushell      |
 | Brush Shell  | `brush`     | `brush` | Drop to Brush shell  |
 | Ion Shell    | `ion-shell` | `ion`   | Drop to Ion shell    |
+| mjsh         | `mjsh`      | the primary user's `shell` | Drop to mjsh (Operator) |
+
+mjsh is out-of-band (`~/.local/bin/mjsh`, not a Nix package), so its entry reads the path back from `users.users.<primaryUser>.shell` (set in `users/mj/default.nix`) instead of restating it, and `/etc/greetd/environments` lists it by that full path — greetd's `PATH` does not include `~/.local/bin`.
 
 ### 8.2.1 X11 Sessions and Launchers
 
@@ -956,6 +959,7 @@ services.displayManager.sessionPackages = [
   brush-session
 ])
 ++ [
+  mjsh-session
   leftwm-xsession
   plasma-x11-xsession
 ];
@@ -982,6 +986,7 @@ start-leftwm
 nu
 brush
 ion
+/home/mj/.local/bin/mjsh
 ```
 
 ### 8.5 PAM

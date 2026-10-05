@@ -4,9 +4,9 @@
 #
 # Plymouth cannot decode video, so the clip is cut into PNG frames at build
 # time. The theme is copied into EVERY initrd, and the 196 MiB ESP keeps three
-# of them (constraint #42), so the frames are budgeted hard: 12 fps, 640 px
-# wide, palette-quantized — ~3 MiB against 80 MiB for the source's 24 fps at
-# 1280 px. The script scales them up to the screen. Check the size with
+# of them (constraint #42), so the frames are budgeted hard: 12 fps, 480 px
+# wide, palette-quantized — under 5 MiB against 80 MiB for the source's 24
+# fps at 1280 px. The script scales them up to the screen. Check the size with
 # `nix path-info -Sh .#steelbore-plymouth` after changing any of the three.
 {
   lib,
@@ -21,7 +21,7 @@
     blue = "0.0";
   },
   fps ? 12,
-  width ? 640,
+  width ? 480,
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
