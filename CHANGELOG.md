@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Home Manager activates again under COSMIC.** cosmic-settings-daemon
+  now also replaces `~/.config/gtk-3.0/gtk.css` with its own symlink, so
+  `home-manager-mj.service` refused to clobber it and every HM change was
+  stranded (constraint #30). The GTK 3 file is now `force`-owned like the
+  GTK 4 one.
 - **Claude Desktop builds again.** Release 2.19675.1's native module
   links `libpipewire-0.3`; `pipewire` is now in its `buildInputs`, so
   autoPatchelf no longer fails the rebuild.

@@ -43,13 +43,15 @@ in
   # default-apps.nix; the MIME lists live in lib/default-apps.nix.
 
   xdg.configFile = {
-    # COSMIC's cosmic-settings-daemon overwrites HM's gtk-4.0/gtk.css
-    # with its own `cosmic/dark.css` symlink whenever the theme syncs.
+    # COSMIC's cosmic-settings-daemon overwrites HM's gtk-4.0/gtk.css and
+    # gtk-3.0/gtk.css (the latter since 2026-10-06) with its own
+    # `cosmic/dark.css` symlink whenever the theme syncs.
     # On the next nixos-rebuild HM sees a foreign file at the path it
     # expects to own and refuses to activate ("would be clobbered").
     # `force = true` tells HM to overwrite unconditionally; cosmic
     # re-asserts its symlink moments later, producing at most a brief
     # theme flicker right after activation.
+    "gtk-3.0/gtk.css".force = true;
     "gtk-4.0/gtk.css".force = true;
 
     # Suppress gnome-keyring's SSH component so it doesn't override
@@ -234,8 +236,8 @@ in
     # widget styling; these @define-color overrides recolour it to the active
     # palette — accent, destructive, success, warning, window/view/headerbar/
     # card/popover fills. Null for a local theme, which keeps adw-gtk3's own
-    # colours. (`gtk-4.0/gtk.css` is force-owned above because COSMIC rewrites
-    # it; this is the content HM writes there.)
+    # colours. (Both `gtk.css` files are force-owned above because COSMIC
+    # rewrites them; this is the content HM writes there.)
     gtk4.extraCss = lib.optionalString (themeAssets.gtk4Css != null) (
       builtins.readFile themeAssets.gtk4Css
     );
