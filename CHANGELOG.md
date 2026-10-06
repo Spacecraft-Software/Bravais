@@ -24,8 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Nushell, Brush and Ion (wrapped in cage + rio like them), and
   `/etc/greetd/environments` lists mjsh by its full path.
 
+### Fixed
+
+- **Claude Desktop builds again.** Release 2.19675.1's native module
+  links `libpipewire-0.3`; `pipewire` is now in its `buildInputs`, so
+  autoPatchelf no longer fails the rebuild.
+
 ### Changed
 
+- **Flake inputs and three vendored binaries bumped.** `nixpkgs`,
+  `nixpkgs-unstable`, `home-manager-unstable`, `antigravity-nix` and
+  `construct` moved in `flake.lock`; `claude-desktop`, `codex-desktop` and
+  `browseros` moved to their newly pinned versions. `.github/skills/` was
+  re-synced (`spacecraft-steelbore-standard` changed).
 - **Flake inputs and two more vendored binaries bumped.** `nixpkgs`,
   `nixpkgs-unstable`, `home-manager-unstable` and `construct` moved in
   `flake.lock`; `codex-desktop` and `obscura` moved to the versions pinned

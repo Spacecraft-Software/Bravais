@@ -42,6 +42,7 @@
   libseccomp,
   libpulseaudio,
   libsecret,
+  pipewire,
   libuuid,
   libxkbcommon,
   mesa,
@@ -69,11 +70,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "claude-desktop";
-  version = "2.9939.4";
+  version = "2.19675.1";
 
   src = fetchurl {
     url = "https://downloads.claude.ai/claude-desktop/apt/stable/pool/main/c/claude-desktop/claude-desktop_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-PP3bI78pEeBeJ7TtOFa455XflGQ7LDW1nesxfPmVvKA=";
+    hash = "sha256-m6En7szycPbmDTX1xTM2VAU78FQMiPyCoAnQFxGxBvw=";
   };
 
   nativeBuildInputs = [
@@ -111,6 +112,7 @@ stdenv.mkDerivation (finalAttrs: {
     nspr
     nss
     pango
+    pipewire # libpipewire-0.3 (claude-native-binding.node)
     (lib.getLib stdenv.cc.cc) # libstdc++ / libgcc_s
     systemd # libudev
     wayland

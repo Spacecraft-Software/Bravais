@@ -15,13 +15,13 @@ let
   # Update procedure: run `nu pkgs/update-vendored.nu browseros` (plan 5.1) —
   # or by hand: bump version, swap the URL, then refresh the hash with
   #   nix store prefetch-file --hash-type sha256 <url>
-  browserosVersion = "0.50.5";
+  browserosVersion = "0.51.0";
   browseros = pkgs.appimageTools.wrapType2 {
     pname = "browseros";
     version = browserosVersion;
     src = pkgs.fetchurl {
       url = "https://github.com/browseros-ai/BrowserOS/releases/download/v${browserosVersion}/BrowserOS_v${browserosVersion}_x64.AppImage";
-      hash = "sha256-qfgH+hkOZtPFW8KfXHTwhOyrGr+d706p74o7uq5GcIk=";
+      hash = "sha256-tYbfcgg8BG4uotHMG2RjMl7Uywwxl11I4JzBQhXj578=";
     };
   };
 in

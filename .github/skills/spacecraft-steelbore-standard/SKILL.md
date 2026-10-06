@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v2.11 (§19-§26 assurance + requirements + V&V; §13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.3 security-by-design) so
+  The Steelbore Standard v2.12 (§19-§26 assurance + requirements + V&V; §13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 2.11 | **Date:** 2026-10-05 | **Author:** Mohamed Hammad
+**Version:** 2.12 | **Date:** 2026-10-06 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -491,7 +491,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§24** Dependencies qualified at the depth §19.3 requires, with purpose, provenance, maintenance, security history, unsafe posture, transitive weight, alternatives, and exit plan recorded; `cargo audit` and `cargo deny` gate CI, not just adoption; lockfile and toolchain pinned; no unqualified software on a Category A path; an SBOM generated from the locked inputs in the release CI run and shipped with a checksum
 - [ ] **§25** Baselines cut at all three gates covering source, dependencies, toolchain, requirements, budgets, and interfaces; anomalies classified S1–S4 by consequence, S1 and S2 closed only by a committed regression test citing the anomaly, and open anomalies listed in the release notes; release manifest assembled with identity, artifacts and checksums, provenance, verification and validation summaries, budgets, known issues, and the conformance claim; installation verified from each of the three §5.5 package definitions in a clean environment before the tag is pushed
 - [ ] **§26** `SECURITY.md` present with reporting channel, acknowledgement target, scope, supported versions, disclosure terms, and credit policy; advisories published for fixed vulnerabilities and citing the SBOM; deprecations announced in `CHANGELOG.md`, the ICD, and at run time, with the notice period the category requires and a named replacement; support window stated for the project's posture; an ended project taken through the §26.4 EOL procedure rather than left silent
-- [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too
+- [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too, only through the signing setup already configured on the host — no agent creates, reads, requests, or exposes a private key, passphrase, password, or token, and a signing failure is reported, never worked around
 - [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution
 
 If any item is not applicable to the current artifact type (e.g., color palette
