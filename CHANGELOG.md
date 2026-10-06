@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and two more vendored binaries bumped.** `nixpkgs`,
+  `nixpkgs-unstable`, `home-manager-unstable` and `construct` moved in
+  `flake.lock`; `codex-desktop` and `obscura` moved to the versions pinned
+  in their `pkgs/<name>/package.nix`. `.github/skills/` was re-synced
+  (`spacecraft-steelbore-standard` changed).
 - **Flake inputs and three vendored binaries bumped.** `nixpkgs`,
   `home-manager`, `home-manager-unstable` and `antigravity-nix` moved in
   `flake.lock`; `codex-desktop`, `goose-desktop` and `ollama` moved to the
