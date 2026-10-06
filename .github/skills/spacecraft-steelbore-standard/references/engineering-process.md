@@ -195,7 +195,7 @@ it.
 |-----------|---------|
 | Rationale | Why this is required. One sentence. A requirement whose rationale cannot be written is a design decision in disguise, and belongs in the design record |
 | Source | The need it satisfies, an upstream standard, a platform constraint, or a clause of this standard |
-| Priority | `mandatory` / `expected` / `optional`. Drives what MVP means in §17 |
+| Priority | `mandatory` / `expected` / `optional`. Drives what MVP means in §17. Only `mandatory` and `expected` count toward the §17 figures; `optional` never does |
 | Verification method | One of the four §21.1 methods, chosen **when the requirement is written** — not after the code exists and the cheapest evidence is obvious |
 | Status | `draft` / `baselined` / `implemented` / `verified` / `withdrawn`. **The denominator of the §17 progress figures** |
 
