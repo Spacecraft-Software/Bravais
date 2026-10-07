@@ -588,9 +588,13 @@
             (centerbox :orientation "h"
               (box :orientation "h" :spacing 8 :halign "start"
                 (literal :content leftwm-ws)
-                (label :class "window-title" :halign "start" :text window-title))
+                ;; :limit-width (characters, with an ellipsis) is the eww way to cap
+                ;; the title; GTK CSS has no max-width/text-overflow to do it.
+                (label :class "window-title" :halign "start" :limit-width 60 :text window-title))
               (label :class "clock" :text time)
-              (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
+              ;; :space-evenly false — eww boxes default to true, which spreads
+              ;; the indicators across the whole right-hand third of the bar.
+              (box :orientation "h" :spacing 16 :space-evenly false :halign "end" :class "metrics"
                 ;; Keyboard language — leftmost in the metrics group. Text
                 ;; from `lang`, color from `lang_state` (en=steel blue,
                 ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
@@ -785,12 +789,13 @@
           }
 
           // ── Focused window title ──────────────────────────────────────────
+          // Width is capped by :limit-width in eww.yuck. Never add web-only
+          // properties (max-width, text-overflow, overflow, white-space) here:
+          // GTK's CSS parser rejects the whole stylesheet over one unknown
+          // property, and the bar then renders unstyled -- no colors, no
+          // border, theme-default everything.
           .window-title {
               color: $foreground;
-              max-width: 400px;
-              text-overflow: ellipsis;
-              overflow: hidden;
-              white-space: nowrap;
           }
 
           // ── System tray ───────────────────────────────────────────────────

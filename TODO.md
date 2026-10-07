@@ -67,7 +67,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
-- [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`boot-splash.nix`**: Plymouth boot splash from `assets/boot/splash.jpeg` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
 - [✓] **`users/mj/startup-sound.nix`**: once-per-boot startup sound at the first graphical login
 - Note: to change fonts later, follow the "Changing fonts" section in `AGENTS.md` (procedure: the `changing-fonts` skill in `.claude/skills/`)
 

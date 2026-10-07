@@ -137,26 +137,47 @@ let
   # Pre-create the per-PID xauth file so xauth doesn't print
   # "file ... does not exist" before startx generates it. bash's $$ is
   # preserved across exec, so the touched file matches startx's PID.
+  #
+  # A lone Meta tap opening the launcher is a KWin modifier-only shortcut,
+  # and kwin_x11 6.6 has no modifier-only support at all (libkwin-x11 carries
+  # no ModifierOnlyShortcuts code; only kwin_wayland does), so on X11 the tap
+  # did nothing. xcape restores it: a Super tap with no other key emits
+  # Alt+F1, which Plasma binds to "Activate Application Launcher" alongside
+  # Meta. Super held as a modifier is untouched. X11-only by construction —
+  # it runs inside this X server's client and exits with it — so the Wayland
+  # session, where KWin already handles the tap, never gets a second toggle.
+  plasma-x11-client = pkgs.writeShellScript "plasma-x11-client" ''
+    ${pkgs.xcape}/bin/xcape -e 'Super_L=Alt_L|F1;Super_R=Alt_L|F1'
+    exec ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-x11 "$@"
+  '';
+
   start-plasma-x11 = pkgs.writeShellScriptBin "start-plasma-x11" ''
     export PATH="${startxPath}:$PATH"
     touch "$HOME/.serverauth.$$"
-    exec ${xinitPkg}/bin/startx ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-x11 "$@"
+    exec ${xinitPkg}/bin/startx ${plasma-x11-client} "$@"
   '';
 
   # LeftWM session — split into two scripts to avoid shell-quoting hell.
   #
   # The OUTER script (`leftwm-xinitrc`) is what startx execs. It sets up
-  # X-only env vars (GDK_BACKEND, fixed SSH_AUTH_SOCK) then exec's
-  # `dbus-run-session` wrapping the INNER script.
+  # X-only env vars (GDK_BACKEND, fixed SSH_AUTH_SOCK), joins the session
+  # bus, and runs the INNER script.
   #
-  # The INNER script (`leftwm-session-inner`) runs under a fresh dbus
-  # session. It spawns the autostart services in the background and
-  # execs leftwm.
+  # The INNER script (`leftwm-session-inner`) spawns the autostart services
+  # in the background and execs leftwm.
   #
-  # Why dbus-run-session: eww (GTK4) fails to initialize GTK without a
-  # session bus; ~/.cache/eww/eww_*.log shows "Failed to initialize
-  # GTK" otherwise. dbus-run-session also gives picom/dunst a bus for
-  # proper shutdown.
+  # Which session bus: the systemd USER bus ($XDG_RUNTIME_DIR/bus), the one
+  # every other session uses. eww (GTK) fails to initialise without a session
+  # bus, but greetd does not export DBUS_SESSION_BUS_ADDRESS, so this script
+  # sets it. It used to run `dbus-run-session` instead, and that PRIVATE bus
+  # broke everything that talks to the Secret Service: the gnome-keyring that
+  # pam_gnome_keyring unlocked at login lives on the user bus, so on the
+  # private one `org.freedesktop.secrets` either did not exist or
+  # D-Bus-activated a second, locked daemon. That is what made
+  # steelbore-keyring-check report "no default collection" and gitway-add
+  # (which reads its biometric-enrolled passphrase through oo7 on the session
+  # bus) hang with no prompt. dbus-run-session stays only as the fallback for
+  # a login with no user manager.
   #
   # Why GDK_BACKEND=x11: forces eww/dunst onto X11 without probing
   # Wayland (we're under leftwm, X11-only).
@@ -191,16 +212,21 @@ let
     #   session start; without LoadTheme the focused border falls back
     #   to leftwm's hardcoded red.
     # - leftwm clobbers the root window background on startup to its
-    #   default grey (#333333); xsetroot must run AFTER leftwm or its
-    #   color (background) gets overwritten and gaps between tiled
-    #   windows show as grey instead.
+    #   default grey (#333333); the wallpaper must be set AFTER leftwm or
+    #   it gets overwritten and gaps between tiled windows show as grey.
+    #
+    # The wallpaper is the same loose file Niri shows (users/mj/niri.nix),
+    # not Nix-managed; if it is ever missing, fall back to the solid
+    # background-role fill, exactly as Niri does. --no-fehbg: nothing
+    # reads ~/.fehbg, so don't write it.
     #
     # The one-second sleep gives leftwm's IPC socket and root grab
     # time to settle.
     (
       sleep 1
       ${pkgs.leftwm}/bin/leftwm-command "LoadTheme $HOME/.config/leftwm/themes/current/theme.ron"
-      ${xsetrootPkg}/bin/xsetroot -solid '${steelborePalette.background}'
+      ${pkgs.feh}/bin/feh --no-fehbg --bg-fill "$HOME/Pictures/Wallpapers/Steelbore/ChatGPT_Image_2026-09-30_16-46-13.png" \
+        || ${xsetrootPkg}/bin/xsetroot -solid '${steelborePalette.background}'
     ) &
     exec ${pkgs.leftwm}/bin/leftwm
   '';
@@ -223,6 +249,27 @@ let
     # resolve appearance to a non-existent backend; libadwaita then
     # silently launches light.
     export XDG_CURRENT_DESKTOP=leftwm
+    if [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+      # D-Bus-activated services (gcr-prompter for keyring unlocks, portals,
+      # polkit dialogs) start from the user manager's environment, so they
+      # need this session's display to draw on. Only display-scoped names
+      # are imported, and they are withdrawn again when leftwm exits, so a
+      # later Wayland session on the same user manager does not inherit a
+      # dead DISPLAY.
+      # Only names that are set: startx may leave XAUTHORITY unset.
+      imported=""
+      for v in DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE; do
+        printenv "$v" >/dev/null && imported="$imported $v"
+      done
+      # shellcheck disable=SC2086
+      ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd $imported
+      ${leftwm-session-inner}
+      status=$?
+      # shellcheck disable=SC2086
+      ${pkgs.systemd}/bin/systemctl --user unset-environment $imported
+      exit "$status"
+    fi
     exec ${pkgs.dbus}/bin/dbus-run-session -- ${leftwm-session-inner}
   '';
 

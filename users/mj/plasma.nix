@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Home Manager: KDE Plasma date/time formatting and colour scheme
+# Steelbore Bravais — Home Manager: KDE Plasma date/time, layout shortcut and colour scheme
 {
   config,
   lib,
@@ -51,6 +51,28 @@ in
         --group General --key ColorScheme "${themeAssets.name}"
     ''
   );
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Keyboard layout switching: Ctrl+Space OR Meta+Space
+  # ═══════════════════════════════════════════════════════════════════════════
+  # The XKB "Switching to another layout" options CANNOT give two keys: each
+  # grp:*_toggle option rewrites the same Space key, so ticking both Ctrl+Space
+  # and Win+Space leaves only one in force. The layout switcher's own global
+  # shortcut can, because kglobalaccel keeps a list of keys per action
+  # (tab-separated in the active field). Ctrl+Space stays first, as set in
+  # System Settings; Meta+Space is the alternate, matching Niri's Mod+Space.
+  # Meta+Space is unbound in Plasma by default (KRunner is Alt+Space).
+  #
+  # kglobalshortcutsrc is rewritten by kglobalaccel, so this is kwriteconfig6
+  # on one key, not an xdg.configFile — the same reasoning as the clock below,
+  # with the same trade-off: a change made in System Settings is reverted at
+  # the next rebuild. kglobalaccel reads the file at login, so the alternate
+  # takes effect at the next Plasma login. Applies to Wayland and X11 alike.
+  home.activation.plasmaLayoutShortcut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+      --group "KDE Keyboard Layout Switcher" --key "Switch to Next Keyboard Layout" \
+      "$(printf 'Ctrl+Space\tMeta+Space,Meta+Alt+K,Switch to Next Keyboard Layout')"
+  '';
 
   # ═══════════════════════════════════════════════════════════════════════════
   # 24-hour time and ISO 8601 dates in Plasma

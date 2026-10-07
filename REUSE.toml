@@ -115,7 +115,7 @@ path = [
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 
-# Boot media: the Plymouth splash clip (audio stripped) and the startup sound,
+# Boot media: the Plymouth splash image and the startup sound,
 # consumed by pkgs/steelbore-plymouth and users/mj/startup-sound.nix. Media,
 # not software, so CC-BY-SA-4.0 rather than the repo's GPL.
 [[annotations]]

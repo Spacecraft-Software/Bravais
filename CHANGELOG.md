@@ -9,7 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Boot splash is now a still image.** `assets/boot/splash.jpeg` replaces
+  the `splash.mp4` clip; `pkgs/steelbore-plymouth` shows it scaled to fit
+  the screen. The theme shrinks from ~4.8 MiB of frames to ~0.4 MiB, which
+  returns about 4 MiB of headroom to every initrd (constraint #43).
+
+### Added
+
+- **Meta+Space switches keyboard layout in Plasma** as an alternate to
+  Ctrl+Space (Wayland and X11). It is a second key on the layout switcher's
+  global shortcut; the XKB option list can hold only one Space toggle.
+- **A Win key tap opens the launcher in Plasma X11.** kwin_x11 6.6 has no
+  modifier-only shortcuts, so `start-plasma-x11` runs `xcape` to turn a
+  lone Super tap into Alt+F1.
+- **LeftWM shows the Steelbore wallpaper**, the same file Niri uses, with the
+  solid background colour as the fallback.
+
 ### Fixed
+
+- **LeftWM joins the real session bus.** The session ran under
+  `dbus-run-session`, a private bus without the gnome-keyring that PAM
+  unlocked at login, so `steelbore-keyring-check` reported "no default
+  collection" and `gitway-add` hung with no fingerprint or password prompt.
+  It now uses the systemd user bus and imports its display into the
+  activation environment for the session's lifetime.
+- **LeftWM bar renders styled again.** GTK rejected the whole stylesheet
+  over web-only CSS properties on the window title (`max-width`,
+  `text-overflow`, …), so the bar drew with no colours, and the indicators
+  were spread evenly across the right third. The title is now capped with
+  `:limit-width`, and the indicator box packs tightly.
 
 - **Windows no longer appears in the boot menu.** systemd-boot kept
   auto-detecting the leftover `EFI/Microsoft` loader on the ESP after
