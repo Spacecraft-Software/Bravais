@@ -298,10 +298,16 @@ let
                 emphasis_2 "${steelborePalette.success}"
                 emphasis_3 "${steelborePalette.accent}"
             }
+            // Ribbon key hints (the `n` in `<n> New Pane`) use emphasis_0. They
+            // were `error`, which is 1.15:1 on the accent fill and 2.6:1 on the
+            // foreground fill. They are now the ribbon's own `background` text
+            // colour (6.66:1 / 15.1:1 on Modern), so the status bar's bold
+            // weight and the < > brackets tell the key apart, not hue.
+            // Never put a status colour on these fills.
             ribbon_selected {
                 base "${steelborePalette.background}"
                 background "${steelborePalette.foreground}"
-                emphasis_0 "${steelborePalette.error}"
+                emphasis_0 "${steelborePalette.background}"
                 emphasis_1 "${steelborePalette.foreground}"
                 emphasis_2 "${steelborePalette.accent}"
                 emphasis_3 "${steelborePalette.accent}"
@@ -309,7 +315,7 @@ let
             ribbon_unselected {
                 base "${steelborePalette.background}"
                 background "${steelborePalette.accent}"
-                emphasis_0 "${steelborePalette.error}"
+                emphasis_0 "${steelborePalette.background}"
                 emphasis_1 "${steelborePalette.foreground}"
                 emphasis_2 "${steelborePalette.accent}"
                 emphasis_3 "${steelborePalette.accent}"

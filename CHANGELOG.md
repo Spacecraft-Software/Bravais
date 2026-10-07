@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collection" and `gitway-add` hung with no fingerprint or password prompt.
   It now uses the systemd user bus and imports its display into the
   activation environment for the session's lifetime.
+- **Zellij key hints are readable.** The `<n>` hints in the status-bar
+  ribbons were red on orange (1.15:1); they now use the ribbon's navy text
+  colour (6.66:1), told apart by bold weight and brackets.
 - **LeftWM bar renders styled again.** GTK rejected the whole stylesheet
   over web-only CSS properties on the window title (`max-width`,
   `text-overflow`, …), so the bar drew with no colours, and the indicators
