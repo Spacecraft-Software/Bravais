@@ -546,11 +546,13 @@
           ;; `leftwm-state`, which streams JSON from LeftWM's Unix domain socket
           ;; ($XDG_RUNTIME_DIR/leftwm/current_state.sock). `deflisten` reads
           ;; each new line, updating the variable instantly on every state change
-          ;; (no polling). The `-n` flag preserves newlines in the Liquid template
-          ;; output so the `literal` widget can parse the rendered yuck.
+          ;; (no polling). NEVER pass `-n` here: it keeps the template's newlines,
+          ;; and because deflisten takes every LINE as a new value, `leftwm-ws`
+          ;; then only ever held the closing `)` and no tag buttons rendered.
+          ;; Without it, each state change is one line of yuck.
 
-          (deflisten leftwm-ws "${pkgs.leftwm}/bin/leftwm-state -w 0 -n -t ${workspaceTemplate}")
-          (deflisten window-title "${pkgs.leftwm}/bin/leftwm-state -w 0 -s '{% if window_title != \"\" %}{{ window_title }}{% else %}STEELBORE OS :: BRAVAIS{% endif %}'")
+          (deflisten leftwm-ws "${pkgs.leftwm}/bin/leftwm-state -w 0 -t ${workspaceTemplate}")
+          (deflisten window-title "${pkgs.leftwm}/bin/leftwm-state -w 0 -s '{{ window_title }}'")
 
           ;; Hardware state — one event-driven feed. `steelbore-beacon`
           ;; (pkgs/steelbore-beacon) blocks on three kernel event sources — the
@@ -585,12 +587,26 @@
           (defpoll ico-num       :interval "3600s" "printf '\\xF3\\xB0\\x8E\\xA5'")  ;; nf-md-numeric U+F03A5
 
           (defwidget bar []
-            (centerbox :orientation "h"
-              (box :orientation "h" :spacing 8 :halign "start"
+            ;; `steelbore-bar` scopes the button reset in the user gtk.css
+            ;; (users/mj/desktop-theme.nix) — see the button rule below.
+            (centerbox :orientation "h" :class "steelbore-bar"
+              ;; Brand at the far left, always — the same fixed label as the Niri
+              ;; bar (users/mj/eww.nix) — then the tags, then the focused window.
+              ;; :space-evenly false packs them from the left; the eww default
+              ;; (true) gave each child an equal share and pushed the title out
+              ;; against the clock.
+              (box :orientation "h" :spacing 12 :space-evenly false :halign "start"
+                (label :class "title" :text "STEELBORE OS :: BRAVAIS")
                 (literal :content leftwm-ws)
-                (label :class "window-title" :halign "start" :text window-title))
+                ;; :limit-width (characters, with an ellipsis) is the eww way to cap
+                ;; the title; GTK CSS has no max-width/text-overflow to do it. 45 keeps
+                ;; a gap before the centred clock after the brand and nine tags.
+                (label :class "window-title" :halign "start" :limit-width 45
+                       :visible {window-title != ""} :text window-title))
               (label :class "clock" :text time)
-              (box :orientation "h" :spacing 16 :halign "end" :class "metrics"
+              ;; :space-evenly false — eww boxes default to true, which spreads
+              ;; the indicators across the whole right-hand third of the bar.
+              (box :orientation "h" :spacing 16 :space-evenly false :halign "end" :class "metrics"
                 ;; Keyboard language — leftmost in the metrics group. Text
                 ;; from `lang`, color from `lang_state` (en=steel blue,
                 ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
@@ -693,7 +709,10 @@
           }
 
           // Clickable indicators (lang/caffeine/bluetooth/network) are GTK
-          // buttons. Strip Adwaita's relief/background/padding so they read as
+          // buttons. This reset alone LOSES to the user gtk.css (USER priority
+          // outranks eww's APPLICATION priority), so its background part is
+          // repeated there, scoped to .steelbore-bar. Strip Adwaita's
+          // relief/background/padding so they read as
           // flat colored glyphs like the Niri bar's plain labels. The state
           // color lives on the child label (eww.yuck: (label :class ...)), so
           // it is never overridden by button chrome or the theme's button fg.
@@ -702,6 +721,7 @@
               background-image: none;
               border: none;
               box-shadow: none;
+              border-radius: 0;  // else the tag underline curves up at both ends
               outline: none;
               padding: 0;
               margin: 0;
@@ -709,7 +729,8 @@
               min-width: 0;
           }
 
-          .title  { color: $foreground; }
+          // margin, not window padding: GTK ignores padding on the toplevel.
+          .title  { color: $foreground; margin-left: 12px; }
           .clock  { color: $info; }
           .metrics { padding-right: 12px; }
           .metric      { color: $success; }  // normal
@@ -757,19 +778,22 @@
           // visible = shown on some display but not focused
           // busy    = has windows but not shown on any display
           // (else)  = empty tag
+          // The tag underline is an inset box-shadow, not border-bottom: the user
+          // gtk.css sets `border-color` on every button at USER priority, which
+          // outranks this file and would recolour a border to the theme's.
           .workspaces {
               padding: 0 4px;
           }
 
           .ws-button-mine {
               color: $foreground;
-              border-bottom: 2px solid $foreground;
+              box-shadow: inset 0 -2px $foreground;
               padding: 0 4px;
           }
 
           .ws-button-visible {
               color: $info;
-              border-bottom: 2px solid $info;
+              box-shadow: inset 0 -2px $info;
               padding: 0 4px;
           }
 
@@ -785,12 +809,13 @@
           }
 
           // ── Focused window title ──────────────────────────────────────────
+          // Width is capped by :limit-width in eww.yuck. Never add web-only
+          // properties (max-width, text-overflow, overflow, white-space) here:
+          // GTK's CSS parser rejects the whole stylesheet over one unknown
+          // property, and the bar then renders unstyled -- no colors, no
+          // border, theme-default everything.
           .window-title {
               color: $foreground;
-              max-width: 400px;
-              text-overflow: ellipsis;
-              overflow: hidden;
-              white-space: nowrap;
           }
 
           // ── System tray ───────────────────────────────────────────────────

@@ -9,7 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Boot splash is now a still image.** `assets/boot/splash.png` (the
+  "Steelbore OS Boot Screen" artwork) replaces the `splash.mp4` clip; `pkgs/steelbore-plymouth` shows it scaled to fit
+  the screen. The theme shrinks from ~4.8 MiB of frames to ~0.6 MiB, which
+  returns about 4 MiB of headroom to every initrd (constraint #43).
+
+### Added
+
+- **Meta+Space switches keyboard layout in Plasma** as an alternate to
+  Ctrl+Space (Wayland and X11). It is a second key on the layout switcher's
+  global shortcut; the XKB option list can hold only one Space toggle.
+- **A Win key tap opens the launcher in Plasma X11.** kwin_x11 6.6 has no
+  modifier-only shortcuts, so `start-plasma-x11` runs `xcape` to turn a
+  lone Super tap into Alt+F1.
+- **LeftWM shows the Steelbore wallpaper**, the same file Niri uses, with the
+  solid background colour as the fallback.
+
 ### Fixed
+
+- **LeftWM joins the real session bus.** The session ran under
+  `dbus-run-session`, a private bus without the gnome-keyring that PAM
+  unlocked at login, so `steelbore-keyring-check` reported "no default
+  collection" and `gitway-add` hung with no fingerprint or password prompt.
+  It now uses the systemd user bus and imports its display into the
+  systemd user environment for the session's lifetime.
+- **LeftWM bar shows its workspace tags and keeps the brand left.**
+  `leftwm-state -n` split each update over many lines and eww's `deflisten`
+  kept only the last one (`)`), so no tag buttons ever rendered; the left
+  group also spread its children evenly, pushing the window title against
+  the clock. The brand label is now fixed at the far left (as on Niri),
+  then the tags, then the title. The filled pills behind clickable bar
+  indicators came from the user `gtk.css`, which outranks eww's stylesheet;
+  a reset scoped to `.steelbore-bar` there removes them.
+- **Zellij key hints are readable.** The `<n>` hints in the status-bar
+  ribbons were red on orange (1.15:1); they now use the ribbon's navy text
+  colour (6.66:1), told apart by bold weight and brackets.
+- **LeftWM bar renders styled again.** GTK rejected the whole stylesheet
+  over web-only CSS properties on the window title (`max-width`,
+  `text-overflow`, …), so the bar drew with no colours, and the indicators
+  were spread evenly across the right third. The title is now capped with
+  `:limit-width`, and the indicator box packs tightly.
 
 - **Windows no longer appears in the boot menu.** systemd-boot kept
   auto-detecting the leftover `EFI/Microsoft` loader on the ESP after

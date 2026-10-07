@@ -23,7 +23,7 @@ let
 in
 {
   options.steelbore.boot.splash = {
-    enable = lib.mkEnableOption "the Steelbore Plymouth boot animation";
+    enable = lib.mkEnableOption "the Steelbore Plymouth boot splash";
   };
 
   config = lib.mkIf config.steelbore.boot.splash.enable {

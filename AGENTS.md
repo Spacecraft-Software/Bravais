@@ -190,7 +190,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 40. **Keep `dontStrip = true` on github-copilot-app** — strip plus autoPatchelf corrupts the first RELA entry and ld.so aborts, with no build-time signal.
 41. **An agent's skills directory is never a directory symlink into `~/.agents/skills`** — agent-private writes (claude.ai's `synced/`, Codex's `.system/`) land in the shared hub for every other agent to read, and the old pointer guard swept the whole hub aside on every activation; use `agentPaths` modes (`per-skill` / `none`).
 42. **`/boot` is a 196 MiB ESP that holds three XanMod kernel+initrd pairs** — keep `systemd-boot.configurationLimit = 3`; an `ENOSPC` in the bootloader step is `/boot`, not `/nix`.
-43. **The Plymouth splash puts the initrd under a ~49 MiB ceiling** — never add `i915` to the initrd (the splash runs on `simpledrm`), keep zstd `-19` without `--long`, and re-measure the built initrd after touching the frames.
+43. **The Plymouth splash puts the initrd under a ~49 MiB ceiling** — never add `i915` to the initrd (the splash runs on `simpledrm`), keep zstd `-19` without `--long`, and re-measure the built initrd after changing the splash image.
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 

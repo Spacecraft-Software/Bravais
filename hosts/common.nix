@@ -51,8 +51,8 @@
   # Steelbore module toggles (software set shared across machines; a machine
   # MAY override individual toggles in its own default.nix).
   steelbore = {
-    # Plymouth boot animation (modules/theme/boot-splash.nix). Each initrd grows
-    # ~6 MiB (frames + Plymouth's libraries), times the three the ESP keeps —
+    # Plymouth boot splash (modules/theme/boot-splash.nix). Each initrd grows
+    # by the splash image plus Plymouth's libraries, times the three the ESP keeps —
     # the initrd has a ~49 MiB ceiling (constraint #43).
     boot.splash.enable = true;
 

@@ -6,10 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Attribution — Steelbore Rust Idiom Layer
 
-[`idioms.md`](idioms.md) is a Steelbore-authored distillation (GPL-3.0-or-later) of
-rules adapted from the **Apollo GraphQL Rust Best Practices skill**. Per the
-Steelbore Standard §4.2 (upstream license compliance) and §15.3 (third-party
-attribution), the upstream MIT notice is preserved verbatim below.
+[`idioms.md`](idioms.md) — together with the `anyhow` and async-error-bound bullets in
+[`../SKILL.md`](../SKILL.md) "Error Handling & Resilience" — is a Steelbore-authored
+distillation (GPL-3.0-or-later) of rules adapted from the **Apollo GraphQL Rust
+Best Practices skill**. Per the Steelbore Standard §4.2 (upstream license compliance)
+and §15.3 (third-party attribution), the upstream MIT notice is preserved verbatim below.
 
 - **Adapted work:** Apollo GraphQL — *Rust Best Practices* skill (`rust-best-practices`)
 - **Source:** <https://github.com/apollographql/skills>
@@ -20,8 +21,19 @@ attribution), the upstream MIT notice is preserved verbatim below.
   descriptive names, `insta` snapshots), static-vs-dynamic dispatch, the type-state
   pattern, comments-vs-docs, import ordering, flamegraph profiling details (adapted
   from Chapter 3), and smart pointers / thread-safety guidelines (adapted from Chapter 9).
-  Apollo's error-handling chapter was intentionally **not** adapted (covered by this
-  skill's SKILL.md and by `microsoft-rust-guidelines`).
+  The 2026-10-06 re-sync additionally adapted: Ch. 1 §1.5 (never `Copy` + `Iterator` on
+  one type) and §1.8 (when to extract a function); Ch. 2 (`[lints.rust]` beside
+  `[lints.clippy]`, `--all-features` caveat); Ch. 3 (ownership as modelling, clone-late,
+  `Cow`, stack-vs-heap traps, `clippy::perf` pass, `impl Iterator` to callees); Ch. 4
+  §4.4 (`anyhow` for binaries and test helpers only), §4.6 (tests exercise errors) and
+  §4.7 (async error bounds) — both §4.4 and §4.7 placed in `SKILL.md`, not `idioms.md`;
+  Ch. 5 (`assert_matches!`, `pretty_assertions`, shared setup with inline
+  action/assertion); Ch. 7 (`bon`); Ch. 8 (`#[non_exhaustive]`, doc-coverage checklist);
+  Ch. 9 (`RefCell` conflicting-borrow panic). Apollo's error-*design* guidance (Ch. 4
+  §4.1–§4.3, §4.5) remains **not** adapted — SKILL.md points to
+  `microsoft-rust-guidelines` for it.
+- **Last synced against upstream:** 2026-10-06 (apollographql/skills commit of
+  2026-09-28)
 
 > Note: the *skill* we adapted from (the `apollographql/skills` repository) is MIT. A
 > separate upstream repository — the standalone *Rust Best Practices* handbook/book —

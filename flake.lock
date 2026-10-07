@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791294241,
-        "narHash": "sha256-9/jHkGm39hu3P4PEqwvU8D5TcOqqUsr8gIeOZHSiNXI=",
+        "lastModified": 1791381753,
+        "narHash": "sha256-OKPmRAk0OYuwQ2sgRuGG9dwX2vy/lUHOm2SYNDT1lJU=",
         "owner": "UnbreakableMJ",
         "repo": "antigravity-nix",
-        "rev": "bb1b6a6d935037efba008f199c530462d15dddc7",
+        "rev": "5b795e082a3f105e52718de05df8d697ff8eee88",
         "type": "github"
       },
       "original": {
@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791284464,
-        "narHash": "sha256-tt9W2LuxbZBZqwyyQxswAqHSPDLL7r7zwU0zJkJIpbg=",
+        "lastModified": 1791311474,
+        "narHash": "sha256-dRYuINQB72XSGxas4xgEnTPgl6VzTQXLKr2nNVhlawk=",
         "owner": "Spacecraft-Software",
         "repo": "Construct",
-        "rev": "79ba532eb691732e38988f4ece9f0c0edb0a5536",
+        "rev": "3ec130ed689ef83fbb9d3ca71f382e13588192dc",
         "type": "github"
       },
       "original": {
@@ -183,11 +183,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791293500,
-        "narHash": "sha256-3hwJd2/vG/VYV1P/g7oDgdbNsWODhN5F//Od+hPMm2k=",
+        "lastModified": 1791306979,
+        "narHash": "sha256-KuLePuhwJM9NLt/gTLHzXaOoSZKGoB3m7NfXjiQ98HY=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "0e11b7bcba1d74ef8ea10bfdfb1e1a5811a21087",
+        "rev": "fae6e9e42c3b762ab47635cddcfaf6f52374a61b",
         "type": "github"
       },
       "original": {
