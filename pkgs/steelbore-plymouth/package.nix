@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Plymouth boot splash: assets/boot/splash.jpeg shown as a
+# Steelbore Bravais — Plymouth boot splash: assets/boot/splash.png shown as a
 # still image by a Plymouth `script` theme.
 #
-# The script plugin loads PNG only, so the JPEG is converted at build time.
-# The theme is copied into EVERY initrd, and the 196 MiB ESP keeps three of
-# them (constraint #42), so the image is budgeted: scaled to `width` and
-# palette-quantized. The script scales it to fit the screen. Check the size
+# The script plugin loads PNG only, so any other source format would need
+# converting; the image is re-encoded here in any case. The theme is copied
+# into EVERY initrd, and the 196 MiB ESP keeps three of them (constraint
+# #42), so the image is budgeted: scaled down to at most `width` (never up —
+# that would only add bytes) and palette-quantized. The script scales it to fit the screen. Check the size
 # with `nix path-info -Sh .#steelbore-plymouth` after changing the image or
 # the width, then measure the built initrd (constraint #43).
 {
@@ -25,9 +26,9 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "steelbore-plymouth";
-  version = "2.0.0";
+  version = "2.1.0";
 
-  src = ../../assets/boot/splash.jpeg;
+  src = ../../assets/boot/splash.png;
   dontUnpack = true;
 
   nativeBuildInputs = [
@@ -40,7 +41,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    ffmpeg -loglevel error -i "$src" -vf "scale=${toString width}:-2" splash.png
+    ffmpeg -loglevel error -i "$src" -vf "scale='min(${toString width},iw)':-2" splash.png
     pngquant --force --ext .png --quality 70-90 splash.png
 
     runHook postBuild

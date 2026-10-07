@@ -241,9 +241,25 @@ in
     gtk4.extraCss = lib.optionalString (themeAssets.gtk4Css != null) (
       builtins.readFile themeAssets.gtk4Css
     );
-    gtk3.extraCss = lib.optionalString (themeAssets.gtk3Css != null) (
-      builtins.readFile themeAssets.gtk3Css
-    );
+    # The bar reset appended after it: this file is a USER-priority provider,
+    # which GTK ranks above the APPLICATION-priority stylesheet eww loads, so
+    # the Theme file's `button { background-color: … }` beats eww.scss's own
+    # transparent reset whatever its specificity, and drew a filled pill
+    # behind every clickable bar indicator and tag. Scoped to the
+    # `steelbore-bar` class the LeftWM bar's root widget carries
+    # (modules/desktops/leftwm.nix); structural only, no colour values.
+    gtk3.extraCss =
+      lib.optionalString (themeAssets.gtk3Css != null) (builtins.readFile themeAssets.gtk3Css)
+      + ''
+
+        .steelbore-bar button,
+        .steelbore-bar button:hover,
+        .steelbore-bar button:active,
+        .steelbore-bar button:checked {
+            background-color: transparent;
+            background-image: none;
+        }
+      '';
     iconTheme = {
       name = iconThemeName;
       package = pkgs.papirus-icon-theme;

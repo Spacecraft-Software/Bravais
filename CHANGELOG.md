@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Boot splash is now a still image.** `assets/boot/splash.jpeg` replaces
-  the `splash.mp4` clip; `pkgs/steelbore-plymouth` shows it scaled to fit
-  the screen. The theme shrinks from ~4.8 MiB of frames to ~0.4 MiB, which
+- **Boot splash is now a still image.** `assets/boot/splash.png` (the
+  "Steelbore OS Boot Screen" artwork) replaces the `splash.mp4` clip; `pkgs/steelbore-plymouth` shows it scaled to fit
+  the screen. The theme shrinks from ~4.8 MiB of frames to ~0.6 MiB, which
   returns about 4 MiB of headroom to every initrd (constraint #43).
 
 ### Added
@@ -35,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collection" and `gitway-add` hung with no fingerprint or password prompt.
   It now uses the systemd user bus and imports its display into the
   activation environment for the session's lifetime.
+- **LeftWM bar shows its workspace tags and keeps the brand left.**
+  `leftwm-state -n` split each update over many lines and eww's `deflisten`
+  kept only the last one (`)`), so no tag buttons ever rendered; the left
+  group also spread its children evenly, pushing the window title against
+  the clock. The brand label is now fixed at the far left (as on Niri),
+  then the tags, then the title. The filled pills behind clickable bar
+  indicators came from the user `gtk.css`, which outranks eww's stylesheet;
+  a reset scoped to `.steelbore-bar` there removes them.
 - **Zellij key hints are readable.** The `<n>` hints in the status-bar
   ribbons were red on orange (1.15:1); they now use the ribbon's navy text
   colour (6.66:1), told apart by bold weight and brackets.
