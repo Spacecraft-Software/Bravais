@@ -5,10 +5,12 @@ description: >
   optimising multi-threaded systems that demand low latency and high throughput on multi-core
   hardware. Triggers on Rust concurrency and performance work: std::thread, Arc,
   std::sync::RwLock, parking_lot locks, tokio and spawn_blocking, atomics, std::hint::spin_loop,
-  catch_unwind, false sharing, lock contention, or benchmarking a hot path. Load `microsoft-rust-
-  guidelines` FIRST — it is the mandatory base for any Rust work; this skill stacks on top of it
-  and is pulled in conditionally for parallel or latency-sensitive code, never as the front door.
-  Do NOT trigger for non-Rust languages. By Mohamed Hammad and Spacecraft Software.
+  catch_unwind, false sharing, lock contention, or benchmarking a hot path. Its
+  references/idioms.md idiom layer covers everyday Rust readability. Load
+  `microsoft-rust-guidelines` FIRST — it is the mandatory base for any Rust work; this skill
+  stacks on top of it and is pulled in conditionally for parallel or latency-sensitive code,
+  never as the front door. Do NOT trigger for non-Rust languages. By Mohamed Hammad and
+  Spacecraft Software.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 website: https://Construct.SpacecraftSoftware.org/
@@ -82,10 +84,14 @@ characteristics, and a clear understanding of the trade‑offs involved.
 
 ## Tooling & Quality Gates
 - `cargo fmt` – non‑optional, project‑wide.
-- `cargo clippy -- -W clippy::pedantic` – treat warnings as errors in CI.
+- `cargo clippy --all-targets --all-features --locked -- -D warnings` – **the one
+  canonical clippy command**, daily and in CI; warnings are errors. `-W clippy::pedantic`
+  is an optional addition where the false-positive rate is tolerable.
+  `references/idioms.md` §4 carries the per-lint detail and defers to this command.
 - `cargo test` + `cargo miri test` for unsafe code.
 - `cargo bench` (criterion) for performance‑sensitive components.
-- `cargo tarpaulin` for coverage, though not a substitute for thoughtful tests.
+- `cargo llvm-cov` or `cargo tarpaulin` for coverage, though not a substitute for
+  thoughtful tests.
 - `cargo audit` and `cargo deny` to keep dependencies secure and minimal.
 - CI must run fmt, clippy, all tests, doc tests, and at least a sample benchmark.
 
@@ -103,8 +109,24 @@ When profiling to identify performance bottlenecks (Standard §3.2):
   - **Color:** Randomized (has no performance/semantic meaning). Focus on wide boxes and thick stacks.
 
 ## Error Handling & Resilience
-- Libraries: precise error types via `thiserror`, avoid `unwrap()`.
-- Applications: `anyhow`/`eyre` for propagation, with `.context()`.
+- Error design lives in `microsoft-rust-guidelines`: applications follow
+  **M-APP-ERROR** (`references/02_application_guidelines.md`; `anyhow`/`eyre` with
+  `.context()`), libraries follow **M-ERRORS-CANONICAL-STRUCTS**
+  (`references/12_libraries_ux_guidelines.md`; the guideline prescribes the struct
+  shape, `thiserror` may derive its `Display`/`Error`). `unwrap()`/`expect()` only where
+  M-PANIC-IS-STOP (`references/08_universal_guidelines.md`) permits a panic — a detected
+  programming error, a const context, a poisoned lock — never as a substitute for error
+  handling.
+- `anyhow` is for binaries and test helpers, never a library's public error type — it
+  erases the error's type, so callers can only `downcast_ref` instead of matching.
+- Errors returned from a spawned task (`tokio::spawn`, a `JoinHandle`) or stored in
+  `anyhow::Error` / `Box<dyn Error + Send + Sync>` should be `Send + Sync + 'static`:
+  `spawn` itself needs `Send + 'static`, and `Sync` is what the boxed/`anyhow`
+  conversions add. Design the type to satisfy that from the start — owned data only, no
+  `Rc`/`RefCell`/borrowed sources — and, since auto-traits cannot be declared, pin them
+  with a compile-time assertion next to the type rather than discovering a missing bound
+  at the first `spawn`:
+  `const _: () = { fn assert_bounds<T: Send + Sync + 'static>() {} let _ = assert_bounds::<MyError>; };`
 - Panic only for unrecoverable logic errors, never for runtime conditions like
   network timeouts. In mission‑critical threads, consider `std::panic::catch_unwind`
   at a high boundary (with great care).
@@ -134,9 +156,11 @@ When providing code examples, always include:
 
 ## Steelbore Idiom Layer
 This skill is the **concurrency & performance doctrine**. For questions about how Rust
-*reads* — borrowing vs cloning, idiomatic `Option`/`Result` flow, iterators vs `for`,
-clippy lint discipline, testing conventions, static vs dynamic dispatch, the type-state
-pattern, comments vs docs, import ordering — load
+*reads* — borrowing vs cloning, `Cow` for maybe-owned data, stack-vs-heap traps,
+idiomatic `Option`/`Result` flow, iterators vs `for`, clippy lint discipline, testing
+conventions (including the error path), static vs dynamic dispatch, the type-state
+pattern, comments vs docs with a doc-coverage checklist, import ordering, smart pointers,
+and extracting functions (and when duplication is the better trade) — load
 [`references/idioms.md`](references/idioms.md). It is a distilled, attributed adaptation
 of Apollo GraphQL's *Rust Best Practices* (MIT; see [`CREDITS.md`](CREDITS.md)). The
 idiom layer sits **under** this doctrine — it never overrides a concurrency/performance
@@ -150,9 +174,10 @@ Three Rust skills coexist; they occupy different planes and must not compete to 
   gateway (load first for any Rust work). **This skill** = concurrency/performance
   doctrine, pulled in conditionally for multi-core / latency-sensitive / parallel work.
   The **idiom layer** above = a borrowed readability reference. They stack additively.
-- **Canonical clippy policy.** One policy wins: `clippy` **warnings-as-errors in CI**
-  (`-D warnings`) is the Steelbore baseline. Apollo's named-lint list in `idioms.md` is
-  the *surgical detail under* that policy, not a competing one.
+- **Canonical clippy policy.** One command wins: the one stated under "Tooling &
+  Quality Gates" above (`-D warnings`, warnings-as-errors in CI) is the Steelbore
+  baseline. Apollo's named-lint list in `idioms.md` §4 is the *surgical detail under*
+  that command, not a competing one.
 - **`parking_lot` is internal-only.** This skill prefers `parking_lot` locks over `std`
   — but never leak `parking_lot` (or any third-party) types across a **public API**
   surface. Keep them behind your own types/`std` types at the boundary. This resolves
