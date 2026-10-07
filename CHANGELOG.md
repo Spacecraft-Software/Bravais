@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unlocked at login, so `steelbore-keyring-check` reported "no default
   collection" and `gitway-add` hung with no fingerprint or password prompt.
   It now uses the systemd user bus and imports its display into the
-  activation environment for the session's lifetime.
+  systemd user environment for the session's lifetime.
 - **LeftWM bar shows its workspace tags and keeps the brand left.**
   `leftwm-state -n` split each update over many lines and eww's `deflisten`
   kept only the last one (`)`), so no tag buttons ever rendered; the left

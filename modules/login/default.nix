@@ -257,13 +257,19 @@ let
       # are imported, and they are withdrawn again when leftwm exits, so a
       # later Wayland session on the same user manager does not inherit a
       # dead DISPLAY.
+      #
+      # systemd only, never `dbus-update-activation-environment`: that also
+      # writes the bus's own activation environment, which D-Bus offers no
+      # way to unset, so a dead DISPLAY would outlive the session. With
+      # dbus-broker (NixOS's bus) every activation goes through a systemd
+      # unit, so the systemd environment is the one that counts.
       # Only names that are set: startx may leave XAUTHORITY unset.
       imported=""
       for v in DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE; do
         printenv "$v" >/dev/null && imported="$imported $v"
       done
       # shellcheck disable=SC2086
-      ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd $imported
+      ${pkgs.systemd}/bin/systemctl --user import-environment $imported
       ${leftwm-session-inner}
       status=$?
       # shellcheck disable=SC2086

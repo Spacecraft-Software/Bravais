@@ -138,10 +138,10 @@ bravais/
 +-- pkgs/                          # In-tree packages; default.nix is the index (also packages.*)
 |   +-- preflight/                 # Rust rebuild orchestrator (§16)
 |   +-- steelbore-*/               # First-party Rust tools (audio-led, beacon, niri-unmax, cosmic-unmax, vpn)
-|   +-- steelbore-plymouth/        # Plymouth theme: frames cut from assets/boot/splash.mp4 at build time
+|   +-- steelbore-plymouth/        # Plymouth theme: assets/boot/splash.png, re-encoded at build time
 |   +-- <vendored>/                # Version+hash-pinned upstream binaries (docs/vendored-binaries.md)
 |   +-- update-vendored.nu, sync-skills.nu   # vendored bumper; .github/skills/ regenerator
-+-- assets/boot/                   # Boot media (CC-BY-SA-4.0): splash.mp4, startup-sound.mp3 (§5.2)
++-- assets/boot/                   # Boot media (CC-BY-SA-4.0): splash.png, startup-sound.mp3 (§5.2)
 +-- bravais-mcp/                   # Source of the Rust MCP server built by pkgs/bravais-mcp/
 +-- flakes/rapg/                   # Wrapper flake for rapg (upstream ships none)
 +-- scripts/rebuild.sh             # POSIX port of `rebuild` (deprecated in favour of preflight)
@@ -538,7 +538,7 @@ Set via `console.colors` in `modules/theme/default.nix`: the 16-entry list `ansi
 
 - **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs, and the installer prunes entries beyond the limit before copying the new kernel (CONSTRAINTS.md #42). Single-boot: an `extraInstallCommands` hook deletes any `EFI/Microsoft` loader on each install, since systemd-boot would otherwise auto-list it as "Windows Boot Manager"
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
-- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` once as 12 fps / 480 px quantized frames on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
+- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; shows the still image `assets/boot/splash.png` (at most 1920 px wide, palette-quantized) scaled to fit, on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
 - **Startup sound:** `users/mj/startup-sound.nix` — `pw-play` of `assets/boot/startup-sound.mp3` once per boot at the first graphical login (marker in `/tmp`)
 - **Module lists:** none here (initrd modules: generated `hosts/<machine>/hardware.nix`; `kvm-intel`: `modules/hardware/intel.nix`). The generated `hosts/thinkpad/hardware.nix` also declares `kvm-intel` and `hardware.cpu.intel.updateMicrocode`; the list options merge and the microcode line is the same `mkDefault`, so the duplication is harmless
 
