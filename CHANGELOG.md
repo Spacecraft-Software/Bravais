@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The splash build quantizes in pure Rust.** A new in-tree tool,
+  `pkgs/steelbore-quantize`, palette-quantizes the splash with the Rust
+  `imagequant` crate (the engine inside pngquant 3) and the `png` crate,
+  replacing pngquant's C front end and libpng. It writes unfiltered rows at
+  zlib level 9, so the splash image is 6% smaller than pngquant's (555 KB vs
+  589 KB). `nix build .#steelbore-quantize` builds it on its own.
 - **Boot splash is now a still image.** `assets/boot/splash.png` (the
   "Steelbore OS Boot Screen" artwork) replaces the `splash.mp4` clip; `pkgs/steelbore-plymouth` shows it scaled to fit
   the screen. The theme shrinks from ~4.8 MiB of frames to ~0.6 MiB, which

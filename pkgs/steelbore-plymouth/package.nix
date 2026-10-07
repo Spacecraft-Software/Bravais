@@ -6,14 +6,15 @@
 # converting; the image is re-encoded here in any case. The theme is copied
 # into EVERY initrd, and the 196 MiB ESP keeps three of them (constraint
 # #42), so the image is budgeted: scaled down to at most `width` (never up —
-# that would only add bytes) and palette-quantized. The script scales it to fit the screen. Check the size
+# that would only add bytes) and palette-quantized by steelbore-quantize
+# (pkgs/steelbore-quantize: the Rust imagequant crate, no C). The script scales it to fit the screen. Check the size
 # with `nix path-info -Sh .#steelbore-plymouth` after changing the image or
 # the width, then measure the built initrd (constraint #43).
 {
   lib,
   stdenvNoCC,
   ffmpeg-headless,
-  pngquant,
+  steelbore-quantize,
   # sRGB float channels ("0.15294118") of the canvas around the image;
   # modules/theme/boot-splash.nix passes the active palette's `background`.
   background ? {
@@ -26,14 +27,14 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "steelbore-plymouth";
-  version = "2.1.0";
+  version = "2.2.0";
 
   src = ../../assets/boot/splash.png;
   dontUnpack = true;
 
   nativeBuildInputs = [
     ffmpeg-headless
-    pngquant
+    steelbore-quantize
   ];
 
   passthru.themeName = "steelbore";
@@ -42,7 +43,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook preBuild
 
     ffmpeg -loglevel error -i "$src" -vf "scale='min(${toString width},iw)':-2" splash.png
-    pngquant --force --ext .png --quality 70-90 splash.png
+    steelbore-quantize --quality 70-90 splash.png splash.png
 
     runHook postBuild
   '';

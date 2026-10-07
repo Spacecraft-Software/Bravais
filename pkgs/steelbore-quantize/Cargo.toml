@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "steelbore-quantize"
+version = "0.1.0"
+edition = "2021"
+description = "Palette-quantize a PNG with the Rust imagequant crate (pure-Rust stand-in for pngquant)."
+license = "GPL-3.0-or-later"
+authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
+
+[dependencies]
+anyhow = "1"
+imagequant = { version = "4", default-features = false, features = ["threads"] }
+png = "0.18"
+jiff = { version = "0.2", default-features = false, features = ["std"] }
+serde_json = "1"
+
+# Release tuning (Standard §3.2.1). LTO + one codegen unit shrink the binary
+# at no cost. `-C target-cpu=native` is deliberately NOT set: it would break
+# Nix reproducibility and binary-cache reuse, and this runs once per build on
+# one image. No mimalloc (M-MIMALLOC-APPS): it is a C allocator, which would
+# defeat the point of a pure-Rust replacement for one short-lived process.
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+ambiguous_negative_literals = "warn"
+missing_debug_implementations = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_lifetimes = "warn"
+
+[lints.clippy]
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "warn", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+allow_attributes_without_reason = "warn"
+if_then_some_else_none = "warn"
+map_err_ignore = "warn"
+unused_result_ok = "warn"
