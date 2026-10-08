@@ -199,6 +199,8 @@ Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot t
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only), or `preflight --update-vendored` to bump them as part of a rebuild. **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
 
+**Commit lock and version bumps without asking.** When `flake.lock` or a vendored package's `version` + `hash` shows up modified, commit it as part of the work — don't leave it unstaged or wait for the maintainer's go-ahead. Give it its own `chore(deps): bump …` branch and PR, or add it to a deps PR already open, never to an unrelated feature PR. Run the gates first, add a CHANGELOG `### Changed` bullet naming what moved (no version numbers), and if `construct` moved, commit the `nu pkgs/sync-skills.nu` output with it.
+
 Three exceptions, each explained in **`docs/vendored-binaries.md`**: `codex-desktop` pins an unversioned `…/deb/latest/` URL, so it breaks whenever OpenAI ships and the old artifact cannot be refetched; `grok-bot` is bumped by hand from a copied download URL with its `?_gl=` analytics parameter stripped; `skyroads` has been frozen since the 1990s. Do not add `grok-bot` or `skyroads` to the updater. Per-package failure isolation, the `up-github` tag options and the two-hash `obscura` bumper are in the `vendored-binaries` skill (`.claude/skills/vendored-binaries/`).
 
 ## Documentation maintenance

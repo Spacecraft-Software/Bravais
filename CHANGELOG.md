@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`nixpkgs` and five vendored binaries bumped.** `nixpkgs` moved in
+  `flake.lock`; `claude-desktop`, `codex-desktop`, `github-copilot-app`,
+  `ollama` and `opencode-desktop` moved to the versions pinned in their
+  `pkgs/<name>/package.nix`.
 - **The splash build quantizes in pure Rust.** A new in-tree tool,
   `pkgs/steelbore-quantize`, palette-quantizes the splash with the Rust
   `imagequant` crate (the engine inside pngquant 3) and the `png` crate,

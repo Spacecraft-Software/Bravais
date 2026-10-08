@@ -24,11 +24,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "ollama";
-  version = "0.35.1";
+  version = "0.40.0";
 
   src = fetchurl {
     url = "https://github.com/ollama/ollama/releases/download/v${finalAttrs.version}/ollama-linux-amd64.tar.zst";
-    hash = "sha256-n815rEV1sr0xuZLu4YsQAMitEmtFFifI+M0JFxTPuxA=";
+    hash = "sha256-yUqkFWs9E+ZOvC7+XqU/AVOEyIK+d25mlc+zf7GA1a0=";
   };
 
   nativeBuildInputs = [
