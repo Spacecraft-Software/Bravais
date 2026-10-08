@@ -51,7 +51,6 @@ struct Args {
     input: PathBuf,
     output: PathBuf,
     quality: (u8, u8),
-    json: bool,
 }
 
 #[derive(Debug)]
@@ -113,7 +112,7 @@ fn main() -> ExitCode {
         }
         Ok(Command::Run(args)) => match run(&args) {
             Ok(summary) => {
-                if args.json {
+                if machine {
                     println!("{}", success_json(&invocation, &args, &summary));
                 }
                 ExitCode::SUCCESS
@@ -124,9 +123,10 @@ fn main() -> ExitCode {
     }
 }
 
-/// Machine mode for diagnostics: `--json`, an agent harness (`AI_AGENT` /
-/// `AGENT` set to anything non-empty — presence, not `== "1"`), truthy `CI`,
-/// or stderr not being a terminal (a Nix build log).
+/// Machine mode, for the result on stdout and diagnostics on stderr alike
+/// (CLI Standard section 5): `--json`, an agent harness (`AI_AGENT` / `AGENT`
+/// set to anything non-empty — presence, not `== "1"`), truthy `CI`, or stdout
+/// not being a terminal (piped, or a Nix build log).
 fn machine_mode(invocation: &[String]) -> bool {
     let present = |name: &str| std::env::var_os(name).is_some_and(|v| !v.is_empty());
     let ci = std::env::var("CI").is_ok_and(|v| !v.is_empty() && v != "0" && v != "false");
@@ -134,19 +134,19 @@ fn machine_mode(invocation: &[String]) -> bool {
         || present("AI_AGENT")
         || present("AGENT")
         || ci
-        || !io::stderr().is_terminal()
+        || !io::stdout().is_terminal()
 }
 
 fn parse(invocation: &[String]) -> Result<Command, Failure> {
     let mut quality = DEFAULT_QUALITY;
-    let mut json = false;
     let mut paths = Vec::new();
     let mut iter = invocation.iter();
     while let Some(arg) = iter.next() {
         match arg.as_str() {
             "-h" | "--help" => return Ok(Command::Help),
             "--version" => return Ok(Command::Version),
-            "--json" => json = true,
+            // Accepted here, resolved by `machine_mode` with the other signals.
+            "--json" => {}
             "--quality" => {
                 let value = iter
                     .next()
@@ -167,7 +167,6 @@ fn parse(invocation: &[String]) -> Result<Command, Failure> {
             input,
             output,
             quality,
-            json,
         })),
         Err(_) => Err(Failure::usage("expected exactly two paths: INPUT OUTPUT")),
     }
@@ -291,11 +290,8 @@ fn encode(path: &Path, width: u32, height: u32, palette: &[RGBA], indices: &[u8]
         .map(|c| c.a)
         .collect();
 
-    let mut tmp_name = path.as_os_str().to_owned();
-    tmp_name.push(".steelbore-quantize.tmp");
-    let tmp = PathBuf::from(tmp_name);
+    let (tmp, file) = create_temp(path)?;
     let written = (|| -> Result<()> {
-        let file = File::create(&tmp).with_context(|| format!("creating {}", tmp.display()))?;
         let mut out = BufWriter::new(file);
         let mut encoder = png::Encoder::new(&mut out, width, height);
         encoder.set_color(png::ColorType::Indexed);
@@ -325,8 +321,36 @@ fn encode(path: &Path, width: u32, height: u32, palette: &[RGBA], indices: &[u8]
         let _ = fs::remove_file(&tmp);
         return Err(e);
     }
-    fs::rename(&tmp, path).with_context(|| format!("moving output into {}", path.display()))?;
+    if let Err(e) = fs::rename(&tmp, path) {
+        let _ = fs::remove_file(&tmp);
+        return Err(e).with_context(|| format!("moving output into {}", path.display()));
+    }
     Ok(fs::metadata(path)?.len())
+}
+
+/// Attempts at a free temporary name before giving up; a collision needs a
+/// leftover from a crashed run with the same PID, so a handful is plenty.
+const TEMP_ATTEMPTS: u32 = 16;
+
+/// Creates a new sibling of `path` to write into. `create_new` refuses an
+/// existing file instead of truncating it, and the name carries the PID, so
+/// neither a concurrent run nor an unrelated file of that name is clobbered.
+fn create_temp(path: &Path) -> Result<(PathBuf, File)> {
+    let pid = std::process::id();
+    for attempt in 0..TEMP_ATTEMPTS {
+        let mut name = path.as_os_str().to_owned();
+        name.push(format!(".steelbore-quantize.{pid}.{attempt}.tmp"));
+        let tmp = PathBuf::from(name);
+        match File::options().write(true).create_new(true).open(&tmp) {
+            Ok(file) => return Ok((tmp, file)),
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(e).with_context(|| format!("creating {}", tmp.display())),
+        }
+    }
+    anyhow::bail!(
+        "no free temporary name beside {} after {TEMP_ATTEMPTS} attempts",
+        path.display()
+    )
 }
 
 /// `u32` image dimensions always fit `usize` on the 32/64-bit targets this
@@ -415,7 +439,8 @@ Usage: {TOOL} [--quality MIN-MAX] [--json] INPUT OUTPUT
 
 Options:
   --quality MIN-MAX  0-100; below MIN nothing is written (default {min}-{max})
-  --json             print a result object on stdout
+  --json             print a result object on stdout (also automatic when
+                     stdout is not a terminal or AI_AGENT/AGENT/CI is set)
   -h, --help         this help
   --version          version and maintainer
 
