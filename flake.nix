@@ -496,6 +496,7 @@
               antigravity-nix
               nil
               mcp-servers
+              pathfinder
               ;
           };
           modules = [

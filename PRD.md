@@ -348,6 +348,7 @@ Every active input declared in `flake.nix` (commented-out inputs — `adit`, `ki
 | `mcp-servers`            | `github:Spacecraft-Software/mcp-servers`               | `nixpkgs-unstable` | `mcpctl` — generates and deploys each MCP host's config |
 | `vacuum`                 | `github:Spacecraft-Software/Vacuum`                    | `nixpkgs-unstable` | Disk-space recovery CLI + TUI (binary only; config in `users/mj/apps.nix`) |
 | `engram`                 | `github:Spacecraft-Software/Engram`                    | `nixpkgs-unstable` | Shared chat memory (CLI + MCP server), resolved by bare name on PATH (CONSTRAINTS.md #23) |
+| `pathfinder`             | `github:Spacecraft-Software/Pathfinder`                | `nixpkgs`          | jq-compatible shim over jaq; follows stable so its pinned jaq (3.1.0) is the CI-tested engine |
 
 **Why `github:` rather than local `git+file://` / `path:` for first-party inputs:** a `path:` input is content-addressed and drifts its NAR hash on every source edit (CONSTRAINTS.md #10), and a `git+file:///spacecraft-software/…` URL resolves on exactly one machine — CI, a fresh clone and the Copilot coding agent could not evaluate the flake. The consequence is that `github:` sees **pushed** content only: a change to `mcp-servers`, `vacuum` or `engram` must be committed *and* pushed before `nix flake update <input>` can pick it up.
 
@@ -382,9 +383,9 @@ mkBravais = { host, channel ? "stable", palette ? defaultPalette }: ...
 - `palette` defaults to the slug in `theme.nix`; it is overridden only by the per-theme `themeSystems` output that `theme try` builds.
 - The march level is **not** a parameter — it is pinned inside the host config via `steelbore.platform.x86_64.marchLevel` (ThinkPad = `v3`). The option itself accepts `v1`–`v4` and defaults to `v2`, but there is no v1–v4 build matrix.
 - Instantiates `unstablePkgs` from `nixpkgs-unstable` with `config.allowUnfree = true` (the system's `nixpkgs.config.allowUnfree` does not reach a separate evaluation) and a `nixfmt-rfc-style = nixfmt` overlay.
-- **`specialArgs`** (NixOS modules): `steelborePalette`, `themeAssets`, `themeRegistry`, `steelboreApps`, `primaryUser`, `gitway`, `construct`, `rapg`, `unstablePkgs`, `antigravity-nix`, `nil`, `mcp-servers`.
+- **`specialArgs`** (NixOS modules): `steelborePalette`, `themeAssets`, `themeRegistry`, `steelboreApps`, `primaryUser`, `gitway`, `construct`, `rapg`, `unstablePkgs`, `antigravity-nix`, `nil`, `mcp-servers`, `pathfinder`.
 - **Module load order:** external (`home-manager` of the selected channel, `nix-flatpak`, `gitway.nixosModules.default`), then `host`, `modules/core`, `modules/theme`, `modules/hardware`, `modules/platform`, `modules/desktops`, `modules/login`, `modules/services`, `modules/compat`, `modules/packages`, then `users/mj/default.nix` (the system user account), then the Home Manager block.
-- **Home Manager:** `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, `home-manager.users.${primaryUser} = import ./users/mj/home.nix`. **`extraSpecialArgs`**: `steelborePalette`, `themeAssets`, `steelboreApps`, `primaryUser`, `gitway`, `construct`, `constructSkills`, `rapg`, `unstablePkgs`, `antigravity-nix`, `nil`, `mcp-servers`, `vacuum`, `engram`.
+- **Home Manager:** `useGlobalPkgs = true`, `useUserPackages = true`, `backupFileExtension = "backup"`, `home-manager.users.${primaryUser} = import ./users/mj/home.nix`. **`extraSpecialArgs`**: `steelborePalette`, `themeAssets`, `steelboreApps`, `primaryUser`, `gitway`, `construct`, `constructSkills`, `rapg`, `unstablePkgs`, `antigravity-nix`, `nil`, `mcp-servers`, `vacuum`, `engram`, `pathfinder`.
 - `primaryUser = "mj"` is stated once in `flake.nix`; `steelboreApps` is `lib/default-apps.nix` applied to the one-word-per-role selection in `default-apps.nix` plus any `apps/<slug>.nix` drop-ins.
 - `constructSkills` is bound **once** and handed to both `packages.skills` and Home Manager, because three nixpkgs instantiations would otherwise give three store paths for a byte-identical skill tree and the drift probe would report drift forever.
 
@@ -1607,6 +1608,7 @@ each must be Nix-provided (CONSTRAINTS.md #23).
 | `bravais-mcp` | in-tree crate `bravais-mcp/`, packaged at `pkgs/bravais-mcp/` | `ai.nix` (system) | First-party Rust MCP server; main program `bravais-cli`. GPL-3.0-or-later. |
 | `crates-mcp` | third-party crate, `pkgs/crates-mcp/` (version + hash pinned) | `home.nix` (user) | crates.io / docs.rs lookups; `cargoHash` must be regenerated on every bump. |
 | `engram` | `engram` flake input (first-party) | `home.nix` (user) | Shared chat memory; needs an explicit `--db` (CONSTRAINTS.md #23). User-scoped because its state lives in `$HOME`. |
+| `pathfinder-jq` | `pathfinder` flake input (first-party) | `home.nix` (user) | Provides `jq` for mj. Deliberately shadows the system reference jq (per-user profile precedes the system one on `PATH`); root and full-path callers keep jq 1.8.2. |
 | `mcpctl` | `mcp-servers` flake input (first-party) | `home.nix` (user) | Renders and deploys each MCP host's config; user-scoped because it writes into `$HOME`. |
 | `vacuum` | `vacuum` flake input (first-party) | `home.nix` (user) | Disk-space recovery CLI + TUI; config HM-managed (`users/mj/apps.nix`); its own NixOS module deliberately unused. |
 | `obscura` | built from source, `pkgs/obscura/` | `ai.nix` (system) | Also an MCP server (`obscura mcp`); see below. |
@@ -2080,6 +2082,7 @@ isolation and the `obscura` bumper are in the `vendored-binaries` skill.
 | `mcpctl` — deploys MCP host configs from `mcp.toml` | `mcp-servers` input | `home.packages` (writes into `$HOME`) |
 | `vacuum` — disk-space recovery | `vacuum` input | `home.packages` |
 | `engram` — shared chat memory | `engram` input | `home.packages`; `ENGRAM_DB` in `users/mj/shell.nix` |
+| `pathfinder` — `jq` for mj (shim over jaq) | `pathfinder` input | `home.packages` (`pathfinder-jq`) |
 
 MCP hosts resolve servers **by bare name on PATH**, so they stay Nix-provided, and
 Engram needs an explicit `--db` (CONSTRAINTS.md #23). First-party inputs are
