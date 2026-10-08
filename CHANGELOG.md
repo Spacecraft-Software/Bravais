@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`jq` is now Pathfinder for mj.** The `pathfinder` flake input supplies a
+  jq-compatible shim over jaq: it translates jq's command line, supplies the
+  jq builtins jaq lacks, and hands off to jaq, so scripts written for jq keep
+  working (jaq alone rejects nine jq flags and does not auto-vivify). It
+  shadows the system reference jq for mj only; root, services and full-path
+  callers still get jq 1.8.2.
 - **Meta+Space switches keyboard layout in Plasma** as an alternate to
   Ctrl+Space (Wayland and X11). It is a second key on the layout switcher's
   global shortcut; the XKB option list can hold only one Space toggle.

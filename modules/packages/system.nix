@@ -63,6 +63,9 @@
         # Text Processing (Rust preferred)
         jaq # Rust — jq replacement
         jq # C — the reference JSON processor, for scripts pinned to its exact semantics
+        # NB: for user mj, `jq` on PATH resolves to Pathfinder (users/mj/home.nix,
+        # pathfinder-jq) — the per-user profile precedes this one. This jq stays
+        # the reference for root, services, and full-path callers.
         teip # Rust — Masking tool
         htmlq # Rust — HTML selector
         skim # Rust — Fuzzy finder

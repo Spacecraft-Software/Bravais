@@ -9,6 +9,7 @@
   mcp-servers,
   vacuum,
   engram,
+  pathfinder,
   unstablePkgs,
   primaryUser,
   ...
@@ -239,6 +240,22 @@
       #
       # Remove the imperative copy:  cargo uninstall engram
       engram.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+      # `pathfinder-jq` — Pathfinder, a jq-compatible shim over jaq, installed
+      # with its `bin/jq -> pathfinder` symlink so that for this user `jq` IS
+      # Pathfinder. jaq alone is not a safe `jq` alias: it rejects nine jq flags,
+      # lacks 21 jq builtins, and does not auto-vivify (`null | .a.b = 1` errors).
+      # Pathfinder translates, polyfills, and exec()s jaq — one execve, no
+      # wrapper — with jaq pinned by store path at build time.
+      #
+      # Deliberately shadows the reference jq in modules/packages/system.nix:
+      # /etc/profiles/per-user/mj/bin precedes /run/current-system/sw/bin on
+      # PATH. That jq (1.8.2) stays installed for root, system services, and any
+      # script that calls /run/current-system/sw/bin/jq by full path.
+      # Pathfinder reports `jq-1.8.1`, its compatibility baseline.
+      #
+      # Opt out per call:  /run/current-system/sw/bin/jq …
+      pathfinder.packages.${pkgs.stdenv.hostPlatform.system}.pathfinder-jq
 
       # `crates-mcp` — the `crates` MCP server (crates.io / docs.rs lookups),
       # from the in-tree pkgs/ index. Third-party, so it is packaged here rather
