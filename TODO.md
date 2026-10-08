@@ -148,6 +148,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → alacritty (default terminal)
 - [✓] Write theme files (`theme.ron`, `up`, `down`, `picom.conf` — polybar.ini/template.liquid removed with polybar in Phase E)
 - [✓] Write `/etc/dunst/dunstrc` with Steelbore theme (moved to `modules/desktops/shared.nix` in Phase B — shared with Niri)
+- [✓] Idle and sleep lock: xss-lock + i3lock (gtklock is Wayland-only, CONSTRAINTS.md #45); `steelbore-x-idle` arms the X timers (lock 300 s, panel off 360 s); Caffeine `Mod+Shift+C` clears them
+- [ ] Verify on hardware: idle lock at 300 s, Ctrl+Alt+L, lock before suspend, Caffeine on/off
 
 ---
 

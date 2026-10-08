@@ -19,7 +19,8 @@
   # Polkit for privilege escalation
   security.polkit.enable = true;
 
-  # PAM service for gtklock (screen locker used by Niri and LeftWM). The
+  # PAM service for gtklock (Niri's screen locker; LeftWM uses i3lock,
+  # CONSTRAINTS.md #45). The
   # gtklock package ships its own `etc/pam.d/gtklock` (auth include login)
   # but NixOS doesn't link package PAM files into /etc/pam.d/ — without
   # this declaration the service is unknown to PAM and gtklock rejects

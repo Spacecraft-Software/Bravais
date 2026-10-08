@@ -135,7 +135,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 |-------|---------------|
 | Privilege escalation | `sudo-rs` (Rust), `execWheelOnly = true`. Standard `sudo` (C) is disabled. |
 | SSH agent | `gitway-agent` owns `$SSH_AUTH_SOCK` at `${XDG_RUNTIME_DIR}/gitway-agent.sock`. `programs.ssh.startAgent` must stay `false` to avoid racing. `openssh_hpn` remains installed for general SSH workflows. |
-| Screen lock PAM | `security.pam.services.gtklock = {}` is required — packages shipping `etc/pam.d/<service>` are invisible to PAM without explicit declaration. |
+| Screen lock PAM | `security.pam.services.gtklock = {}` is required — packages shipping `etc/pam.d/<service>` are invisible to PAM without explicit declaration. LeftWM (X11) locks with i3lock instead (`programs.i3lock.enable` declares its service; #45). |
 | Secure Boot | `sbctl` (Rust) installed; not yet enrolled. |
 | Fingerprint | `fprintd` + TOD (`libfprint-2-tod1-vfs0090`, locally patched). **Explicit** allow/deny policy in `modules/hardware/fingerprint.nix` — never for session entry (`greetd`, TTY `login`) or anything needing `PAM_OLDAUTHTOK` (`passwd`). `cosmic-greeter` is allowed only while it is merely the lock screen (the module derives this). Fingerprint authenticates; it cannot decrypt. |
 | Keyring | gnome-keyring. Auto-unlocked by the greetd password via `pam_gnome_keyring`; `steelbore-keyring-check` (read-only, runs at session start) and `steelbore-keyring-unlock` (`Mod+Shift+U`, rescue) in `modules/desktops/shared.nix`. The gcr **3** prompter is load-bearing — see constraint #32. |
@@ -192,6 +192,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 42. **`/boot` is a 196 MiB ESP that holds three XanMod kernel+initrd pairs** — keep `systemd-boot.configurationLimit = 3`; an `ENOSPC` in the bootloader step is `/boot`, not `/nix`.
 43. **The Plymouth splash puts the initrd under a ~49 MiB ceiling** — never add `i915` to the initrd (the splash runs on `simpledrm`), keep zstd `-19` without `--long`, and re-measure the built initrd after changing the splash image.
 44. **X sessions go to tuigreet's `--xsessions` with `--no-xsession-wrapper`, never `--sessions`** — tuigreet stamps every `--sessions` entry `XDG_SESSION_TYPE=wayland`, so Plasma X11 ran as "Wayland" and Electron apps (Orca) refused to start.
+45. **gtklock is Wayland-only (`ext-session-lock`) and cannot lock an X session** — LeftWM locks with i3lock via xss-lock; `steelbore-x-idle` owns the X idle timers and Caffeine clears them.
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
