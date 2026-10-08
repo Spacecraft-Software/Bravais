@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`nixpkgs-unstable`, `home-manager-unstable` and `antigravity-nix`
+  bumped** in `flake.lock`.
+
 ### Fixed
 
 - **LeftWM locks the screen, and Caffeine works there.** Ctrl+Alt+L ran
