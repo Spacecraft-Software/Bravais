@@ -108,6 +108,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable X server for XWayland support
 - [✓] Configure SSH askpass override (`ksshaskpass`)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)
+- [✓] Register Plasma Browser Integration hosts for Brave, Edge, Opera (Flatpak relay + `talk` permission) and BrowserOS (`users/mj/browser-integration.nix`); Tor Browser deliberately excluded
+- [ ] Verify the extension connects in Brave, Edge, Opera and BrowserOS
 - [✓] Enable KWallet and Krohnkite tiling
 - [✓] Enable GPG agent with pinentry-qt
 - [✓] Exclude bloatware (oxygen, elisa, khelpcenter)

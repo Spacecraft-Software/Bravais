@@ -398,20 +398,32 @@
     # sandbox costs nothing. Each already carries `org.freedesktop.secrets=talk`
     # in its Flathub manifest, so no extra bus permission is needed.
     services.flatpak.overrides.settings =
-      lib.genAttrs
-        [
-          "com.google.Chrome"
-          "com.microsoft.Edge"
-          "com.opera.Opera"
-          "com.brave.Browser"
-          "com.discordapp.Discord"
-          "io.wavebox.Wavebox"
-          "com.visualstudio.code"
-          "com.vscodium.codium"
-          "io.github.shiftey.Desktop"
-        ]
-        (_: {
-          Environment.XDG_CURRENT_DESKTOP = "GNOME";
-        });
+      lib.recursiveUpdate
+        (lib.genAttrs
+          [
+            "com.google.Chrome"
+            "com.microsoft.Edge"
+            "com.opera.Opera"
+            "com.brave.Browser"
+            "com.discordapp.Discord"
+            "io.wavebox.Wavebox"
+            "com.visualstudio.code"
+            "com.vscodium.codium"
+            "io.github.shiftey.Desktop"
+          ]
+          (_: {
+            Environment.XDG_CURRENT_DESKTOP = "GNOME";
+          })
+        )
+        # ── Plasma Browser Integration ─────────────────────────────────────────
+        # Plasma's FlatpakIntegrator grants this to the browsers it knows
+        # (Chrome among them) and writes their host relay; for these three it
+        # does neither. users/mj/browser-integration.nix writes the relay, which
+        # calls FlatpakIntegrator.Link over this bus name.
+        (
+          lib.genAttrs [ "com.brave.Browser" "com.microsoft.Edge" "com.opera.Opera" ] (_: {
+            "Session Bus Policy"."org.kde.plasma.browser.integration" = "talk";
+          })
+        );
   };
 }
