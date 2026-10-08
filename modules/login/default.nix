@@ -367,6 +367,14 @@ in
         # Labelling the offset is what makes the greeter's local time
         # unambiguous rather than merely local (Standard §14.3, which permits
         # local time as a human-facing companion).
+        #
+        # X sessions go to --xsessions, NOT --sessions: tuigreet stamps every
+        # --sessions entry XDG_SESSION_TYPE=wayland, so Plasma X11 started
+        # believing it was on Wayland — kded, plasmashell and kcminit each
+        # logged "Failed to create wl_display", and Orca refused to start.
+        # --xsessions makes it x11. --no-xsession-wrapper because every Exec
+        # there already runs startx (start-leftwm, start-plasma-x11); the
+        # default wrapper would start a second X server around it.
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
             --time \
@@ -375,7 +383,9 @@ in
             --remember-session \
             --asterisks \
             --greeting "STEELBORE OS :: BRAVAIS" \
-            --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions:${config.services.displayManager.sessionData.desktops}/share/xsessions
+            --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
+            --xsessions ${config.services.displayManager.sessionData.desktops}/share/xsessions \
+            --no-xsession-wrapper
         '';
         user = "greeter";
       };

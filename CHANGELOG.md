@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Plasma X11 starts as an X11 session; Orca launches there again.**
+  tuigreet was given the X sessions folder through `--sessions`, which marks
+  every entry `XDG_SESSION_TYPE=wayland`, so Plasma X11's own services tried
+  to reach a Wayland display and Electron apps such as Orca exited at
+  startup. X sessions now go through `--xsessions` (with
+  `--no-xsession-wrapper`, since each entry starts X itself) (constraint #44).
 - **LeftWM joins the real session bus.** The session ran under
   `dbus-run-session`, a private bus without the gnome-keyring that PAM
   unlocked at login, so `steelbore-keyring-check` reported "no default

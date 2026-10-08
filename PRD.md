@@ -911,14 +911,18 @@ tuigreet \
   --remember-session \
   --asterisks \
   --greeting "STEELBORE OS :: BRAVAIS" \
-  --sessions <sessionData.desktops>/share/wayland-sessions:<sessionData.desktops>/share/xsessions
+  --sessions <sessionData.desktops>/share/wayland-sessions \
+  --xsessions <sessionData.desktops>/share/xsessions \
+  --no-xsession-wrapper
 ```
 
 The greeter runs as user `greeter`.
 
 **Why `UTC%:z`:** tuigreet renders `--time-format` through chrono's strftime. `%:z` computes the offset from the system's own time zone (`time.timeZone` in `modules/core/locale.nix`) instead of hardcoding it, so the line stays correct if the zone changes and across any DST transition. `%Z` (a bare `+03`) and `%z` (`+0300`) don't read as an offset. Labelling the offset makes the greeter's local time unambiguous, which Standard §14.3 allows as a human-facing companion to UTC.
 
-**Default session:** `services.displayManager.defaultSession = "niri"` is a plain definition. It has to be set because the upstream nixpkgs modules `plasma6.nix` and `niri.nix` (the latter on nixos-unstable only) both `mkDefault` this option and would otherwise collide (these are nixpkgs' own NixOS modules, not Bravais's `modules/desktops/niri.nix` or `users/mj/niri.nix`). A plain definition outranks both without `mkForce` (CONSTRAINTS.md #21). tuigreet itself reads `--sessions`, and `--remember-session` still wins for a returning user.
+**Default session:** `services.displayManager.defaultSession = "niri"` is a plain definition. It has to be set because the upstream nixpkgs modules `plasma6.nix` and `niri.nix` (the latter on nixos-unstable only) both `mkDefault` this option and would otherwise collide (these are nixpkgs' own NixOS modules, not Bravais's `modules/desktops/niri.nix` or `users/mj/niri.nix`). A plain definition outranks both without `mkForce` (CONSTRAINTS.md #21). tuigreet itself reads `--sessions` and `--xsessions`, and `--remember-session` still wins for a returning user.
+
+**Why `--xsessions`:** tuigreet stamps every `--sessions` entry `XDG_SESSION_TYPE=wayland` and every `--xsessions` entry `x11`. Passing the X sessions through `--sessions` made Plasma X11 run as "Wayland", and Electron apps such as Orca refused to start. `--no-xsession-wrapper` drops tuigreet's default `startx /usr/bin/env` prefix, because each X session's `Exec` already starts its own server (CONSTRAINTS.md #44).
 
 ### 8.2 Shell Sessions
 
