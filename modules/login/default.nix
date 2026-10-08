@@ -2,6 +2,7 @@
 # Steelbore Bravais — greetd + tuigreet Login Manager
 {
   config,
+  lib,
   pkgs,
   primaryUser,
   steelborePalette,
@@ -205,6 +206,21 @@ let
     # key off a broken one. Read-only; exits non-zero and notifies on trouble.
     # The delay lets pam_gnome_keyring's daemon settle first.
     ( sleep 5 ; steelbore-keyring-check ) &
+    # Idle lock + blank, and lock before suspend (CONSTRAINTS.md #45).
+    # gtklock is Wayland-only (ext-session-lock), so X sessions lock with
+    # i3lock. steelbore-x-idle (modules/desktops/shared.nix) arms the X
+    # server's screensaver at 300 s and DPMS off at 360 s, or clears both
+    # while Caffeine is on; xss-lock runs i3lock when the screensaver fires,
+    # on `loginctl lock-session` (Ctrl+Alt+L) and before sleep. --nofork
+    # with --transfer-sleep-lock: i3lock releases xss-lock's sleep delay
+    # once the lock is up, so suspend never outruns the lock. Started here,
+    # not in the theme's `up` script, for the polkit agent's reason above.
+    # -e: an empty Enter is not a failed attempt (no fingerprint here; see
+    # the i3lock entry in modules/hardware/fingerprint.nix).
+    steelbore-x-idle
+    ${pkgs.xss-lock}/bin/xss-lock --transfer-sleep-lock -- \
+      ${pkgs.i3lock}/bin/i3lock --nofork --ignore-empty-password \
+        --show-failed-attempts --color='${lib.removePrefix "#" steelborePalette.background}' &
     # After leftwm is up, force-apply the Steelbore theme and re-set the
     # root background. Both calls must happen AFTER leftwm starts:
     #

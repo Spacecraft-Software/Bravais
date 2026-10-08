@@ -79,20 +79,51 @@ let
     fi
   '';
 
-  # Caffeine — toggle the swayidle idle daemon (auto lock + screen-off,
-  # configured in users/mj/niri.nix). SIGSTOP pauses swayidle so its idle
-  # timers stop advancing (the machine stays awake); SIGCONT resumes
-  # normal idle behaviour. State tracked by a runtime-dir flag; dunstify
-  # reports the new state. Bound to Mod+Shift+C in the Niri config.
+  # X11 idle timers for the LeftWM session (CONSTRAINTS.md #45), mirroring
+  # Niri's swayidle config in users/mj/niri.nix: lock at 300 s, monitors off
+  # at 360 s. The X server's screensaver fires at 300 s and xss-lock (started
+  # by leftwm-session-inner, modules/login/default.nix) runs i3lock on it;
+  # DPMS powers the panel off at 360 s. With the Caffeine flag present both
+  # timers are cleared instead, so one command applies whichever state the
+  # flag records — at session start and on every Caffeine toggle.
+  xIdle = pkgs.writeShellScriptBin "steelbore-x-idle" ''
+    xset=${pkgs.xset or pkgs.xorg.xset}/bin/xset
+    if [ -e "''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active" ]; then
+      "$xset" s off
+      "$xset" -dpms
+    else
+      "$xset" s 300
+      "$xset" +dpms
+      "$xset" dpms 0 0 360
+    fi
+  '';
+
+  # Caffeine — keep the machine awake on demand. Under Niri it toggles the
+  # swayidle idle daemon (auto lock + screen-off, configured in
+  # users/mj/niri.nix): SIGSTOP pauses swayidle so its idle timers stop
+  # advancing; SIGCONT resumes normal idle behaviour. Under LeftWM, where
+  # xss-lock is the idle locker, steelbore-x-idle clears or restores the X
+  # server's screensaver and DPMS timers instead. State tracked by a
+  # runtime-dir flag; dunstify reports the new state. Bound to Mod+Shift+C
+  # in both the Niri and the LeftWM config.
   caffeineToggle = pkgs.writeShellScriptBin "steelbore-caffeine" ''
     state="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active"
+    # Re-applies the X timers for the new flag state; only where xss-lock
+    # runs, i.e. a LeftWM session (Niri's Xwayland has no idle locker).
+    apply_x() {
+      if ${pkgs.procps}/bin/pgrep -u "$(id -u)" -x xss-lock >/dev/null; then
+        ${xIdle}/bin/steelbore-x-idle
+      fi
+    }
     if [ -e "$state" ]; then
       ${pkgs.procps}/bin/pkill -CONT -x swayidle || true
       rm -f "$state"
+      apply_x
       ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
     else
       ${pkgs.procps}/bin/pkill -STOP -x swayidle || true
       : > "$state"
+      apply_x
       ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-full "Caffeine on — staying awake"
     fi
   '';
@@ -527,6 +558,7 @@ in
           btToggle
           airplaneToggle
           caffeineToggle
+          xIdle
           kbdLightCycle
           outputScale
           osd

@@ -134,6 +134,14 @@ let
     "su"
     "su-l"
 
+    # --- A locker that collects the password before PAM runs --------------
+    # i3lock (LeftWM's X11 locker, CONSTRAINTS.md #45) starts PAM only when
+    # Enter is pressed, after the password is already typed. pam_fprintd is
+    # `sufficient` ahead of pam_unix, so allowing it here would make every
+    # password unlock wait out a fingerprint scan first. Unlock it by
+    # password; the keyring is already open, as it is under gtklock.
+    "i3lock"
+
     # --- Non-conversational contexts --------------------------------------
     # These run with no interactive prompt to answer: fprintd's "Place your
     # finger on the reader" arrives as PAM_TEXT_INFO and then blocks, which is

@@ -153,6 +153,16 @@
       # and the session hangs indefinitely.
       services.xserver.displayManager.startx.enable = true;
 
+      # Screen locker (CONSTRAINTS.md #45). gtklock is Wayland-only — under
+      # X it exits with "Your compositor doesn't support ext-session-lock" —
+      # so LeftWM locks with i3lock, driven by xss-lock from
+      # leftwm-session-inner (modules/login/default.nix). The module declares
+      # the `i3lock` PAM service (CONSTRAINTS.md #9); enableGnomeKeyring
+      # re-opens the login keyring on a password unlock, for gtklock's
+      # reason in modules/core/security.nix.
+      programs.i3lock.enable = true;
+      security.pam.services.i3lock.enableGnomeKeyring = true;
+
       # LeftWM and companion packages
       environment.systemPackages = with pkgs; [
         leftwm
@@ -174,7 +184,7 @@
 
         # Notifications + utilities (cross-platform with Niri where applicable)
         dunst # Notification daemon (X11 + Wayland)
-        gtklock # Lockscreen (X11 + Wayland via GTK)
+        xss-lock # Idle/sleep lock trigger for i3lock (C; no Rust X11 locker in nixpkgs)
         feh # Wallpaper / image viewer (X11)
         xclip # Clipboard
         xsel # Clipboard
@@ -227,7 +237,11 @@
               keybind: [
                   // Session
                   (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
-                  (command: Execute, value: "gtklock", modifier: ["Control", "Alt"], key: "l"),
+                  // Lock via logind so xss-lock runs i3lock — the same path as
+                  // the idle and before-sleep locks (CONSTRAINTS.md #45).
+                  (command: Execute, value: "loginctl lock-session", modifier: ["Control", "Alt"], key: "l"),
+                  // Caffeine — keep awake: clears the X idle timers (mirrors Niri).
+                  (command: Execute, value: "steelbore-caffeine", modifier: ["modkey", "Shift"], key: "c"),
                   // Keyring unlock — a RESCUE path, not a routine one: greetd
                   // authenticates by password, so pam_gnome_keyring auto-unlocks
                   // at login. Use this when something locked the keyring
@@ -301,7 +315,7 @@
 
                   // Multimedia + hardware hotkeys (mirror Niri). lefthk-core
                   // has no `allow-when-locked` analog — these will not fire
-                  // while gtklock is engaged (the X locker grabs the keyboard).
+                  // while i3lock is engaged (the X locker grabs the keyboard).
                   // swayosd is Wayland-only (wlr-layer-shell), so volume +
                   // brightness route through steelbore-osd (a dunstify-based
                   // progress-bar popup) instead. Radio toggles + kbd-backlight
@@ -347,7 +361,8 @@
         "leftwm/keybinds.txt".text = ''
           <b>Session</b>
           Mod+Shift+E           Exit LeftWM
-          Ctrl+Alt+L            Lock screen (gtklock)
+          Ctrl+Alt+L            Lock screen (i3lock)
+          Mod+Shift+C           Toggle Caffeine (keep awake)
           Mod+Shift+U           Unlock keyring
 
           <b>Applications</b>
@@ -512,8 +527,9 @@
           (defpoll net_state :interval "5s"
             "for IF in /sys/class/net/*; do [ \"$IF\" = /sys/class/net/lo ] && continue; if [ \"$(cat \"$IF/operstate\" 2>/dev/null)\" = up ]; then echo up; exit 0; fi; done; echo down")
 
-          ;; Caffeine — mirrors the `steelbore-caffeine` toggle (SIGSTOP/
-          ;; SIGCONT of swayidle). State is a flag file under XDG_RUNTIME_DIR
+          ;; Caffeine — mirrors the `steelbore-caffeine` toggle (here it
+          ;; clears or restores the X idle timers via steelbore-x-idle;
+          ;; under Niri it pauses swayidle). State is a flag file under XDG_RUNTIME_DIR
           ;; so the bar can read it rootless. `caf` emits nf-md-coffee_outline
           ;; (U+F06CA) when active (staying awake) or nf-md-coffee_off
           ;; (U+F0FAA) when idle; `caf_state` selects the CSS class (caf-on =

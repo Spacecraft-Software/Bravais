@@ -664,7 +664,7 @@ inheritance with two explicit lists:
 | | Services |
 |---|---|
 | **`fprintAllow`** | `sudo`, `sudo-i`, `polkit-1`, `gtklock`, `swaylock`, `xlock`, `vlock`, `kde-fingerprint`, and `cosmic-greeter` while it is only the COSMIC lock screen |
-| **`fprintDeny`** | session entry (`greetd`, `login`); `PAM_OLDAUTHTOK` users (`passwd`, `chpasswd`); account mutation (`chsh`, `chfn`, `user*`, `group*`); `su`, `su-l`; non-conversational (`runuser`, `runuser-l`, `systemd-run0`, `systemd-user`, `cups`); and `cosmic-greeter` if it becomes the display manager |
+| **`fprintDeny`** | session entry (`greetd`, `login`); `PAM_OLDAUTHTOK` users (`passwd`, `chpasswd`); account mutation (`chsh`, `chfn`, `user*`, `group*`); `su`, `su-l`; `i3lock` (runs PAM only after Enter, so a scan would delay every password unlock); non-conversational (`runuser`, `runuser-l`, `systemd-run0`, `systemd-user`, `cups`); and `cosmic-greeter` if it becomes the display manager |
 
 **The rule:** fingerprint *authenticates*, it cannot *decrypt*. Wherever it
 touches a secret it gates release of something the **login keyring** holds,
@@ -1073,7 +1073,7 @@ kdeconnect-kde, plasma-systemmonitor, filelight, kcalc, ark, kate, kwalletmanage
 
 **Service:** `programs.niri.enable = true`
 
-**Companion packages** (`modules/desktops/niri.nix` — the stack matches LeftWM where cross-platform: eww, dunst, gtklock):
+**Companion packages** (`modules/desktops/niri.nix` — the stack matches LeftWM where cross-platform: eww, dunst):
 niri, xwayland-satellite, eww (status bar), anyrun (launcher), dunst (notifications), gtklock (locker), swayidle, wl-clipboard, wl-clipboard-rs, grim, slurp, swayosd (OSD for the XF86 keys — Niri has no built-in daemon), polkit_gnome (auth agent — Niri needs one explicitly), and the wallpaper daemon `pkgs.awww or pkgs.swww` (upstream rename; the `or` picks per channel).
 
 **Niri Configuration** (`~/.config/niri/config.kdl`, single source via `users/mj/niri.nix` — niri prefers the user config over `/etc/niri`, so a system copy would be dead and previously drifted). The wrappers, brightnessctl udev rule and dunst config live in `modules/desktops/shared.nix` (§9.6). `XDG_CURRENT_DESKTOP "niri"` routes portal lookups.
@@ -1118,7 +1118,7 @@ Audio, mic, backlight and Caps/Num Lock come from one event-driven `deflisten` o
 **Services:** `services.xserver.enable = true`, `services.xserver.displayManager.startx.enable = true`. LeftWM is intentionally **not** registered via `services.xserver.windowManager.leftwm.enable`: that xsession runs `leftwm` directly, and since greetd does not start Xorg, leftwm panics in a respawn loop. `modules/login/default.nix` registers its own xsession that wraps LeftWM in `startx`.
 
 **Companion packages:**
-leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, gtklock, feh, xclip, xsel, maim, xdotool, numlockx, xkb-switch (layout for the eww language indicator)
+leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, xss-lock + i3lock (`programs.i3lock`), feh, xclip, xsel, maim, xdotool, numlockx, xkb-switch (layout for the eww language indicator)
 
 **LeftWM Configuration** (`~/.config/leftwm/config.ron`, written by Home Manager from `modules/desktops/leftwm.nix`):
 
@@ -1127,7 +1127,8 @@ leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, gt
 
 Key bindings:
 
-- **Session:** `Mod+Shift+E` kill session, `Ctrl+Alt+L` lock (gtklock), `Mod+Shift+U` keyring unlock (rescue)
+- **Session:** `Mod+Shift+E` kill session, `Ctrl+Alt+L` lock (`loginctl lock-session` → xss-lock → i3lock), `Mod+Shift+C` Caffeine, `Mod+Shift+U` keyring unlock (rescue)
+- **Idle:** xss-lock (started by `leftwm-session-inner`) runs i3lock when the X screensaver fires at 300 s and before sleep; DPMS powers the panel off at 360 s — the same timings as Niri's swayidle. gtklock cannot run under X (CONSTRAINTS.md #45).
 - **Applications:** `Mod+Return` alacritty (rio renders blank under startx-spawned Xorg), `Mod+D` rlaunch, `Mod+Shift+D` rofi
 - **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+Shift+F` float
 - **Focus / move:** `Mod+K/J` or `Mod+Up/Down`; `Mod+Shift+K/J`. Up/down only: lefthk-core lacks the Left/Right commands and one panics its parser, disabling every bind; sloppy focus and tile-drag cover left/right.
@@ -1157,7 +1158,8 @@ Config and wrappers used by **both** bare window managers live here — active w
 
 - `steelbore-bt-state` — `off` / `on` / `connected`, one truth source for the bar and the toggle
 - `steelbore-bt-toggle`, `steelbore-airplane-toggle` — rfkill toggles with dunstify feedback that replaces rather than stacks
-- `steelbore-caffeine`, `steelbore-kbd-light-cycle`, `steelbore-output-scale`, `steelbore-layout-state`, `steelbore-osd` (LeftWM's X11 OSD)
+- `steelbore-caffeine` — pauses swayidle under Niri; under LeftWM it clears the X idle timers through `steelbore-x-idle`, which also arms them at session start (CONSTRAINTS.md #45)
+- `steelbore-kbd-light-cycle`, `steelbore-output-scale`, `steelbore-layout-state`, `steelbore-osd` (LeftWM's X11 OSD)
 - `steelbore-keyring-check` — read-only keyring diagnosis, safe unattended, with distinct exit codes for a wrong `default` alias, a locked keyring, and dangling items
 - `steelbore-keyring-unlock` — drives the Secret Service Unlock prompt through one long-lived D-Bus client, so the password is collected by gcr-prompter and never enters the script, replacing the old path that killed the PAM-seeded daemon (CONSTRAINTS.md #32)
 - Plus `brightnessctl` and `playerctl`.
@@ -1996,11 +1998,11 @@ All five sessions are enabled together in `hosts/common.nix` (`steelbore.desktop
 | COSMIC  | Wayland  | COSMIC Panel                 | cosmic-launcher                         | cosmic-notifications | upstream (COSMIC)                 |
 | Plasma 6| Wayland  | Plasma Panel                 | KRunner                                 | KDE Notifications    | upstream (Plasma)                 |
 | Niri    | Wayland  | eww                          | anyrun (`Mod+D`)                        | dunst                | gtklock + swayidle                |
-| LeftWM  | X11      | eww (separate `eww-leftwm` config) | rlaunch (`Mod+D`), rofi (`Mod+Shift+D`) | dunst            | gtklock (`Ctrl+Alt+L`)            |
+| LeftWM  | X11      | eww (separate `eww-leftwm` config) | rlaunch (`Mod+D`), rofi (`Mod+Shift+D`) | dunst            | i3lock via xss-lock (`Ctrl+Alt+L`, idle, sleep) |
 
 Notes:
 
-- **Niri and LeftWM share a stack where it is cross-platform** — eww, dunst and gtklock — and use Wayland-only tools (anyrun, swayidle, swayosd, xwayland-satellite) where the X11 alternatives do not apply (`modules/desktops/niri.nix`). Niri starts the bar and notifier from `spawn-at-startup` in `users/mj/niri.nix` (`eww open bar`, `dunst`); LeftWM starts picom, dunst, the eww daemon and the bar (from `~/.config/eww-leftwm`) in its theme's `up` script (`modules/desktops/leftwm.nix`), which runs once LeftWM is managing the display. The session wrapper that launches LeftWM is `leftwm-session-inner` in `modules/login/default.nix`.
+- **Niri and LeftWM share a stack where it is cross-platform** — eww and dunst — and use Wayland-only tools (anyrun, gtklock, swayidle, swayosd, xwayland-satellite) where the X11 alternatives do not apply (`modules/desktops/niri.nix`). Niri starts the bar and notifier from `spawn-at-startup` in `users/mj/niri.nix` (`eww open bar`, `dunst`); LeftWM starts picom, dunst, the eww daemon and the bar (from `~/.config/eww-leftwm`) in its theme's `up` script (`modules/desktops/leftwm.nix`), which runs once LeftWM is managing the display. The session wrapper that launches LeftWM is `leftwm-session-inner` in `modules/login/default.nix`.
 - **Two eww configs, kept in step:** Niri's lives in `users/mj/eww.nix` (`~/.config/eww`), LeftWM's under `~/.config/eww-leftwm` in `modules/desktops/leftwm.nix` so the two never collide. Both draw their hardware indicators from `steelbore-beacon` (CONSTRAINTS.md #25) and obey the `eww.scss` comment rule (CONSTRAINTS.md #26).
 - **Alacritty is the default terminal** (`Mod+Return`) under both Niri and LeftWM; LeftWM requires it because rio renders blank under startx-spawned Xorg (rationale in `modules/desktops/leftwm.nix`).
 - COSMIC, Plasma and GNOME keep their upstream shell components (panel, launcher, notifications, lock). Bravais adds explicit per-DE portal routing plus a package set per module: GNOME's extension set (incl. forge tiling) in `modules/desktops/gnome.nix`, and Plasma's krohnkite tiling, KWallet tools and ksshaskpass in `modules/desktops/plasma.nix`.
@@ -2166,7 +2168,7 @@ A `--version` call proves only that a binary is on PATH, not that a session star
 
 - **Manual:** Panel or bar visible: the eww bar under Niri and LeftWM (clock in ISO 8601 with a UTC offset), the native panel under COSMIC, GNOME and Plasma.
 - **Manual:** A test notification (`dunstify test`) renders through dunst under Niri and LeftWM.
-- **Manual:** Lock screen: `Mod+Shift+L` (Niri) and `Ctrl+Alt+L` (LeftWM) engage gtklock; unlocking with the password works.
+- **Manual:** Lock screen: `Mod+Shift+L` (Niri) engages gtklock and `Ctrl+Alt+L` (LeftWM) engages i3lock; unlocking with the password works. LeftWM also locks after 300 s idle unless Caffeine is on.
 - **Manual:** Fingerprint unlocks gtklock and falls through to the password prompt on a failed scan; it is never offered at the greetd login (policy: `modules/hardware/fingerprint.nix`, §6.1).
 - **Manual:** Niri: `Mod+Shift+Slash` opens the hotkey overlay with every primary bind titled.
 - **Manual:** Mouse side buttons switch workspace in every desktop, and the TrackPoint is unaffected.

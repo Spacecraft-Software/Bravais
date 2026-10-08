@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **LeftWM locks the screen, and Caffeine works there.** Ctrl+Alt+L ran
+  gtklock, which is Wayland-only and exits at once under X, so LeftWM
+  never locked; the Caffeine button paused a `swayidle` that does not run
+  under X. LeftWM now locks with i3lock through xss-lock: after 5 minutes
+  idle, on Ctrl+Alt+L and before suspend, with the panel off at 6 minutes
+  as under Niri. Caffeine (bar button, or the new `Mod+Shift+C`) clears
+  those timers. Unlock with the password; fingerprint is not offered there.
+
 ### Changed
 
 - **`nixpkgs` and five vendored binaries bumped.** `nixpkgs` moved in
