@@ -1063,7 +1063,7 @@ Fully Rust-based desktop from System76. The upstream module wires portals, dconf
 - `programs.ssh.askPassword = lib.mkForce …ksshaskpass` (avoids askpass conflicts when multiple desktop modules are enabled)
 
 **KDE packages:**
-kdeconnect-kde, plasma-systemmonitor, filelight, kcalc, ark, kate, kwalletmanager, kwallet, pinentry-qt, krohnkite (KWin tiling script). The KDE portal is registered by the Plasma 6 module itself; routing is `kde`, `gtk` with FileChooser → `kde`.
+kdeconnect-kde, plasma-systemmonitor, filelight, kcalc, ark, kate, kwalletmanager, kwallet, pinentry-qt, krohnkite (KWin tiling script). `plasma-browser-integration` comes from the Plasma 6 module. Firefox (system Mozilla manifest) and the Flatpaks on Plasma's own list (Chrome among them) are registered by Plasma; `users/mj/browser-integration.nix` registers Brave, Edge and Opera through a relay that calls Plasma's `FlatpakIntegrator.Link` (bus permission in `modules/packages/flatpak.nix`), and BrowserOS directly. Tor Browser is left out on purpose. The KDE portal is registered by the Plasma 6 module itself; routing is `kde`, `gtk` with FileChooser → `kde`.
 
 **Excluded packages:** oxygen, elisa, khelpcenter
 

@@ -31,6 +31,9 @@
     # from desktop-theme.nix because it writes through kwriteconfig6 rather
     # than xdg.configFile — see the header comment there for why.
     ./plasma.nix
+    # Plasma Browser Integration hosts for Brave, Edge, Opera and BrowserOS,
+    # which Plasma does not register itself.
+    ./browser-integration.nix
     ./apps.nix
     # Which program handles what — the sole xdg.mimeApps block. Selection is
     # one word per role in the repo-root default-apps.nix.

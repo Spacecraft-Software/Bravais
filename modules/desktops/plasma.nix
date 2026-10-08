@@ -37,7 +37,8 @@
     programs.ssh.askPassword = lib.mkForce "${pkgs.kdePackages.ksshaskpass}/bin/ksshaskpass";
 
     environment.systemPackages = with pkgs; [
-      # kdePackages.plasma-browser-integration
+      # kdePackages.plasma-browser-integration — already installed by the Plasma 6
+      # module; per-browser hosts live in users/mj/browser-integration.nix
       kdePackages.kdeconnect-kde
       kdePackages.plasma-systemmonitor
       kdePackages.filelight

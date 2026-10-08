@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Plasma Browser Integration in Brave, Edge, Opera and BrowserOS.** Plasma
+  only registers its native host for Firefox and a fixed list of Flatpaks
+  (Chrome among them), so the extension could not reach Plasma from these
+  four. Each now has a host registration; the three Flatpaks also get the
+  D-Bus permission the relay needs. Tor Browser is left out on purpose.
+
 ### Changed
 
 - **`nixpkgs-unstable`, `home-manager-unstable` and `antigravity-nix`
