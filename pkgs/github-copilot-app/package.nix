@@ -33,11 +33,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "github-copilot-app";
-  version = "1.1.26";
+  version = "1.1.27";
 
   src = fetchurl {
     url = "https://github.com/github/app/releases/download/v${finalAttrs.version}/GitHub-Copilot-linux-x64.deb";
-    hash = "sha256-y4l1DMvGNO9J7zy5ZgnTvvAw9+D/flAPfO6d2iyuMT4=";
+    hash = "sha256-E6siamKcrEnq8oFC4Hkydi4EBigSfJxm61vvZIYtWEY=";
   };
 
   nativeBuildInputs = [
