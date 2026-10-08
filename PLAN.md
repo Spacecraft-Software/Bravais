@@ -108,9 +108,11 @@ override only feeds the Breeze theme it does not use).
       variant) — the override is the line that makes `hostnamectl` and the
       "About" panels read "Steelbore OS Bravais"
 - [ ] P-007 `ANSI_COLOR` rendered from `steelborePalette.accent` with the
-      hex-to-RGB helper the Plymouth package already uses, never a retyped
-      triple (§11.4); `extraLSBReleaseArgs` left untouched — `lsb-release`
-      follows `distroName`/`distroId` on its own
+      hex-to-channel decoder in `lib/palette.nix` — the 0–255 integers that
+      feed `floatChannel` (Plymouth and COSMIC consume the 0.0–1.0 float form;
+      `ANSI_COLOR` wants the integers) — never a retyped triple (§11.4);
+      `extraLSBReleaseArgs` left untouched — `lsb-release` follows
+      `distroName`/`distroId` on its own
 - [ ] P-008 Eval gate before any switch:
       `nix eval --raw '.#nixosConfigurations.bravais-thinkpad.config.environment.etc."os-release".text'`
       shows every row of the Identity table; repeat for `bravais-thinkpad-unstable`.
@@ -125,10 +127,12 @@ override only feeds the Breeze theme it does not use).
       carries `DISTRO_ID=nixos` and must still accept a system whose
       `/etc/os-release` says `ID=steelbore`; the `/etc/NIXOS` marker is what
       makes both directions pass
-- [ ] P-011 Boot menu label: decide whether `system.nixos.tags` gains
-      `bravais` (titles become `Steelbore OS bravais-26.05…`) or stays bare
-      (`Steelbore OS 26.05…`); default bare — VARIANT already carries it
-      (optional)
+- [ ] P-011 Boot menu version column: systemd-boot's builder puts only
+      `distroName` (plus profile and specialisation) in the entry **title**;
+      `system.nixos.label` lands in the entry's **version** field. Decide
+      whether `system.nixos.tags` gains `bravais` so that column reads
+      `bravais-26.05…`; default no — VARIANT already carries it, and the
+      title reads `Steelbore OS` either way (optional)
 
 ## M2 — Desktop and shell surfaces
 
@@ -188,7 +192,8 @@ desktop "About" panels what they need beyond os-release.
       `/etc/NIXOS` marker to be provided explicitly; otherwise no new
       constraint
 - [ ] P-026 Memory note for future sessions: identity lives in
-      `lib/identity.nix`; never retype the OS name
+      `lib/identity.nix`; never retype the OS name — P-003's AGENTS.md rule
+      already carries this for every agent (optional)
 
 ---
 
