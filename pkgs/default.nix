@@ -4,12 +4,18 @@
 # by the modules AND exposed as the flake's `packages.x86_64-linux` output so
 # each can be built/tested standalone via `nix build .#<name>`.
 { pkgs }:
+let
+  # Bound once so steelbore-plymouth builds with the same derivation the
+  # flake exports, rather than a second callPackage of it.
+  steelbore-quantize = pkgs.callPackage ./steelbore-quantize/package.nix { };
+in
 {
+  inherit steelbore-quantize;
   steelbore-audio-led = pkgs.callPackage ./steelbore-audio-led/package.nix { };
   steelbore-beacon = pkgs.callPackage ./steelbore-beacon/package.nix { };
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
   steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
-  steelbore-plymouth = pkgs.callPackage ./steelbore-plymouth/package.nix { };
+  steelbore-plymouth = pkgs.callPackage ./steelbore-plymouth/package.nix { inherit steelbore-quantize; };
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };
