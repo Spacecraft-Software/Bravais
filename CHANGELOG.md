@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Antigravity and the unstable channel's Home Manager are bumped.** The
+  `antigravity-nix` and `home-manager-unstable` inputs moved to their
+  latest revisions.
 - **The OS identifies itself as Steelbore OS Bravais.** `/etc/os-release`
   and `/etc/lsb-release` now name Steelbore OS (`ID=steelbore`, still
   `ID_LIKE=nixos`), with Bravais as the edition, Spacecraft Software as the
