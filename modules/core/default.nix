@@ -11,5 +11,6 @@
     ./security.nix
     ./keyring.nix
     ./dns.nix
+    ./identity.nix # Steelbore OS os-release / lsb-release (lib/identity.nix)
   ];
 }

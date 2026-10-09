@@ -4,7 +4,7 @@
 //! bravais-mcp-server — Stdio-based Model Context Protocol server.
 //! Exposes environment details, command referencing, and rewriting tools.
 
-use libbravais_mcp::{detect_shell, MappingTable, RewriteEngine};
+use libbravais_mcp::{detect_shell, MappingTable, RewriteEngine, OS_FULL_NAME, OS_URL};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, Write};
 
@@ -63,7 +63,7 @@ fn tool_definitions() -> Vec<serde_json::Value> {
     vec![
         serde_json::json!({
             "name": TOOL_ENV,
-            "description": "Introspect operating system and default user shell environments on Steelbore OS Bravais",
+            "description": format!("Introspect operating system and default user shell environments on {OS_FULL_NAME}"),
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -250,8 +250,7 @@ fn handle_request(
                     let shell = detect_shell(shell_override, file_hint);
 
                     let content = format!(
-                        "OS: Steelbore OS Bravais\nShell: {}\nDocumentation Anchor: https://Bravais.SpacecraftSoftware.org/\nDetailed shell syntax and tool help can be obtained from Loran (https://Loran.SpacecraftSoftware.org/).",
-                        shell
+                        "OS: {OS_FULL_NAME}\nShell: {shell}\nDocumentation Anchor: {OS_URL}\nDetailed shell syntax and tool help can be obtained from Loran (https://Loran.SpacecraftSoftware.org/).",
                     );
 
                     let result = serde_json::json!({

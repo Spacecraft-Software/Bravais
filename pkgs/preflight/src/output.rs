@@ -40,7 +40,8 @@ pub struct Metadata {
 }
 
 pub const MAINTAINER: &str = "Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>";
-pub const WEBSITE: &str = "https://Bravais.SpacecraftSoftware.org/";
+/// The project URL: lib/identity.nix `urls.home`, injected by build.rs.
+pub const WEBSITE: &str = env!("STEELBORE_OS_URL");
 
 impl<T: Serialize> Response<T> {
     pub fn new(command: String, data: T, dry_run: bool) -> Self {

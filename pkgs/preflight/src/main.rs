@@ -32,6 +32,14 @@ use clap::{Parser, Subcommand};
 
 use output::{AppError, ColorWhen, Exit, Format, Level, Out};
 
+/// One-line summary for `--help` and `describe`. The OS name (and the URL in
+/// the help text below) come from lib/identity.nix via build.rs, so this
+/// binary never restates them; Cargo.toml's static `description` cannot.
+const ABOUT: &str = concat!(
+    env!("STEELBORE_OS_NAME"),
+    " rebuild orchestrator: preflight checks, the switch, postflight disk accounting."
+);
+
 #[derive(Parser, Debug)]
 #[command(
     name = "preflight",
@@ -43,9 +51,9 @@ use output::{AppError, ColorWhen, Exit, Format, Level, Out};
         env!("CARGO_PKG_VERSION"), "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
         "Copyright (C) 2026 Mohamed Hammad & Spacecraft Software  |  License: GPL-3.0-or-later\n",
-        "https://Bravais.SpacecraftSoftware.org/"
+        env!("STEELBORE_OS_URL")
     ),
-    about = "Steelbore OS rebuild orchestrator: preflight checks, the switch, postflight disk accounting.",
+    about = ABOUT,
     after_help = concat!(
         "EXAMPLES:\n",
         "  preflight                     Full rebuild: update, switch, mirror, report\n",
@@ -59,7 +67,7 @@ use output::{AppError, ColorWhen, Exit, Format, Level, Out};
         "  preflight disk report --json  Machine-readable free space and reclaimable bytes\n",
         "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
-        "https://Bravais.SpacecraftSoftware.org/"
+        env!("STEELBORE_OS_URL")
     )
 )]
 #[expect(
@@ -301,7 +309,7 @@ fn cmd_schema(out: Out) -> i32 {
     let schema = serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "preflight",
-        "description": "Steelbore OS rebuild orchestrator",
+        "description": concat!(env!("STEELBORE_OS_NAME"), " rebuild orchestrator"),
         "commands": {
             "preflight": {
                 "description": "Run the rebuild sequence",
@@ -344,7 +352,7 @@ fn cmd_describe(out: Out) -> i32 {
     let manifest = serde_json::json!({
         "tool": env!("CARGO_PKG_NAME"),
         "version": env!("CARGO_PKG_VERSION"),
-        "summary": env!("CARGO_PKG_DESCRIPTION"),
+        "summary": ABOUT,
         "host": steps::HOST,
         "flake_dir": steps::FLAKE_DIR,
         "maintainer": output::MAINTAINER,

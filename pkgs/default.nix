@@ -16,6 +16,7 @@ in
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
   steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
   steelbore-plymouth = pkgs.callPackage ./steelbore-plymouth/package.nix { inherit steelbore-quantize; };
+  steelbore-branding = pkgs.callPackage ./steelbore-branding/package.nix { };
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };

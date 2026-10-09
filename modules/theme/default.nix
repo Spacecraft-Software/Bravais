@@ -12,6 +12,7 @@
     ./dark-mode.nix
     ./declaration.nix
     ./boot-splash.nix
+    ./branding.nix
   ];
 
   # The active slug has exactly ONE source: ./theme.nix, resolved through

@@ -3,9 +3,11 @@
 # Split from home.nix in Phase D (elegance plan 3.1); zero behavior change.
 {
   config,
+  osConfig,
   lib,
   pkgs,
   steelborePalette,
+  steelboreIdentity,
   themeAssets,
   steelboreApps,
   ...
@@ -99,6 +101,34 @@ let
         ;;
     esac
   '';
+
+  # The `steelbore` banner's text, read from the identity (lib/identity.nix)
+  # rather than typed into the def. The release comes from the NixOS config
+  # this Home Manager runs under (`osConfig`), so the banner names the release
+  # the machine was actually built from; the codename is ours (D3), looked up
+  # the same way os-release does, so the two never disagree. toJSON gives a
+  # double-quoted string with `"` and `\` escaped — valid Nushell — and a
+  # plain double-quoted string is not interpolated, so `(` in the copyright
+  # line and `<`/`>` round the address are literal.
+  identityLines =
+    let
+      id = steelboreIdentity;
+      release = osConfig.system.nixos.release;
+    in
+    [
+      id.banner
+      "${id.fullName} ${release} (${id.codenameFor release})"
+      ""
+      "Maintained by ${id.maintainer} <${id.contact}>"
+      "Copyright (C) 2026 ${id.maintainer} & ${id.vendor} | License: ${id.license}"
+      id.urls.home
+    ];
+  # One Nushell string literal (toJSON escapes the newlines as `\n`, which a
+  # double-quoted Nushell string reads back), so the def stays one line
+  # whatever the number of identity lines.
+  identityBanner = builtins.toJSON (
+    lib.concatMapStringsSep "\n" (line: if line == "" then "" else "  ${line}") identityLines
+  );
 
   # Handler roles (lib/default-apps.nix). `termEditor` is what $EDITOR runs;
   # `editor` — deliberately a separate role — is what a double-click opens.
@@ -593,7 +623,7 @@ in
         # Project Steelbore Identity
         def steelbore [] {
           print "============================================================"
-          print "  STEELBORE :: Industrial Sci-Fi Desktop Environment"
+          print ${identityBanner}
           print "============================================================"
           print "  STATUS    :: ACTIVE"
           print "  LOAD      :: NOMINAL"

@@ -6,6 +6,7 @@
 {
   pkgs,
   steelborePalette,
+  steelboreIdentity,
   ...
 }:
 
@@ -16,6 +17,12 @@ let
   # PATH the compositor happened to export, which is not the same environment
   # a login shell gets.
   beacon = (import ../../pkgs { inherit pkgs; }).steelbore-beacon;
+
+  # The bar title is the identity banner (lib/identity.nix), never a literal.
+  # toJSON renders it as a double-quoted literal with `"` and `\` escaped,
+  # which is also how yuck reads a string. Kept identical to the LeftWM bar's
+  # binding in modules/desktops/leftwm.nix (constraint #26: both bars in step).
+  titleYuck = builtins.toJSON steelboreIdentity.banner;
 in
 {
   xdg.configFile = {
@@ -130,7 +137,7 @@ in
 
       (defwidget bar []
         (centerbox :orientation "h"
-          (label :class "title" :halign "start" :text "STEELBORE OS :: BRAVAIS")
+          (label :class "title" :halign "start" :text ${titleYuck})
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 8 :space-evenly false :halign "end" :class "metrics"
             ;; Keyboard language — leftmost in the metrics group. Text from
