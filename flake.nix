@@ -344,6 +344,11 @@
       # directory name is a stable path, not a duplicate of this fact.
       primaryUser = "mj";
 
+      # The operating system's identity — Steelbore OS, Bravais edition —
+      # stated once in lib/identity.nix and threaded like primaryUser. Every
+      # surface that names the OS reads it from here (PLAN.md, M0).
+      steelboreIdentity = import ./lib/identity.nix;
+
       # ── Agent skill tree ──────────────────────────────────────────────────
       # THE skill tree, built exactly once and used in two places: the
       # `packages.skills` output below, and `spacecraft.construct.package` in
@@ -489,6 +494,7 @@
               themeRegistry
               steelboreApps
               primaryUser
+              steelboreIdentity
               gitway
               construct
               rapg
@@ -533,6 +539,7 @@
                   themeAssets
                   steelboreApps
                   primaryUser
+                  steelboreIdentity
                   gitway
                   construct
                   constructSkills

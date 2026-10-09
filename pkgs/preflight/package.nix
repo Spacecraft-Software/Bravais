@@ -5,6 +5,11 @@
   rustPlatform,
 }:
 
+let
+  # Packages get no specialArgs, so read the identity file directly — the same
+  # file flake.nix threads to modules as `steelboreIdentity`.
+  identity = import ../../lib/identity.nix;
+in
 rustPlatform.buildRustPackage {
   pname = "preflight";
   version = "0.1.0";
@@ -12,6 +17,14 @@ rustPlatform.buildRustPackage {
   src = lib.cleanSource ./.;
 
   cargoLock.lockFile = ./Cargo.lock;
+
+  # The OS name and URL the binary prints (--help, --version, describe, schema,
+  # the JSON envelope). build.rs re-exports them for `env!`; its fallbacks only
+  # serve a `cargo build` outside Nix.
+  env = {
+    STEELBORE_OS_NAME = identity.name;
+    STEELBORE_OS_URL = identity.urls.home;
+  };
 
   # No nativeBuildInputs and no buildInputs: every dependency is pure Rust.
   # `rustix` talks to the kernel through linux-raw-sys rather than libc here, so
@@ -25,7 +38,7 @@ rustPlatform.buildRustPackage {
   # mcpctl probe exists to report on (CONSTRAINTS.md #23 makes the same
   # point about resolving MCP binaries by bare name).
   meta = {
-    description = "Steelbore OS rebuild orchestrator: preflight checks, the switch, postflight disk accounting";
+    description = "${identity.name} rebuild orchestrator: preflight checks, the switch, postflight disk accounting";
     license = lib.licenses.gpl3Plus;
     mainProgram = "preflight";
     platforms = lib.platforms.linux;

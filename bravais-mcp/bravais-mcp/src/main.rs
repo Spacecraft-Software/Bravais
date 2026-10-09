@@ -2,7 +2,7 @@
 // Rust guideline compliant 2026-05-18
 
 use clap::{Parser, Subcommand};
-use libbravais_mcp::{detect_shell, MappingTable, RewriteEngine};
+use libbravais_mcp::{detect_shell, MappingTable, RewriteEngine, OS_FULL_NAME, OS_URL};
 use owo_colors::OwoColorize;
 use serde::Serialize;
 
@@ -100,9 +100,9 @@ fn main() {
     match args.command {
         Commands::Env => {
             let res = serde_json::json!({
-                "os": "Steelbore OS Bravais",
+                "os": OS_FULL_NAME,
                 "detected_shell": shell.to_string(),
-                "documentation_anchor": "https://Bravais.SpacecraftSoftware.org/",
+                "documentation_anchor": OS_URL,
                 "reference_manual": "https://Loran.SpacecraftSoftware.org/"
             });
 
@@ -115,7 +115,7 @@ fn main() {
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  Steelbore OS Bravais");
+                println!("  {OS_FULL_NAME}");
                 println!(
                     "{}",
                     "Detected Shell:"
@@ -129,7 +129,7 @@ fn main() {
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  https://Bravais.SpacecraftSoftware.org/");
+                println!("  {OS_URL}");
                 println!(
                     "{}",
                     "Detailed Syntax & Translation:"

@@ -1,7 +1,7 @@
 # Bravais -- Product Requirements Document
 
 **Project:** Bravais (A Steelbore OS NixOS Distribution)
-**Version:** 3.2 | **Date:** 2026-09-28
+**Version:** 3.3 | **Date:** 2026-10-09
 **Author:** Mohamed Hammad | **License:** GPL-3.0-or-later
 **Status:** Implemented on the reference machine — per-area status in §1.6
 
@@ -82,6 +82,7 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Security: sudo-rs, keyring, fingerprint (§5.5, §5.6, §6.1) | Implemented | fingerprint verified by hand; sudo-rs check open (TODO Phase 10) |
 | Containers: Podman, AppImage (§12.1, §12.4) | Implemented | `docker` alias and AppImage binfmt checks open (TODO Phase 10) |
 | Vendored upstream binaries (§16.4) | Implemented | `pkgs/update-vendored.nu` |
+| Steelbore OS identity (§4.6) | Implemented | os-release / lsb-release evaluated on both channels, 2026-10-09; `steelbore-branding` and the preflight / bravais-mcp builds pass. Not yet switched on the reference machine: `hostnamectl`, the boot menu and the About pages are unchecked (PLAN.md P-009, P-010, P-020) |
 | Boot splash and startup sound (§5.2) | Implemented | builds and fits the ESP budget (CONSTRAINTS.md #43); not yet seen on a real boot (TODO Phase 10) |
 | Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`); key enrollment open in TODO.md Phase 6 |
 | Waydroid (§12.7) | Planned | `waydroid init`, Niri start and APK install open (TODO.md) |
@@ -108,6 +109,7 @@ bravais/
 |   +-- theme-assets.nix           # active slug -> the Theme repo's generated files
 |   +-- default-apps.nix           # handler roles -> MIME lists, app catalog, resolver (§2.6)
 |   +-- terminal-theme.nix         # terminal theme record + per-format emitters
+|   +-- identity.nix               # THE OS identity: names, ids, URLs, logo names, codenames (§4.6)
 +-- hosts/                         # Machine configurations
 |   +-- common.nix                 # Shared by every machine: networking, X11/XKB, shells, steelbore.* toggles
 |   +-- thinkpad/                  # ThinkPad (i7-8665U, Whiskey Lake)
@@ -116,10 +118,12 @@ bravais/
 +-- modules/                       # NixOS modules (steelbore.* namespace)
 |   +-- core/                      # Always-enabled: boot, memory, nix (the sole overlay location),
 |   |                              #   nix-tmp (builder TMPDIR, CONSTRAINTS.md #28), locale, audio,
-|   |                              #   security (sudo-rs, polkit, PAM), keyring, dns (DoT + DNSSEC)
+|   |                              #   security (sudo-rs, polkit, PAM), keyring, dns (DoT + DNSSEC),
+|   |                              #   identity (os-release / lsb-release, §4.6)
 |   +-- theme/                     # default (SPACECRAFT_* env, TTY colours), fonts, dark-mode,
 |   |                              #   declaration (Standard §11.6.4 /etc/steelbore/theme.toml),
-|   |                              #   boot-splash (Plymouth, §5.2; ESP budget CONSTRAINTS.md #43)
+|   |                              #   boot-splash (Plymouth, §5.2; ESP budget CONSTRAINTS.md #43),
+|   |                              #   branding (logo icons + KDE About page, §4.6)
 |   +-- hardware/                  # android, audio-led, bluetooth, fingerprint (explicit PAM policy), intel
 |   +-- platform/x86-64.nix        # ISA level (v1–v4 enum) + compiler/linker flags
 |   +-- desktops/                  # gnome, cosmic, cosmic-unmax, plasma, niri (eww bar + dunst),
@@ -139,9 +143,11 @@ bravais/
 |   +-- preflight/                 # Rust rebuild orchestrator (§16)
 |   +-- steelbore-*/               # First-party Rust tools (audio-led, beacon, niri-unmax, cosmic-unmax, vpn, quantize)
 |   +-- steelbore-plymouth/        # Plymouth theme: assets/boot/splash.png, quantized by steelbore-quantize
+|   +-- steelbore-branding/        # Steelbore OS emblem + wordmark as hicolor/pixmaps icons (§4.6)
 |   +-- <vendored>/                # Version+hash-pinned upstream binaries (docs/vendored-binaries.md)
 |   +-- update-vendored.nu, sync-skills.nu   # vendored bumper; .github/skills/ regenerator
 +-- assets/boot/                   # Boot media (CC-BY-SA-4.0): splash.png, startup-sound.mp3 (§5.2)
++-- assets/brand/                  # Brand marks (CC-BY-SA-4.0): steelbore-os.svg (emblem), steelbore-os-wordmark.svg (wordmark)
 +-- bravais-mcp/                   # Source of the Rust MCP server built by pkgs/bravais-mcp/
 +-- flakes/rapg/                   # Wrapper flake for rapg (upstream ships none)
 +-- scripts/rebuild.sh             # POSIX port of `rebuild` (deprecated in favour of preflight)
@@ -518,11 +524,57 @@ These exist for shell scripts and third-party programs with no Standard §11 the
 
 Set via `console.colors` in `modules/theme/default.nix`: the 16-entry list `ansi.normal ++ ansi.bright` from `lib/palette.nix` (§4.2), each passed through `convert.bareHex` to give the 16 hex values without `#` prefix that `console.colors` expects — normal 0–7 then bright 8–15. No colour is written in the module, so the TTY follows the active theme with the terminals.
 
+### 4.6 Steelbore OS Identity
+
+The operating system is **Steelbore OS**; **Bravais** is its NixOS edition and **Spacecraft Software** its vendor (Standard §2.1: the v1.7 umbrella rename left the OS line the Steelbore name; §11.6.5 names Bravais as Steelbore OS's NixOS flavor). The project, repository, flake outputs and hostnames keep the name Bravais, and the `nixos-*` commands keep theirs.
+
+**Single source.** `lib/identity.nix` is a pure attrset (no `pkgs`, no `lib`) holding the name, ids, variant, vendor, the two display strings (`fullName` = "Steelbore OS Bravais", `banner` = "STEELBORE OS :: BRAVAIS"), the URLs, the §15.2 attribution, the two logo icon names and the release codenames. `flake.nix` imports it once as `steelboreIdentity` and passes it through `specialArgs` and `extraSpecialArgs`; in-tree packages, which get no `specialArgs`, `import ../../lib/identity.nix`. No consumer retypes a name, URL or codename.
+
+**Release codenames.** Steelbore OS names each NixOS release after an Arabic-origin star: **26.05 = Altair**, **26.11 = Aldebaran** (`codenames`, read through `codenameFor`). A release with no entry fails evaluation, so a channel bump onto a new release needs a name first (CONSTRAINTS.md #46). nixpkgs' `system.nixos.codeName` is read-only, so `nixos-version` and the bootspec label still carry NixOS's codename.
+
+**os-release as rendered** (`environment.etc."os-release".text` on `bravais-thinkpad`, evaluated 2026-10-09; `bravais-thinkpad-unstable` differs only where noted):
+
+| Field | Value | Set by |
+|-------|-------|--------|
+| `NAME` | `Steelbore OS` | `system.nixos.distroName` |
+| `ID` | `steelbore` | `system.nixos.distroId` |
+| `ID_LIKE` | `nixos` | nixpkgs, automatically once `ID ≠ nixos` |
+| `VARIANT` / `VARIANT_ID` | `Bravais` / `bravais` | `variantName` / `variant_id` |
+| `VENDOR_NAME` | `Spacecraft Software` | `system.nixos.vendorName` |
+| `CPE_NAME` | `cpe:/o:spacecraft-software:steelbore:26.05` | `vendorId` + `distroId` |
+| `VERSION` | `26.05 (Altair)` — unstable `26.11 (Aldebaran)` | `extraOSReleaseArgs` (codename) |
+| `VERSION_ID` | `26.05` — unstable `26.11` | nixpkgs |
+| `VERSION_CODENAME` | `altair` — unstable `aldebaran` | `extraOSReleaseArgs` |
+| `PRETTY_NAME` | `Steelbore OS Bravais 26.05 (Altair)` | `extraOSReleaseArgs` |
+| `HOME_URL`, `DOCUMENTATION_URL` | `https://Bravais.SpacecraftSoftware.org/` | `extraOSReleaseArgs` |
+| `VENDOR_URL` | `https://SpacecraftSoftware.org/` | `extraOSReleaseArgs` |
+| `SUPPORT_URL` | `https://github.com/Spacecraft-Software/Bravais` | `extraOSReleaseArgs` |
+| `BUG_REPORT_URL` | `https://github.com/Spacecraft-Software/Bravais/issues` | `extraOSReleaseArgs` |
+| `ANSI_COLOR` | `0;38;2;R;G;B` of the palette's `accent` role | `extraOSReleaseArgs`, via `steelborePalette.convert.rgbTriple` |
+| `LOGO` | `steelbore-os` | `extraOSReleaseArgs` |
+| `DEFAULT_HOSTNAME` | `steelbore` (unused: every host sets `networking.hostName`) | nixpkgs, from `distroId` |
+| `BUILD_ID` | `<release>.<date>.<rev>` | nixpkgs |
+| `SUPPORT_END`, `IMAGE_ID`, `IMAGE_VERSION` | stable only: NixOS's own end-of-life date, empty, empty | nixpkgs, left alone on purpose |
+
+nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes `LOGO=nix-snowflake`, which is why `modules/core/identity.nix` supplies them. `/etc/lsb-release` carries the same values: `DISTRIB_ID=steelbore`, `DISTRIB_RELEASE="26.05"`, `DISTRIB_CODENAME=altair`, `LSB_VERSION` and `DISTRIB_DESCRIPTION` equal to `VERSION` and `PRETTY_NAME`.
+
+**Consumers.**
+
+- `modules/core/identity.nix` (always on, no toggle) sets `system.nixos.distroName`, `distroId`, `vendorName`, `vendorId`, `variantName`, `variant_id`, `extraOSReleaseArgs` and `extraLSBReleaseArgs`. The first four are `internal = true` upstream, so evaluating both channels after every bump is the regression check. The same options title the systemd-boot entries ("Steelbore OS"), the getty greeting (`<<< Welcome to Steelbore OS … >>>`) and the initrd's os-release (`PRETTY_NAME` with " (Initrd)" appended). The boot-menu version column is left untagged (no `system.nixos.tags`).
+- The tuigreet `--greeting` (`modules/login/default.nix`) and both bar titles (`users/mj/eww.nix` for Niri, the eww block in `modules/desktops/leftwm.nix`) read `banner`.
+- The Nushell `steelbore` banner (`users/mj/shell.nix`) prints `banner`, `fullName` with the release and codename, and the §15.2 attribution block.
+- `pkgs/steelbore-plymouth` takes the name for its `Description=` from a `steelboreIdentity` argument; the theme keeps `Name=Steelbore`, which is how Plymouth selects it.
+- `pkgs/preflight` and `bravais-mcp` receive the OS name and URL as build-time environment variables set in their `package.nix` (`STEELBORE_OS_NAME` / `STEELBORE_OS_FULL_NAME`, `STEELBORE_OS_URL`); a plain `cargo build` outside Nix falls back to defaults.
+
+**Logo.** `assets/brand/steelbore-os.svg` is the emblem (os-release `LOGO`, GNOME About; COSMIC About shows the name only); `assets/brand/steelbore-os-wordmark.svg` is the emblem with the STEELBORE wordmark (KDE Info Center). `pkgs/steelbore-branding` installs the emblem into `share/icons/hicolor/scalable/apps` plus 64, 128 and 256 px PNGs rendered with `resvg` (Rust) and `share/pixmaps`; the wordmark is installed as SVG only, since it is not square. Both artworks carry one fill colour, which the package replaces at build time with the active palette's `foreground` role (`modules/theme/branding.nix`), so `theme set` recolours the logo with everything else and no colour is written in Nix. `modules/theme/branding.nix` is always on: it installs the icons system-wide and writes `/etc/xdg/kcm-about-distrorc` (`Name`, `Variant`, `Website`, and `LogoPath` = the wordmark's store path, `UseOSReleaseVersion=true` so the codename shows) whether or not Plasma is enabled. **Known limit:** a `foreground`-coloured mark has little contrast on a light toolkit theme (Breeze Light, light Adwaita); every Bravais desktop defaults to dark mode, so no inverted set ships.
+
+**Switching across the `ID` change.** `switch-to-configuration` accepts a new system when `/etc/NIXOS` exists or the running `/etc/os-release` `ID` matches the new generation's `DISTRO_ID`. The first switch to `ID=steelbore`, and any rollback to a generation from before it, pass only through the `/etc/NIXOS` marker, which `setup-etc.pl` recreates on every activation while `system.etc.overlay` stays off (it is off on both channels). Tools that detect NixOS by `ID=nixos` rather than `ID_LIKE` stop recognising the machine.
+
 ---
 
 ## 5. Core System Modules
 
-`modules/core/default.nix` imports nine modules from `modules/core/`, all unconditional (no `steelbore.*` toggle): boot, memory, nix, nix-tmp, locale, audio, security, keyring, dns.
+`modules/core/default.nix` imports ten modules from `modules/core/`, all unconditional (no `steelbore.*` toggle): boot, memory, nix, nix-tmp, locale, audio, security, keyring, dns, identity (§4.6).
 
 ### 5.1 Nix Settings (`modules/core/nix.nix`)
 

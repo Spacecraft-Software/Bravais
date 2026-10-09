@@ -7,6 +7,24 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// The OS name in prose, as reported by the `env`
+/// command and the MCP `env` tool.
+///
+/// Nix sets `STEELBORE_OS_FULL_NAME` from lib/identity.nix `fullName`
+/// (pkgs/bravais-mcp/package.nix), so the packaged binary never restates it.
+/// The fallback only serves a plain `cargo build` outside Nix.
+pub const OS_FULL_NAME: &str = match option_env!("STEELBORE_OS_FULL_NAME") {
+    Some(name) => name,
+    None => "Steelbore OS Bravais",
+};
+
+/// The OS documentation URL: lib/identity.nix `urls.home`, set by Nix as
+/// `STEELBORE_OS_URL`. Same fallback rule as [`OS_FULL_NAME`].
+pub const OS_URL: &str = match option_env!("STEELBORE_OS_URL") {
+    Some(url) => url,
+    None => "https://Bravais.SpacecraftSoftware.org/",
+};
+
 /// The structure of our mappings configuration file.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct MappingsConfig {

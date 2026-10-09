@@ -6,6 +6,7 @@
   lib,
   pkgs,
   steelborePalette,
+  steelboreIdentity,
   ...
 }:
 
@@ -21,6 +22,12 @@
       # exactly as `leftwm-state` is: a bare name would resolve against the
       # PATH the theme's `up` script happens to inherit, not a login shell's.
       beacon = (import ../../pkgs { inherit pkgs; }).steelbore-beacon;
+
+      # The bar title is the identity banner (lib/identity.nix), never a
+      # literal. toJSON renders it as a double-quoted literal with `"` and `\`
+      # escaped, which is also how yuck reads a string. Kept identical to the
+      # Niri bar's binding in users/mj/eww.nix (constraint #26: both bars in step).
+      titleYuck = builtins.toJSON steelboreIdentity.banner;
 
       # The LeftWM Themes wiki strongly recommends that
       # `~/.config/leftwm/themes/current` be a symlink rather than a real
@@ -612,7 +619,7 @@
               ;; (true) gave each child an equal share and pushed the title out
               ;; against the clock.
               (box :orientation "h" :spacing 12 :space-evenly false :halign "start"
-                (label :class "title" :text "STEELBORE OS :: BRAVAIS")
+                (label :class "title" :text ${titleYuck})
                 (literal :content leftwm-ws)
                 ;; :limit-width (characters, with an ellipsis) is the eww way to cap
                 ;; the title; GTK CSS has no max-width/text-overflow to do it. 45 keeps

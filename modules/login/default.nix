@@ -6,6 +6,7 @@
   pkgs,
   primaryUser,
   steelborePalette,
+  steelboreIdentity,
   gitway,
   ...
 }:
@@ -391,6 +392,11 @@ in
         # --xsessions makes it x11. --no-xsession-wrapper because every Exec
         # there already runs startx (start-leftwm, start-plasma-x11); the
         # default wrapper would start a second X server around it.
+        #
+        # The greeting is the identity banner (lib/identity.nix), never a
+        # literal here; escapeShellArg single-quotes it so a future banner
+        # with a quote, `$` or backslash cannot break the command line greetd
+        # hands to its shell.
         command = ''
           ${pkgs.tuigreet}/bin/tuigreet \
             --time \
@@ -398,7 +404,7 @@ in
             --remember \
             --remember-session \
             --asterisks \
-            --greeting "STEELBORE OS :: BRAVAIS" \
+            --greeting ${lib.escapeShellArg steelboreIdentity.banner} \
             --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
             --xsessions ${config.services.displayManager.sessionData.desktops}/share/xsessions \
             --no-xsession-wrapper

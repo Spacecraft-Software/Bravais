@@ -2,6 +2,25 @@
 
 Bravais is a meticulously crafted, flake-based NixOS configuration implementing the **Steelbore Standard**. Designed from the ground up to be modular, memory-safe, and visually cohesive, it provides a performant, reliable, and highly customizable system architecture for advanced computing workflows.
 
+## Identity
+
+The operating system is **Steelbore OS**; **Bravais** is its NixOS edition
+(os-release `VARIANT`), and **Spacecraft Software** is the vendor. A built
+system says so in `/etc/os-release` and `/etc/lsb-release` (`ID=steelbore`,
+`ID_LIKE=nixos`), in `hostnamectl`, in the boot-menu titles, the TTY
+greeting, the greeter, the bar titles, the `steelbore` shell banner and the
+desktop About pages, with the Steelbore OS emblem as its logo. Each release
+carries its own codename, an Arabic-origin star name: 26.05 is **Altair**,
+26.11 is **Aldebaran**. The project, repository, flake outputs and hostnames
+keep the name Bravais.
+
+Bravais is still a NixOS distribution, so the `nixos-*` commands
+(`nixos-rebuild`, `nixos-version`, `nixos-option`) keep their names, just as
+`apt` stays `apt` on a Debian derivative. `nixos-version` also keeps NixOS's
+own codename, because nixpkgs does not let a distribution override it.
+
+Every one of these names is stated once, in `lib/identity.nix`.
+
 ## Core Philosophy
 
 The design of Bravais is guided by four primary tenets:
@@ -21,7 +40,8 @@ bravais/
 ├── flake.nix                      # Flake entry point (mkBravais helper; per-machine configs)
 ├── flake.lock                     # Pinned dependencies
 ├── lib/                           # Custom Nix helper functions
-│   └── default.nix                # Color palette definitions
+│   ├── default.nix                # Color palette definitions
+│   └── identity.nix               # Steelbore OS identity: names, URLs, codenames
 ├── hosts/                         # One directory per physical machine
 │   ├── common.nix                 # Shared host config (user, shells, toggles)
 │   └── thinkpad/                  # ThinkPad (i7-8665U) — hostname + hw + march pin

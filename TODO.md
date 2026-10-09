@@ -666,6 +666,48 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Renamed to the top-level `xf86-video-dummy` / `xf86-input-void` attrs --
       the `xorg.*` set is deprecated and warned on every evaluation
 
+## Steelbore OS identity (2026-10-09)
+
+Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
+
+- [✓] `lib/identity.nix` — the single source (names, ids, URLs, attribution,
+      logo icon names, Arabic-origin star codenames: 26.05 Altair,
+      26.11 Aldebaran)
+- [✓] `steelboreIdentity` threaded through `specialArgs` and
+      `extraSpecialArgs` in `flake.nix`
+- [✓] `modules/core/identity.nix` — os-release (`ID=steelbore`,
+      `ID_LIKE=nixos`, `VARIANT=Bravais`, vendor, CPE, URLs, `ANSI_COLOR` from
+      the palette's `accent`, `LOGO=steelbore-os`, codename in `VERSION` /
+      `VERSION_CODENAME` / `PRETTY_NAME`) and lsb-release; evaluated on both
+      channels
+- [✓] Boot-menu titles, getty greeting and initrd os-release follow
+      (installer script and initrd os-release built)
+- [✓] Boot-menu version column left untagged (no `system.nixos.tags`)
+- [✓] tuigreet greeting, both eww bar titles (Niri, LeftWM) and the
+      `steelbore` Nushell banner (with the §15.2 attribution) read the identity
+- [✓] Plymouth theme `Description=` reads the identity
+- [✓] `pkgs/steelbore-branding` — emblem + wordmark icons recoloured from
+      the palette's `foreground`, PNGs via `resvg`
+- [✓] `modules/theme/branding.nix` — icons system-wide, KDE
+      `/etc/xdg/kcm-about-distrorc`
+- [✓] `preflight` and `bravais-mcp` print the OS name and URL from the
+      identity (build-time env vars)
+- [✓] CONSTRAINTS.md #46 — every NixOS release needs a codename
+- [✓] Docs: AGENTS.md, README.md, PRD.md §4.6, CHANGELOG.md
+- [ ] Gates: stable toplevel build, unstable `drvPath` eval, REUSE lint
+- [ ] Confirm `/etc/NIXOS` on the live host right before the first switch
+- [ ] First switch, then check `hostnamectl`, `bootctl list`, a TTY greeting
+      and `cat /etc/os-release`
+- [ ] Rollback drill: boot the previous generation and switch forward again
+- [ ] Visual check: GNOME About (emblem), COSMIC About (name only), KDE Info Center (wordmark), both
+      bars, the greeter, one TTY
+- [ ] `/etc/machine-info` (pretty hostname, chassis, icon) (optional)
+- [ ] fastfetch logo for `ID=steelbore` (optional)
+- [ ] Construct's `spacecraft-missing-pkg` skill detects NixOS by `ID=nixos`
+      only; it should also accept `ID_LIKE=nixos` (fix upstream)
+- [ ] Decide whether KInfoCenter shows the codename
+      (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.

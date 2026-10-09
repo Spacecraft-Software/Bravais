@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Steelbore OS logo.** The Steelbore OS emblem and wordmark are installed
+  as system icons, drawn in the active theme's text colour, so they change
+  with `theme set`. GNOME's About page shows the emblem (os-release
+  `LOGO=steelbore-os`); KDE Info Center shows the wordmark with the OS name,
+  edition and website. The mark is light, so it has little contrast on a
+  light toolkit theme.
+
 - **Plasma Browser Integration in Brave, Edge, Opera and BrowserOS.** Plasma
   only registers its native host for Firefox and a fixed list of Flatpaks
   (Chrome among them), so the extension could not reach Plasma from these
@@ -18,6 +25,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   D-Bus permission the relay needs. Tor Browser is left out on purpose.
 
 ### Changed
+
+- **The OS identifies itself as Steelbore OS Bravais.** `/etc/os-release`
+  and `/etc/lsb-release` now name Steelbore OS (`ID=steelbore`, still
+  `ID_LIKE=nixos`), with Bravais as the edition, Spacecraft Software as the
+  vendor, the project's own website and issue tracker, and the theme's
+  accent colour. Each release has a Steelbore OS codename, an Arabic-origin
+  star name (Altair on the stable channel, Aldebaran on unstable), which
+  `hostnamectl` shows after "Steelbore OS Bravais". Boot-menu
+  entries, the TTY greeting and the initrd follow. The greeter, both bar
+  titles, the Plymouth theme description, `preflight` and the bravais-mcp
+  `env` tool take the name from the same place. The `steelbore` shell banner
+  replaces the old "Industrial Sci-Fi Desktop Environment" title with the
+  OS name, release, codename and maintainer details. `nixos-version` keeps
+  NixOS's own codename, and tools that detect NixOS only by `ID=nixos` no
+  longer recognise the machine.
 
 - **`nixpkgs-unstable`, `home-manager-unstable` and `antigravity-nix`
   bumped** in `flake.lock`.

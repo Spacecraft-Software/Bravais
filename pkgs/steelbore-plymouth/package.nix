@@ -23,6 +23,14 @@
     blue = "0.0";
   },
   width ? 1920,
+  # The OS identity (lib/identity.nix). Packages get no specialArgs, so the
+  # default imports the file directly; an argument rather than a `let` so a
+  # caller can override it like `background`. Supplies the OS name in the
+  # theme Description and meta, which used to be literals. NOT named plain
+  # `identity`: callPackage auto-fills any argument that names a nixpkgs
+  # attribute, and `pkgs.identity` is a package, so the default would be
+  # silently replaced by its store name ("identity-26.03 boot splash").
+  steelboreIdentity ? import ../../lib/identity.nix,
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
@@ -55,10 +63,13 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     mkdir -p "$dir"
     cp splash.png "$dir/"
 
+    # Name= is the theme's own name (it matches themeName, the directory
+    # Plymouth selects it by), not the OS name, so it stays "Steelbore";
+    # Description= is where the OS is named, and that comes from the identity.
     cat > "$dir/${finalAttrs.passthru.themeName}.plymouth" <<EOF
     [Plymouth Theme]
     Name=Steelbore
-    Description=Steelbore OS boot splash
+    Description=${steelboreIdentity.name} boot splash
     ModuleName=script
 
     [script]
@@ -86,7 +97,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   meta = {
-    description = "Steelbore OS Plymouth theme showing the boot splash image";
+    description = "${steelboreIdentity.name} Plymouth theme showing the boot splash image";
     license = lib.licenses.cc-by-sa-40;
     platforms = lib.platforms.linux;
   };
