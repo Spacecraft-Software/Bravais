@@ -59,7 +59,7 @@ const ABOUT: &str = concat!(
         "  preflight                     Full rebuild: update, switch, mirror, report\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
-        "  preflight --update-all        Bump every input and the vendored pins (alias: --full-update)\n",
+        "  preflight --update-all        Also bump the vendored pins (alias: --full-update)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
@@ -110,7 +110,7 @@ struct Cli {
     #[arg(long)]
     no_update: bool,
 
-    /// Bump every flake input (bare `nix flake update`) and the vendored pins; implies --update-vendored
+    /// Update everything: every flake input (as always) plus the vendored pins; implies --update-vendored
     // `--full-update` is the spelling people reach for. Without the alias,
     // clap's did-you-mean answered it with `--no-update` -- the opposite
     // request, which a user following the tip would have run.
@@ -216,7 +216,6 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
     let opts = steps::Options {
         dry: cli.dry,
         no_update: cli.no_update,
-        update_all: cli.update_all,
         // "Update everything" has to include the pins `nix flake update`
         // cannot move, or it silently leaves the stalest things in the tree
         // behind -- exactly what a user reaching for --update-all wants gone.
@@ -316,7 +315,7 @@ fn cmd_schema(out: Out) -> i32 {
                 "flags": {
                     "--dry": "dry-build; make no changes",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "bump every flake input, including stable nixpkgs, and implies --update-vendored; conflicts with --no-update and --skills-only; alias --full-update",
+                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",

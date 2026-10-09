@@ -29,20 +29,14 @@ use crate::output::{Level, Out};
 pub const FLAKE_DIR: &str = "/spacecraft-software/bravais";
 pub const HOST: &str = "bravais-thinkpad";
 
-/// Inputs bumped on a full run.
+/// The input `--skills-only` bumps.
 ///
-/// `nixpkgs-unstable` and `home-manager-unstable` are in the list so
-/// `unstablePkgs` never lags stable. `construct` alone is the `--skills-only`
-/// fast path: skills come from that input and nothing else, so bumping the
-/// others drags unrelated rebuild work into an edit that touched a Markdown
-/// file.
-const FULL_INPUTS: &[&str] = &[
-    "antigravity-nix",
-    "construct",
-    "gitway",
-    "nixpkgs-unstable",
-    "home-manager-unstable",
-];
+/// Skills come from `construct` and nothing else, so bumping the other inputs
+/// would drag unrelated rebuild work into an edit that touched a Markdown
+/// file. A full run names no input at all: a bare `nix flake update` bumps
+/// every one, so an input added to `flake.nix` is tracked without an edit
+/// here.
+const SKILLS_INPUT: &str = "construct";
 
 /// How long before the vendored-binary pins are worth re-checking.
 ///
@@ -92,10 +86,6 @@ pub struct RunReport {
 pub struct Options {
     pub dry: bool,
     pub no_update: bool,
-    /// Bump EVERY input with a bare `nix flake update` instead of the
-    /// curated [`FULL_INPUTS`]. Opt-in because it moves stable `nixpkgs`
-    /// and `home-manager`, which the curated list leaves alone on purpose.
-    pub update_all: bool,
     /// Run `pkgs/update-vendored.nu` before the switch, bumping the
     /// `version` + `hash` pins that no flake update can move.
     pub update_vendored: bool,
@@ -198,11 +188,9 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         cmd.args(["flake", "update"]).current_dir(FLAKE_DIR);
         github_token(&mut r, &mut cmd);
         // No input arguments at all is what makes `nix flake update` bump
-        // every input, so `--update-all` adds nothing to the command line.
+        // every input, which is the full run.
         if opts.skills_only {
-            cmd.arg("construct");
-        } else if !opts.update_all {
-            cmd.args(FULL_INPUTS);
+            cmd.arg(SKILLS_INPUT);
         }
         r.run("flake-update", &mut cmd);
         if !opts.skills_only {
@@ -574,7 +562,7 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
 ///
 /// Unauthenticated, Nix resolves every `github:` input through the GitHub
 /// REST API at 60 requests an hour per IP, and a bare `nix flake update`
-/// (`--update-all`) spends that in one run: 2026-09-27 died with
+/// (every full run) spends that in one go: 2026-09-27 died with
 /// `HTTP error 403 ... API rate limit exceeded` on `nixpkgs-unstable`.
 /// Authenticated, the limit is 5000.
 ///
