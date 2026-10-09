@@ -44,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   NixOS's own codename, and tools that detect NixOS only by `ID=nixos` no
   longer recognise the machine.
 
+- **A rebuild bumps every flake input.** `preflight`, `rebuild` and
+  `scripts/rebuild.sh` now run a bare `nix flake update` instead of a
+  hand-kept list of five, so `pathfinder`, `engram`, `vacuum`, `theme`,
+  stable `nixpkgs` and every other input move on each run, and a new input
+  is picked up without an edit. `--update-all` stays: in `preflight` it
+  still adds the vendored pins, elsewhere it is accepted for compatibility.
 - **`nixpkgs-unstable`, `home-manager-unstable` and `antigravity-nix`
   bumped** in `flake.lock`.
 

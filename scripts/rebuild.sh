@@ -48,14 +48,14 @@ rebuild.sh — full system rebuild for bravais-thinkpad
 
 Usage: scripts/rebuild.sh [OPTIONS]
 
-Bumps the tracked flake inputs, frees disk while keeping a week of rollback
+Bumps every flake input, frees disk while keeping a week of rollback
 targets, builds and switches, then mirrors the repo into /etc/nixos. A failed
 switch aborts before the mirror.
 
 Options:
   --dry           nixos-rebuild dry-build only; skips GC and the /etc mirror
   --no-update     skip `nix flake update`
-  --update-all    bump every flake input, not just the tracked five
+  --update-all    accepted for compatibility; every run bumps every input
   --no-gc         skip garbage collection and the journal vacuum
   --trace         add --show-trace --verbose (to diagnose eval failures)
   --skills-only   bump only `construct`; skip GC, the mirror and the probes
@@ -186,11 +186,11 @@ if [ "$no_update" -eq 0 ]; then
     }
     if [ "$skills_only" -eq 1 ]; then
         flake_update construct
-    elif [ "$update_all" -eq 1 ]; then
-        # No input names = every input, stable nixpkgs and home-manager included.
-        flake_update
     else
-        flake_update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
+        # No input names = every input, stable nixpkgs and home-manager
+        # included, so an input added to flake.nix is tracked without an
+        # edit here.
+        flake_update
 
         # Antigravity staleness probe. Updating the INPUT cannot move the
         # version pins inside it (artifacts/versions.json), so a rebuild can

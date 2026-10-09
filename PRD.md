@@ -41,7 +41,7 @@ One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whis
 
 ### 1.3 Principal Workflows
 
-- **Rebuild** — `preflight`: bump the tracked inputs, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
+- **Rebuild** — `preflight`: bump every flake input, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
 - **Switch theme** — `theme set <slug>` (persist), `theme try <slug>` (live, reverts at the next rebuild), `theme now <slug>` (Standard §11.6-aware apps, no rebuild) (§2.2, §16.3).
 - **Change a default app** — `app set <role> <slug>` rewrites `default-apps.nix` (§2.6, §16.3).
 - **Sync agent skills** — `skills-sync` moves the skill pointer ahead of a rebuild; follow with `nu pkgs/sync-skills.nu` (§16.2).
@@ -2070,7 +2070,7 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 ### 16.1 Rebuild
 
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
-user, never as root. In order: bump the five tracked inputs (authenticated with
+user, never as root. In order: bump every flake input (authenticated with
 the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#bravais-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
@@ -2183,7 +2183,7 @@ sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable   # nixos-unstable
 sudo nixos-rebuild switch --flake .#bravais                     # alias → stable ThinkPad
 ```
 
-**Supported switch path:** `preflight` (Rust, `pkgs/preflight/`), run as the user and never as root, bumps the tracked inputs, collects garbage, vacuums the journal and switches, mirroring the tree into `/etc/nixos` and starting the detached Flatpak update only after a successful switch (`preflight --dry` exercises it without switching). The sequence and its two deprecated ports are in §16.1; every flag is in `preflight --help` and `docs/rebuild.md`.
+**Supported switch path:** `preflight` (Rust, `pkgs/preflight/`), run as the user and never as root, bumps every flake input, collects garbage, vacuums the journal and switches, mirroring the tree into `/etc/nixos` and starting the detached Flatpak update only after a successful switch (`preflight --dry` exercises it without switching). The sequence and its two deprecated ports are in §16.1; every flag is in `preflight --help` and `docs/rebuild.md`.
 
 After any switch, check `systemctl status home-manager-mj.service` — a failed Home Manager activation strands every HM change while `nixos-rebuild` still reports success (CONSTRAINTS.md #30).
 

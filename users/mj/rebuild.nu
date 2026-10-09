@@ -98,14 +98,13 @@ def antigravity-status [] {
 }
 
 # Full system rebuild for bravais-thinkpad: load the signing key, bump
-# the tracked flake inputs (construct == skills-sync; nixpkgs-unstable +
-# home-manager-unstable so unstablePkgs never lags stable — elegance
-# plan 5.2), free disk while keeping a week of rollback targets,
+# every flake input (a bare `nix flake update`, so an input added to
+# flake.nix is tracked without an edit here), free disk while keeping a week of rollback targets,
 # build + switch, then mirror the repo into /etc/nixos. A failed
 # switch aborts before the mirror.
 #   --dry        nixos-rebuild dry-build only; skips GC and the /etc mirror
 #   --no-update  skip `nix flake update`
-#   --update-all bump every flake input, not just the tracked five
+#   --update-all accepted for compatibility; every run bumps every input
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
 def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
@@ -118,7 +117,7 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     print ""
     print "  --dry          nixos-rebuild dry-build only; skips GC and the /etc mirror"
     print "  --no-update    skip `nix flake update`"
-    print "  --update-all   bump every flake input, not just the tracked five"
+    print "  --update-all   accepted for compatibility; every run bumps every input"
     print "  --no-gc        skip garbage collection + journal vacuum"
     print "  --trace        add --show-trace --verbose (to diagnose eval failures)"
     print "  --skills-only  bump only `construct`; skip GC, the /etc mirror and the mcpctl probe"
@@ -200,11 +199,9 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     with-env $nix_env {
       if $skills_only {
         nix flake update construct
-      } else if $update_all {
+      } else {
         # No input names = every input, stable nixpkgs and home-manager included.
         nix flake update
-      } else {
-        nix flake update antigravity-nix construct gitway nixpkgs-unstable home-manager-unstable
       }
     }
     # Report only, and only on the full path: --skills-only does not
