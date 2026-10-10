@@ -82,7 +82,8 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Security: sudo-rs, keyring, fingerprint (§5.5, §5.6, §6.1) | Implemented | fingerprint verified by hand; sudo-rs check open (TODO Phase 10) |
 | Containers: Podman, AppImage (§12.1, §12.4) | Implemented | `docker` alias and AppImage binfmt checks open (TODO Phase 10) |
 | Vendored upstream binaries (§16.4) | Implemented | `pkgs/update-vendored.nu` |
-| Steelbore OS identity (§4.6) | Implemented | os-release / lsb-release evaluated on both channels, 2026-10-09; `steelbore-branding` and the preflight / bravais-mcp builds pass. Not yet switched on the reference machine: `hostnamectl`, the boot menu and the About pages are unchecked (PLAN.md P-009, P-010, P-020) |
+| Steelbore OS identity (§4.6) | Implemented | switched on the reference machine 2026-10-11: os-release, lsb-release, `hostnamectl`, the boot-entry titles, the TTY greeting and KDE Info Center verified. Open: the rollback drill and the per-desktop About pages (PLAN.md P-010, P-020) |
+| `steelbore-version` / `nixos-version` alias (§4.6) | Implemented | built and checked against upstream's output 2026-10-11; not yet switched in (PLAN.md P-034) |
 | Boot splash and startup sound (§5.2) | Implemented | builds and fits the ESP budget (CONSTRAINTS.md #43); not yet seen on a real boot (TODO Phase 10) |
 | Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`); key enrollment open in TODO.md Phase 6 |
 | Waydroid (§12.7) | Planned | `waydroid init`, Niri start and APK install open (TODO.md) |
@@ -530,7 +531,9 @@ The operating system is **Steelbore OS**; **Bravais** is its NixOS edition and *
 
 **Single source.** `lib/identity.nix` is a pure attrset (no `pkgs`, no `lib`) holding the name, ids, variant, vendor, the two display strings (`fullName` = "Steelbore OS Bravais", `banner` = "STEELBORE OS :: BRAVAIS"), the URLs, the §15.2 attribution, the two logo icon names and the release codenames. `flake.nix` imports it once as `steelboreIdentity` and passes it through `specialArgs` and `extraSpecialArgs`; in-tree packages, which get no `specialArgs`, `import ../../lib/identity.nix`. No consumer retypes a name, URL or codename.
 
-**Release codenames.** Steelbore OS names each NixOS release after an Arabic-origin star: **26.05 = Altair**, **26.11 = Aldebaran** (`codenames`, read through `codenameFor`). A release with no entry fails evaluation, so a channel bump onto a new release needs a name first (CONSTRAINTS.md #46). nixpkgs' `system.nixos.codeName` is read-only, so `nixos-version` and the bootspec label still carry NixOS's codename.
+**Release codenames.** Steelbore OS names each NixOS release after an Arabic-origin star: **26.05 = Altair**, **26.11 = Aldebaran** (`codenames`, read through `codenameFor`). A release with no entry fails evaluation, so a channel bump onto a new release needs a name first (CONSTRAINTS.md #46). nixpkgs' `system.nixos.codeName` is read-only, so the bootspec label still carries NixOS's codename; `nixos-version` does not, because it is now `steelbore-version`'s alias.
+
+**`steelbore-version`** (`pkgs/steelbore-version/`, Rust) reports the running system: the version line `26.05.<date>.<rev> (Altair)`, `--pretty`, `--codename`, `--revision`/`--hash`, `--configuration-revision`, `--json`/`--fields`, `schema` and `describe`. It reads a version record that `modules/core/identity.nix` writes to `/run/current-system/sw/share/steelbore/version.json` (not `/etc`, which bubblewrap sandboxes hide), so the binary does not rebuild on a nixpkgs bump. Invoked as `nixos-version` (a symlink in the same package) it reproduces NixOS's output contract byte for byte, with the Steelbore OS codename; upstream's script is switched off (`system.tools.nixos-version.enable = false`, CONSTRAINTS.md #47).
 
 **os-release as rendered** (`environment.etc."os-release".text` on `bravais-thinkpad`, evaluated 2026-10-09; `bravais-thinkpad-unstable` differs only where noted):
 

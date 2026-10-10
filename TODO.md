@@ -694,10 +694,19 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       identity (build-time env vars)
 - [✓] CONSTRAINTS.md #46 — every NixOS release needs a codename
 - [✓] Docs: AGENTS.md, README.md, PRD.md §4.6, CHANGELOG.md
-- [ ] Gates: stable toplevel build, unstable `drvPath` eval, REUSE lint
-- [ ] Confirm `/etc/NIXOS` on the live host right before the first switch
-- [ ] First switch, then check `hostnamectl`, `bootctl list`, a TTY greeting
-      and `cat /etc/os-release`
+- [✓] Gates: stable toplevel build, unstable `drvPath` eval, REUSE lint
+- [✓] Confirm `/etc/NIXOS` on the live host right before the first switch
+- [✓] First switch, then check `hostnamectl`, `bootctl list`, a TTY greeting
+      and `cat /etc/os-release` (2026-10-11; boot titles read from the
+      entry builder, since `/boot` is root-only)
+- [✓] `steelbore-version` (Rust, `pkgs/steelbore-version/`): version line,
+      `--pretty`, `--codename`, `--revision`, `--json`/`--fields`, `schema`,
+      `describe`; reads `/run/current-system/sw/share/steelbore/version.json`
+- [✓] `nixos-version` as its alias, byte-compatible with upstream except
+      the codename; upstream's script disabled (CONSTRAINTS.md #47)
+- [ ] Switch, then check `steelbore-version`, `nixos-version`,
+      `nixos-version --json` and `steelbore-version` inside a sandboxed shell
+- [ ] `steelbore-help` and the Steelbore OS manual (PLAN.md M5)
 - [ ] Rollback drill: boot the previous generation and switch forward again
 - [ ] Visual check: GNOME About (emblem), COSMIC About (name only), KDE Info Center (wordmark), both
       bars, the greeter, one TTY
