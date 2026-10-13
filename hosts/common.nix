@@ -52,7 +52,7 @@
   # MAY override individual toggles in its own default.nix).
   steelbore = {
     # Plymouth boot splash (modules/theme/boot-splash.nix). Each initrd grows
-    # by the splash image plus Plymouth's libraries, times the three the ESP keeps —
+    # by the splash frames plus Plymouth's libraries, times the three the ESP keeps —
     # the initrd has a ~49 MiB ceiling (constraint #43).
     boot.splash.enable = true;
 

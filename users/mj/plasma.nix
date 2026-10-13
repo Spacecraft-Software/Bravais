@@ -1,15 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Home Manager: KDE Plasma date/time, layout shortcut and colour scheme
+# Steelbore Bravais — Home Manager: KDE Plasma date/time, layout shortcut, colour scheme
+# and splash screen
 {
   config,
   lib,
   pkgs,
+  steelborePalette,
   themeAssets,
   ...
 }:
 
 let
   kwriteconfig = lib.getExe' pkgs.kdePackages.kconfig "kwriteconfig6";
+
+  # The Plasma splash: the boot animation again, from the Plymouth theme's
+  # own frames (pkgs/steelbore-ksplash), on the active palette's canvas.
+  ksplash = (import ../../pkgs { inherit pkgs; }).steelbore-ksplash.override {
+    inherit (steelborePalette) background;
+  };
 
   # The panel clock's own keys, from plasma-workspace v6.6.5
   # `applets/digital-clock/main.xml`, group [Appearance]:
@@ -36,7 +44,25 @@ let
   );
 in
 {
-  xdg.dataFile = schemeFiles;
+  xdg.dataFile = schemeFiles // {
+    "plasma/look-and-feel/${ksplash.packageId}".source =
+      "${ksplash}/share/plasma/look-and-feel/${ksplash.packageId}";
+  };
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Splash screen — the boot animation (pkgs/steelbore-ksplash)
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ksplashrc names a Look-and-Feel package by id; ours carries only the
+  # splash, so choosing it here leaves the Global Theme alone. kwriteconfig6
+  # rather than xdg.configFile because System Settings › Splash Screen
+  # rewrites the file — same trade-off as the keys below: a choice made there
+  # is reverted at the next rebuild. Read at the next Plasma login.
+  home.activation.plasmaSplash = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/ksplashrc" \
+      --group KSplash --key Engine KSplashQML
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/ksplashrc" \
+      --group KSplash --key Theme "${ksplash.packageId}"
+  '';
 
   # ═══════════════════════════════════════════════════════════════════════════
   # Active colour scheme — the §11.6.5 polarity/palette agreement for Plasma

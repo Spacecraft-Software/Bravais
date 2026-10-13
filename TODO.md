@@ -67,7 +67,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
-- [✓] **`boot-splash.nix`**: Plymouth boot splash from `assets/boot/splash.png` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot still from `assets/boot/shutdown.png` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`pkgs/steelbore-ksplash`**: the same animation as the KDE Plasma splash screen (selected in `users/mj/plasma.nix`)
 - [✓] **`pkgs/steelbore-quantize`**: pure-Rust PNG quantizer (`imagequant` + `png`) replacing pngquant in the splash build
 - [✓] **`users/mj/startup-sound.nix`**: once-per-boot startup sound at the first graphical login
 - Note: to change fonts later, follow the "Changing fonts" section in `AGENTS.md` (procedure: the `changing-fonts` skill in `.claude/skills/`)
@@ -461,6 +462,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Verify Flatpak apps install from Flathub
 - [ ] Verify AppImage binfmt execution
 - [ ] Verify the Plymouth boot animation renders on a real boot, and the startup sound plays once per boot
+- [ ] Verify the shutdown still shows at poweroff and reboot, and the Plasma splash plays at a Plasma login
 
 ---
 
@@ -749,16 +751,16 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 |-------|--------|----------|
 | 1. Foundation | Complete | 14/14 |
 | 2. Core Modules | Complete | 31/31 |
-| 3. Theme Engine | Complete | 8/8 |
+| 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
 | 5. Desktop Environments | Complete | 45/45 |
 | 6. Package Modules | In Progress | 134/141 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
-| 10. Testing | In Progress | 13/21 |
+| 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **306/321** |
+| **Total** | **95%** | **307/323** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and

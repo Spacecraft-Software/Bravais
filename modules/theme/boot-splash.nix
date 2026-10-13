@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — Plymouth boot splash (pkgs/steelbore-plymouth)
 #
-# Shows from early initrd until greetd starts (greetd is ordered after
-# plymouth-quit-wait.service upstream). The firmware and systemd-boot stages
+# Plays the boot animation from early initrd until greetd starts (greetd is
+# ordered after plymouth-quit-wait.service upstream), and shows the shutdown
+# still at poweroff and reboot — the same theme, branching on the mode. The firmware and systemd-boot stages
 # before the kernel cannot show it. It renders on simpledrm (built into the
 # XanMod kernel, up from the first kernel second); i915 loads in stage 2 and
 # takes the display over, which may show as a brief flicker. Do NOT add i915
