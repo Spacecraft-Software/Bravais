@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The unstable channel is bumped.** The `nixpkgs-unstable`,
+  `home-manager-unstable` and `antigravity-nix` inputs moved to their
+  latest revisions.
 - **Antigravity and the unstable channel's Home Manager are bumped.** The
   `antigravity-nix` and `home-manager-unstable` inputs moved to their
   latest revisions.
