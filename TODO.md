@@ -728,9 +728,12 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [ ] Restore the other npm globals: `gemini`, `openclaude`, `pi`,
       `task-master`, `deepcode`, `bailian` and `ark-helper` are dangling links
       (their `~/.npm-packages/lib/node_modules` entries are gone)
-- [ ] `cursor-agent update` fails `[unauthenticated]` until `cursor-agent login`
-- [ ] Repair the `kimi-cli` uv tool (`uv tool install kimi-cli --reinstall`);
-      `uv tool list` reports its environment missing
+- [✓] `cursor-agent update` failed `[unauthenticated]`; fixed by `cursor-agent login`
+- [✓] OpenCode CLI moved to 2.x (`opencode upgrade --major`, 2026-10-13; npm
+      `@opencode/cli`, not `opencode-ai`); `opencode upgrade` tracks 2.x from here
+- [ ] OpenCode Desktop has no 2.x build yet (no npm package, the update API
+      has no desktop artifact); `pkgs/opencode-desktop` stays on 1.x until one ships
+- [✓] Removed the broken `kimi-cli` uv tool (superseded by Kimi Code from npm)
 
 ## Known Issues & Notes
 
