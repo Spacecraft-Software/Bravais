@@ -723,10 +723,12 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 
 - [✓] `preflight --update-ai-tools` runs each out-of-band AI tool's own
       updater (`pkgs/preflight/src/ai_tools.rs`); `--full-update` implies it
-- [ ] Run it for real once and record its cost in `docs/rebuild.md`
-- [ ] Restore the npm globals: `~/.npm-packages/lib/node_modules` is gone, so
-      `gemini`, `openclaude`, `pi`, `task-master`, `deepcode`, `bailian` and
-      `ark-helper` are dangling links (`npm update --global` has nothing to do)
+- [✓] First live run (2026-10-13): kilo, mimo, kimi and qwen moved to npm
+      globals (their own updaters failed); the cap went from 10 to 30 minutes
+- [ ] Restore the other npm globals: `gemini`, `openclaude`, `pi`,
+      `task-master`, `deepcode`, `bailian` and `ark-helper` are dangling links
+      (their `~/.npm-packages/lib/node_modules` entries are gone)
+- [ ] `cursor-agent update` fails `[unauthenticated]` until `cursor-agent login`
 - [ ] Repair the `kimi-cli` uv tool (`uv tool install kimi-cli --reinstall`);
       `uv tool list` reports its environment missing
 

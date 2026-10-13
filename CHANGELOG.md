@@ -13,12 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`preflight --update-ai-tools` updates the AI tools installed outside
   Nix.** It runs each tool's own updater in turn — `claude update`,
-  `codex update`, `opencode upgrade`, and the same for Kilo, MiMo Code, Qwen
-  Code, Grok, Kimi Code, Cursor Agent, Copilot, Kiro, Goose, Antigravity, omp
-  and pool, plus `uv tool upgrade --all` and `npm update --global`. Tools you
-  have not installed are skipped, a failure does not stop the others, and
-  any updater still running after 10 minutes is stopped.
-  `preflight --full-update` now includes it.
+  `codex update`, `opencode upgrade`, and the same for Grok, Cursor Agent,
+  Copilot, Kiro, Goose, Antigravity, omp and pool, plus
+  `uv tool upgrade --all` and `npm update --global`. Tools you have not
+  installed are skipped, a failure does not stop the others, and any updater
+  still running after 30 minutes is stopped. `preflight --full-update` now
+  includes it.
+- **Kilo, MiMo Code, Kimi Code and Qwen Code are now installed with npm**,
+  because their own updaters could not update their original installs. They
+  are updated along with your other npm global packages, and their old
+  install folders are gone from your PATH. Kimi Code keeps its settings and
+  sign-in in `~/.kimi-code`.
 - **`steelbore-version`, and `nixos-version` as its alias.** Reports the
   running system's version (`26.05.… (Altair)`), its full name, codename and
   nixpkgs revision, as text or JSON. `nixos-version` now runs the same

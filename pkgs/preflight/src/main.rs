@@ -329,7 +329,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--no-update": "skip nix flake update",
                     "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored and --update-ai-tools; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
-                    "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 600 s; conflicts with --skills-only",
+                    "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",

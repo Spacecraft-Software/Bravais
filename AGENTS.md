@@ -130,7 +130,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 - **Niri binds**: primary binds get `hotkey-overlay-title="..."` so they appear in `show-hotkey-overlay`; silent aliases (vim moves, mouse wheel, individual workspace 2-5 numbers) omit the title to keep the overlay readable.
 - **`unstablePkgs` for always-latest / unstable-only packages**: `flake.nix` re-instantiates `nixpkgs-unstable` with `config.allowUnfree = true` and threads it into modules and HM via `specialArgs`/`extraSpecialArgs`. Active uses: `uv` (development.nix), `steam-run` (system.nix), `code-cursor-fhs` and `kiro-fhs` (editors.nix). Reach for `unstablePkgs.<name>` whenever a package is unstable-only on 26.05 or whenever stable's version lags meaningfully behind upstream.
 - **`home.packages` for user-level packages**: Declared at the top of `users/mj/home.nix` (after `home.stateVersion`), always using `with unstablePkgs;`. Currently hosts the Rust toolchain (`rustup` + cargo subcommands). Use this instead of `environment.systemPackages` for packages that are user-specific rather than system-wide.
-- **PATH in shell.nix**: Do **not** use `home.sessionPath` — it always prepends, causing user-local bins to shadow Nix-store ones. The out-of-band bin dirs are single-sourced in the `outOfBandDirs` list in `users/mj/shell.nix` (let block) and rendered into all three managed shells (bash via `posixPathAppend`, Nushell via `nuPathAppend`, Ion via `posixPathAppend`). **Adding a new out-of-band CLI bin dir = one edit to `outOfBandDirs`.** Current dirs: `~/.local/bin`, `~/.cargo/bin`, `~/.kimi-code/bin`, `~/.npm-packages/bin`, `~/.opencode/bin`, `~/.kilo/bin`, `~/.mimocode/bin`, `~/.local/lib/qwen-code/bin`.
+- **PATH in shell.nix**: Do **not** use `home.sessionPath` — it always prepends, causing user-local bins to shadow Nix-store ones. The out-of-band bin dirs are single-sourced in the `outOfBandDirs` list in `users/mj/shell.nix` (let block) and rendered into all three managed shells (bash via `posixPathAppend`, Nushell via `nuPathAppend`, Ion via `posixPathAppend`). **Adding a new out-of-band CLI bin dir = one edit to `outOfBandDirs`.** Current dirs: `~/.local/bin`, `~/.cargo/bin`, `~/.npm-packages/bin`, `~/.opencode/bin`.
 
 ## Security
 
@@ -154,7 +154,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 1. **bash cannot be replaced via overlay** — stdenv builds every derivation with it (infinite recursion); assign Nushell/Brush as login shells instead.
 2. **`programs.bash.enable` must stay true** — PAM builds and NixOS activation depend on it.
 3. **task-master-ai is unbuildable in nixpkgs** — `ai.nix` ships an `npx` wrapper; keep the nixpkgs line commented out.
-4. **claude-code, grok-cli, mimocode and qwen-code are out-of-band and self-updating** — don't move them into Nix without a concrete reason.
+4. **claude-code, grok-cli, mimocode and qwen-code are out-of-band** — claude and grok self-update, mimocode and qwen-code are npm globals; `preflight --update-ai-tools` updates all of them; don't move them into Nix without a concrete reason.
 5. **Stable/unstable package-name splits use the `or` fallback** (`pkgs.xinit or pkgs.xorg.xinit`) — keep it; for `gcr_3 or gcr` the order is load-bearing (#32).
 6. **`useFetchCargoVendor` warnings** come from upstream COSMIC — harmless and not suppressible.
 7. **Flake-input packages are threaded via `specialArgs` AND `extraSpecialArgs`** (as `gitway` is), never via overlays.

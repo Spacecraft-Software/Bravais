@@ -147,7 +147,7 @@ impl Runner {
                 true
             }
             Ok(s) => {
-                self.record(name, Outcome::Failed, Some(format!("exited {s}")));
+                self.record(name, Outcome::Failed, Some(s.to_string()));
                 false
             }
             Err(e) => {
@@ -175,7 +175,7 @@ impl Runner {
                     return true;
                 }
                 Ok(Some(s)) => {
-                    self.record(name, Outcome::Failed, Some(format!("exited {s}")));
+                    self.record(name, Outcome::Failed, Some(s.to_string()));
                     return false;
                 }
                 Ok(None) if start.elapsed() >= limit => {

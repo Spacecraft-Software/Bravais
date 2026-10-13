@@ -57,15 +57,18 @@ const fn updater(step: &'static str, program: &'static str, args: &'static [&'st
 /// and the tool declines (the `OpenCode` family asks "Install anyways?" when it
 /// cannot tell how it was installed, and a null stdin answers no). `kiro-cli`
 /// is the one that needs a flag to stay quiet.
+///
+/// A tool whose own updater cannot update the way it was installed belongs
+/// under npm instead. `kilo`, `mimo`, `kimi` and `qwen` were moved
+/// there on 2026-10-13 after their curl-installed updaters failed: `kilo
+/// upgrade` fetched a web page and exited 0, `mimo upgrade` rejected its own
+/// "curl" channel, `kimi upgrade` only printed an install command and exited
+/// 0, and `qwen update` could not reach its registry.
 pub const TOOLS: &[Tool] = &[
     updater("ai-claude", "claude", &["update"]),
     updater("ai-codex", "codex", &["update"]),
     updater("ai-opencode", "opencode", &["upgrade"]),
-    updater("ai-kilo", "kilo", &["upgrade"]),
-    updater("ai-mimo", "mimo", &["upgrade"]),
-    updater("ai-qwen", "qwen", &["update"]),
     updater("ai-grok", "grok", &["update"]),
-    updater("ai-kimi", "kimi", &["upgrade"]),
     updater("ai-cursor-agent", "cursor-agent", &["update"]),
     updater("ai-copilot", "copilot", &["update"]),
     updater("ai-kiro", "kiro-cli", &["update", "--non-interactive"]),
@@ -74,13 +77,18 @@ pub const TOOLS: &[Tool] = &[
     updater("ai-omp", "omp", &["update"]),
     updater("ai-pool", "pool", &["update"]),
     // uv-installed tools: kimi-cli, llm, mistral-vibe, specify-cli, graphify.
+    // An upgrade re-resolves each tool from uv's own record of it, so extras
+    // added behind uv's back are dropped: `llm install <plugin>` plugins went
+    // on 2026-10-13. Install extras with `uv tool install <tool> --with <x>`.
     Tool {
         step: "ai-uv-tools",
         program: "uv",
         args: &["tool", "upgrade", "--all"],
         kind: Kind::PackageManager,
     },
-    // npm globals under ~/.npm-packages (the prefix ~/.npmrc names).
+    // npm globals under ~/.npm-packages (the prefix ~/.npmrc names): kilo,
+    // mimo, kimi and qwen among them. For globals npm's "wanted" version is
+    // `latest`, so this crosses major versions too.
     Tool {
         step: "ai-npm-globals",
         program: "npm",
@@ -91,13 +99,16 @@ pub const TOOLS: &[Tool] = &[
 
 /// How long one updater may run before it is killed.
 ///
-/// These are single-binary downloads, normally well under a minute; ten
-/// minutes covers a slow mirror without letting a hung download hold
-/// preflight open indefinitely -- the failure the detached Flatpak update
-/// exists to avoid. Only the updater itself is killed, not any helper it
+/// Generous because the link here is slow, not because updaters hang: the
+/// first live run (2026-10-13) used ten minutes and killed two genuine
+/// downloads part-way -- `omp update` fetching its binary, and `uv tool
+/// upgrade --all` with 64 MiB of mistral-vibe left -- while every other tool
+/// finished in well under that. Thirty minutes still stops a truly hung
+/// download from holding preflight open indefinitely, the failure the
+/// detached Flatpak update exists to avoid. Only the updater itself is killed, not any helper it
 /// spawned: putting it in its own process group would also stop a Ctrl-C at
 /// the terminal from reaching it.
-pub const TIMEOUT: Duration = Duration::from_mins(10);
+pub const TIMEOUT: Duration = Duration::from_mins(30);
 
 /// How often a running updater is polled for exit.
 pub const POLL: Duration = Duration::from_millis(250);
