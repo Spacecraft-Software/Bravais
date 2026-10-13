@@ -17,6 +17,12 @@ codename is needed, and §11.6.5 already names Bravais as the NixOS flavor of
 Steelbore OS — the vocabulary below (OS = Steelbore OS, variant = Bravais,
 vendor = Spacecraft Software) is the Standard's own.
 
+**Status (2026-10-11).** The identity is live after the switch and reboot:
+os-release, lsb-release, `hostnamectl`, the boot entries, the TTY greeting,
+KDE Info Center and fastfetch's text all say Steelbore OS Bravais 26.05
+(Altair). M4 (`steelbore-version`) and M5 (`steelbore-help` and the manual)
+are added below; M4 is in progress.
+
 **Status (2026-10-09).** M0 and the M1/M2 code are in the working tree
 and evaluate on both channels; M3's documentation is written. What remains
 needs the live host: the `/etc/NIXOS` check right before the switch (P-004),
@@ -132,10 +138,12 @@ override only feeds the Breeze theme it does not use).
       shows every row of the Identity table; repeat for `bravais-thinkpad-unstable`.
       Then the two standing gates (stable toplevel build, unstable `drvPath`
       eval) and the REUSE check
-- [ ] P-009 First switch, in order: P-004 marker confirmed → `preflight`
+- [x] P-009 First switch, in order: P-004 marker confirmed → `preflight`
       switch → verify `hostnamectl` ("Operating System: Steelbore OS Bravais
       26.05 (Altair)"), `bootctl list` entry titles, a TTY greeting
-      (`<<< Welcome to Steelbore OS … >>>`), `cat /etc/os-release`
+      (`<<< Welcome to Steelbore OS … >>>`), `cat /etc/os-release`.
+      *Done 2026-10-11; the boot titles were read from the entry builder
+      because `/boot` is root-only*
 - [ ] P-010 Rollback drill: boot the previous generation once and switch
       forward again — `switch-to-configuration` of the *old* generation
       carries `DISTRO_ID=nixos` and must still accept a system whose
@@ -218,6 +226,127 @@ desktop "About" panels what they need beyond os-release.
 - [ ] P-026 Memory note for future sessions: identity lives in
       `lib/identity.nix`; never retype the OS name — P-003's AGENTS.md rule
       already carries this for every agent (optional)
+
+---
+
+## M4 — `steelbore-version`, and `nixos-version` as its alias
+
+**Goal.** A Rust `steelbore-version` that reports the running system the way
+`nixos-version` does, under the Steelbore OS name and codename, and that
+answers as `nixos-version` too. Today `nixos-version` is NixOS's generated
+shell script (`nixos/modules/installer/tools/nixos-version.sh`): it prints
+`<version> (<codeName>)`, `--hash`/`--revision`, `--configuration-revision`
+and `--json`, with every value substituted in at evaluation time. It is the
+last surface still saying "Yarara".
+
+**Where the data comes from.** The values are module-evaluation results
+(`system.nixos.version`, `.release`, `.revision`, `.codeName`,
+`system.configurationRevision`, the identity), which an in-tree package cannot
+see. Baking them into the Rust build would rebuild the crate on every nixpkgs
+bump, so the binary stays generic and reads a **version record** at run time.
+`modules/core/identity.nix` writes it as a package in `systemPackages`, so it
+lands at `/run/current-system/sw/share/steelbore/version.json`: the same
+"what is the current system" answer the upstream script gives. Not `/etc`:
+bubblewrap FHS environments (AppImages, this agent's own shell) replace `/etc`
+with a tmpfs and would not see it, but they bind `/run`. `STEELBORE_VERSION_FILE`
+overrides the path, for tests and for checking a record before switching.
+
+**The alias.** The package ships `bin/nixos-version` as a symlink to
+`bin/steelbore-version`, and the binary branches on the name it was invoked
+by:
+
+| Invoked as | Behaviour |
+|---|---|
+| `steelbore-version` | CLI Standard: `metadata` + `data` envelope, `--json`/`--format`, `--fields`, `schema`, `describe`, exit codes 0/1/2/3, presence-based agent detection, `--version` with the maintainer line |
+| `nixos-version` | Upstream's exact contract, so existing scripts keep working: the bare line `<version> (<codename>)`, `--hash`/`--revision` and `--configuration-revision` exiting 1 with upstream's message when unknown, `--json` with upstream's camelCase keys and key order, only `$1` consulted |
+
+Both print the **Steelbore** codename (`26.05 … (Altair)`); that is the point
+of the alias. Upstream's own script must be switched off with
+`system.tools.nixos-version.enable = false`, or two packages provide
+`bin/nixos-version` and the system `buildEnv` collides; that trap becomes
+constraint #47.
+
+- [x] P-028 `pkgs/steelbore-version/`: Rust crate (`clap`, `serde`,
+      `serde_json`, `jiff`), `build.rs` injecting the OS name and URL from
+      `lib/identity.nix` as `pkgs/preflight` does; `package.nix` adds the
+      `nixos-version` symlink; indexed in `pkgs/default.nix`
+- [x] P-029 Version record: `modules/core/identity.nix` writes
+      `share/steelbore/version.json` (name, variant, ids, vendor, release,
+      version, Steelbore codename, NixOS codename, nixpkgs revision,
+      configuration revision, pretty name, home URL), installs the package,
+      and sets `system.tools.nixos-version.enable = false`
+- [x] P-030 `steelbore-version` surface: bare line; `--revision` (alias
+      `--hash`); `--configuration-revision`; `--codename`; `--pretty`
+      ("Steelbore OS Bravais 26.05 (Altair)"); `--json` / `--format`;
+      `--fields`; `schema` and `describe` subcommands; an unknown revision is
+      exit 3 with a hint, a missing record is exit 3 naming the path
+- [x] P-031 `nixos-version` compatibility, checked byte for byte against
+      upstream's output on this host (bare, `--hash`, `--json`, unknown
+      configuration revision)
+- [x] P-032 Constraint #47 in `CONSTRAINTS.md` and AGENTS.md: upstream's
+      `nixos-version` stays disabled while `steelbore-version` provides the
+      name
+- [x] P-033 Docs: README's identity paragraph and `lib/identity.nix`'s
+      codename comment (`nixos-version` no longer says "Yarara"), PRD
+      package inventory, TODO, CHANGELOG `### Added`
+- [ ] P-034 Verify after the switch: `steelbore-version`, `nixos-version`,
+      `nixos-version --json`, and `steelbore-version` inside a bubblewrap
+      sandbox (a Claude Code shell)
+- [ ] P-035 Set `system.configurationRevision = self.rev or self.dirtyRev or null`
+      in `flake.nix`, so `--configuration-revision` answers. Cost: the
+      toplevel store path changes with every commit, which ends the
+      "unchanged toplevel proves a no-op refactor" check used in the past
+      (optional)
+- [ ] P-036 Man pages `steelbore-version(1)` and `nixos-version(8)`:
+      upstream's `-h` runs `man nixos-version`, which goes away with
+      upstream's package; until then `--help` serves both names (optional)
+
+## M5 — `steelbore-help` and the Steelbore OS manual
+
+**Goal.** A Steelbore OS manual covering the OS and the Spacecraft Software
+tools that ship on it, opened by a Rust `steelbore-help`, with `nixos-help`
+as its alias. Today `nixos-help` is a shell script that opens the NixOS HTML
+manual in `$BROWSER`, `xdg-open` or `w3m`. It comes from
+`documentation.nixos.enable`, bundled with the manual and its "NixOS Manual"
+desktop entry, with no separate switch.
+
+**The manual.** Texinfo is the house canonical prose format: one source
+builds HTML and Info. Proposed outline:
+
+1. **Steelbore OS:** identity, installing, rebuilding (`preflight`), desktops
+   and sessions, theming (`theme`), default applications (`app`), security
+   (keyring, fingerprint, `sudo-rs`), troubleshooting (the constraints, in
+   prose)
+2. **Spacecraft Software tools:** gitway, vacuum, mj, mjsh (Operator),
+   pathfinder, preflight, steelbore-version, steelbore-help, steelbore-vpn,
+   steelbore-quantize, mcpctl, engram. Each chapter is sourced from that
+   project's own documentation where it exists, never retyped
+3. **NixOS:** the upstream NixOS manual and options reference, reached from
+   the Steelbore manual rather than forked (see D5)
+
+**D5 — open, for the maintainer: how far to "update the NixOS manual".**
+Forking the NixOS manual's text means carrying a rebrand across thousands of
+upstream pages that change every release. The proposal is to leave its text
+alone and wrap it: the Steelbore manual is the front page, and the NixOS
+manual stays one part of it. Its title and desktop entry can carry the
+Steelbore name without editing its prose.
+
+- [ ] P-037 Decide D5
+- [ ] P-038 `docs/manual/steelbore.texi` and a `steelbore-manual` package
+      building HTML and Info
+- [ ] P-039 Chapters for the Spacecraft Software tools, sourced from each
+      project's docs; needs a source for every tool not in this tree (mjsh,
+      gitway, vacuum, pathfinder, mj)
+- [ ] P-040 `pkgs/steelbore-help/`: Rust; opens the HTML manual the way
+      `nixos-help` picks a browser; `--info` opens the Info manual in the
+      terminal; `--nixos` opens the upstream NixOS manual; `--json` reports
+      the manual locations; `schema` and `describe`
+- [ ] P-041 The `nixos-help` alias: since `documentation.nixos.enable` cannot
+      drop only the script, ship `bin/nixos-help` and a `nixos-manual.desktop`
+      ("Steelbore OS Manual") from `steelbore-help` at `lib.hiPrio`, so the
+      system `buildEnv` takes ours. Record the mechanism as a constraint
+- [ ] P-042 Docs, and verify `steelbore-help`, `nixos-help` and the menu
+      entry after the switch
 
 ---
 

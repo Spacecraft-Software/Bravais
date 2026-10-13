@@ -213,4 +213,12 @@ Steelbore OS names its releases itself: Arabic-origin star names, one per NixOS 
 
 The trap is the channel bump. `nixos-unstable` moves to the next release number around each NixOS branch-off, so a routine `nix flake update nixpkgs-unstable` (or `preflight`'s tracked-input bump) can turn `bravais-thinkpad-unstable` from evaluating to failing with no change in this repository. Add the next release's star name to `codenames` before the bump lands. Pick from the Arabic-origin entries of Wikipedia's "List of proper names of stars"; skip names already taken by a Spacecraft project (Achernar is one).
 
-Out of scope: `system.nixos.codeName` is `readOnly` upstream, so `nixos-version` and the bootspec label keep NixOS's own codename. That is accepted, not a bug.
+Out of scope: `system.nixos.codeName` is `readOnly` upstream, so the bootspec label keeps NixOS's own codename. That is accepted, not a bug. `nixos-version` no longer does: since #47 it is `steelbore-version`'s alias and prints this file's codename.
+
+### 47. `nixos-version` is `steelbore-version`'s alias; upstream's script stays disabled
+
+`pkgs/steelbore-version` installs `bin/nixos-version` as a symlink to its own binary, which answers under that name with NixOS's output contract (`src/compat.rs`) and the Steelbore OS codename. NixOS installs a `nixos-version` of its own through `system.tools.nixos-version.enable`, which defaults to on. With both present, two packages provide `bin/nixos-version` in the system path, and the `buildEnv` that assembles it fails on the collision. `modules/core/identity.nix` therefore sets `system.tools.nixos-version.enable = false` beside installing the package; never re-enable it, and never drop the symlink without re-enabling it, or the command disappears.
+
+The binary reads its facts from a version record that `modules/core/identity.nix` writes to `/run/current-system/sw/share/steelbore/version.json`. That path, not `/etc`, is deliberate: bubblewrap FHS environments (AppImages, the Claude Code shell) mount a tmpfs over `/etc` but bind `/run`, so a record in `/etc` was invisible inside them. The record carries `schema = 1`, which must match `record::SCHEMA` in the binary; change both together.
+
+Compatibility was checked on 2026-10-11 by running both commands against the same system: the bare line differs only in the codename (Altair vs Yarara), and `--hash`, `--revision`, `--json` and the unknown `--configuration-revision` failure are byte-identical.

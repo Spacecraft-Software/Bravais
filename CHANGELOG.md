@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`steelbore-version`, and `nixos-version` as its alias.** Reports the
+  running system's version (`26.05.… (Altair)`), its full name, codename and
+  nixpkgs revision, as text or JSON. `nixos-version` now runs the same
+  program and keeps NixOS's output format, so scripts that parse it still
+  work, but it prints the Steelbore OS codename instead of NixOS's.
 - **Steelbore OS logo.** The Steelbore OS emblem and wordmark are installed
   as system icons, drawn in the active theme's text colour, so they change
   with `theme set`. GNOME's About page shows the emblem (os-release

@@ -16,8 +16,9 @@ keep the name Bravais.
 
 Bravais is still a NixOS distribution, so the `nixos-*` commands
 (`nixos-rebuild`, `nixos-version`, `nixos-option`) keep their names, just as
-`apt` stays `apt` on a Debian derivative. `nixos-version` also keeps NixOS's
-own codename, because nixpkgs does not let a distribution override it.
+`apt` stays `apt` on a Debian derivative. `nixos-version` is now an alias for
+`steelbore-version`: it keeps NixOS's output format, so scripts that parse it
+still work, and prints the Steelbore OS codename.
 
 Every one of these names is stated once, in `lib/identity.nix`.
 

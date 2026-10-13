@@ -68,8 +68,9 @@ let
     # One star name per NixOS release this flake can build, drawn from the
     # Arabic-origin entries of Wikipedia's "List of proper names of stars"
     # (maintainer decision D3; §2 stellar register). Replaces NixOS's own
-    # codename in os-release and lsb-release only — nixpkgs' `codeName` is
-    # read-only, so `nixos-version` and the bootspec label still show it.
+    # codename in os-release, lsb-release and `steelbore-version` (which also
+    # answers as `nixos-version`). nixpkgs' `codeName` is read-only, so the
+    # bootspec label still shows NixOS's.
     #
     # Every release either channel can produce MUST have an entry: a missing
     # one fails evaluation (codenameFor below) rather than silently shipping
