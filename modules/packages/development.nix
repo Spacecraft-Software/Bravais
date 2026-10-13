@@ -48,7 +48,7 @@
         # primary `gcc` above on buildEnv collision; gnat/gnatmake/etc. still link.
         # gnat16-or-gnat fallback (CONSTRAINTS.md #5): the pinned unstable
         # channel tops out at gnat15, so a bare gnat16 broke the
-        # bravais-thinkpad-unstable eval; `gnat` is the channel's default GNAT.
+        # steelbore-thinkpad-unstable eval; `gnat` is the channel's default GNAT.
         (lib.lowPrio (pkgs.gnat16 or pkgs.gnat)) # Ada — GNAT (GCC Ada) compiler
 
         # Rust Toolchain — managed via Home Manager (unstablePkgs): rustup +

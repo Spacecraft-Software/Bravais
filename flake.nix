@@ -402,7 +402,7 @@
       # Measured against this nixpkgs (26.05): platform API levels 27-36 exist
       # and 37 does NOT, despite repo.json's `latest.platforms = 37.0` — that
       # field is a package revision, not an API level. Verify before bumping:
-      #   nix eval --raw .#nixosConfigurations.bravais-thinkpad.pkgs.path
+      #   nix eval --raw .#nixosConfigurations.steelbore-thinkpad.pkgs.path
       #   then read pkgs/development/mobile/androidenv/repo.json
       androidComposition = androidPkgs.androidenv.composeAndroidPackages {
         platformVersions = [
@@ -450,8 +450,8 @@
       # The x86-64 march level is pinned inside each machine's host config
       # (steelbore.platform.x86_64.marchLevel), not here.
       #
-      # Usage:  nixos-rebuild switch --flake .#bravais-thinkpad
-      #         nixos-rebuild switch --flake .#bravais-thinkpad-unstable
+      # Usage:  nixos-rebuild switch --flake .#steelbore-thinkpad
+      #         nixos-rebuild switch --flake .#steelbore-thinkpad-unstable
       #
       #   host    — a machine path from `hosts` above
       #   channel — "stable" (26.05) or "unstable" (rolling)
@@ -562,8 +562,8 @@
     {
       nixosConfigurations = {
         # ── ThinkPad (Intel i7-8665U — x86-64-v3, pinned in hosts/thinkpad) ──
-        bravais-thinkpad = mkBravais { host = hosts.thinkpad; };
-        bravais-thinkpad-unstable = mkBravais {
+        steelbore-thinkpad = mkBravais { host = hosts.thinkpad; };
+        steelbore-thinkpad-unstable = mkBravais {
           host = hosts.thinkpad;
           channel = "unstable";
         };
@@ -572,7 +572,7 @@
         # Points at the attribute rather than calling mkBravais again: an
         # identical second call is a full duplicate evaluation, and
         # `nix flake check` walks every nixosConfigurations entry.
-        bravais = self.nixosConfigurations.bravais-thinkpad;
+        bravais = self.nixosConfigurations.steelbore-thinkpad;
       };
 
       # ── Per-theme systems (`theme try`) ───────────────────────────────────
@@ -690,9 +690,9 @@
       # (stable + unstable). The x86-64 march level is pinned per host, so
       # there is no v1–v4 matrix to enumerate here.
       checks.${system} = {
-        bravais-thinkpad = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
-        bravais-thinkpad-unstable =
-          self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
+        steelbore-thinkpad = self.nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel;
+        steelbore-thinkpad-unstable =
+          self.nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel;
 
         # Niri config validation (elegance plan 5.5): the user config.kdl is a
         # generated string Nix cannot type-check; run niri's own parser over
@@ -702,7 +702,7 @@
           let
             checkPkgs = nixpkgs.legacyPackages.${system};
             rendered =
-              self.nixosConfigurations.bravais-thinkpad.config.home-manager.users.${primaryUser}.xdg.configFile."niri/config.kdl".source;
+              self.nixosConfigurations.steelbore-thinkpad.config.home-manager.users.${primaryUser}.xdg.configFile."niri/config.kdl".source;
           in
           checkPkgs.runCommand "niri-config-validate" { } ''
             ${checkPkgs.niri}/bin/niri validate -c ${rendered}

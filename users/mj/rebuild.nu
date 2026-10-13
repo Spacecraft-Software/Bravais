@@ -97,7 +97,7 @@ def antigravity-status [] {
   { pinned: $pinned, latest: $latest, current: ($pinned == $latest) }
 }
 
-# Full system rebuild for bravais-thinkpad: load the signing key, bump
+# Full system rebuild for steelbore-thinkpad: load the signing key, bump
 # every flake input (a bare `nix flake update`, so an input added to
 # flake.nix is tracked without an edit here), free disk while keeping a week of rollback targets,
 # build + switch, then mirror the repo into /etc/nixos. A failed
@@ -234,9 +234,9 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
   # forwarded --option form it does accept.
   let extra = (["--option" "warn-dirty" "false"] | append (if $trace { ["--show-trace" "--verbose"] } else { [] }))
   if $dry {
-    sudo nixos-rebuild dry-build --flake .#bravais-thinkpad ...$extra
+    sudo nixos-rebuild dry-build --flake .#steelbore-thinkpad ...$extra
   } else {
-    sudo nixos-rebuild switch --flake .#bravais-thinkpad ...$extra
+    sudo nixos-rebuild switch --flake .#steelbore-thinkpad ...$extra
   }
   if (not $dry) and (not $skills_only) {
     # Lean true mirror: prune stale files, but skip VCS internals,

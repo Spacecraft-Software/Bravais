@@ -40,10 +40,10 @@ bounds set out below.
    gate — it builds both channels' full closures and exceeds 10 minutes
    (see [`CONSTRAINTS.md`](./CONSTRAINTS.md) #17):
    ```sh
-   nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
-   nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+   nix build --no-link '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'
+   nix eval --raw '.#nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel.drvPath'
    nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'
-   nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace
+   nixos-rebuild dry-build --flake .#steelbore-thinkpad-unstable --show-trace
    ```
 4. **Follow existing conventions.** Module namespace is `steelbore.*`. Add packages to
    the appropriate `modules/packages/*.nix` file. Prefer Rust packages.

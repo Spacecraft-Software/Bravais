@@ -15,7 +15,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure nix-flatpak input
 - [✓] Configure gitway input (`github:Spacecraft-Software/Gitway`, tracks `main`; threaded via `specialArgs` / `extraSpecialArgs`)
 - [✓] Define `mkBravais` function with `host` and `channel` parameters (march pinned per-machine)
-- [✓] Generate per-machine `nixosConfigurations` (`bravais-thinkpad`, `bravais-thinkpad-unstable`, `bravais` alias)
+- [✓] Generate per-machine `nixosConfigurations` (`steelbore-thinkpad`, `steelbore-thinkpad-unstable`, `bravais` alias)
 - [✓] Factor shared host config into `hosts/common.nix`; one `hosts/<machine>/` dir per machine
 - [✓] Set up `steelborePalette` in specialArgs
 - [✓] ~~Pass `stablePkgs` to modules via specialArgs~~ (removed — claude-code now uses channel-appropriate `pkgs`)
@@ -384,7 +384,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 ### Host (`hosts/common.nix` + `hosts/thinkpad/`)
 
-- [✓] **`thinkpad/default.nix`**: Set hostname to `bravais-thinkpad`; pin `steelbore.platform.x86_64.marchLevel = "v3"`; enable `hardware.audioLed` + `hardware.bluetooth`
+- [✓] **`thinkpad/default.nix`**: Set hostname to `steelbore-thinkpad`; pin `steelbore.platform.x86_64.marchLevel = "v3"`; enable `hardware.audioLed` + `hardware.bluetooth`
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
@@ -441,11 +441,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ## Phase 10: Testing & Verification
 
 - [✓] Run `nix flake check` without errors
-- [✓] Run `nix flake show` and verify per-machine configurations listed (`bravais-thinkpad`, `-unstable`, `bravais` alias)
-- [✓] Run `nixos-rebuild dry-build --flake .#bravais-thinkpad` successfully
-- [✓] Run `nixos-rebuild build --flake .#bravais-thinkpad` successfully
-- [✓] Run `nixos-rebuild switch --flake .#bravais-thinkpad` successfully
-- [✓] Verify unstable channel build (`nixos-rebuild build --flake .#bravais-thinkpad-unstable`)
+- [✓] Run `nix flake show` and verify per-machine configurations listed (`steelbore-thinkpad`, `-unstable`, `bravais` alias)
+- [✓] Run `nixos-rebuild dry-build --flake .#steelbore-thinkpad` successfully
+- [✓] Run `nixos-rebuild build --flake .#steelbore-thinkpad` successfully
+- [✓] Run `nixos-rebuild switch --flake .#steelbore-thinkpad` successfully
+- [✓] Verify unstable channel build (`nixos-rebuild build --flake .#steelbore-thinkpad-unstable`)
 - [~] Verify Niri session boots with the eww bar and dunst
 - [✓] Verify COSMIC session boots with panel
 - [✓] Verify GNOME session boots on Wayland
@@ -579,7 +579,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] `steelbore.hardware.android` module — `pkgs.android-tools` + SDK licence
 - [✓] `devShells.<system>.android` in flake.nix (`nix develop .#android -c nu`)
-- [✓] Enabled on `bravais-thinkpad`; docs in PRD §6.0, USER_MANUAL §7.4
+- [✓] Enabled on `steelbore-thinkpad`; docs in PRD §6.0, USER_MANUAL §7.4
 - [✓] CONSTRAINTS.md #33 — `programs.adb.enable` is removed, not deprecated
 - [ ] Confirm `adb devices` sees a real handset without any group membership
       (systemd 260 uaccess); if it reports `no permissions`, the uaccess
@@ -588,7 +588,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
       the current `35`/`36` + `37.0.0` are sensible defaults, not requirements
 ## Waydroid (2026-09-09)
 
-- [✓] `steelbore.services.waydroid` module; enabled on `bravais-thinkpad`
+- [✓] `steelbore.services.waydroid` module; enabled on `steelbore-thinkpad`
 - [✓] Confirmed XanMod already has binder built in — no extra modules needed
 - [ ] Run `sudo waydroid init` once (multi-hundred-MB image download)
 - [ ] Verify it starts under Niri; it CANNOT work under LeftWM (X11)

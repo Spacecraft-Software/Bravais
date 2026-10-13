@@ -35,7 +35,7 @@ Bravais is a flake-based NixOS configuration implementing the Spacecraft Softwar
 
 ### 1.2 Scope and Supported Hardware
 
-One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whiskey Lake), pinned to x86-64-v3 because the CPU has AVX2/BMI2/FMA but no AVX-512 (`hosts/thinkpad/default.nix`, §7.1.1, §7.3). It is built on both channels: `bravais-thinkpad` (stable 26.05), `bravais-thinkpad-unstable`, and the `bravais` alias for the stable build (§2.4).
+One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whiskey Lake), pinned to x86-64-v3 because the CPU has AVX2/BMI2/FMA but no AVX-512 (`hosts/thinkpad/default.nix`, §7.1.1, §7.3). It is built on both channels: `steelbore-thinkpad` (stable 26.05), `steelbore-thinkpad-unstable`, and the `bravais` alias for the stable build (§2.4).
 
 **"Supported" means** the configuration builds (§17.1) and is switched and in daily use on that machine. Other hardware is untested. Adding a machine is a `hosts/<machine>/` directory carrying only genuinely per-machine settings plus two output lines in `flake.nix` (§2.3).
 
@@ -67,8 +67,8 @@ This PRD states requirements and the design decisions behind them, with enough "
 
 | Area | Status | Evidence |
 |------|--------|----------|
-| Stable system build (§2.4, §17.1) | Verified | `bravais-thinkpad` toplevel built at `343510b` (nixpkgs `5e2305d`), 2026-09-28 — run manually per §17.1; not in CI |
-| Unstable evaluation (§2.4, §17.1) | Verified (evaluation only) | `bravais-thinkpad-unstable` `drvPath` evaluated at `343510b` (nixpkgs-unstable `e158d9e`), 2026-09-28. This proves the configuration evaluates, not that it builds; a full unstable build is not part of the gate |
+| Stable system build (§2.4, §17.1) | Verified | `steelbore-thinkpad` toplevel built at `343510b` (nixpkgs `5e2305d`), 2026-09-28 — run manually per §17.1; not in CI |
+| Unstable evaluation (§2.4, §17.1) | Verified (evaluation only) | `steelbore-thinkpad-unstable` `drvPath` evaluated at `343510b` (nixpkgs-unstable `e158d9e`), 2026-09-28. This proves the configuration evaluates, not that it builds; a full unstable build is not part of the gate |
 | REUSE / SPDX compliance (§17.3) | Verified | `checks.reuse-lint`; `.github/workflows/reuse.yml` on push and PR |
 | LF line endings | Verified | `.github/workflows/text-file-format.yml` |
 | Niri configuration (§9.4) | Verified | `checks.niri-config` (`niri validate` on the rendered `config.kdl`) passed at `343510b`, 2026-09-28 — run manually per §17.1; not in CI |
@@ -274,11 +274,11 @@ fallback (CONSTRAINTS.md #5; the `gcr_3 or gcr` order is load-bearing, #32).
 `nixosConfigurations` are generated **per physical machine** (stable + unstable each).
 The x86-64 march level is pinned in each machine's host config, not exploded into a matrix:
 
-| Configuration               | Machine                            | Channel  | March                          |
-|-----------------------------|------------------------------------|----------|--------------------------------|
-| `bravais-thinkpad`          | ThinkPad (i7-8665U, Whiskey Lake)  | stable   | v3 (AVX2; CPU has no AVX-512)  |
-| `bravais-thinkpad-unstable` | ThinkPad                           | unstable | v3                             |
-| `bravais` (alias)           | → `bravais-thinkpad` (stable)      | stable   | v3                             |
+| Configuration                 | Machine                             | Channel  | March                          |
+|-------------------------------|-------------------------------------|----------|--------------------------------|
+| `steelbore-thinkpad`          | ThinkPad (i7-8665U, Whiskey Lake)   | stable   | v3 (AVX2; CPU has no AVX-512)  |
+| `steelbore-thinkpad-unstable` | ThinkPad                            | unstable | v3                             |
+| `bravais` (alias)             | → `steelbore-thinkpad` (stable)     | stable   | v3                             |
 
 `modules/platform/x86-64.nix` supports `v1`…`v4` as an enum; a machine picks one.
 The alias points at the existing attribute, so it costs no second evaluation.
@@ -396,16 +396,16 @@ mkBravais = { host, channel ? "stable", palette ? defaultPalette }: ...
 - `primaryUser = "mj"` is stated once in `flake.nix`; `steelboreApps` is `lib/default-apps.nix` applied to the one-word-per-role selection in `default-apps.nix` plus any `apps/<slug>.nix` drop-ins.
 - `constructSkills` is bound **once** and handed to both `packages.skills` and Home Manager, because three nixpkgs instantiations would otherwise give three store paths for a byte-identical skill tree and the drift probe would report drift forever.
 
-**Outputs built from it:** `nixosConfigurations.bravais-thinkpad` (stable), `bravais-thinkpad-unstable`, and `bravais` — an alias that points at the `bravais-thinkpad` attribute rather than calling `mkBravais` again (an identical second call is a full duplicate evaluation). `themeSystems.x86_64-linux.<slug>` holds one buildable toplevel per selectable theme; it is deliberately **not** in `nixosConfigurations`, because `nix flake check` force-evaluates every entry there and holding all theme variants in one evaluator was OOM-killed.
+**Outputs built from it:** `nixosConfigurations.steelbore-thinkpad` (stable), `steelbore-thinkpad-unstable`, and `bravais` — an alias that points at the `steelbore-thinkpad` attribute rather than calling `mkBravais` again (an identical second call is a full duplicate evaluation). `themeSystems.x86_64-linux.<slug>` holds one buildable toplevel per selectable theme; it is deliberately **not** in `nixosConfigurations`, because `nix flake check` force-evaluates every entry there and holding all theme variants in one evaluator was OOM-killed.
 
 **All flake outputs** (`flake.nix`, `x86_64-linux`):
 
 | Output | Contents |
 |--------|----------|
-| `nixosConfigurations` | `bravais-thinkpad`, `bravais-thinkpad-unstable`, `bravais` (alias) |
+| `nixosConfigurations` | `steelbore-thinkpad`, `steelbore-thinkpad-unstable`, `bravais` (alias) |
 | `themeSystems.<slug>` | One toplevel per selectable theme — what `theme try` builds |
 | `packages.*` | The `pkgs/default.nix` index (`nix build .#<name>`), plus `theme-registry`, `app-registry` and `skills` |
-| `checks` | `bravais-thinkpad` and `bravais-thinkpad-unstable` toplevels, `niri-config` (`niri validate` over the rendered KDL), `reuse-lint` |
+| `checks` | `steelbore-thinkpad` and `steelbore-thinkpad-unstable` toplevels, `niri-config` (`niri validate` over the rendered KDL), `reuse-lint` |
 | `devShells.android` | Android SDK, JDK 17, Gradle (§6.0); enter with `nix develop .#android -c nu` |
 | `devShells.default` | nil, nixfmt, statix, deadnix |
 | `formatter` | nixfmt — what `nix fmt` runs |
@@ -535,7 +535,7 @@ The operating system is **Steelbore OS**; **Bravais** is its NixOS edition and *
 
 **`steelbore-version`** (`pkgs/steelbore-version/`, Rust) reports the running system: the version line `26.05.<date>.<rev> (Altair)`, `--pretty`, `--codename`, `--revision`/`--hash`, `--configuration-revision`, `--json`/`--fields`, `schema` and `describe`. It reads a version record that `modules/core/identity.nix` writes to `/run/current-system/sw/share/steelbore/version.json` (not `/etc`, which bubblewrap sandboxes hide), so the binary does not rebuild on a nixpkgs bump. Invoked as `nixos-version` (a symlink in the same package) it reproduces NixOS's output contract byte for byte, with the Steelbore OS codename; upstream's script is switched off (`system.tools.nixos-version.enable = false`, CONSTRAINTS.md #47).
 
-**os-release as rendered** (`environment.etc."os-release".text` on `bravais-thinkpad`, evaluated 2026-10-09; `bravais-thinkpad-unstable` differs only where noted):
+**os-release as rendered** (`environment.etc."os-release".text` on `steelbore-thinkpad`, evaluated 2026-10-09; `steelbore-thinkpad-unstable` differs only where noted):
 
 | Field | Value | Set by |
 |-------|-------|--------|
@@ -879,9 +879,9 @@ toggles, machine-specific services, and the x86-64 march pin. Every other toggle
 `hosts/common.nix`. The only machine today is `thinkpad`.
 
 `flake.nix` names each machine once in its `hosts` attribute set and passes it to
-`mkBravais { host, channel }`, which yields `bravais-thinkpad` (stable 26.05),
-`bravais-thinkpad-unstable` (nixos-unstable) and the `bravais` alias. The alias points at the
-`bravais-thinkpad` attribute instead of calling `mkBravais` a second time, because a second
+`mkBravais { host, channel }`, which yields `steelbore-thinkpad` (stable 26.05),
+`steelbore-thinkpad-unstable` (nixos-unstable) and the `bravais` alias. The alias points at the
+`steelbore-thinkpad` attribute instead of calling `mkBravais` a second time, because a second
 identical call would evaluate the whole system again. **Adding a machine** means adding a
 `hosts/<machine>/` directory plus two output lines in `flake.nix`.
 
@@ -905,7 +905,7 @@ The user account is **not** defined here. It is defined once in `users/mj/defaul
 
 The machine is an Intel i7-8665U (Whiskey Lake). A T490s-specific comment in this file names the pointing stick.
 
-- **Hostname:** `bravais-thinkpad`
+- **Hostname:** `steelbore-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.{android,audioLed,bluetooth,fingerprint,intel}.enable`
 - **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" ]`. This is per-machine because the device name is. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick (CONSTRAINTS.md #29)
 - **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = false; user = primaryUser; }` (disabled since 2026-10-02; when enabled, a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
@@ -2075,7 +2075,7 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
 user, never as root. In order: bump every flake input (authenticated with
 the `gh` token, never stored), garbage-collect keeping a week of generations,
-vacuum the journal, `nixos-rebuild switch --flake .#bravais-thinkpad`, and — only
+vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
 Flatpak update **detached**, because a full Flatpak refresh can take hours and
 must never block the switch. `preflight` wraps none of the tools it drives onto
@@ -2171,18 +2171,18 @@ the project procedures; `README.md`, `CONTRIBUTING.md` and `NOTICE.md` face user
 ```bash
 # Validate: real stable build + unstable eval + the cheap checks
 # (bare `nix flake check` builds both channels' closures, >10 min — CONSTRAINTS.md #17)
-nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
-nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'
+nix eval --raw '.#nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel.drvPath'
 nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'  # SPDX + niri KDL; seconds
 
 nix build .#<name>                                              # one in-tree package (after `git add -A`)
 nix flake show                                                  # list outputs
-nixos-rebuild dry-build --flake .#bravais-thinkpad
-nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace   # the pre-PR check
+nixos-rebuild dry-build --flake .#steelbore-thinkpad
+nixos-rebuild dry-build --flake .#steelbore-thinkpad-unstable --show-trace   # the pre-PR check
 
 # Switch — manual path
-sudo nixos-rebuild switch --flake .#bravais-thinkpad            # stable ThinkPad (v3)
-sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable   # nixos-unstable channel
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad            # stable ThinkPad (v3)
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad-unstable   # nixos-unstable channel
 sudo nixos-rebuild switch --flake .#bravais                     # alias → stable ThinkPad
 ```
 

@@ -27,7 +27,7 @@ use crate::output::{Level, Out};
 
 /// Where the flake lives and what host it builds.
 pub const FLAKE_DIR: &str = "/spacecraft-software/bravais";
-pub const HOST: &str = "bravais-thinkpad";
+pub const HOST: &str = "steelbore-thinkpad";
 
 /// The input `--skills-only` bumps.
 ///

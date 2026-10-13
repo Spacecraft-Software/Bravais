@@ -136,8 +136,8 @@ The following facts were confirmed by direct reading and anchor every verdict in
 @file{flake.nix} is 182 lines and already lean; @code{mkBravais} is a 57-line
 inline function (it does @emph{not} need extracting into @file{lib/}).
 @item
-The configuration outputs are @code{bravais-thinkpad},
-@code{bravais-thinkpad-unstable}, and the @code{bravais} alias.  There is
+The configuration outputs are @code{steelbore-thinkpad},
+@code{steelbore-thinkpad-unstable}, and the @code{bravais} alias.  There is
 @strong{no} @code{bravais-v1}@dots{}@code{v4} matrix; the x86-64 march level is
 @strong{pinned per host} (the ThinkPad's i7-8665U is @samp{v3}).
 @item
@@ -285,8 +285,8 @@ Low-risk, high-value changes applied in the same pass as this document
 @itemize @bullet
 @item
 Add @code{formatter}, @code{devShells}, and @code{checks} flake outputs, with
-the checks referencing the @emph{real} @code{bravais-thinkpad} and
-@code{bravais-thinkpad-unstable} configurations.
+the checks referencing the @emph{real} @code{steelbore-thinkpad} and
+@code{steelbore-thinkpad-unstable} configurations.
 @item
 De-duplicate the @code{mj} user account into a single owning module.
 @item
@@ -378,8 +378,8 @@ devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
 };
 
 checks.${system} = {
-  bravais-thinkpad          = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
-  bravais-thinkpad-unstable = self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
+  steelbore-thinkpad          = self.nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel;
+  steelbore-thinkpad-unstable = self.nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel;
 };
 @end verbatim
 

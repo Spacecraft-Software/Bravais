@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — full system rebuild for bravais-thinkpad.
+# Steelbore Bravais — full system rebuild for steelbore-thinkpad.
 #
 # A port of the Nushell `rebuild` command defined in users/mj/shell.nix, for use
 # from Bash (or any POSIX shell) — an agent's tool shell, a rescue TTY, a
@@ -21,7 +21,7 @@
 set -eu
 
 REPO=/spacecraft-software/bravais
-HOST=bravais-thinkpad
+HOST=steelbore-thinkpad
 MCP_REPO=/spacecraft-software/mcp-servers
 FLATPAK_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/flatpak-update.log"
 STAMP="$HOME/.cache/bravais-vendored-check"
@@ -44,7 +44,7 @@ dim()  { say "$C_DIM"  "$1"; }
 
 usage() {
     cat <<'USAGE'
-rebuild.sh — full system rebuild for bravais-thinkpad
+rebuild.sh — full system rebuild for steelbore-thinkpad
 
 Usage: scripts/rebuild.sh [OPTIONS]
 

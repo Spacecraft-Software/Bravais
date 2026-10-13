@@ -45,7 +45,7 @@ are maintainer estimates (§17.1), one tick per verified item.
 ## Identity values
 
 Stated once, in `lib/identity.nix`, and read by everything below. These are
-the values as built (os-release evaluated on `bravais-thinkpad`, 2026-10-09);
+the values as built (os-release evaluated on `steelbore-thinkpad`, 2026-10-09);
 the **Decisions** section records the maintainer's four answers.
 
 | Field (os-release)   | Value                                              | Source            |
@@ -134,8 +134,8 @@ override only feeds the Breeze theme it does not use).
       `distroName`/`distroId` on its own. *Superseded by D3:*
       `extraLSBReleaseArgs` now carries the codename too
 - [x] P-008 Eval gate before any switch:
-      `nix eval --raw '.#nixosConfigurations.bravais-thinkpad.config.environment.etc."os-release".text'`
-      shows every row of the Identity table; repeat for `bravais-thinkpad-unstable`.
+      `nix eval --raw '.#nixosConfigurations.steelbore-thinkpad.config.environment.etc."os-release".text'`
+      shows every row of the Identity table; repeat for `steelbore-thinkpad-unstable`.
       Then the two standing gates (stable toplevel build, unstable `drvPath`
       eval) and the REUSE check
 - [x] P-009 First switch, in order: P-004 marker confirmed → `preflight`
@@ -185,7 +185,7 @@ desktop "About" panels what they need beyond os-release.
       `UseOSReleaseVersion=true` so the codename shows*
 - [ ] P-017 `/etc/machine-info` (`PRETTY_HOSTNAME`, `CHASSIS=laptop`,
       `ICON_NAME`) via `environment.etc` so GNOME's "Device Name" and
-      `hostnamectl` present a titled host, not a bare `bravais-thinkpad`
+      `hostnamectl` present a titled host, not a bare `steelbore-thinkpad`
       (optional)
 - [ ] P-018 Fetch tools: `fastfetch` picks its logo by `ID` and will fall
       back to a generic mark once `ID=steelbore`; `macchina` (`telemetry`)

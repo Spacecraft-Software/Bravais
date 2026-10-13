@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The unstable channel is bumped.** The `nixpkgs-unstable`,
   `home-manager-unstable` and `antigravity-nix` inputs moved to their
   latest revisions.
+- **The ThinkPad is now `steelbore-thinkpad`.** The hostname and the flake
+  outputs are renamed from `bravais-thinkpad` (`.#steelbore-thinkpad`,
+  `.#steelbore-thinkpad-unstable`); the `.#bravais` alias is unchanged, and
+  `preflight`, `rebuild` and `scripts/rebuild.sh` target the new name.
 - **Antigravity and the unstable channel's Home Manager are bumped.** The
   `antigravity-nix` and `home-manager-unstable` inputs moved to their
   latest revisions.
