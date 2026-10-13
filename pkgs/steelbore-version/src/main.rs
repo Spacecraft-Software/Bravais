@@ -64,7 +64,7 @@ const ABOUT: &str = concat!(
         "  steelbore-version --revision         The nixpkgs commit (alias: --hash)\n",
         "  steelbore-version --json             Every field, in the standard envelope\n",
         "  steelbore-version --fields release,codename --json\n",
-        "  nixos-version --json                 Upstream NixOS's format, Steelbore codename\n",
+        "  nixos-version --json                 Upstream NixOS's format, ", env!("STEELBORE_OS_NAME"), " codename\n",
         "\n",
         "The version record is read from ", "/run/current-system/sw/share/steelbore/version.json", "\n",
         "(override with STEELBORE_VERSION_FILE). Invoked as nixos-version, this binary\n",
@@ -95,8 +95,9 @@ struct Cli {
     #[arg(long)]
     configuration_revision: bool,
 
-    /// Print the Steelbore OS release codename
-    #[arg(long)]
+    // The help text names the OS from lib/identity.nix, so it is built with
+    // `concat!` rather than written as a doc comment.
+    #[arg(long, help = concat!("Print the ", env!("STEELBORE_OS_NAME"), " release codename"))]
     codename: bool,
 
     /// Print the full name, as os-release `PRETTY_NAME`
@@ -168,11 +169,10 @@ fn run_steelbore(invocation: &[OsString]) -> u8 {
         Ok(cli) => cli,
         Err(e) => return usage_error(&e, invocation, &command),
     };
-    let format = if cli.json {
-        Some(Format::Json)
-    } else {
-        cli.format
-    };
+    // `--json` is an alias of `--format json`, so the last of the two on the
+    // command line wins, here and on the usage-error path alike. clap has
+    // already validated the values; `explicit_format` only orders them.
+    let format = explicit_format(invocation);
     let color = if cli.no_color {
         ColorWhen::Never
     } else {
@@ -319,7 +319,10 @@ fn load_error(e: &LoadError) -> AppError {
         LoadError::Missing(_) => AppError::new(
             "no_record",
             Exit::NotFound,
-            format!("{e}; a Steelbore OS rebuild installs it (or set {PATH_ENV} to read another)"),
+            format!(
+                "{e}; a {} rebuild installs it (or set {PATH_ENV} to read another)",
+                env!("STEELBORE_OS_NAME")
+            ),
         )
         .with_hint("preflight"),
         LoadError::Unreadable(..) => {
@@ -436,7 +439,7 @@ fn describe() -> Value {
                 "selectors (one at most)": {
                     "--revision": "nixpkgs commit (alias --hash)",
                     "--configuration-revision": "system.configurationRevision",
-                    "--codename": "Steelbore OS release codename",
+                    "--codename": concat!(env!("STEELBORE_OS_NAME"), " release codename"),
                     "--pretty": "full name, as os-release PRETTY_NAME",
                 },
             },
@@ -446,7 +449,7 @@ fn describe() -> Value {
         "global_flags": ["--json", "--format", "--fields", "--color", "--no-color", "--verbose", "--quiet"],
         "fields": FIELDS,
         "aliases": {
-            COMPAT_NAME: "same binary; upstream NixOS output contract with the Steelbore OS codename",
+            COMPAT_NAME: concat!("same binary; upstream NixOS output contract with the ", env!("STEELBORE_OS_NAME"), " codename"),
         },
         "record": { "path": DEFAULT_PATH, "override_env": PATH_ENV, "schema": SCHEMA },
         "exit_codes": exit_codes(),
