@@ -79,7 +79,7 @@ The following facts were confirmed by direct reading and anchor every verdict in
 
 - `flake.nix` is 182 lines and already lean; `mkBravais` is a 57-line inline function (it does
   *not* need extracting into `lib/`).
-- The configuration outputs are `bravais-thinkpad`, `bravais-thinkpad-unstable`, and the `bravais`
+- The configuration outputs are `steelbore-thinkpad`, `steelbore-thinkpad-unstable`, and the `bravais`
   alias. There is **no** `bravais-v1`…`v4` matrix; the x86-64 march level is **pinned per host**
   (the ThinkPad's i7-8665U is `v3`).
 - The stable channel is `nixos-26.05`; `kimi-cli` is commented out, not an active input.
@@ -148,7 +148,7 @@ Low-risk, high-value changes applied in the same pass as this document (see
 [Quick Wins](#quick-wins) for the mechanics):
 
 - Add `formatter`, `devShells`, and `checks` flake outputs, with the checks referencing the *real*
-  `bravais-thinkpad` and `bravais-thinkpad-unstable` configurations.
+  `steelbore-thinkpad` and `steelbore-thinkpad-unstable` configurations.
 - De-duplicate the `mj` user account into a single owning module.
 - Remove the redundant Flatpak service declaration so Flatpak has one owner.
 
@@ -207,8 +207,8 @@ devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
 };
 
 checks.${system} = {
-  bravais-thinkpad          = self.nixosConfigurations.bravais-thinkpad.config.system.build.toplevel;
-  bravais-thinkpad-unstable = self.nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel;
+  steelbore-thinkpad          = self.nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel;
+  steelbore-thinkpad-unstable = self.nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel;
 };
 ```
 

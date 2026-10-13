@@ -45,7 +45,7 @@ in Phase E — eww is the bar on both WMs). Grep those when changing a family.
 4. **Verify** before declaring done:
    ```sh
    git add -A
-   nix build --no-link --print-out-paths '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'   # must evaluate+build
+   nix build --no-link --print-out-paths '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'   # must evaluate+build
    nix-store -qR <result> | grep -i nerd-fonts                                                              # new fonts in, old fonts out
    ```
    The build does **not** catch a wrong family name (it's just a string) — only step 1's `fc-scan` does.

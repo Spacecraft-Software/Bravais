@@ -5,27 +5,27 @@ Authoritative agent context (Standard §5.7). Every agent reads this file;
 
 ## What this is
 
-A flake-based NixOS configuration implementing **The Spacecraft Software Standard** (renamed from "Steelbore Standard" at Standard v1.7). The `mkBravais { host, channel }` function in `flake.nix` generates **per-machine nixosConfigurations**: `bravais-thinkpad` (stable 26.05) and `bravais-thinkpad-unstable` (nixos-unstable), plus a `bravais` alias → stable ThinkPad. The x86-64 march level is pinned inside each machine's host config (the ThinkPad's i7-8665U is x86-64-v3 — no AVX-512), not exploded into a v1–v4 matrix. Adding a machine = drop a `hosts/<machine>/` dir + two output lines in `flake.nix`.
+A flake-based NixOS configuration implementing **The Spacecraft Software Standard** (renamed from "Steelbore Standard" at Standard v1.7). The `mkBravais { host, channel }` function in `flake.nix` generates **per-machine nixosConfigurations**: `steelbore-thinkpad` (stable 26.05) and `steelbore-thinkpad-unstable` (nixos-unstable), plus a `bravais` alias → stable ThinkPad. The x86-64 march level is pinned inside each machine's host config (the ThinkPad's i7-8665U is x86-64-v3 — no AVX-512), not exploded into a v1–v4 matrix. Adding a machine = drop a `hosts/<machine>/` dir + two output lines in `flake.nix`.
 
 ## Build and test commands
 
 ```sh
 # `nix flake check` builds BOTH channels' full closures and exceeds 10 min —
 # not a usable gate. Use the toplevel build + unstable eval (constraint #17).
-nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
-nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'
+nix eval --raw '.#nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel.drvPath'
 nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'  # SPDX + niri KDL; seconds
 nix build .#<name>                                      # One in-tree pkg (after `git add -A`)
 nix flake show                                          # List outputs
-nixos-rebuild dry-build --flake .#bravais-thinkpad      # Dry run
-sudo nixos-rebuild switch --flake .#bravais-thinkpad    # Apply (stable ThinkPad, v3)
-sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable # Unstable channel
+nixos-rebuild dry-build --flake .#steelbore-thinkpad      # Dry run
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad    # Apply (stable ThinkPad, v3)
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad-unstable # Unstable channel
 sudo nixos-rebuild switch --flake .#bravais             # Alias → stable ThinkPad
 ```
 
 ## Rebuild
 
-Run as the user, never as root. **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point.** Its sequence: bump every flake input (a bare `nix flake update`, so a new input is tracked without touching the three implementations) with `gh auth token` passed to that one command as a `NIX_CONFIG` `extra-access-tokens` entry (never stored; the anonymous GitHub API limit is 60/h), GC keeping a week of generations, vacuum the journal, `nixos-rebuild switch --flake .#bravais-thinkpad`, then — only after a successful switch — `rsync --delete` the tree into `/etc/nixos` and start the Flatpak update **detached**, never inline (a full Flatpak refresh measured hours). `preflight --help` / `schema` / `describe` give the flag surface; `preflight disk report --json` is the free-space surface.
+Run as the user, never as root. **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point.** Its sequence: bump every flake input (a bare `nix flake update`, so a new input is tracked without touching the three implementations) with `gh auth token` passed to that one command as a `NIX_CONFIG` `extra-access-tokens` entry (never stored; the anonymous GitHub API limit is 60/h), GC keeping a week of generations, vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, then — only after a successful switch — `rsync --delete` the tree into `/etc/nixos` and start the Flatpak update **detached**, never inline (a full Flatpak refresh measured hours). `preflight --help` / `schema` / `describe` give the flag surface; `preflight disk report --json` is the free-space surface.
 
 The sequence has **three** implementations: `pkgs/preflight/` (supported), `users/mj/rebuild.nu` (the Nushell `rebuild` — one text serving both the `config.nu` `def` and the `rebuild` binary, so it carries its own helpers) and `scripts/rebuild.sh` (POSIX subset for any other shell; `nix run nixpkgs#shellcheck -- -s sh scripts/rebuild.sh` must stay at zero findings). **Change one and change all three.** The two older ones open with a deprecation question that aborts unless answered `y`; `--yes` skips it.
 
@@ -229,7 +229,7 @@ it. Both are tracked; `PRD.md` and `TODO.md` are tracked as well.
 
 - **License:** GPL-3.0-or-later
 - **Project posture:** personal hobby project. No warranty, no liability. PR acceptance is at the maintainer's sole discretion.
-- **Before opening a PR:** open an issue first for non-trivial changes. Test with a real `toplevel` build (see Build and test commands) — not `nix flake check`, which times out — plus `nixos-rebuild dry-build --flake .#bravais-thinkpad-unstable --show-trace`.
+- **Before opening a PR:** open an issue first for non-trivial changes. Test with a real `toplevel` build (see Build and test commands) — not `nix flake check`, which times out — plus `nixos-rebuild dry-build --flake .#steelbore-thinkpad-unstable --show-trace`.
 - **Commits:** Conventional Commits prefix (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`), subject ≤ 72 chars, imperative mood, body wrapped at 72 columns. **Signed & Verified — mandatory** (Standard §6.3): Ed25519 SSH commit signing (`commit.gpgsign=true`, `gpg.format=ssh`, signing key registered as a *Signing* key on GitHub). Do **not** use `git commit -s` (DCO sign-off) — that is a different mechanism and does not satisfy this requirement.
 - **Forking:** encouraged under GPL-3.0-or-later when goals diverge.
 

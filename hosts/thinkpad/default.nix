@@ -14,7 +14,7 @@
     ./hardware.nix
   ];
 
-  networking.hostName = "bravais-thinkpad";
+  networking.hostName = "steelbore-thinkpad";
 
   steelbore.hardware = {
     android.enable = true;

@@ -248,9 +248,9 @@ machine. Adding a machine = drop a `hosts/<machine>/` dir + two output lines in 
 
 | Configuration | Machine | Channel | March |
 |---------------|---------|---------|-------|
-| `bravais-thinkpad` | ThinkPad (i7-8665U, Whiskey Lake) | stable (26.05) | `v3` (AVX2; CPU has no AVX-512) |
-| `bravais-thinkpad-unstable` | ThinkPad | unstable (rolling) | `v3` |
-| `bravais` | alias → `bravais-thinkpad` (stable) | | |
+| `steelbore-thinkpad` | ThinkPad (i7-8665U, Whiskey Lake) | stable (26.05) | `v3` (AVX2; CPU has no AVX-512) |
+| `steelbore-thinkpad-unstable` | ThinkPad | unstable (rolling) | `v3` |
+| `bravais` | alias → `steelbore-thinkpad` (stable) | | |
 
 The march level is the `marchLevel` option in `modules/hardware/intel.nix` (enum `v1`–`v4`).
 Compiler flags are sourced from **CachyOS** (v1, v3, v4) and **ALHP** (v2 — the authoritative
@@ -320,8 +320,8 @@ maintainer's discretion; see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 ```bash
 # Validate: real stable build + unstable eval + the cheap checks
 # (bare `nix flake check` builds both channels' closures, >10 min — CONSTRAINTS.md #17)
-nix build --no-link '.#nixosConfigurations.bravais-thinkpad.config.system.build.toplevel'
-nix eval --raw '.#nixosConfigurations.bravais-thinkpad-unstable.config.system.build.toplevel.drvPath'
+nix build --no-link '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'
+nix eval --raw '.#nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel.drvPath'
 nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'
 
 # Show all flake outputs
@@ -337,10 +337,10 @@ nixos-rebuild build --flake .#bravais
 sudo nixos-rebuild switch --flake .#bravais
 
 # ThinkPad (stable 26.05, x86-64-v3)
-sudo nixos-rebuild switch --flake .#bravais-thinkpad
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad
 
 # ThinkPad on the unstable channel (bleeding-edge packages)
-sudo nixos-rebuild switch --flake .#bravais-thinkpad-unstable
+sudo nixos-rebuild switch --flake .#steelbore-thinkpad-unstable
 ```
 
 ## Documentation

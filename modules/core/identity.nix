@@ -80,7 +80,7 @@ in
     # upstream (nixos/modules/misc/version.nix): settable but undocumented,
     # so a nixpkgs bump could rename or drop them without a release note.
     # The regression check is evaluating BOTH channels' os-release
-    # (bravais-thinkpad and bravais-thinkpad-unstable) after every bump.
+    # (steelbore-thinkpad and steelbore-thinkpad-unstable) after every bump.
     distroName = id.name;
     distroId = id.id; # ≠ "nixos", so upstream emits ID_LIKE=nixos (D1)
     vendorName = id.vendor;
