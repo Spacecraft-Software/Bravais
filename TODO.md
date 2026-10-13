@@ -719,6 +719,17 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [ ] Decide whether KInfoCenter shows the codename
       (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
 
+## Out-of-band AI tool updates (2026-10-13)
+
+- [✓] `preflight --update-ai-tools` runs each out-of-band AI tool's own
+      updater (`pkgs/preflight/src/ai_tools.rs`); `--full-update` implies it
+- [ ] Run it for real once and record its cost in `docs/rebuild.md`
+- [ ] Restore the npm globals: `~/.npm-packages/lib/node_modules` is gone, so
+      `gemini`, `openclaude`, `pi`, `task-master`, `deepcode`, `bailian` and
+      `ark-helper` are dangling links (`npm update --global` has nothing to do)
+- [ ] Repair the `kimi-cli` uv tool (`uv tool install kimi-cli --reinstall`);
+      `uv tool list` reports its environment missing
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.

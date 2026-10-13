@@ -24,6 +24,7 @@
 // is no allocation hot path to speed up, and the allocator would be pure
 // closure weight on a tool whose whole job is to run other programs.
 
+mod ai_tools;
 mod disk;
 mod output;
 mod steps;
@@ -59,8 +60,9 @@ const ABOUT: &str = concat!(
         "  preflight                     Full rebuild: update, switch, mirror, report\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
-        "  preflight --update-all        Also bump the vendored pins (alias: --full-update)\n",
+        "  preflight --update-all        Also bump the vendored pins and AI tools (alias: --full-update)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
+        "  preflight --update-ai-tools   Also run the out-of-band AI tools' updaters (claude, codex, …)\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
@@ -110,7 +112,7 @@ struct Cli {
     #[arg(long)]
     no_update: bool,
 
-    /// Update everything: every flake input (as always) plus the vendored pins; implies --update-vendored
+    /// Update everything: every flake input (as always), the vendored pins and the out-of-band AI tools; implies --update-vendored and --update-ai-tools
     // `--full-update` is the spelling people reach for. Without the alias,
     // clap's did-you-mean answered it with `--no-update` -- the opposite
     // request, which a user following the tip would have run.
@@ -120,6 +122,10 @@ struct Cli {
     /// Also bump the version+hash-pinned upstream binaries (pkgs/update-vendored.nu)
     #[arg(long, conflicts_with = "skills_only")]
     update_vendored: bool,
+
+    /// Also run the self-updaters of the AI tools installed outside Nix (claude update, opencode upgrade, …)
+    #[arg(long, conflicts_with = "skills_only")]
+    update_ai_tools: bool,
 
     /// Skip garbage collection and journal vacuum
     #[arg(long)]
@@ -212,14 +218,17 @@ fn main() -> std::process::ExitCode {
     std::process::ExitCode::from(code as u8)
 }
 
-fn cmd_run(out: Out, cli: &Cli) -> i32 {
-    let opts = steps::Options {
+/// The run's options as the flags select them.
+const fn options(cli: &Cli) -> steps::Options {
+    steps::Options {
         dry: cli.dry,
         no_update: cli.no_update,
         // "Update everything" has to include the pins `nix flake update`
         // cannot move, or it silently leaves the stalest things in the tree
         // behind -- exactly what a user reaching for --update-all wants gone.
         update_vendored: cli.update_vendored || cli.update_all,
+        // The same for the AI tools outside Nix, which no rebuild reaches.
+        update_ai_tools: cli.update_ai_tools || cli.update_all,
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
@@ -228,8 +237,11 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
         gc_all: cli.gc_all,
         journal_days: cli.journal_days,
         mcp_deploy: cli.mcp_deploy,
-    };
-    let (report, switched) = steps::run(out, opts);
+    }
+}
+
+fn cmd_run(out: Out, cli: &Cli) -> i32 {
+    let (report, switched) = steps::run(out, options(cli));
 
     let human = String::new(); // the sequence narrates on stderr as it goes
     out.emit("preflight", &report, cli.dry, &human);
@@ -315,8 +327,9 @@ fn cmd_schema(out: Out) -> i32 {
                 "flags": {
                     "--dry": "dry-build; make no changes",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored; conflicts with --no-update and --skills-only; alias --full-update",
+                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored and --update-ai-tools; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
+                    "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 600 s; conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
@@ -361,11 +374,34 @@ fn cmd_describe(out: Out) -> i32 {
             "disk-report",
             "disk-reclaim",
         ],
-        "external_tools": ["nixos-rebuild", "nix", "sudo", "rsync", "vacuum", "gitway-add", "mcpctl", "flatpak", "nu", "git"],
+        "external_tools": external_tools(),
+        "ai_tools": ai_tools::TOOLS.iter().map(ai_tools::Tool::command_line).collect::<Vec<_>>(),
     });
     let human = format!("{manifest:#}\n");
     out.emit("preflight describe", &manifest, false, &human);
     Exit::Success as i32
+}
+
+/// Every program preflight runs, the AI tools' updaters included.
+fn external_tools() -> Vec<&'static str> {
+    let mut tools = vec![
+        "nixos-rebuild",
+        "nix",
+        "sudo",
+        "rsync",
+        "vacuum",
+        "gitway-add",
+        "mcpctl",
+        "flatpak",
+        "nu",
+        "git",
+    ];
+    for t in ai_tools::TOOLS {
+        if !tools.contains(&t.program) {
+            tools.push(t.program);
+        }
+    }
+    tools
 }
 
 #[cfg(test)]
@@ -384,6 +420,29 @@ mod tests {
     fn full_update_is_an_alias_for_update_all() {
         let cli = Cli::try_parse_from(["preflight", "--full-update"]);
         assert!(cli.is_ok_and(|c| c.update_all));
+    }
+
+    #[test]
+    fn full_update_implies_both_extra_update_steps() {
+        let opts = Cli::try_parse_from(["preflight", "--full-update"]).map(|c| options(&c));
+        assert!(opts.is_ok_and(|o| o.update_vendored && o.update_ai_tools));
+    }
+
+    #[test]
+    fn update_ai_tools_alone_leaves_the_vendored_pins() {
+        let opts = Cli::try_parse_from(["preflight", "--update-ai-tools"]).map(|c| options(&c));
+        assert!(opts.is_ok_and(|o| o.update_ai_tools && !o.update_vendored));
+    }
+
+    #[test]
+    fn a_plain_run_updates_no_ai_tools() {
+        let opts = Cli::try_parse_from(["preflight"]).map(|c| options(&c));
+        assert!(opts.is_ok_and(|o| !o.update_ai_tools));
+    }
+
+    #[test]
+    fn update_ai_tools_conflicts_with_skills_only() {
+        assert!(Cli::try_parse_from(["preflight", "--update-ai-tools", "--skills-only"]).is_err());
     }
 
     #[test]

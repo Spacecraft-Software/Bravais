@@ -18,10 +18,12 @@
 // whose wall time is dominated by a single external build.
 
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
+use crate::ai_tools;
 use crate::disk;
 use crate::output::{Level, Out};
 
@@ -89,6 +91,9 @@ pub struct Options {
     /// Run `pkgs/update-vendored.nu` before the switch, bumping the
     /// `version` + `hash` pins that no flake update can move.
     pub update_vendored: bool,
+    /// Run each out-of-band AI tool's own updater after the switch
+    /// (`ai_tools::TOOLS`); nothing else in a rebuild reaches them.
+    pub update_ai_tools: bool,
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
@@ -148,6 +153,46 @@ impl Runner {
             Err(e) => {
                 self.record(name, Outcome::Failed, Some(e.to_string()));
                 false
+            }
+        }
+    }
+
+    /// [`Runner::run`] with a time limit: past `limit` the child is killed
+    /// and the step recorded as failed.
+    fn run_timed(&mut self, name: &'static str, cmd: &mut Command, limit: Duration) -> bool {
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                self.record(name, Outcome::Failed, Some(e.to_string()));
+                return false;
+            }
+        };
+        let start = Instant::now();
+        loop {
+            match child.try_wait() {
+                Ok(Some(s)) if s.success() => {
+                    self.record(name, Outcome::Ok, None);
+                    return true;
+                }
+                Ok(Some(s)) => {
+                    self.record(name, Outcome::Failed, Some(format!("exited {s}")));
+                    return false;
+                }
+                Ok(None) if start.elapsed() >= limit => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    self.record(
+                        name,
+                        Outcome::Failed,
+                        Some(format!("timed out after {} s; killed", limit.as_secs())),
+                    );
+                    return false;
+                }
+                Ok(None) => std::thread::sleep(ai_tools::POLL),
+                Err(e) => {
+                    self.record(name, Outcome::Failed, Some(e.to_string()));
+                    return false;
+                }
             }
         }
     }
@@ -261,21 +306,7 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     }
     let switched = r.run("nixos-rebuild", &mut cmd);
 
-    // --- postflight ------------------------------------------------------
-    if switched && !opts.dry && !opts.skills_only {
-        mirror_etc(&mut r);
-        mcpctl(&mut r, opts.mcp_deploy);
-    }
-
-    if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
-        flatpak_detached(&mut r);
-    } else if opts.no_flatpak {
-        r.record(
-            "flatpak-update",
-            Outcome::Skipped,
-            Some("--no-flatpak".into()),
-        );
-    }
+    postflight(&mut r, opts, switched);
 
     let after = if opts.dry {
         None
@@ -299,6 +330,30 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         },
         switched,
     )
+}
+
+/// Everything after the switch except the closing disk report.
+fn postflight(r: &mut Runner, opts: Options, switched: bool) {
+    if switched && !opts.dry && !opts.skills_only {
+        mirror_etc(r);
+        mcpctl(r, opts.mcp_deploy);
+    }
+
+    if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
+        flatpak_detached(r);
+    } else if opts.no_flatpak {
+        r.record(
+            "flatpak-update",
+            Outcome::Skipped,
+            Some("--no-flatpak".into()),
+        );
+    }
+
+    // Not gated on `switched`: these tools live outside the system closure,
+    // so a failed switch is no reason to leave them stale.
+    if opts.update_ai_tools {
+        update_ai_tools(r, opts.dry);
+    }
 }
 
 /// Reclaim on request, or unasked when the disk is low enough that the switch
@@ -435,6 +490,50 @@ fn changed_vendored_files() -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Run every installed AI tool's own updater, one at a time.
+///
+/// Serial on purpose: each is a download that prints its own progress, and
+/// interleaving a dozen of those on one terminal would make every one of them
+/// unreadable to save a minute or two. The updater's stdout goes to OUR stderr,
+/// as in `update_vendored`, so `--json` keeps one payload on stdout; its stdin
+/// is null so that no prompt can hang the run (see `ai_tools::TOOLS`). A
+/// failure is recorded and the next tool still runs.
+fn update_ai_tools(r: &mut Runner, dry: bool) {
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    for tool in ai_tools::TOOLS {
+        let Some(bin) = ai_tools::resolve(tool.program, &path) else {
+            r.record(tool.step, Outcome::Skipped, Some("not installed".into()));
+            continue;
+        };
+        if tool.kind == ai_tools::Kind::SelfUpdater && ai_tools::in_nix_store(&bin) {
+            r.record(
+                tool.step,
+                Outcome::Skipped,
+                Some(format!(
+                    "{} is Nix-managed; it updates with the flake",
+                    tool.program
+                )),
+            );
+            continue;
+        }
+        if dry {
+            r.record(
+                tool.step,
+                Outcome::Skipped,
+                Some(format!("dry run; would run: {}", tool.command_line())),
+            );
+            continue;
+        }
+        r.out
+            .say(Level::Info, &format!("running: {}", tool.command_line()));
+        let mut cmd = Command::new(&bin);
+        cmd.args(tool.args)
+            .stdin(Stdio::null())
+            .stdout(std::io::stderr());
+        r.run_timed(tool.step, &mut cmd, ai_tools::TIMEOUT);
+    }
 }
 
 /// Mirror the working tree into /etc/nixos.
