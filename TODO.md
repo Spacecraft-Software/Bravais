@@ -751,16 +751,16 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 |-------|--------|----------|
 | 1. Foundation | Complete | 14/14 |
 | 2. Core Modules | Complete | 31/31 |
-| 3. Theme Engine | Complete | 8/8 |
+| 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
 | 5. Desktop Environments | Complete | 45/45 |
 | 6. Package Modules | In Progress | 134/141 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
-| 10. Testing | In Progress | 13/21 |
+| 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **306/321** |
+| **Total** | **95%** | **307/323** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and
