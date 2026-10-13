@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **mjsh's prompt matches Nushell's.** mjsh now draws its prompt from the
+  same Starship config as Nushell and Ion (the powerline prompt that follows
+  `theme set`), instead of Operator's minimal preset. Its
+  `~/.config/mjsh/config.toml` is now managed by Home Manager; the
+  hand-written file is moved aside as `config.toml.backup`.
 - **The unstable channel is bumped.** The `nixpkgs-unstable`,
   `home-manager-unstable` and `antigravity-nix` inputs moved to their
   latest revisions.

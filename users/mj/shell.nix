@@ -1005,5 +1005,31 @@ in
       alias disk-telemetry = yazi
       alias edit = ${termEditor}
     '';
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MJSH — Operator's shell (the login shell; binary out-of-band, see
+    # users/mj/default.nix). Its prompt renders through the SAME starship.toml
+    # as Nushell and Ion (programs.starship above), so the three prompts are
+    # one preset and follow `theme set` together. Not Operator's own
+    # share/mjsh/starship/<slug>.toml presets: those are a different, minimal
+    # layout. Starship's `character` module is mjsh's prompt indicator.
+    # ═══════════════════════════════════════════════════════════════════════════
+    "mjsh/config.toml".source = (pkgs.formats.toml { }).generate "mjsh-config.toml" {
+      shell = {
+        prompt = {
+          engine = "starship";
+          starship_config = "${config.xdg.configHome}/starship.toml";
+        };
+        # External programs' arguments; each call is a recorded spawn
+        # decision, bounded by mjsh's external_timeout_ms.
+        completion.external = {
+          command = "carapace";
+          args = [
+            "{cmd}"
+            "nushell"
+          ];
+        };
+      };
+    };
   };
 }
