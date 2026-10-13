@@ -31,7 +31,8 @@ rustPlatform.buildRustPackage {
   # there is nothing for pkg-config to find.
 
   # The tools preflight drives -- nixos-rebuild, nix, sudo, rsync, vacuum,
-  # gitway-add, mcpctl, flatpak -- are deliberately NOT wrapped onto PATH.
+  # gitway-add, mcpctl, flatpak, and the AI tools' own updaters
+  # (src/ai_tools.rs) -- are deliberately NOT wrapped onto PATH.
   # Every one is expected to be the user's own, resolved at run time: pinning
   # them into a store closure here would freeze `vacuum` and `mcpctl` at
   # whatever revision this derivation last built, which is exactly the drift the

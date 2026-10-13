@@ -719,6 +719,22 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [ ] Decide whether KInfoCenter shows the codename
       (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
 
+## Out-of-band AI tool updates (2026-10-13)
+
+- [✓] `preflight --update-ai-tools` runs each out-of-band AI tool's own
+      updater (`pkgs/preflight/src/ai_tools.rs`); `--full-update` implies it
+- [✓] First live run (2026-10-13): kilo, mimo, kimi and qwen moved to npm
+      globals (their own updaters failed); the cap went from 10 to 30 minutes
+- [ ] Restore the other npm globals: `gemini`, `openclaude`, `pi`,
+      `task-master`, `deepcode`, `bailian` and `ark-helper` are dangling links
+      (their `~/.npm-packages/lib/node_modules` entries are gone)
+- [✓] `cursor-agent update` failed `[unauthenticated]`; fixed by `cursor-agent login`
+- [✓] OpenCode CLI moved to 2.x (`opencode upgrade --major`, 2026-10-13; npm
+      `@opencode/cli`, not `opencode-ai`); `opencode upgrade` tracks 2.x from here
+- [ ] OpenCode Desktop has no 2.x build yet (no npm package, the update API
+      has no desktop artifact); `pkgs/opencode-desktop` stays on 1.x until one ships
+- [✓] Removed the broken `kimi-cli` uv tool (superseded by Kimi Code from npm)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.

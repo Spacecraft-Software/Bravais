@@ -25,7 +25,7 @@ npm build is broken in nixpkgs and unfixable via overlay. Upstream's `package-lo
 
 ### 4. Out-of-band CLIs: claude-code, grok-cli, mimocode, qwen-code
 
-All installed outside Nix and self-updating. `claude-code` and `grok-cli` live in `~/.local/bin/`; `mimocode` in `~/.mimocode/bin/`; `qwen-code` binary in `~/.local/lib/qwen-code/bin/` (with a thin wrapper at `~/.local/bin/qwen`). The `claude-code` entry in `modules/packages/ai.nix` stays commented out; `unstablePkgs.claude-code` is the re-enable path. Don't move these into Nix without a concrete reason — their release cadence outpaces nixpkgs-unstable pickup.
+All installed outside Nix. `claude-code` and `grok-cli` live in `~/.local/bin/` and update themselves (`claude update`, `grok update`). `mimocode` and `qwen-code` were curl installs (`~/.mimocode/bin/`, `~/.local/lib/qwen-code/` behind a `~/.local/bin/qwen` wrapper) until 2026-10-13, when their own updaters proved unable to update those installs (`mimo upgrade`: "unsupported update channel: curl"; `qwen update`: registry error); they are now npm globals in `~/.npm-packages` (`@mimo-ai/cli`, `@qwen-code/qwen-code`), updated by `npm update --global`. Kilo and Kimi Code moved the same way for the same reason. `preflight --update-ai-tools` runs every one of these updaters (`pkgs/preflight/src/ai_tools.rs`). The `claude-code` entry in `modules/packages/ai.nix` stays commented out; `unstablePkgs.claude-code` is the re-enable path. Don't move these into Nix without a concrete reason — their release cadence outpaces nixpkgs-unstable pickup.
 
 ### 5. Stable/unstable package-name splits
 

@@ -143,12 +143,10 @@ let
   outOfBandDirs = [
     ".local/bin"
     ".cargo/bin"
-    ".kimi-code/bin"
+    # npm globals: kilo, mimo, kimi and qwen live here since 2026-10-13
+    # (their own install dirs are gone), plus gemini and friends.
     ".npm-packages/bin"
     ".opencode/bin"
-    ".kilo/bin"
-    ".mimocode/bin"
-    ".local/lib/qwen-code/bin"
   ];
   # POSIX-ish colon chain ($HOME/d1:$HOME/d2…) — bash and Ion share it.
   posixPathAppend = lib.concatMapStringsSep ":" (d: "$HOME/" + d) outOfBandDirs;

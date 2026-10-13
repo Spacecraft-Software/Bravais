@@ -46,6 +46,7 @@ One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whis
 - **Change a default app** — `app set <role> <slug>` rewrites `default-apps.nix` (§2.6, §16.3).
 - **Sync agent skills** — `skills-sync` moves the skill pointer ahead of a rebuild; follow with `nu pkgs/sync-skills.nu` (§16.2).
 - **Bump vendored binaries** — `nu pkgs/update-vendored.nu` or `preflight --update-vendored`; never by hand (§16.4).
+- **Update the AI tools installed outside Nix** — `preflight --update-ai-tools` runs each one's own updater (`claude update`, `opencode upgrade`, …); `--full-update` includes it (§16.1).
 - **Add a package** — the matching `modules/packages/*.nix`, Rust preferred, with a language comment; then update this PRD's inventory and `TODO.md` (§11).
 
 ### 1.4 Non-Goals
@@ -1652,7 +1653,8 @@ their own modules.
   kilocode-cli is not in nixpkgs. The `task-master` npx wrapper is commented out too
   (CONSTRAINTS.md #3). `mcp-nixos` is disabled because fastmcp's tests hang in the sandbox.
 - **Out-of-band:** claude-code, grok-cli, mimocode and qwen-code are installed outside Nix and
-  self-update (CONSTRAINTS.md #4); `unstablePkgs.claude-code` stays commented out as the
+  self-update (CONSTRAINTS.md #4); `preflight --update-ai-tools` runs their updaters, and
+  those of the other out-of-band AI CLIs (§16.1). `unstablePkgs.claude-code` stays commented out as the
   re-enable path.
 - **Local models:** Ollama runs as a service from `modules/services/ollama.nix` (official
   prebuilt, pinned in `pkgs/ollama/`). Its GUI client Alpaca is a Flatpak (§11.10) pointed at
@@ -2080,7 +2082,9 @@ the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
 Flatpak update **detached**, because a full Flatpak refresh can take hours and
-must never block the switch. `preflight` wraps none of the tools it drives onto
+must never block the switch. `--update-ai-tools` (implied by `--full-update`)
+then runs the self-updater of every AI tool installed outside Nix, one at a
+time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. `preflight` wraps none of the tools it drives onto
 PATH, so they are never frozen in its closure (same reasoning as
 CONSTRAINTS.md #23).
 
