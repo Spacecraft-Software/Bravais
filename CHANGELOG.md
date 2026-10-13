@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **KDE Plasma's loading screen plays the same animation** after you log in
   to Plasma, in place of the Breeze splash. Picking another splash in System
   Settings lasts until the next rebuild.
+- **Dependencies bumped:** `nixpkgs`, `engram`, `nix-flatpak` and `pathfinder`
+  flake inputs, and the Claude Desktop, Codex Desktop, GitHub Copilot app,
+  Goose Desktop, Ollama and OpenCode Desktop vendored packages.
 - **mjsh's prompt matches Nushell's.** mjsh now draws its prompt from the
   same Starship config as Nushell and Ion (the powerline prompt that follows
   `theme set`), instead of Operator's minimal preset. Its
