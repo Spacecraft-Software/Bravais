@@ -97,7 +97,12 @@ in
     # in this RON file at ~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom.
     # The COSMIC 1.0-alpha schema supports multiple bindings mapped to the
     # same action, so we ship pairs (Ctrl+Space + Super+Space → input-source
-    # switch; Super+Return + Super+T → terminal) here. Note: home-manager
+    # switch; Super+Return + Super+T → terminal) here. Super+Shift+C runs
+    # steelbore-caffeine, matching Niri, LeftWM and Plasma: on COSMIC it holds
+    # an org.freedesktop.ScreenSaver inhibit, the one cosmic-idle honours
+    # (modules/desktops/shared.nix). It cannot flip the Caffeine panel applet,
+    # which keeps its inhibit in its own process; either one keeps the
+    # machine awake. COSMIC binds nothing to Super+Shift+C by default. Note: home-manager
     # makes the file read-only, so future tweaks via the Settings UI silently
     # fail until the binding is also added/removed here.
     "cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom".text = ''
@@ -143,6 +148,13 @@ in
               ],
               key: "t",
           ): System(Terminal),
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "c",
+          ): Spawn("steelbore-caffeine"),
       }
     '';
 

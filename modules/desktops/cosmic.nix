@@ -93,10 +93,12 @@ in
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
     };
 
-    # Caffeine for COSMIC. Mod+Shift+C's `steelbore-caffeine` is a no-op here
-    # (it pauses swayidle / clears the X timers, and COSMIC runs neither), so
-    # keep-awake comes from a panel applet instead — add it once via Settings →
-    # Desktop → Panel → Configure panel applets → Caffeine.
+    # Caffeine for COSMIC: the clickable half. Super+Shift+C is the other
+    # half — steelbore-caffeine holding a ScreenSaver inhibit (bound in
+    # users/mj/desktop-theme.nix). The key cannot flip this applet, which keeps
+    # its inhibit in its own process; either one keeps the machine awake. Add
+    # the applet once via Settings → Desktop → Panel → Configure panel
+    # applets → Caffeine.
     #
     # This applet over the `cosmic` remote's com.github.codevardhan.caffeine-
     # applet: cosmic-idle only honours org.freedesktop.ScreenSaver inhibits,
