@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The Artcraft suite is installed as Flatpaks.** WordCraft, PhotoCraft,
+  VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft,
+  FigCraft, SoundCraft, DeckCraft, CADCraft and GridCraft come from each
+  app's official release bundle, pinned in `pkgs/artcraft/sources.nix`. The
+  weekly Flatpak update cannot update them; `nu pkgs/update-vendored.nu
+  artcraft` (or `preflight --update-vendored`) bumps them. They replace the
+  AppImages in `~/Applications`. The Artcraft Launcher is not installed,
+  because it installs apps itself, outside the declared list.
+- **Caffeine on Plasma and COSMIC.** `Meta+Shift+C` now toggles Caffeine
+  there too, as it already did on Niri and LeftWM. On Plasma the battery
+  applet lists it among the apps blocking sleep, though its own *Manually
+  Block Sleep and Screen Locking* checkbox does not change. The key is a
+  default, so you can rebind it in System Settings › Shortcuts. COSMIC also
+  gets the `cosmic-ext-applet-caffeine` panel applet; add it once in
+  Settings → Desktop → Panel → Configure panel applets. The applet and the
+  key are separate switches, and either keeps the machine awake.
 - **`preflight --update-ai-tools` updates the AI tools installed outside
   Nix.** It runs each tool's own updater in turn — `claude update`,
   `codex update`, `opencode upgrade`, and the same for Grok, Cursor Agent,

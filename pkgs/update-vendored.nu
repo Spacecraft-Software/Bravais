@@ -4,7 +4,7 @@
 #
 # Steelbore Bravais — vendored-binary updater (elegance plan 5.1).
 #
-# Nine packages pin upstream versions that `nix flake update` cannot bump;
+# These packages pin upstream versions that `nix flake update` cannot bump;
 # this script reads each upstream source of truth, rewrites version + hash
 # in place, and builds the result:
 #
@@ -17,13 +17,15 @@
 #   adguardvpn-cli         pkgs/adguardvpn-cli/package.nix         GitHub releases
 #   browseros              modules/packages/browsers.nix           GitHub releases
 #   obscura                pkgs/obscura/package.nix                GitHub releases
+#   codex-desktop          pkgs/codex-desktop/package.nix          blob ETag (see up-codex)
+#   artcraft               pkgs/artcraft/sources.nix               GitHub releases (13 apps)
 #
-# Eight of the nine vendor a prebuilt BINARY, so a bump is "swap the URL, hash
+# All but obscura vendor a prebuilt artifact, so a bump is "swap the URL, hash
 # the download". obscura is the exception: it is built from source and pins two
 # hashes, neither of them a release asset. See up-obscura.
 #
 # Usage (any directory inside the repo):
-#   nu pkgs/update-vendored.nu              # bump all nine + nix build each
+#   nu pkgs/update-vendored.nu              # bump all + nix build each
 #   nu pkgs/update-vendored.nu --check      # report only, change nothing
 #   nu pkgs/update-vendored.nu ollama       # single package
 #
@@ -313,12 +315,66 @@ def up-browseros [check: bool] {
   $result
 }
 
+# One Artcraft pin as it is laid out in pkgs/artcraft/sources.nix — the exact
+# text `rewrite` swaps, so it must match nixfmt's layout of that file.
+def artcraft-entry [app: string, version: string, hash: string]: nothing -> string {
+  $"  ($app) = {\n    version = \"($version)\";\n    hash = \"($hash)\";\n  };"
+}
+
+# The Artcraft suite (storytold): thirteen apps, one GitHub repo each, each
+# versioned on its own cadence, all pinned in one file. up-github cannot drive
+# it — `extract` reads only the first `version =` — so every entry is parsed
+# and rewritten by its app name. The suite reports as ONE summary row; its
+# `latest` column names what moved.
+#
+# No build attr: the bundles are not a flake package. prefetch-sri has already
+# downloaded and hashed each new asset, and the next system build installs it
+# (nix-flatpak reinstalls an app whose bundle hash changed).
+def up-artcraft [check: bool] {
+  let file = "pkgs/artcraft/sources.nix"
+  let pins = (
+    # `collect` first: a raw open is a stream, and `parse` would match each
+    # chunk alone — the pattern spans lines, so it would find nothing.
+    open --raw $file
+    | collect
+    | parse -r '(?m)^  (?<app>[a-z]+) = \{\n    version = "(?<version>[^"]+)";\n    hash = "(?<hash>sha256-[^"]+)";'
+  )
+  if ($pins | is-empty) {
+    error make {msg: $"no pins parsed from ($file) — layout changed?"}
+  }
+  let stale = (
+    $pins
+    | each { |p| $p | insert latest (github-latest $"storytold/($p.app)") }
+    | where { |p| $p.latest != $p.version }
+  )
+  let current = $"($pins | length) apps"
+  if ($stale | is-empty) {
+    return {package: "artcraft" current: $current latest: $current action: "up to date"}
+  }
+  let moved = ($stale | each { |p| $"($p.app) ($p.latest)" } | str join ", ")
+  if $check {
+    return {package: "artcraft" current: $current latest: $moved action: "update available"}
+  }
+  rewrite $file (
+    $stale | each { |p|
+      let url = $"https://github.com/storytold/($p.app)/releases/download/v($p.latest)/($p.app)-($p.latest)-linux-x86_64.flatpak"
+      {
+        from: (artcraft-entry $p.app $p.version $p.hash)
+        to: (artcraft-entry $p.app $p.latest (prefetch-sri $url))
+      }
+    }
+  )
+  print "artcraft: updated (installed at next rebuild — not a flake package)"
+  {package: "artcraft" current: $current latest: $moved action: "updated"}
+}
+
 def main [package?: string, --check] {
   cd (git rev-parse --show-toplevel | str trim)
   let known = [
     "claude-desktop" "chrome-remote-desktop" "ollama"
     "goose-desktop" "opencode-desktop" "github-copilot-app"
     "adguardvpn-cli" "browseros" "obscura" "codex-desktop"
+    "artcraft"
   ]
   let targets = if $package == null {
     $known
@@ -361,6 +417,8 @@ def main [package?: string, --check] {
       "browseros" => (up-browseros $check)
       # Source-built, two hashes, no release asset — see up-obscura.
       "obscura" => (up-obscura $check)
+      # Thirteen apps in one pin file — see up-artcraft.
+      "artcraft" => (up-artcraft $check)
     }
     } catch {|err|
       {package: $t, current: "?", latest: "?", action: $"error: ($err.msg)"}

@@ -6,7 +6,8 @@
 # config. First occupants: the dunst notification theme (dunst is spawned by
 # Niri's spawn-at-startup AND LeftWM's session script) and the steelbore-*
 # shell wrappers that both sessions' key binds call (rfkill toggles, caffeine,
-# keyboard-backlight cycle, X11 OSD for LeftWM).
+# keyboard-backlight cycle, X11 OSD for LeftWM). steelbore-caffeine alone is
+# also installed for Plasma and COSMIC, which bind the same key to it.
 {
   config,
   lib,
@@ -98,16 +99,28 @@ let
     fi
   '';
 
-  # Caffeine — keep the machine awake on demand. Under Niri it toggles the
-  # swayidle idle daemon (auto lock + screen-off, configured in
-  # users/mj/niri.nix): SIGSTOP pauses swayidle so its idle timers stop
-  # advancing; SIGCONT resumes normal idle behaviour. Under LeftWM, where
-  # xss-lock is the idle locker, steelbore-x-idle clears or restores the X
-  # server's screensaver and DPMS timers instead. State tracked by a
-  # runtime-dir flag; dunstify reports the new state. Bound to Mod+Shift+C
-  # in both the Niri and the LeftWM config.
+  # Caffeine — keep the machine awake on demand. One toggle for every
+  # session, bound to Mod+Shift+C in Niri, LeftWM, Plasma and COSMIC; each
+  # session has its own idle owner, so the toggle works through all of them:
+  #   - Niri: swayidle (auto lock + screen-off, users/mj/niri.nix). SIGSTOP
+  #     pauses it so its idle timers stop advancing; SIGCONT resumes them.
+  #   - LeftWM: xss-lock is the idle locker, so steelbore-x-idle clears or
+  #     restores the X server's screensaver and DPMS timers.
+  #   - Plasma and COSMIC: neither runs swayidle or xss-lock. Instead
+  #     kde-inhibit holds an inhibition for as long as it lives, and turning
+  #     Caffeine off kills it. Plasma gets the PowerManagement and ScreenSaver
+  #     inhibits, the same pair its battery applet's manual block takes.
+  #     COSMIC gets only the ScreenSaver inhibit, the one cosmic-idle honours.
+  #     Each daemon drops an inhibit when its holder leaves the bus, so a
+  #     crashed holder cannot leave the machine stuck awake.
+  # This cannot flip the Plasma applet's checkbox or the COSMIC Caffeine
+  # applet: both keep their inhibit inside their own process and expose no
+  # control. Plasma lists this one under "applications blocking sleep".
+  # State is tracked by a runtime-dir flag; dunstify reports the new state
+  # (to dunst, or to Plasma's and COSMIC's own notification servers).
   caffeineToggle = pkgs.writeShellScriptBin "steelbore-caffeine" ''
     state="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.active"
+    holder="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.holder"
     # Re-applies the X timers for the new flag state; only where xss-lock
     # runs, i.e. a LeftWM session (Niri's Xwayland has no idle locker).
     apply_x() {
@@ -115,13 +128,33 @@ let
         ${xIdle}/bin/steelbore-x-idle
       fi
     }
+    # setsid gives the holder its own process group, so stopping it also
+    # stops the `sleep` it runs and nothing is left orphaned.
+    hold_start() {
+      case "''${XDG_CURRENT_DESKTOP:-}" in
+        *KDE*) what="--power --screenSaver" ;;
+        *COSMIC*) what="--screenSaver" ;;
+        *) return 0 ;;
+      esac
+      # shellcheck disable=SC2086 # $what is two flags on purpose
+      ${pkgs.util-linux}/bin/setsid         ${pkgs.kdePackages.kde-cli-tools}/bin/kde-inhibit $what         ${pkgs.coreutils}/bin/sleep infinity </dev/null >/dev/null 2>&1 &
+      echo "$!" > "$holder"
+    }
+    hold_stop() {
+      if [ -e "$holder" ]; then
+        kill -TERM -- "-$(cat "$holder")" 2>/dev/null || true
+        rm -f "$holder"
+      fi
+    }
     if [ -e "$state" ]; then
       ${pkgs.procps}/bin/pkill -CONT -x swayidle || true
+      hold_stop
       rm -f "$state"
       apply_x
       ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
     else
       ${pkgs.procps}/bin/pkill -STOP -x swayidle || true
+      hold_start
       : > "$state"
       apply_x
       ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-full "Caffeine on — staying awake"
@@ -503,81 +536,87 @@ let
   '';
 in
 {
-  config =
-    lib.mkIf (config.steelbore.desktops.leftwm.enable || config.steelbore.desktops.niri.enable)
-      {
-        # Dunst notification configuration
-        environment.etc."dunst/dunstrc".text = ''
-          # Steelbore Dunst Configuration
-          [global]
-          monitor = 0
-          follow = mouse
-          width = 350
-          height = 150
-          origin = top-right
-          offset = 10x40
+  config = lib.mkMerge [
+    # Caffeine is the one helper the desktop environments share with the bare
+    # WMs: Plasma and COSMIC bind Mod+Shift+C to it too (users/mj/plasma.nix,
+    # users/mj/desktop-theme.nix), so it must be on PATH when only they are on.
+    (lib.mkIf (config.steelbore.desktops.plasma.enable || config.steelbore.desktops.cosmic.enable) {
+      environment.systemPackages = [ caffeineToggle ];
+    })
+    (lib.mkIf (config.steelbore.desktops.leftwm.enable || config.steelbore.desktops.niri.enable) {
+      # Dunst notification configuration
+      environment.etc."dunst/dunstrc".text = ''
+        # Steelbore Dunst Configuration
+        [global]
+        monitor = 0
+        follow = mouse
+        width = 350
+        height = 150
+        origin = top-right
+        offset = 10x40
 
-          transparency = 5
-          padding = 16
-          horizontal_padding = 16
-          frame_width = 2
-          frame_color = "${steelborePalette.accent}"
-          separator_color = frame
+        transparency = 5
+        padding = 16
+        horizontal_padding = 16
+        frame_width = 2
+        frame_color = "${steelborePalette.accent}"
+        separator_color = frame
 
-          font = "Hack Nerd Font 12"
-          line_height = 0
-          markup = full
-          format = "<b>%s</b>\n%b"
-          alignment = left
+        font = "Hack Nerd Font 12"
+        line_height = 0
+        markup = full
+        format = "<b>%s</b>\n%b"
+        alignment = left
 
-          icon_position = left
-          max_icon_size = 48
+        icon_position = left
+        max_icon_size = 48
 
-          [urgency_low]
-          background = "${steelborePalette.background}"
-          foreground = "${steelborePalette.info}"
-          timeout = 5
+        [urgency_low]
+        background = "${steelborePalette.background}"
+        foreground = "${steelborePalette.info}"
+        timeout = 5
 
-          [urgency_normal]
-          background = "${steelborePalette.background}"
-          foreground = "${steelborePalette.foreground}"
-          timeout = 10
+        [urgency_normal]
+        background = "${steelborePalette.background}"
+        foreground = "${steelborePalette.foreground}"
+        timeout = 10
 
-          [urgency_critical]
-          background = "${steelborePalette.background}"
-          foreground = "${steelborePalette.error}"
-          frame_color = "${steelborePalette.error}"
-          timeout = 0
-        '';
+        [urgency_critical]
+        background = "${steelborePalette.background}"
+        foreground = "${steelborePalette.error}"
+        frame_color = "${steelborePalette.error}"
+        timeout = 0
+      '';
 
-        # Shared helper wrappers — installed for whichever bare WM(s)
-        # are enabled. Both Niri and LeftWM binds reference these by
-        # bare name (they land on PATH via environment.systemPackages).
-        environment.systemPackages = [
-          btState
-          btToggle
-          airplaneToggle
-          caffeineToggle
-          xIdle
-          kbdLightCycle
-          outputScale
-          osd
-          layoutState
-          keyringCheck
-          keyringUnlock
-          # Explicit on both sessions (already system-wide via core
-          # audio, but listed here for clarity — LeftWM binds need them).
-          pkgs.brightnessctl # C — display + keyboard backlight
-          pkgs.playerctl # MPRIS media control
-        ];
+      # Shared helper wrappers — installed for whichever bare WM(s)
+      # are enabled. Both Niri and LeftWM binds reference these by
+      # bare name (they land on PATH via environment.systemPackages).
+      environment.systemPackages = [
+        btState
+        btToggle
+        airplaneToggle
+        caffeineToggle
+        xIdle
+        kbdLightCycle
+        outputScale
+        osd
+        layoutState
+        keyringCheck
+        keyringUnlock
+        # Explicit on both sessions (already system-wide via core
+        # audio, but listed here for clarity — LeftWM binds need them).
+        pkgs.brightnessctl # C — display + keyboard backlight
+        pkgs.playerctl # MPRIS media control
+      ];
 
-        # brightnessctl udev rules make /sys/class/backlight (group
-        # `video`) and /sys/class/leds (group `input`) group-writable,
-        # so the display + keyboard backlight are controllable rootless.
-        # User `mj` is in both groups. swayosd-server's brightness
-        # backend (Niri) also relies on the backlight being
-        # `video`-writable. Moved here from niri.nix so LeftWM gets the
-        # same ACL.
-        services.udev.packages = [ pkgs.brightnessctl ];
-      };
+      # brightnessctl udev rules make /sys/class/backlight (group
+      # `video`) and /sys/class/leds (group `input`) group-writable,
+      # so the display + keyboard backlight are controllable rootless.
+      # User `mj` is in both groups. swayosd-server's brightness
+      # backend (Niri) also relies on the backlight being
+      # `video`-writable. Moved here from niri.nix so LeftWM gets the
+      # same ACL.
+      services.udev.packages = [ pkgs.brightnessctl ];
+    })
+  ];
 }

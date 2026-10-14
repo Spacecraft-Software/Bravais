@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — Home Manager: KDE Plasma date/time, layout shortcut, colour scheme
-# and splash screen
+# Steelbore Bravais — Home Manager: KDE Plasma date/time, layout and Caffeine
+# shortcuts, colour scheme and splash screen
 {
   config,
   lib,
@@ -42,9 +42,40 @@ let
       value.source = sch.path;
     }) themeAssets.kdeSchemes
   );
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Caffeine: Meta+Shift+C, the same bind as Niri, LeftWM and COSMIC
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Plasma has no shortcut for its battery applet's "Manually Block Sleep and
+  # Screen Locking" toggle. The checkbox lives in the applet's own QML, and
+  # neither PowerDevil nor the applet registers a global action for it. So
+  # the bind runs steelbore-caffeine, which takes the same two inhibits
+  # through a held kde-inhibit (modules/desktops/shared.nix). The applet's
+  # popup then lists it among the applications blocking sleep; the checkbox
+  # itself does not move.
+  #
+  # X-KDE-Shortcuts in a desktop file is how an application ships a default
+  # global shortcut. kglobalacceld's detectAppsWithShortcuts() finds it, but
+  # only through KApplicationTrader, i.e. among the applications/ entries, so
+  # the file goes there and not under kglobalaccel/ (that directory is read
+  # only for components kglobalshortcutsrc already names). NoDisplay keeps it
+  # out of every menu without hiding it from that scan; NotShowIn=KDE would.
+  # This is a DEFAULT, not a forced key, unlike the layout shortcut below: a
+  # rebind in System Settings › Shortcuts sticks. Read at login.
+  # Meta+Shift+C is unbound in stock Plasma.
+  caffeineShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Toggle Caffeine (keep awake)
+    Exec=steelbore-caffeine
+    Icon=caffeine-cup-full
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+Shift+C
+  '';
 in
 {
   xdg.dataFile = schemeFiles // {
+    "applications/steelbore-caffeine.desktop".text = caffeineShortcut;
     "plasma/look-and-feel/${ksplash.packageId}".source =
       "${ksplash}/share/plasma/look-and-feel/${ksplash.packageId}";
   };

@@ -4,6 +4,7 @@
   primaryUser,
   config,
   lib,
+  pkgs,
   steelborePalette,
   ...
 }:
@@ -91,6 +92,23 @@ in
       "org.freedesktop.impl.portal.ScreenCast" = [ "cosmic" ];
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
     };
+
+    # Caffeine for COSMIC: the clickable half. Super+Shift+C is the other
+    # half — steelbore-caffeine holding a ScreenSaver inhibit (bound in
+    # users/mj/desktop-theme.nix). The key cannot flip this applet, which keeps
+    # its inhibit in its own process; either one keeps the machine awake. Add
+    # the applet once via Settings → Desktop → Panel → Configure panel
+    # applets → Caffeine.
+    #
+    # This applet over the `cosmic` remote's com.github.codevardhan.caffeine-
+    # applet: cosmic-idle only honours org.freedesktop.ScreenSaver inhibits,
+    # which is what this one takes. The Flatpak takes a logind idle:sleep lock
+    # instead — that stops suspend but not cosmic-idle's screen-off and lock.
+    # Upstream is archived; its known gap is that each monitor's panel holds
+    # its own toggle state.
+    environment.systemPackages = [
+      pkgs.cosmic-ext-applet-caffeine # Rust -- keep-awake panel applet
+    ];
 
     # Steelbore-themed Builder overrides for cosmic-theme. cosmic-settings-daemon
     # watches these via inotify, so changes apply without logout. palette /

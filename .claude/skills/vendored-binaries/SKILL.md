@@ -1,16 +1,18 @@
 ---
 name: vendored-binaries
-description: How to bump the ten version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, codex-desktop, github-copilot-app, adguardvpn-cli, obscura, browseros). Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
+description: How to bump the ten version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, codex-desktop, github-copilot-app, adguardvpn-cli, obscura, browseros) plus the Artcraft Flatpak bundles. Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
 ---
 
 Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot
 touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`,
 `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in
-`pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). They are
+`pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). The
+thirteen Artcraft Flatpak bundles are pinned the same way in one file,
+`pkgs/artcraft/sources.nix` (target `artcraft`). They are
 **declarative, not self-updating** -- never bump one by hand.
 
 ```sh
-nu pkgs/update-vendored.nu              # bump all 10 + nix build each
+nu pkgs/update-vendored.nu              # bump all + nix build each
 nu pkgs/update-vendored.nu --check      # report only, change nothing
 nu pkgs/update-vendored.nu ollama       # single package
 ```
@@ -47,3 +49,11 @@ nu pkgs/update-vendored.nu ollama       # single package
   `installCheckPhase` runs `--version` under a scratch `HOME` (first run creates a
   data dir) to prove the static claim at build time.
 
+- **`artcraft` is thirteen pins in one file**, one per storytold app, each on its
+  own release cadence, so `up-github` (one `version =` per file) cannot drive it.
+  `up-artcraft` parses every entry by app name and rewrites only the stale ones;
+  the whole suite reports as one summary row whose `latest` column names what
+  moved. The file is read with `open --raw … | collect` -- without `collect`
+  the multi-line `parse -r` sees one stream chunk at a time and matches nothing.
+  There is no flake attr to build: nix-flatpak installs the bundle at the next
+  switch, and reinstalls an app whose bundle hash changed.

@@ -3,9 +3,39 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 
+let
+  # ── Artcraft suite (storytold) ───────────────────────────────────────────
+  # Not on Flathub and served from no signed remote: upstream ships each app
+  # as a single-file `.flatpak` bundle on its GitHub release. So the bundle is
+  # fetched into the store at a pinned version + hash (pkgs/artcraft/
+  # sources.nix) and installed with nix-flatpak's `bundle`. Its `sha256` is the
+  # pin's hash: when a bump changes it, nix-flatpak uninstalls the app and
+  # installs the new bundle. App data in ~/.var/app survives that.
+  #
+  # Two consequences of bundle delivery:
+  #   - The weekly `flatpak update` timer below cannot update these. A bundle
+  #     has no remote to update from, so a new release lands only via
+  #     `nu pkgs/update-vendored.nu artcraft` plus a rebuild.
+  #   - Each bundle is held twice, once as the fetched file in the store
+  #     (rooted by the system generation) and once installed (~0.65 GB each).
+  #
+  # Each bundle names its own org.freedesktop.Platform branch (the apps differ,
+  # and a bump can move one) and its runtime-repo, flathub, which supplies it.
+  # The Artcraft Launcher is left out on
+  # purpose: it installs and updates the apps itself, outside nix-flatpak.
+  artcraftBundles = lib.mapAttrsToList (app: pin: {
+    appId = "ai.storyteller.${app}";
+    bundle = "${pkgs.fetchurl {
+      url = "https://github.com/storytold/${app}/releases/download/v${pin.version}/${app}-${pin.version}-linux-x86_64.flatpak";
+      inherit (pin) hash;
+    }}";
+    sha256 = pin.hash;
+  }) (import ../../pkgs/artcraft/sources.nix);
+in
 {
   options.steelbore.packages.flatpak = {
     enable = lib.mkEnableOption "Flatpak application management";
@@ -381,7 +411,8 @@
       # { appId = "org.seul.crimson";                   origin = "flathub"; }  # Crimson Fields
       # { appId = "org.zdoom.UZDoom";                   origin = "flathub"; }
       # { appId = "rs.ruffle.Ruffle";                   origin = "flathub"; }
-    ];
+    ]
+    ++ artcraftBundles;
 
     # ── Keyring: Chromium credential backend ────────────────────────────────
     # Same root cause as the Nix-side wrappers in modules/packages/editors.nix:
