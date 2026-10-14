@@ -201,7 +201,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
-Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`).
+Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). The Artcraft suite's Flatpak bundles are pinned the same way, all thirteen in one file (`pkgs/artcraft/sources.nix`, updater target `artcraft`).
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only), or `preflight --update-vendored` to bump them as part of a rebuild. **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
 

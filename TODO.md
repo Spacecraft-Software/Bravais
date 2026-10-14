@@ -101,6 +101,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `steelbore.desktops.cosmic` option
 - [✓] Enable COSMIC DE, disable cosmic-greeter (use greetd)
+- [✓] Caffeine applet (`cosmic-ext-applet-caffeine`, nixpkgs) — `steelbore-caffeine` cannot reach cosmic-idle, which honours only `org.freedesktop.ScreenSaver` inhibits; the applet takes exactly that. Added to the panel by hand (Settings → Desktop → Panel)
 
 ### KDE Plasma 6 (`plasma.nix`)
 
@@ -336,6 +337,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Add io.github.jotd666.gods-deluxe (Gaming) — un-parked from the Retro / Classic block and moved to the active Gaming section, since it is in neither channel and so is a delivery-policy fallback rather than a nixpkgs duplicate
 - [✓] Add io.github.nwxnw.cosmic-ext-connected (Connected) and io.github.hepp3n.kdeconnect (KDE Connect for COSMIC), both from the `cosmic` remote — Connected has no network permission and front-ends a host daemon; the KDE Connect entry carries `shared=network` and so overlaps nixpkgs `kdePackages.kdeconnect-kde` (modules/desktops/plasma.nix)
 - [✓] Add grok-bot (Grok Bot desktop agent) — `pkgs/grok-bot/`, installed via `modules/packages/ai.nix`; not in nixpkgs so repackaged from the official `.deb`. Its two self-registered URL schemes (`grokbot`, `sand`) are declared in `users/mj/default-apps.nix` per constraint #30
+- [✓] Add the Artcraft suite (13 storytold apps, `ai.storyteller.*`) as Flatpak bundles — not on Flathub and no signed remote, so each GitHub-release `.flatpak` is fetched at a pin in `pkgs/artcraft/sources.nix` and installed with nix-flatpak's `bundle`; bumped by `nu pkgs/update-vendored.nu artcraft`. The Artcraft Launcher is left out (it installs apps itself)
 - [ ] Wire grok-bot into `pkgs/update-vendored.nu` once upstream publishes a discoverable release feed — today the URL carries an opaque build hash and must be refreshed by hand
 - [ ] Open KDE Connect ports 1714-1764/tcp+udp — neither phone-connectivity app can pair until then; `programs.kdeconnect.enable` (which carries the firewall rules) is not set anywhere, only the bare package is in systemPackages
 - [ ] Decide which KDE Connect daemon to keep — the nixpkgs one or the COSMIC Flatpak. Two daemons cannot both hold 1714-1764, and a sandboxed one writes its cache under `~/.var/app/` where Connected cannot read it
@@ -769,14 +771,14 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 | 2. Core Modules | Complete | 31/31 |
 | 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 45/45 |
-| 6. Package Modules | In Progress | 134/141 |
+| 5. Desktop Environments | Complete | 46/46 |
+| 6. Package Modules | In Progress | 135/142 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
 | 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **307/323** |
+| **Total** | **95%** | **309/325** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and

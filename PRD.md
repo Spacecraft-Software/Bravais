@@ -1107,6 +1107,8 @@ Requires `hardware.uinput.enable` plus `uinput` group membership (`input` alone 
 
 Fully Rust-based desktop from System76. The upstream module wires portals, dconf and D-Bus; this module adds only explicit portal routing (Screenshot/ScreenCast → `cosmic`, FileChooser → `gtk`) — without it, with GNOME and Plasma also enabled, requests could resolve to the wrong backend.
 
+**Caffeine:** `cosmic-ext-applet-caffeine` (nixpkgs) is installed system-wide and added to the panel by hand (Settings → Desktop → Panel → Configure panel applets). `Mod+Shift+C`'s `steelbore-caffeine` cannot help here — it pauses swayidle or clears the X timers, and COSMIC runs neither. cosmic-idle honours only `org.freedesktop.ScreenSaver` inhibits, which is what this applet takes; the `cosmic` remote's `com.github.codevardhan.caffeine-applet` takes a logind `idle:sleep` lock instead, which blocks suspend but not cosmic-idle's screen-off and lock.
+
 **Theming:** Home Manager writes cosmic-theme **Builder** overrides for Dark and Light from Standard §11.1 role tokens via `lib/palette.nix`'s converter: the active palette supplies its own polarity and its Standard §11.6.2 `counterpart` (Steelbore Modern → `steelbore-navywhite`) supplies the other, so both builders use registered, contrast-verified values and cannot drift from the palette; `cosmic-settings-daemon` applies them without logout. `auto_switch` is on for time-of-day dark/light; `is_dark` is deliberately **not** managed, because the daemon must be able to flip it and cannot write a read-only store symlink.
 
 ### 9.3 KDE Plasma 6 (Wayland)
@@ -1119,6 +1121,8 @@ Fully Rust-based desktop from System76. The upstream module wires portals, dconf
 - `services.displayManager.sddm.enable` / `sddm.wayland.enable = lib.mkDefault false` (greetd used)
 - `services.xserver.enable = true` (XWayland support)
 - `programs.ssh.askPassword = lib.mkForce …ksshaskpass` (avoids askpass conflicts when multiple desktop modules are enabled)
+
+**Caffeine:** built in, nothing installed — the Power and Battery applet's *Manually Block Sleep and Screen Locking* toggle. `kde-inhibit --power --screenSaver <command>` (kde-cli-tools) holds the same block for the life of one command.
 
 **KDE packages:**
 kdeconnect-kde, plasma-systemmonitor, filelight, kcalc, ark, kate, kwalletmanager, kwallet, pinentry-qt, krohnkite (KWin tiling script). `plasma-browser-integration` comes from the Plasma 6 module. Firefox (system Mozilla manifest) and the Flatpaks on Plasma's own list (Chrome among them) are registered by Plasma; `users/mj/browser-integration.nix` registers Brave, Edge and Opera through a relay that calls Plasma's `FlatpakIntegrator.Link` (bus permission in `modules/packages/flatpak.nix`), and BrowserOS directly. Tor Browser is left out on purpose. The KDE portal is registered by the Plasma 6 module itself; routing is `kde`, `gtk` with FileChooser → `kde`.
@@ -1728,7 +1732,7 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
 > `users/mj/apps.nix`) that keeps `/app/bin:/usr/bin` first on PATH so each entrypoint
 > resolves inside the sandbox.
 
-**Packages (36 declared; parked entries are commented out and not installed):**
+**Packages (49 declared — 36 by app ID, 13 Artcraft bundles; parked entries are commented out and not installed):**
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
@@ -1746,6 +1750,7 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
 | Terminals           | app.devsuite.Ptyxis (alongside the nixpkgs host install, §10.1; themed via shared host dconf) |
 | Productivity        | io.github.Qalculate (org.kde.yakuake removed — nixpkgs `kdePackages.yakuake`) |
 | AI                  | com.jeffser.Alpaca (GTK4 Ollama client — CONSTRAINTS.md #18) |
+| Creative (Artcraft) | ai.storyteller.{wordcraft, photocraft, vectorcraft, filmcraft, lightcraft, pdfcraft, effectcraft, designcraft, figcraft, soundcraft, deckcraft, cadcraft, gridcraft} — storytold's GitHub-release `.flatpak` **bundles**, not a remote: fetched at the pins in `pkgs/artcraft/sources.nix` and installed with nix-flatpak's `bundle`. The weekly update timer cannot reach them; `pkgs/update-vendored.nu artcraft` bumps them (§16.4). The Artcraft Launcher is excluded — it installs apps itself, outside nix-flatpak |
 | Gaming              | **io.github.lavenderdotpet.LibreQuake** and **io.github.jotd666.gods-deluxe** active — in neither channel, so Flatpak is the fallback, not a preference. Parked: com.heroicgameslauncher.hgl, com.usebottles.bottles, com.valvesoftware.Steam (never alongside `programs.steam`), info.beyondallreason.bar, net.openra.OpenRA, net.wz2100.wz2100, org.libretro.RetroArch, org.openttd.OpenTTD |
 | Retro / Classic     | All parked: com.dosbox.DOSBox, com.dosbox_x.DOSBox-X, com.play0ad.zeroad, com.remnantsoftheprecursors.ROTP, eu.jumplink.Learn6502, io.github.dosbox-staging, io.github.dman95.SASM, org.seul.crimson, org.zdoom.UZDoom, rs.ruffle.Ruffle — DOSBox and ZDoom ports ship from nixpkgs (§11.6a) |
 
@@ -2129,8 +2134,9 @@ skill.
 
 ### 16.4 Vendored Upstream Binaries
 
-Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot
-move. They are bumped only by `pkgs/update-vendored.nu` (or
+Ten packages, plus the thirteen Artcraft Flatpak bundles
+(`pkgs/artcraft/sources.nix`), pin an upstream `version` + `hash` that
+`nix flake update` cannot move. They are bumped only by `pkgs/update-vendored.nu` (or
 `preflight --update-vendored`), **never by hand**, and a pinned version is **never
 restated in prose** — point at the package file. The `codex-desktop`, `grok-bot`
 and `skyroads` exceptions are in **`docs/vendored-binaries.md`**; failure
