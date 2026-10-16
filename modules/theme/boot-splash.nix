@@ -2,9 +2,9 @@
 # Steelbore Bravais — Plymouth boot splash (pkgs/steelbore-plymouth)
 #
 # Plays the boot animation from early initrd until greetd starts (greetd is
-# ordered after plymouth-quit-wait.service upstream), and shows the shutdown
-# still at poweroff and reboot — the same theme, branching on the mode. The firmware and systemd-boot stages
-# before the kernel cannot show it. It renders on simpledrm (built into the
+# ordered after plymouth-quit-wait.service upstream), and plays the shutdown
+# animation at poweroff and reboot — the same theme, branching on the mode.
+# The firmware and systemd-boot stages before the kernel cannot show it. It renders on simpledrm (built into the
 # XanMod kernel, up from the first kernel second); i915 loads in stage 2 and
 # takes the display over, which may show as a brief flicker. Do NOT add i915
 # to the initrd for "early KMS": it drags in ~6 MiB of already-compressed

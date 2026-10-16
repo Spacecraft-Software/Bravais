@@ -144,12 +144,12 @@ bravais/
 +-- pkgs/                          # In-tree packages; default.nix is the index (also packages.*)
 |   +-- preflight/                 # Rust rebuild orchestrator (§16)
 |   +-- steelbore-*/               # First-party Rust tools (audio-led, beacon, niri-unmax, cosmic-unmax, vpn, quantize)
-|   +-- steelbore-plymouth/        # Plymouth theme: splash.mp4 as strip frames + shutdown.png, quantized
+|   +-- steelbore-plymouth/        # Plymouth theme: splash.mp4 + shutdown.mp4 as strip frames, quantized
 |   +-- steelbore-ksplash/         # Plasma splash (Look-and-Feel package) playing steelbore-plymouth's frames
 |   +-- steelbore-branding/        # Steelbore OS emblem + wordmark as hicolor/pixmaps icons (§4.6)
 |   +-- <vendored>/                # Version+hash-pinned upstream binaries (docs/vendored-binaries.md)
 |   +-- update-vendored.nu, sync-skills.nu   # vendored bumper; .github/skills/ regenerator
-+-- assets/boot/                   # Boot media (CC-BY-SA-4.0): splash.mp4, shutdown.png, startup-sound.mp3 (§5.2)
++-- assets/boot/                   # Boot media (CC-BY-SA-4.0): splash.mp4, shutdown.mp4, startup-sound.mp3 (§5.2)
 +-- assets/brand/                  # Brand marks (CC-BY-SA-4.0): steelbore-os.svg (emblem), steelbore-os-wordmark.svg (wordmark)
 +-- bravais-mcp/                   # Source of the Rust MCP server built by pkgs/bravais-mcp/
 +-- flakes/rapg/                   # Wrapper flake for rapg (upstream ships none)
@@ -596,7 +596,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 
 - **Bootloader:** systemd-boot, EFI variables writable, `configurationLimit = 3` — the 196 MiB ESP holds three XanMod kernel+initrd pairs, and the installer prunes entries beyond the limit before copying the new kernel (CONSTRAINTS.md #42). Single-boot: an `extraInstallCommands` hook deletes any `EFI/Microsoft` loader on each install, since systemd-boot would otherwise auto-list it as "Windows Boot Manager"
 - **Kernel:** `linuxPackages_xanmod_latest` (performance-optimized)
-- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` at boot — one backdrop frame plus 12 fps crops of the only band that moves (progress bar and dots), played once and then looped from 5 s — and shows the still `assets/boot/shutdown.png` at poweroff and reboot (branching on `Plymouth.GetMode()`); every PNG palette-quantized by `pkgs/steelbore-quantize` (the Rust `imagequant` crate, no C), scaled to fit on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
+- **Boot splash:** Plymouth `script` theme `steelbore` (`modules/theme/boot-splash.nix`, `pkgs/steelbore-plymouth`), toggled by `steelbore.boot.splash.enable`; plays `assets/boot/splash.mp4` at boot — one backdrop frame plus 12 fps crops of the only band that moves (progress bar and dots), played once and then looped from 5 s — and plays `assets/boot/shutdown.mp4` the same way at poweroff and reboot (branching on `Plymouth.GetMode()`), cut at 8.5 s before its fade-to-black outro, since the splash cannot know when power actually goes; every PNG palette-quantized by `pkgs/steelbore-quantize` (the Rust `imagequant` crate, no C), scaled to fit on the palette canvas, with `quiet splash`, rendered on `simpledrm` (no `i915` in the initrd). Initrds are zstd `-19`. Budgeted against the ESP (CONSTRAINTS.md #43)
 - **Plasma splash:** `pkgs/steelbore-ksplash`, a Look-and-Feel package carrying only `contents/splash/Splash.qml` (plain QtQuick: a Timer steps the strip frames over the backdrop, exactly as the Plymouth script does), installed and selected in `ksplashrc` by `users/mj/plasma.nix`; its frames, geometry, frame rate and loop point come from `steelbore-plymouth`'s `passthru.animation`, so the two splashes cannot drift
 - **Startup sound:** `users/mj/startup-sound.nix` — `pw-play` of `assets/boot/startup-sound.mp3` once per boot at the first graphical login (marker in `/tmp`)
 - **Module lists:** none here (initrd modules: generated `hosts/<machine>/hardware.nix`; `kvm-intel`: `modules/hardware/intel.nix`). The generated `hosts/thinkpad/hardware.nix` also declares `kvm-intel` and `hardware.cpu.intel.updateMicrocode`; the list options merge and the microcode line is the same `mkDefault`, so the duplication is harmless

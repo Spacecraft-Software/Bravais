@@ -67,7 +67,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
-- [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot still from `assets/boot/shutdown.png` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot animation from `assets/boot/shutdown.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
 - [✓] **`pkgs/steelbore-ksplash`**: the same animation as the KDE Plasma splash screen (selected in `users/mj/plasma.nix`)
 - [✓] **`pkgs/steelbore-quantize`**: pure-Rust PNG quantizer (`imagequant` + `png`) replacing pngquant in the splash build
 - [✓] **`users/mj/startup-sound.nix`**: once-per-boot startup sound at the first graphical login
@@ -466,7 +466,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Verify Flatpak apps install from Flathub
 - [ ] Verify AppImage binfmt execution
 - [ ] Verify the Plymouth boot animation renders on a real boot, and the startup sound plays once per boot
-- [ ] Verify the shutdown still shows at poweroff and reboot, and the Plasma splash plays at a Plasma login
+- [ ] Verify the shutdown animation plays at poweroff and reboot, and the Plasma splash plays at a Plasma login
 
 ---
 
