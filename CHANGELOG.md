@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies bumped:** `nixpkgs`, `home-manager`, `home-manager-unstable`
+  and `antigravity-nix` flake inputs, and the Claude Desktop, Codex Desktop
+  and Ollama vendored packages.
 - **Animated boot splash and a shutdown screen.** The boot splash plays
   the Steelbore boot animation again: the logo with a progress bar that
   fills, then the dots keep cycling for as long as the boot takes. Powering
