@@ -63,9 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Animated boot splash and a shutdown screen.** The boot splash plays
   the Steelbore boot animation again: the logo with a progress bar that
   fills, then the dots keep cycling for as long as the boot takes. Powering
-  off or rebooting now shows a separate "Shutting down" screen. Only the
-  part of the clip that moves is stored as frames, so it plays at full
-  resolution and the boot image grows by only 1.5 MiB.
+  off or rebooting plays its own "Shutting down Steelbore OS" animation, the
+  same way. Only the part of each clip that moves is stored as frames, so
+  both play at full resolution and the boot image grows by under 3 MiB.
 - **KDE Plasma's loading screen plays the same animation** after you log in
   to Plasma, in place of the Breeze splash. Picking another splash in System
   Settings lasts until the next rebuild.
