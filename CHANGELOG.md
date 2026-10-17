@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **F9 (the gear key) opens COSMIC Settings**, as it already opens
+  System Settings on Plasma and Settings on GNOME.
 - **The Artcraft suite is installed as Flatpaks.** WordCraft, PhotoCraft,
   VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft,
   FigCraft, SoundCraft, DeckCraft, CADCraft and GridCraft come from each

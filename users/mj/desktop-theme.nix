@@ -102,9 +102,12 @@ in
     # an org.freedesktop.ScreenSaver inhibit, the one cosmic-idle honours
     # (modules/desktops/shared.nix). It cannot flip the Caffeine panel applet,
     # which keeps its inhibit in its own process; either one keeps the
-    # machine awake. COSMIC binds nothing to Super+Shift+C by default. Note: home-manager
-    # makes the file read-only, so future tweaks via the Settings UI silently
-    # fail until the binding is also added/removed here.
+    # machine awake. COSMIC binds nothing to Super+Shift+C by default.
+    # XF86Tools is the ThinkPad's F9 gear key (thinkpad_acpi KEY_CONFIG). It
+    # opens COSMIC Settings, as it opens System Settings on Plasma and GNOME
+    # Settings on GNOME by their own defaults; COSMIC binds nothing to it.
+    # Note: home-manager makes the file read-only, so future tweaks via the
+    # Settings UI silently fail until the binding is also added/removed here.
     "cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom".text = ''
       {
           (
@@ -155,6 +158,10 @@ in
               ],
               key: "c",
           ): Spawn("steelbore-caffeine"),
+          (
+              modifiers: [],
+              key: "XF86Tools",
+          ): Spawn("cosmic-settings"),
       }
     '';
 
