@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
+  on Niri and COSMIC. `Alt+Space`, `Alt+F2` and `Search` still work.
+  *Peek at Desktop* loses its default `Meta+D` and has no key.
 - **The Artcraft suite is installed as Flatpaks.** WordCraft, PhotoCraft,
   VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft,
   FigCraft, SoundCraft, DeckCraft, CADCraft and GridCraft come from each

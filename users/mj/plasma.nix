@@ -132,6 +132,24 @@ in
   '';
 
   # ═══════════════════════════════════════════════════════════════════════════
+  # KRunner: Meta+D alongside its stock Alt+Space, Alt+F2 and Search keys
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Matches Mod+D, the launcher under Niri and COSMIC. Meta+D is KWin's
+  # default for "Peek at Desktop", and kglobalaccel gives a key to only one
+  # action, so that action is left with no key. Both values are what System
+  # Settings › Shortcuts writes for this choice, pinned the same way as the
+  # layout shortcut above (with its trade-off). A [services] entry carries
+  # only the active keys, tab-separated; a [kwin] entry is
+  # "active,default,friendly name". Read at the next Plasma login.
+  home.activation.plasmaKrunnerShortcut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+      --group services --group org.kde.krunner.desktop --key _launch \
+      "$(printf 'Alt+Space\tAlt+F2\tSearch\tMeta+D')"
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+      --group kwin --key "Show Desktop" "none,Meta+D,Peek at Desktop"
+  '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
   # 24-hour time and ISO 8601 dates in Plasma
   # ═══════════════════════════════════════════════════════════════════════════
   #
