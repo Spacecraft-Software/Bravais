@@ -149,12 +149,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Claude Desktop finds the keyring under Niri, LeftWM and Margo.** It
-  warned "No system keyring is available" and stored its sign-in in
-  plaintext, because Electron does not recognise those sessions and skips
-  the Secret Service. Its launcher now passes the same
-  `--password-store=gnome-libsecret` flag the editors already get, so it uses
-  the login keyring that greetd unlocks. Restart Claude after rebuilding.
+- **Claude Desktop and the other Electron AI apps find the keyring under
+  Niri, LeftWM and Margo.** Claude warned "No system keyring is available"
+  and stored its sign-in in plaintext, because Electron does not recognise
+  those sessions and skips the Secret Service. Claude, OpenCode, Goose,
+  Codex and Grok Bot desktop now launch with the same
+  `--password-store=gnome-libsecret` flag the editors already get, so they
+  use the login keyring that greetd unlocks. Restart each app after
+  rebuilding; you may have to sign in once more.
 - **Plasma panel pins no longer turn into blank-file icons after a
   rebuild.** The task manager had saved some pins (Dolphin, Konsole,
   Antigravity, Alacritty) as a path inside one build of the system, so
