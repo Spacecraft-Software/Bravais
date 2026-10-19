@@ -160,6 +160,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PATH no longer repeats the out-of-band dirs.** `~/.local/bin`,
+  `~/.cargo/bin`, `~/.npm-packages/bin` and `~/.opencode/bin` were appended
+  once per nested shell, so a terminal under the login shell carried each
+  of them three times. Bash, Nushell and Ion now add a dir only when PATH
+  lacks it, in the same order and still after the Nix paths.
+
 - **Claude Desktop and the other Electron AI apps find the keyring under
   Niri, LeftWM and Margo.** Claude warned "No system keyring is available"
   and stored its sign-in in plaintext, because Electron does not recognise
