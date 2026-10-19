@@ -68,12 +68,24 @@ in
     ignoredDevices = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
-      example = [ "Elan TrackPoint" ];
+      example = [
+        "Elan TrackPoint"
+        "AT Translated Set 2 keyboard"
+      ];
       description = ''
         Device names passed to `xremap --ignore`, so it neither grabs them nor
         re-emits their events.
 
-        This exists for POINTING STICKS specifically. libinput turns
+        KEYBOARDS belong here. The keymap remaps mouse buttons only, so xremap
+        gains nothing from a keyboard, but it grabs one anyway, and its virtual
+        output device has no EV_LED capability. While a keyboard is grabbed the
+        kernel drops every LED write that does not come from the grabber, so the
+        console's `kbd-capslock` trigger and the compositor's own LED updates
+        both go nowhere: the Caps Lock / Num Lock LEDs stay dark in the session
+        and on any TTY switched to from it. Keys keep working, which is why it
+        reads as a console bug rather than as this unit.
+
+        POINTING STICKS belong here too. libinput turns
         middle-button scrolling on by DEFAULT only for devices carrying
         `INPUT_PROP_POINTING_STICK` — that default is the entire reason a
         ThinkPad TrackPoint scrolls when you hold the middle button and push the
@@ -155,6 +167,8 @@ in
     # while this unit runs ALL keyboard and mouse input is proxied through it.
     # The kernel releases the grabs when the process dies and Restart=on-failure
     # brings it back, so a crash costs a keystroke rather than the session.
+    # A grabbed keyboard also loses its lock LEDs (see `ignoredDevices`), so
+    # the built-in keyboard is ignored per machine.
     # To narrow it to a single device later, add `--device` — run
     # `xremap --device-details` to see the names. Deliberately not hardcoded
     # here: a device name breaks the moment a different mouse is plugged in.
