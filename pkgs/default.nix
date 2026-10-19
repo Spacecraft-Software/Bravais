@@ -35,4 +35,5 @@ in
   preflight = pkgs.callPackage ./preflight/package.nix { };
   steelbore-version = pkgs.callPackage ./steelbore-version/package.nix { };
   steelbore-vpn = pkgs.callPackage ./steelbore-vpn/package.nix { };
+  margo = pkgs.callPackage ./margo/package.nix { };
 }

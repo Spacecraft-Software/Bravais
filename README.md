@@ -68,6 +68,7 @@ bravais/
 │   │   ├── gnome.nix              # GNOME on Wayland (de-bloated)
 │   │   ├── cosmic.nix             # COSMIC DE on Wayland
 │   │   ├── niri.nix               # Niri + Ironbar (The Steelbore Standard)
+│   │   ├── margo.nix              # Margo (Rust port of mango) on Wayland
 │   │   ├── plasma.nix             # KDE Plasma on Wayland/X11
 │   │   └── leftwm.nix             # LeftWM + Polybar on X11
 │   ├── login/                     # Display/login managers
@@ -183,6 +184,7 @@ Bravais officially provisions definitions for four primary desktop targets:
 | **COSMIC** | Wayland | cosmic-panel | cosmic-launcher | System76's fully Rust-based desktop |
 | **GNOME** | Wayland | GNOME Shell | GNOME | De-bloated GNOME with curated extensions |
 | **LeftWM** | X11 | Polybar | rlaunch/rofi | High-performance Rust tiling fallback |
+| **Margo** | Wayland | Eww | anyrun | Rust/Smithay port of mango: tags, layouts and mango's animations |
 
 ## Terminal Emulators
 
