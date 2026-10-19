@@ -128,6 +128,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Bind it in LeftWM (`FocusPreviousTag`/`FocusNextTag`) + start/stop from the theme hooks
 - [✓] Leave Niri on its native `MouseBack`/`MouseForward` binds
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
+- [✓] Keep xremap off the built-in keyboard (`ignoredDevices`), or its grab darkens the Caps/Num Lock LEDs on every TTY (CONSTRAINTS.md #29)
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
@@ -401,6 +402,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
+- [✓] **`common.nix`**: Mouse on the TTYs via gpm (`imps2` on `/dev/input/mice`; xremap's re-emitted pointer still reaches it)
 - [✓] **`default.nix`**: Enable printing
 - [✓] **`default.nix`**: Create user `mj` with groups (networkmanager, wheel, input, video, audio)
 - [✓] **`default.nix`**: Set user shell to Nushell (Rust), root shell to Brush (Rust)

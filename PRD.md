@@ -609,6 +609,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 - **All LC_* variables:** `en_US.UTF-8` (ADDRESS, IDENTIFICATION, MEASUREMENT, MONETARY, NAME, NUMERIC, PAPER, TELEPHONE, TIME)
 - **Why `LC_TIME` is not an ISO locale:** `en_DK.UTF-8` was tried for system-wide ISO 8601 and reverted. Qt reads CLDR, not glibc, and CLDR's `en_DK` short time format uses a dot separator, which broke the Plasma panel clock; glibc also never generated the locale, so `date` fell back to C. ISO 8601 in the Plasma clock is pinned in `users/mj/plasma.nix` instead. Any new locale must keep a colon time separator under CLDR and be verified with `LC_ALL=<locale> date` (CONSTRAINTS.md #31)
 - **Console keymap:** `console.keyMap = "us"`, set in the shared host config (`hosts/common.nix`)
+- **Console mouse:** `services.gpm` (protocol `imps2` on `/dev/input/mice`), set in `hosts/common.nix`: select, paste and extend on every TTY. gpm is C; no Rust console-mouse daemon exists, and kmscon would replace the kernel console that greetd and the themed getty run on. xremap does not starve it, because a mouse it grabs is re-emitted through a uinput device the mice multiplexer also merges
 - **Input method:** iBus enabled with an empty engine list — the daemon idles on US-only input but provides the D-Bus surface that the iBus Wayland panel autostart expects, which otherwise surfaces an error popup (notably under COSMIC)
 
 ### 5.4 Audio (`modules/core/audio.nix`)
@@ -911,7 +912,7 @@ The machine is an Intel i7-8665U (Whiskey Lake). A T490s-specific comment in thi
 
 - **Hostname:** `steelbore-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.{android,audioLed,bluetooth,fingerprint,intel}.enable`
-- **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" ]`. This is per-machine because the device name is. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick (CONSTRAINTS.md #29)
+- **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" "AT Translated Set 2 keyboard" ]`. This is per-machine because the device names are. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick, and keeping it off the keyboard keeps the Caps/Num Lock LEDs working in the session and on the console (CONSTRAINTS.md #29)
 - **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = false; user = primaryUser; }` (disabled since 2026-10-02; when enabled, a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
 - **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }`. The i7-8665U supports x86-64-v3 (AVX2/BMI2/FMA) but has **no AVX-512**, so v4 would emit illegal instructions on this CPU
 
