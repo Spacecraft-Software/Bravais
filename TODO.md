@@ -401,7 +401,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
-- [✓] **`common.nix`**: Mouse on the TTYs via gpm (`imps2` on `/dev/input/mice`; xremap's re-emitted pointer still reaches it)
+- [✓] **`common.nix`**: Mouse on the TTYs via `steelbore-reticle` (Rust, in-tree; replaced gpm): select, paste, extend, xterm mouse reporting; reads evdev directly, xremap's re-emitted pointer included
 - [✓] **`default.nix`**: Enable printing
 - [✓] **`default.nix`**: Create user `mj` with groups (networkmanager, wheel, input, video, audio)
 - [✓] **`default.nix`**: Set user shell to Nushell (Rust), root shell to Brush (Rust)
