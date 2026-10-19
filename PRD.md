@@ -2085,8 +2085,9 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
 user, never as root. In order: bring the checkout up to date with `origin`
-(fetch, then fast-forward; refuses uncommitted changes other than
-`flake.lock`, a local-only branch or diverged history; a branch deleted
+(fetch, then fast-forward, carrying uncommitted changes along with a
+warning; refuses uncommitted changes the incoming commits also touch, a
+local-only branch or diverged history; a branch deleted
 upstream falls back to `main`; `--branch <name>` switches to a PR branch,
 `--no-sync` builds the tree as it is), bump every flake input (authenticated with
 the `gh` token, never stored), garbage-collect keeping a week of generations,

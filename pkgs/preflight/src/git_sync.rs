@@ -12,11 +12,16 @@
 //
 // The policy, in order:
 //
-//   1. Uncommitted changes to tracked files refuse the run (`--no-sync` builds
-//      the tree as it is). `flake.lock` is the exception: every full run's
-//      `nix flake update` leaves it modified, so it is dirty on almost every
-//      machine almost all the time, and refusing on it would refuse every
-//      second run.
+//   1. Uncommitted changes to tracked files are carried along, the way
+//      `git switch` and `git merge --ff-only` carry them, and named in a
+//      warning. Refusing on them was the first design and it refused the
+//      very next run on the ThinkPad: preflight's own updaters leave
+//      `flake.lock` and the vendored pins modified, so a dirty tree is the
+//      normal state between a rebuild and the commit that records its bumps.
+//      What is refused is a change git cannot carry -- one the incoming
+//      commits also touch -- since moving would overwrite it (`DIRTY_TREE`).
+//      The one exception is `flake.lock` when a flake update follows: that
+//      bump is about to be redone, so it is dropped instead.
 //   2. `git fetch --prune origin`. Pruning is what makes a deleted upstream
 //      branch visible as gone rather than as a stale remote-tracking ref.
 //   3. Pick the branch: `--branch <name>` if given; else the current branch
@@ -37,7 +42,8 @@ use std::process::Command;
 
 use crate::output::Exit;
 
-/// The one file a dirty tree is allowed to carry; see the policy above.
+/// The lock file, which a following flake update regenerates; see the
+/// policy above.
 pub const LOCK: &str = "flake.lock";
 
 /// Why the run will not go ahead. Becomes the CLI's structured error.
@@ -136,7 +142,7 @@ pub fn choose(
 
 /// Tracked paths with uncommitted changes, `flake.lock` excepted, from
 /// `git status --porcelain=v1`. A rename reports its new path.
-pub fn blocking_changes(porcelain: &str) -> Vec<String> {
+pub fn carried_changes(porcelain: &str) -> Vec<String> {
     porcelain
         .lines()
         .filter_map(|l| l.get(3..))
@@ -201,9 +207,19 @@ fn exists(dir: &str, rev: &str) -> bool {
     git(dir, &["rev-parse", "--verify", "--quiet", rev]).is_some()
 }
 
-/// Sync the checkout. `Ok` carries the step's report line.
-pub fn sync(req: Request) -> Result<String, Refusal> {
-    let lock_dirty = check_tree(req.dir)?;
+/// The outcome of a sync the caller reports.
+#[derive(Debug)]
+pub struct Synced {
+    /// The step's report line.
+    pub line: String,
+    /// Uncommitted paths (`flake.lock` aside) the checkout carried along, so
+    /// the build is origin's code PLUS these. The caller warns about them.
+    pub carried: Vec<String>,
+}
+
+/// Sync the checkout.
+pub fn sync(req: Request) -> Result<Synced, Refusal> {
+    let (lock_dirty, carried) = check_tree(req.dir)?;
     let plan = plan(req)?;
 
     // `nix flake update` leaves flake.lock modified after every full run. If
@@ -219,22 +235,26 @@ pub fn sync(req: Request) -> Result<String, Refusal> {
         .is_none();
 
     if req.dry {
-        return Ok(plan.describe_dry(req.dir));
+        return Ok(Synced {
+            line: plan.describe_dry(req.dir),
+            carried,
+        });
     }
     if lock_conflicts {
         drop_lock_bump(req, &plan.target)?;
     }
-    let line = apply(req.dir, &plan)?;
-    Ok(if lock_conflicts {
+    let line = apply(req.dir, &plan, &carried)?;
+    let line = if lock_conflicts {
         format!("{line}; dropped the uncommitted {LOCK} bump")
     } else {
         line
-    })
+    };
+    Ok(Synced { line, carried })
 }
 
-/// The tree must be a checkout with nothing uncommitted but `flake.lock`.
-/// Returns whether `flake.lock` itself is modified.
-fn check_tree(dir: &str) -> Result<bool, Refusal> {
+/// The tree must be a checkout. Returns whether `flake.lock` is modified, and
+/// every other uncommitted tracked path.
+fn check_tree(dir: &str) -> Result<(bool, Vec<String>), Refusal> {
     if git(dir, &["rev-parse", "--is-inside-work-tree"]).as_deref() != Some("true") {
         return Err(Refusal::new(
             "NOT_A_CHECKOUT",
@@ -244,18 +264,22 @@ fn check_tree(dir: &str) -> Result<bool, Refusal> {
     }
     let porcelain =
         git_raw(dir, &["status", "--porcelain=v1", "--untracked-files=no"]).unwrap_or_default();
-    let blocking = blocking_changes(&porcelain);
-    if !blocking.is_empty() {
-        return Err(Refusal::conflict(
-            "DIRTY_TREE",
-            format!(
-                "uncommitted changes would be built instead of origin's code: {}",
-                blocking.join(", ")
-            ),
-            format!("git -C {dir} stash   # or build them as they are: preflight --no-sync"),
-        ));
-    }
-    Ok(porcelain.lines().any(|l| l.get(3..) == Some(LOCK)))
+    let lock_dirty = porcelain.lines().any(|l| l.get(3..) == Some(LOCK));
+    Ok((lock_dirty, carried_changes(&porcelain)))
+}
+
+/// Moving was blocked by uncommitted changes the incoming commits also touch.
+fn dirty_refusal(dir: &str, carried: &[String]) -> Refusal {
+    Refusal::conflict(
+        "DIRTY_TREE",
+        format!(
+            "uncommitted changes conflict with the incoming commits: {}",
+            carried.join(", ")
+        ),
+        format!(
+            "git -C {dir} stash   # then re-run; or build the tree as it is: preflight --no-sync"
+        ),
+    )
 }
 
 /// Where the checkout is going.
@@ -385,7 +409,7 @@ fn drop_lock_bump(req: Request, target: &str) -> Result<(), Refusal> {
 }
 
 /// Switch if needed, then fast-forward. Returns the report line.
-fn apply(dir: &str, plan: &Plan) -> Result<String, Refusal> {
+fn apply(dir: &str, plan: &Plan, carried: &[String]) -> Result<String, Refusal> {
     let (branch, target) = (&plan.branch, &plan.target);
     if plan.switching {
         let ok = if exists(dir, &format!("refs/heads/{branch}")) {
@@ -393,6 +417,9 @@ fn apply(dir: &str, plan: &Plan) -> Result<String, Refusal> {
         } else {
             git_shown(dir, &["switch", "--create", branch, "--track", target])
         };
+        if !ok && !carried.is_empty() {
+            return Err(dirty_refusal(dir, carried));
+        }
         if !ok {
             return Err(Refusal::new(
                 "SWITCH_FAILED",
@@ -404,6 +431,12 @@ fn apply(dir: &str, plan: &Plan) -> Result<String, Refusal> {
 
     let before = git(dir, &["rev-parse", "HEAD"]).unwrap_or_default();
     if !git_shown(dir, &["merge", "--ff-only", target]) {
+        // A fast-forward that is possible in history can only have been
+        // stopped by the working tree.
+        let ancestor = git(dir, &["merge-base", "--is-ancestor", "HEAD", target]).is_some();
+        if ancestor && !carried.is_empty() {
+            return Err(dirty_refusal(dir, carried));
+        }
         return Err(Refusal::conflict(
             "NOT_FAST_FORWARD",
             format!(
@@ -458,13 +491,13 @@ mod tests {
     }
 
     #[test]
-    fn a_dirty_lock_alone_does_not_block() {
-        assert!(blocking_changes(" M flake.lock\n").is_empty());
+    fn a_dirty_lock_is_not_reported_as_carried() {
+        assert!(carried_changes(" M flake.lock\n").is_empty());
     }
 
     #[test]
-    fn other_changes_block_and_renames_report_the_new_path() {
-        let got = blocking_changes(" M flake.lock\nM  flake.nix\nR  a.nix -> b.nix\n");
+    fn other_changes_are_carried_and_renames_report_the_new_path() {
+        let got = carried_changes(" M flake.lock\nM  flake.nix\nR  a.nix -> b.nix\n");
         assert_eq!(got, ["flake.nix", "b.nix"]);
     }
 
@@ -590,7 +623,7 @@ mod tests {
             lab.git("seed", &["push", "--quiet"]);
             let got = sync(lab.request());
             assert!(
-                got.as_ref().is_ok_and(|l| l.contains("1 new commit")),
+                got.as_ref().is_ok_and(|l| l.line.contains("1 new commit")),
                 "{got:?}"
             );
             assert_eq!(
@@ -612,7 +645,8 @@ mod tests {
             lab.git("seed", &["push", "--quiet", "origin", "--delete", "feat"]);
             let got = sync(lab.request());
             assert!(
-                got.as_ref().is_ok_and(|l| l.contains("deleted on origin")),
+                got.as_ref()
+                    .is_ok_and(|l| l.line.contains("deleted on origin")),
                 "{got:?}"
             );
             assert_eq!(lab.head(), "main");
@@ -648,11 +682,69 @@ mod tests {
         }
 
         #[test]
-        fn uncommitted_changes_refuse_the_run() {
+        fn carried_changes_are_reported_and_kept() {
+            let Some(lab) = Lab::new("kept") else { return };
+            lab.commit("seed", "other.nix", "other");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.write("work", "flake.nix", "local edit");
+            let got = sync(lab.request());
+            assert!(
+                got.as_ref().is_ok_and(|s| s.carried == ["flake.nix"]),
+                "{got:?}"
+            );
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("local edit")
+            );
+        }
+
+        #[test]
+        fn carried_changes_also_work_when_switching_branch() {
+            let Some(lab) = Lab::new("carrysw") else {
+                return;
+            };
+            lab.git("seed", &["switch", "--quiet", "-c", "pr"]);
+            lab.commit("seed", "other.nix", "pr");
+            lab.git("seed", &["push", "--quiet", "origin", "pr"]);
+            lab.write("work", "flake.nix", "local edit");
+            let got = sync(Request {
+                branch: Some("pr"),
+                ..lab.request()
+            });
+            assert!(
+                got.as_ref().is_ok_and(|s| s.carried == ["flake.nix"]),
+                "{got:?}"
+            );
+            assert_eq!(lab.head(), "pr");
+        }
+
+        #[test]
+        fn uncommitted_changes_the_incoming_commits_touch_refuse_the_run() {
             let Some(lab) = Lab::new("dirty") else { return };
+            lab.commit("seed", "flake.nix", "nix 2");
+            lab.git("seed", &["push", "--quiet"]);
             lab.write("work", "flake.nix", "local edit");
             let got = sync(lab.request());
             assert!(got.is_err_and(|r| r.code == "DIRTY_TREE" && r.exit == Exit::Conflict));
+        }
+
+        #[test]
+        fn a_conflicting_change_blocks_a_branch_switch_too() {
+            let Some(lab) = Lab::new("dirtysw") else {
+                return;
+            };
+            lab.git("seed", &["switch", "--quiet", "-c", "pr"]);
+            lab.commit("seed", "flake.nix", "pr");
+            lab.git("seed", &["push", "--quiet", "origin", "pr"]);
+            lab.write("work", "flake.nix", "local edit");
+            let got = sync(Request {
+                branch: Some("pr"),
+                ..lab.request()
+            });
+            assert!(got.is_err_and(|r| r.code == "DIRTY_TREE"));
+            assert_eq!(lab.head(), "main");
         }
 
         #[test]
@@ -667,7 +759,10 @@ mod tests {
             });
             assert!(kept.is_err_and(|r| r.code == "LOCK_CONFLICT"));
             let got = sync(lab.request());
-            assert!(got.as_ref().is_ok_and(|l| l.contains("dropped")), "{got:?}");
+            assert!(
+                got.as_ref().is_ok_and(|l| l.line.contains("dropped")),
+                "{got:?}"
+            );
             assert_eq!(
                 std::fs::read_to_string(lab.path("work").join("flake.lock"))
                     .ok()
@@ -724,7 +819,8 @@ mod tests {
                 ..lab.request()
             });
             assert!(
-                got.as_ref().is_ok_and(|l| l.contains("1 commit(s) behind")),
+                got.as_ref()
+                    .is_ok_and(|l| l.line.contains("1 commit(s) behind")),
                 "{got:?}"
             );
             assert_eq!(lab.git("work", &["rev-parse", "HEAD"]), before);

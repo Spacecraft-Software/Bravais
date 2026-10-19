@@ -363,7 +363,21 @@ fn sync_checkout(r: &mut Runner, opts: Options) -> Result<(), git_sync::Refusal>
         lock_regenerated: !opts.no_update,
     };
     match git_sync::sync(req) {
-        Ok(detail) => r.record("git-sync", Outcome::Ok, Some(detail)),
+        Ok(synced) => {
+            // The build is origin's code plus these, so say so. Usually they
+            // are this tool's own leftovers (vendored pins awaiting a deps
+            // commit); occasionally an experiment someone forgot.
+            if !synced.carried.is_empty() {
+                r.out.say(
+                    Level::Warn,
+                    &format!(
+                        "building with uncommitted changes: {}",
+                        synced.carried.join(", ")
+                    ),
+                );
+            }
+            r.record("git-sync", Outcome::Ok, Some(synced.line));
+        }
         // --dry promises no changes and builds nothing real, so a refusal
         // there is reported, not fatal.
         Err(e) if opts.dry => r.record(

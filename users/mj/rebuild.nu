@@ -74,8 +74,9 @@ def --wrapped bravais-git [repo: string, ...args: string]: nothing -> record {
 # Bring the checkout up to date with origin before anything is built, so a
 # rebuild compiles origin's code and not whatever the checkout happens to
 # hold. Mirrors git_sync in pkgs/preflight/src/git_sync.rs, which carries the
-# full reasoning; change all three. In short: refuse uncommitted changes
-# (flake.lock excepted -- every full run leaves it modified); fetch --prune;
+# full reasoning; change all three. In short: carry uncommitted changes along
+# (reported in `carried`; refused only when the incoming commits touch them
+# too); fetch --prune;
 # keep the current branch while its upstream exists, else (detached, or
 # merged and deleted upstream) go to origin's default branch; refuse a
 # local-only branch; fast-forward only.
@@ -93,10 +94,8 @@ def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bo
   # Porcelain columns 1-2 are the status, so the path starts at column 4.
   let paths = ((bravais-git $repo status --porcelain=v1 --untracked-files=no).stdout
     | lines | where $it != "" | each {|l| $l | str substring 3.. | split row " -> " | last })
-  let blocking = ($paths | where $it != "flake.lock")
-  if ($blocking | is-not-empty) {
-    return (do $refuse 5 "DIRTY_TREE" $"uncommitted changes would be built instead of origin's code: ($blocking | str join ', ')" $"git -C ($repo) stash   # or build them as they are: rebuild --no-sync")
-  }
+  let carried = ($paths | where $it != "flake.lock")
+  let dirty = (do $refuse 5 "DIRTY_TREE" $"uncommitted changes conflict with the incoming commits: ($carried | str join ', ')" $"git -C ($repo) stash   # then re-run; or build the tree as it is: rebuild --no-sync")
   let lock_dirty = ("flake.lock" in $paths)
 
   let fetch = (bravais-git $repo fetch --prune origin)
@@ -141,7 +140,7 @@ def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bo
 
   if $dry {
     let behind = (bravais-git $repo rev-list --count $"HEAD..($target)").stdout | str trim
-    return { ok: true, message: $"dry run; would move to ($want)($choice.why) at ($target) \(($behind) commit\(s\) behind\); building the tree as it is" }
+    return { ok: true, carried: $carried, message: $"dry run; would move to ($want)($choice.why) at ($target) \(($behind) commit\(s\) behind\); building the tree as it is" }
   }
   if $lock_conflicts {
     if not $lock_regenerated {
@@ -160,17 +159,22 @@ def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bo
     }
     if $sw.exit_code != 0 {
       print -e $sw.stderr
+      if ($carried | is-not-empty) { return $dirty }
       return (do $refuse 1 "SWITCH_FAILED" $"could not switch to '($want)'" $"git -C ($repo) status")
     }
   }
   let before = ((bravais-git $repo rev-parse HEAD).stdout | str trim)
   if (bravais-git $repo merge --ff-only $target).exit_code != 0 {
+    # A fast-forward that is possible in history can only have been stopped
+    # by the working tree.
+    let ancestor = ((bravais-git $repo merge-base --is-ancestor HEAD $target).exit_code == 0)
+    if $ancestor and ($carried | is-not-empty) { return $dirty }
     return (do $refuse 5 "NOT_FAST_FORWARD" $"'($want)' has commits that ($target) does not, so it cannot be fast-forwarded" $"git -C ($repo) log --oneline ($target)..($want)   # the local-only commits")
   }
   let new = ((bravais-git $repo rev-list --count $"($before)..HEAD").stdout | str trim)
   let short = ((bravais-git $repo rev-parse --short HEAD).stdout | str trim)
   let note = (if $lock_conflicts { "; dropped the uncommitted flake.lock bump" } else { "" })
-  { ok: true, message: $"($want) at ($short)($choice.why); ($new) new commit\(s\)($note)" }
+  { ok: true, carried: $carried, message: $"($want) at ($short)($choice.why); ($new) new commit\(s\)($note)" }
 }
 
 # Antigravity staleness probe.
@@ -296,6 +300,10 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
     let sync = (bravais-git-sync /spacecraft-software/bravais $branch $dry (not $no_update))
     if $sync.ok {
       print $"(ansi green)git-sync: ($sync.message)(ansi reset)"
+      # The build is origin's code plus these, so say so.
+      if ($sync.carried | is-not-empty) {
+        print $"(ansi yellow)building with uncommitted changes: ($sync.carried | str join ', ')(ansi reset)"
+      }
     } else if $dry {
       print $"(ansi yellow)git-sync: dry run; would refuse \(($sync.code)\): ($sync.message)(ansi reset)"
     } else {

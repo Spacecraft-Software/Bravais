@@ -75,10 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`preflight` builds origin's latest code.** Every run now starts with a
   `git fetch` and a fast-forward of the checkout, so a rebuild no longer
   builds whatever branch happened to be checked out. If that branch was
-  merged and deleted upstream, it switches back to `main`. It stops with a
-  clear message and a command to run when there are uncommitted changes
-  (other than `flake.lock`), local commits origin lacks, or a branch that
-  was never pushed. `preflight --branch <name>` switches to a PR branch
+  merged and deleted upstream, it switches back to `main`. Uncommitted
+  changes (such as freshly bumped vendored pins) are kept and named in a
+  warning. It stops with a clear message and a command to run when those
+  changes clash with the new commits, when the branch has local commits
+  origin lacks, or when the branch was never pushed. `preflight --branch <name>` switches to a PR branch
   before building, and `--no-sync` builds the checkout as it is. The
   Nushell `rebuild` and `scripts/rebuild.sh` do the same.
 - **Dependencies bumped:** `nixpkgs`, `home-manager`, `home-manager-unstable`

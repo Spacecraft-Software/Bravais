@@ -60,7 +60,7 @@ const ABOUT: &str = concat!(
         "EXAMPLES:\n",
         "  preflight                     Full rebuild: sync with origin, update, switch, mirror, report\n",
         "  preflight --branch <NAME>     Switch to origin's <NAME> first (testing a PR), then rebuild\n",
-        "  preflight --no-sync           Build the checkout as it is, uncommitted changes included\n",
+        "  preflight --no-sync           Skip the fetch; build the checkout exactly as it is\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
         "  preflight --update-all        Also bump the vendored pins and AI tools (alias: --full-update)\n",

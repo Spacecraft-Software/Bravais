@@ -179,10 +179,11 @@ fi
 # ── Git sync ────────────────────────────────────────────────────────────────
 # Build origin's code, not whatever the checkout happens to hold. Mirrors
 # pkgs/preflight/src/git_sync.rs, which carries the full reasoning; change all
-# three. In short: refuse uncommitted changes (flake.lock excepted -- every
-# full run leaves it modified); fetch --prune; keep the current branch while
-# its upstream exists, else (detached, or merged and deleted upstream) go to
-# origin's default branch; refuse a local-only branch; fast-forward only.
+# three. In short: carry uncommitted changes along with a warning (refuse only
+# when the incoming commits touch them too); fetch --prune; keep the current
+# branch while its upstream exists, else (detached, or merged and deleted
+# upstream) go to origin's default branch; refuse a local-only branch;
+# fast-forward only.
 # Exit codes follow the CLI Standard: 5 conflict, 3 not found, 1 failure.
 refuse() {  # <exit> <code> <message> <hint>
     if [ "$dry" -eq 1 ]; then
@@ -201,13 +202,8 @@ git_sync() {
     fi
     # Porcelain columns 1-2 are the status, so the path starts at column 4.
     porcelain=$(git -C "$REPO" status --porcelain=v1 --untracked-files=no)
-    blocking=$(printf '%s\n' "$porcelain" | sed -n 's/^...//p' | sed 's/.* -> //' \
-        | grep -vx 'flake\.lock' || true)
-    if [ -n "$blocking" ]; then
-        refuse 5 DIRTY_TREE \
-            "uncommitted changes would be built instead of origin's code: $(printf '%s' "$blocking" | tr '\n' ' ')" \
-            "git -C $REPO stash   # or build them as they are: rebuild.sh --no-sync" || return 0
-    fi
+    carried=$(printf '%s\n' "$porcelain" | sed -n 's/^...//p' | sed 's/.* -> //' \
+        | grep -vx 'flake\.lock' | tr '\n' ' ' | sed 's/ $//' || true)
     lock_dirty=0
     if printf '%s\n' "$porcelain" | grep -q '^.. flake\.lock$'; then lock_dirty=1; fi
 
@@ -258,6 +254,7 @@ git_sync() {
     if [ "$dry" -eq 1 ]; then
         behind=$(git -C "$REPO" rev-list --count "HEAD..$target" 2>/dev/null || echo '?')
         dim "git-sync: dry run; would move to $want$why at $target ($behind commit(s) behind); building the tree as it is"
+        [ -z "$carried" ] || warn "uncommitted changes would be carried along: $carried"
         return 0
     fi
 
@@ -272,22 +269,38 @@ git_sync() {
 
     if [ "$switching" -eq 1 ]; then
         if git -C "$REPO" rev-parse --verify --quiet "refs/heads/$want" >/dev/null; then
-            git -C "$REPO" switch "$want" || \
-                refuse 1 SWITCH_FAILED "could not switch to '$want'" "git -C $REPO status"
+            git -C "$REPO" switch "$want" || switch_failed
         else
-            git -C "$REPO" switch --create "$want" --track "$target" || \
-                refuse 1 SWITCH_FAILED "could not switch to '$want'" "git -C $REPO status"
+            git -C "$REPO" switch --create "$want" --track "$target" || switch_failed
         fi
     fi
 
     before=$(git -C "$REPO" rev-parse HEAD)
-    git -C "$REPO" merge --ff-only "$target" || \
+    if ! git -C "$REPO" merge --ff-only "$target"; then
+        # A fast-forward that is possible in history can only have been
+        # stopped by the working tree.
+        if [ -n "$carried" ] && git -C "$REPO" merge-base --is-ancestor HEAD "$target"; then
+            dirty_refusal
+        fi
         refuse 5 NOT_FAST_FORWARD "'$want' has commits that $target does not, so it cannot be fast-forwarded" \
             "git -C $REPO log --oneline $target..$want   # the local-only commits"
+    fi
     new=$(git -C "$REPO" rev-list --count "$before..HEAD")
     note=""
     [ "$lock_conflicts" -eq 0 ] || note="; dropped the uncommitted flake.lock bump"
     say "$C_OK" "git-sync: $want at $(git -C "$REPO" rev-parse --short HEAD)$why; $new new commit(s)$note"
+    # The build is origin's code plus these, so say so.
+    [ -z "$carried" ] || warn "building with uncommitted changes: $carried"
+}
+
+dirty_refusal() {
+    refuse 5 DIRTY_TREE "uncommitted changes conflict with the incoming commits: $carried" \
+        "git -C $REPO stash   # then re-run; or build the tree as it is: rebuild.sh --no-sync"
+}
+
+switch_failed() {
+    [ -z "$carried" ] || dirty_refusal
+    refuse 1 SWITCH_FAILED "could not switch to '$want'" "git -C $REPO status"
 }
 
 if [ "$no_sync" -eq 1 ]; then
