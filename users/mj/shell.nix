@@ -148,8 +148,13 @@ let
     ".npm-packages/bin"
     ".opencode/bin"
   ];
-  # POSIX-ish colon chain ($HOME/d1:$HOME/d2…) — bash and Ion share it.
-  posixPathAppend = lib.concatMapStringsSep ":" (d: "$HOME/" + d) outOfBandDirs;
+  # Each shell appends a dir only when PATH lacks it. Every nested shell
+  # (login mjsh, the session, each terminal's Nushell) runs its init again
+  # on an inherited PATH, so a blind append stacked one copy per level.
+  # Bash: "$HOME/d1" "$HOME/d2" … for its for-loop.
+  posixPathAppend = lib.concatMapStringsSep " " (d: "\"$HOME/" + d + "\"") outOfBandDirs;
+  # Ion: the same words inside its [ … ] array literal.
+  ionPathAppend = "[ ${posixPathAppend} ]";
   # Nushell list form: $"($env.HOME)/d1" $"($env.HOME)/d2" …
   nuPathAppend = lib.concatMapStringsSep " " (d: "$\"($env.HOME)/" + d + "\"") outOfBandDirs;
 
@@ -233,7 +238,14 @@ in
       enable = true;
       bashrcExtra = ''
         export SSH_AUTH_SOCK="${gitwaySockPosix}"
-        export PATH="$PATH:${posixPathAppend}"
+        for d in ${posixPathAppend}; do
+          case ":$PATH:" in
+            *":$d:"*) ;;
+            *) PATH="$PATH:$d" ;;
+          esac
+        done
+        unset d
+        export PATH
 
         # `su` reminder. A function, not an alias: an alias cannot take the
         # "$@" that must reach the helper intact. Covers Brush as well, which
@@ -952,8 +964,12 @@ in
         }
 
 
-        # User-local bins — appended so Nix store paths take precedence
-        $env.PATH = ($env.PATH | append [${nuPathAppend}])
+        # User-local bins — appended so Nix store paths take precedence,
+        # and only when missing, so a nested shell adds no second copy
+        do --env {
+          let inherited = ($env.PATH | split row (char esep))
+          $env.PATH = ($inherited | append ([${nuPathAppend}] | where {|d| $d not-in $inherited }))
+        }
       '';
     };
 
@@ -986,9 +1002,14 @@ in
       let SSH_AUTH_SOCK = "${gitwaySockPosix}"
       export SSH_AUTH_SOCK
 
-      # User-local bins — appended so Nix store paths take precedence
-      let PATH = "$PATH:${posixPathAppend}"
-      export PATH
+      # User-local bins — appended so Nix store paths take precedence, and
+      # only when missing. `export` inside the loop: a `let PATH` there would
+      # be a loop-local shadow and change nothing (verified).
+      for d in ${ionPathAppend}
+        if not contains ":$PATH:" ":$d:"
+          export PATH = "$PATH:$d"
+        end
+      end
 
       # Starship prompt
       eval $(${pkgs.starship}/bin/starship init ion)
