@@ -64,6 +64,10 @@
   libxscrnsaver,
   libxshmfence,
   libxtst,
+  # Extra Electron flags baked into the launcher. Empty for a bare
+  # `nix build .#grok-bot`; modules/packages/ai.nix overrides it with
+  # `steelbore.keyring.chromiumFlag` (see the claude-desktop package).
+  extraFlags ? [ ],
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -191,7 +195,8 @@ stdenv.mkDerivation (finalAttrs: {
       }" \
       --add-flags "--disable-setuid-sandbox" \
       --add-flags "--ozone-platform-hint=auto" \
-      --add-flags "--enable-features=WaylandWindowDecorations"
+      --add-flags "--enable-features=WaylandWindowDecorations" \
+      ${lib.concatMapStringsSep " " (f: "--add-flags ${lib.escapeShellArg f}") extraFlags}
 
     # The shipped Exec is the bare name `grok-bot`, which only resolves because
     # the postinst symlinks it into /usr/bin. Point it at the wrapper instead —

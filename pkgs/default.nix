@@ -15,6 +15,7 @@ in
   inherit steelbore-quantize steelbore-plymouth;
   steelbore-audio-led = pkgs.callPackage ./steelbore-audio-led/package.nix { };
   steelbore-beacon = pkgs.callPackage ./steelbore-beacon/package.nix { };
+  steelbore-reticle = pkgs.callPackage ./steelbore-reticle/package.nix { };
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
   steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
   steelbore-ksplash = pkgs.callPackage ./steelbore-ksplash/package.nix { inherit steelbore-plymouth; };

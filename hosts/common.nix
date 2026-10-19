@@ -27,25 +27,6 @@
   # ckbcomp can't resolve multi-layout XKB configs; keep console on US
   console.keyMap = "us";
 
-  # Mouse on the virtual consoles (TTYs): left-drag selects, middle-click
-  # pastes, right-click extends the selection, and console programs built
-  # against libgpm get pointer events. gpm is C; no Rust console-mouse
-  # daemon exists, and kmscon (also C) would replace the kernel console on
-  # every VT that greetd and the themed getty use, so the small daemon wins.
-  #
-  # It reads /dev/input/mice, the kernel's merge of every pointer, so the
-  # TrackPoint, the touchpad and any USB mouse all drive it. xremap
-  # (modules/desktops/mouse-workspace-nav.nix) does not starve it: a mouse
-  # xremap grabs is re-emitted through xremap's uinput device, which the
-  # mice multiplexer also merges, and the TrackPoint is never grabbed.
-  # `imps2` autodetects the 2/3-button IntelliMouse framing the multiplexer
-  # speaks. The wheel does nothing: gpm ignores it, and the kernel console
-  # has had no scrollback to scroll since Linux 5.9.
-  services.gpm = {
-    enable = true;
-    protocol = "imps2";
-  };
-
   # Printing
   services.printing.enable = true;
 
@@ -74,6 +55,11 @@
     # by the splash frames plus Plymouth's libraries, times the three the ESP keeps —
     # the initrd has a ~49 MiB ceiling (constraint #43).
     boot.splash.enable = true;
+
+    # Mouse on the virtual consoles (TTYs): select, paste, extend, and mouse
+    # reporting to console programs. Rust, in-tree; replaces gpm
+    # (modules/core/reticle.nix, pkgs/steelbore-reticle).
+    console.mouse.enable = true;
 
     # Desktop environments
     desktops.gnome.enable = true;

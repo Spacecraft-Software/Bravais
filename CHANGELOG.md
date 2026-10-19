@@ -14,10 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
   on Niri and COSMIC. `Alt+Space`, `Alt+F2` and `Search` still work.
   *Peek at Desktop* loses its default `Meta+D` and has no key.
+- **Rebuilds show the Flatpak update's progress.** `preflight`, `rebuild`
+  and `scripts/rebuild.sh` now follow the Flatpak update they start with a
+  live progress bar (operation 2 of 5, percentage, speed and time left)
+  instead of returning and leaving you to run `flatpak-status` again and
+  again. The update still runs on its own, so Ctrl-C only stops the
+  watching. `--detach-flatpak` returns straight away as before, and
+  `preflight flatpak watch` (or `flatpak-watch` in Nushell) picks the bar
+  up again later. `preflight` also shows a spinner during its silent steps.
+  Agents, CI and piped runs see no spinners and get the same output as
+  before.
+
 - **The mouse works on the TTYs.** On any virtual console, drag with the
-  left button to select text, click the middle button to paste it, and
-  right-click to extend a selection. The TrackPoint, the touchpad and a
-  USB mouse all work. This is gpm (`services.gpm` in `hosts/common.nix`).
+  left button to select text (double-click for a word, triple-click for a
+  line), click the middle button to paste it, and right-click to extend a
+  selection. Programs that ask for the mouse, such as htop, mc or vim with
+  `mouse=a`, get the clicks instead. The TrackPoint, the touchpad (tap to
+  click) and a USB mouse all work. It is `steelbore-reticle`, an in-tree
+  Rust daemon (`pkgs/steelbore-reticle`, `steelbore.console.mouse` in
+  `modules/core/reticle.nix`) that replaces gpm; `steelbore-reticle device
+  list` shows the devices it reads.
 - **Margo is a new session at the greeter.** Margo is a Rust (Smithay)
   port of the mango compositor: tags instead of workspaces, mango's
   layouts, and its sliding window animations. It is configured to animate
@@ -75,6 +91,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`preflight` builds origin's latest code.** Every run now starts with a
+  `git fetch` and a fast-forward of the checkout, so a rebuild no longer
+  builds whatever branch happened to be checked out. If that branch was
+  merged and deleted upstream, it switches back to `main`. Uncommitted
+  changes (such as freshly bumped vendored pins) are kept and named in a
+  warning. It stops with a clear message and a command to run when those
+  changes clash with the new commits, when the branch has local commits
+  origin lacks, or when the branch was never pushed.
+  `preflight --branch <name>` switches to a PR branch before building,
+  and `--no-sync` builds the checkout as it is. The Nushell `rebuild`
+  and `scripts/rebuild.sh` do the same.
+- **The shutdown screen glows red.** Poweroff and reboot now play a new
+  cut of the shutdown animation (`assets/boot/shutdown.mp4`): the same
+  logo and layout, with a red progress bar and dots in place of the blue
+  ones. It is shown the same way as before and stops at the same point,
+  before the clip's own fade to black.
 - **Dependencies bumped:** `nixpkgs`, `home-manager`, `home-manager-unstable`
   and `antigravity-nix` flake inputs, and the Claude Desktop, Codex Desktop
   and Ollama vendored packages.
@@ -131,6 +163,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **PATH no longer repeats the out-of-band dirs.** `~/.local/bin`,
+  `~/.cargo/bin`, `~/.npm-packages/bin` and `~/.opencode/bin` were appended
+  once per nested shell, so a terminal under the login shell carried each
+  of them three times. Bash, Nushell and Ion now add a dir only when PATH
+  lacks it, in the same order and still after the Nix paths.
+
+- **Claude Desktop and the other Electron AI apps find the keyring under
+  Niri, LeftWM and Margo.** Claude warned "No system keyring is available"
+  and stored its sign-in in plaintext, because Electron does not recognise
+  those sessions and skips the Secret Service. Claude, OpenCode, Goose,
+  Codex and Grok Bot desktop now launch with the same
+  `--password-store=gnome-libsecret` flag the editors already get, so they
+  use the login keyring that greetd unlocks. Restart each app after
+  rebuilding; you may have to sign in once more.
+- **Margo starts from the greeter instead of dropping straight back to
+  it.** margo loads the Wayland server and EGL libraries at run time
+  rather than linking them, so the package never recorded where they
+  live and margo exited with "could not load libwayland-server.so"
+  before drawing anything. The package now records both library paths.
+- **Plasma panel pins no longer turn into blank-file icons after a
+  rebuild.** The task manager had saved some pins (Dolphin, Konsole,
+  Antigravity, Alacritty) as a path inside one build of the system, so
+  once a rebuild and garbage collection removed that build, the pin lost
+  its icon and launched nothing. Every rebuild now rewrites such pins to
+  the app's own name, which keeps working across builds. A running panel
+  picks it up after `systemctl --user restart plasma-plasmashell` or the
+  next login.
 - **The Caps Lock and Num Lock LEDs light again on the console.** The
   side-button remapper that runs under GNOME, COSMIC, Plasma and LeftWM
   grabbed the built-in keyboard as well as the mouse, and while it held

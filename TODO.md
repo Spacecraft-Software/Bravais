@@ -49,6 +49,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`keyring.nix`**: Install `libsecret` (`secret-tool`) + `seahorse`
 - [✓] **`keyring.nix`**: Expose `steelbore.keyring.chromiumFlag` (`--password-store=gnome-libsecret`)
 - [✓] **`editors.nix`**: Wrap Cursor / Kiro / Antigravity Desktop + IDE with the Chromium keyring flag
+- [✓] **`ai.nix`**: Pass the Chromium keyring flag to Claude / OpenCode / Goose / Codex / Grok Bot desktop (`extraFlags` override)
 - [✓] **`flatpak.nix`**: Sandbox-scoped `XDG_CURRENT_DESKTOP=GNOME` override for Chromium-family Flatpaks (Opera, Chrome, Edge, Brave, Discord, Wavebox, VS Code, GitHub Desktop)
 - [✓] **`dns.nix`**: Enable `systemd-resolved` with DNS-over-TLS and DNSSEC enforced
 - [✓] **`dns.nix`**: Cloudflare malware-block primary (`1.1.1.2` / `1.0.0.2` + v6, SNI `security.cloudflare-dns.com`)
@@ -402,7 +403,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
-- [✓] **`common.nix`**: Mouse on the TTYs via gpm (`imps2` on `/dev/input/mice`; xremap's re-emitted pointer still reaches it)
+- [✓] **`common.nix`**: Mouse on the TTYs via `steelbore-reticle` (Rust, in-tree; replaced gpm): select, paste, extend, xterm mouse reporting; reads evdev directly, xremap's re-emitted pointer included
 - [✓] **`default.nix`**: Enable printing
 - [✓] **`default.nix`**: Create user `mj` with groups (networkmanager, wheel, input, video, audio)
 - [✓] **`default.nix`**: Set user shell to Nushell (Rust), root shell to Brush (Rust)
@@ -732,6 +733,34 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       only; it should also accept `ID_LIKE=nixos` (fix upstream)
 - [ ] Decide whether KInfoCenter shows the codename
       (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
+
+## Rebuild progress display (2026-10-19)
+
+- [✓] `preflight` follows the detached Flatpak update with a live bar parsed
+      from its log (`pkgs/preflight/src/progress.rs`); `--detach-flatpak`
+      returns at once; `preflight flatpak status|watch`
+- [✓] Spinner beside the silent steps (disk accounting, Antigravity and
+      mcpctl probes); nothing drawn for agents, CI or pipes; ASCII on the
+      Linux console
+- [✓] Same watcher in `users/mj/rebuild.nu` (`flatpak-watch`) and
+      `scripts/rebuild.sh`
+- [ ] First live run on the ThinkPad against a real Flatpak update
+
+## Rebuild builds origin's latest code (2026-10-19)
+
+- [✓] `preflight` fetches and fast-forwards the checkout before building
+      (`pkgs/preflight/src/git_sync.rs`); a branch deleted upstream falls
+      back to `main`; uncommitted changes are carried with a warning;
+      refuses clashing changes, local-only branches and diverged history
+      with exit 5 and a runnable hint
+- [✓] `--branch <name>` / `-b` to test a PR branch; `--no-sync` to build
+      the tree as it is; `--dry` only reports
+- [✓] Same step in `users/mj/rebuild.nu` and `scripts/rebuild.sh`
+- [✓] Scenario tests against throwaway git repos (all three implementations)
+- [✓] First live run on the ThinkPad (2026-10-19): the sync worked, then
+      refused the next run over preflight's own uncommitted vendored-pin
+      bumps; dirty trees are now carried, not refused
+- [ ] Second live run with uncommitted pins carried
 
 ## Out-of-band AI tool updates (2026-10-13)
 
