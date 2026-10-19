@@ -26,6 +26,7 @@
 
 mod ai_tools;
 mod disk;
+mod git_sync;
 mod output;
 mod steps;
 
@@ -57,7 +58,9 @@ const ABOUT: &str = concat!(
     about = ABOUT,
     after_help = concat!(
         "EXAMPLES:\n",
-        "  preflight                     Full rebuild: update, switch, mirror, report\n",
+        "  preflight                     Full rebuild: sync with origin, update, switch, mirror, report\n",
+        "  preflight --branch <NAME>     Switch to origin's <NAME> first (testing a PR), then rebuild\n",
+        "  preflight --no-sync           Build the checkout as it is, uncommitted changes included\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
         "  preflight --update-all        Also bump the vendored pins and AI tools (alias: --full-update)\n",
@@ -107,6 +110,14 @@ struct Cli {
     /// Dry-build; make no changes
     #[arg(long, visible_alias = "dry-run")]
     dry: bool,
+
+    /// Build the checkout as it is: skip the git fetch and fast-forward
+    #[arg(long)]
+    no_sync: bool,
+
+    /// Switch the checkout to this branch from origin before building (e.g. a PR branch)
+    #[arg(long, short = 'b', value_name = "NAME", value_parser = git_sync::parse_branch, conflicts_with = "no_sync")]
+    branch: Option<String>,
 
     /// Skip `nix flake update`
     #[arg(long)]
@@ -219,9 +230,11 @@ fn main() -> std::process::ExitCode {
 }
 
 /// The run's options as the flags select them.
-const fn options(cli: &Cli) -> steps::Options {
+fn options(cli: &Cli) -> steps::Options<'_> {
     steps::Options {
         dry: cli.dry,
+        sync: !cli.no_sync,
+        branch: cli.branch.as_deref(),
         no_update: cli.no_update,
         // "Update everything" has to include the pins `nix flake update`
         // cannot move, or it silently leaves the stalest things in the tree
@@ -241,7 +254,15 @@ const fn options(cli: &Cli) -> steps::Options {
 }
 
 fn cmd_run(out: Out, cli: &Cli) -> i32 {
-    let (report, switched) = steps::run(out, options(cli));
+    let (report, switched) = match steps::run(out, options(cli)) {
+        Ok(done) => done,
+        Err(refused) => {
+            return out.fail(
+                &AppError::new(refused.code, refused.exit, refused.message, "preflight")
+                    .with_hint(refused.hint),
+            );
+        }
+    };
 
     let human = String::new(); // the sequence narrates on stderr as it goes
     out.emit("preflight", &report, cli.dry, &human);
@@ -325,7 +346,9 @@ fn cmd_schema(out: Out) -> i32 {
             "preflight": {
                 "description": "Run the rebuild sequence",
                 "flags": {
-                    "--dry": "dry-build; make no changes",
+                    "--dry": "dry-build; make no changes (the git sync fetches and reports what it would do, but does not move the checkout)",
+                    "--no-sync": "build the checkout as it is; skip git fetch and the fast-forward",
+                    "--branch": "switch to origin's <NAME> before building (testing a PR); conflicts with --no-sync",
                     "--no-update": "skip nix flake update",
                     "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored and --update-ai-tools; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
@@ -347,10 +370,11 @@ fn cmd_schema(out: Out) -> i32 {
         },
         "exit_codes": {
             "0": "success",
-            "1": "general failure (the switch did not complete)",
+            "1": "general failure (the switch did not complete; or the git sync could not run: FETCH_FAILED, SWITCH_FAILED, NOT_A_CHECKOUT)",
             "2": "usage error",
-            "3": "resource not found (no watched mount exists)",
-            "4": "permission denied"
+            "3": "resource not found (no watched mount exists; NO_SUCH_BRANCH for --branch)",
+            "4": "permission denied",
+            "5": "conflict: the git sync refused to move the checkout (DIRTY_TREE, NO_UPSTREAM, LOCK_CONFLICT, NOT_FAST_FORWARD); nothing was built"
         },
         "safe_categories": disk::SAFE_CATEGORIES,
         "low_water_bytes": disk::LOW_WATER_BYTES
@@ -370,6 +394,7 @@ fn cmd_describe(out: Out) -> i32 {
         "maintainer": output::MAINTAINER,
         "website": output::WEBSITE,
         "capabilities": [
+            "git-sync",
             "rebuild-orchestration",
             "disk-report",
             "disk-reclaim",
@@ -424,25 +449,47 @@ mod tests {
 
     #[test]
     fn full_update_implies_both_extra_update_steps() {
-        let opts = Cli::try_parse_from(["preflight", "--full-update"]).map(|c| options(&c));
-        assert!(opts.is_ok_and(|o| o.update_vendored && o.update_ai_tools));
+        let cli = Cli::try_parse_from(["preflight", "--full-update"]);
+        assert!(cli.is_ok_and(|c| {
+            let o = options(&c);
+            o.update_vendored && o.update_ai_tools
+        }));
     }
 
     #[test]
     fn update_ai_tools_alone_leaves_the_vendored_pins() {
-        let opts = Cli::try_parse_from(["preflight", "--update-ai-tools"]).map(|c| options(&c));
-        assert!(opts.is_ok_and(|o| o.update_ai_tools && !o.update_vendored));
+        let cli = Cli::try_parse_from(["preflight", "--update-ai-tools"]);
+        assert!(cli.is_ok_and(|c| {
+            let o = options(&c);
+            o.update_ai_tools && !o.update_vendored
+        }));
     }
 
     #[test]
     fn a_plain_run_updates_no_ai_tools() {
-        let opts = Cli::try_parse_from(["preflight"]).map(|c| options(&c));
-        assert!(opts.is_ok_and(|o| !o.update_ai_tools));
+        let cli = Cli::try_parse_from(["preflight"]);
+        assert!(cli.is_ok_and(|c| !options(&c).update_ai_tools));
     }
 
     #[test]
     fn update_ai_tools_conflicts_with_skills_only() {
         assert!(Cli::try_parse_from(["preflight", "--update-ai-tools", "--skills-only"]).is_err());
+    }
+
+    #[test]
+    fn a_plain_run_syncs_and_no_sync_turns_it_off() {
+        let on = Cli::try_parse_from(["preflight"]);
+        assert!(on.is_ok_and(|c| options(&c).sync));
+        let off = Cli::try_parse_from(["preflight", "--no-sync"]);
+        assert!(off.is_ok_and(|c| !options(&c).sync));
+    }
+
+    #[test]
+    fn branch_conflicts_with_no_sync_and_rejects_flag_lookalikes() {
+        assert!(Cli::try_parse_from(["preflight", "--branch", "x", "--no-sync"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--branch=-f"]).is_err());
+        let ok = Cli::try_parse_from(["preflight", "-b", "origin/claude/x"]);
+        assert!(ok.is_ok_and(|c| c.branch.as_deref() == Some("claude/x")));
     }
 
     #[test]

@@ -25,6 +25,7 @@ use serde::Serialize;
 
 use crate::ai_tools;
 use crate::disk;
+use crate::git_sync;
 use crate::output::{Level, Out};
 
 /// Where the flake lives and what host it builds.
@@ -85,8 +86,13 @@ pub struct RunReport {
     reason = "mirrors the CLI flag surface one-to-one; the suggested remedies hide that the flags are independent"
 )]
 #[derive(Debug, Clone, Copy)]
-pub struct Options {
+pub struct Options<'a> {
     pub dry: bool,
+    /// Bring the checkout up to date with origin first (`git_sync`). Off
+    /// under `--no-sync`, which builds the tree exactly as it is.
+    pub sync: bool,
+    /// `--branch`: switch to this branch before building (testing a PR).
+    pub branch: Option<&'a str>,
     pub no_update: bool,
     /// Run `pkgs/update-vendored.nu` before the switch, bumping the
     /// `version` + `hash` pins that no flake update can move.
@@ -208,11 +214,16 @@ const fn fmt_outcome(o: Outcome) -> &'static str {
 
 /// Execute the sequence. Returns the report and whether the switch itself
 /// succeeded -- a failed probe is worth reporting but is not a failed rebuild.
-pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
+/// `Err` means the checkout could not be brought up to date and nothing was
+/// built: building a tree other than the one asked for is the failure the
+/// sync step exists to prevent, so it stops the run rather than warning.
+pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refusal> {
     let mut r = Runner {
         out,
         steps: Vec::new(),
     };
+
+    sync_checkout(&mut r, opts)?;
 
     // Asking for the bump is the check the nag exists to prompt, so the nag
     // would only be noise on top of it.
@@ -224,11 +235,6 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     if opts.no_update {
         r.record("flake-update", Outcome::Skipped, Some("--no-update".into()));
     } else {
-        let key = home().join(".ssh/id_ed25519");
-        r.run(
-            "gitway-add",
-            Command::new("gitway-add").arg(&key).current_dir(FLAKE_DIR),
-        );
         let mut cmd = Command::new("nix");
         cmd.args(["flake", "update"]).current_dir(FLAKE_DIR);
         github_token(&mut r, &mut cmd);
@@ -319,7 +325,7 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
         Some(a)
     };
 
-    (
+    Ok((
         RunReport {
             host: HOST,
             dry_run: opts.dry,
@@ -329,7 +335,45 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
             reclaimed,
         },
         switched,
-    )
+    ))
+}
+
+/// Load the signing key, then bring the checkout up to date with origin.
+///
+/// First, before any step that reads the tree: the vendored bump, the flake
+/// update and the switch must all see origin's code. The key goes into the
+/// agent before the fetch because both the fetch and the flake update can
+/// need it.
+fn sync_checkout(r: &mut Runner, opts: Options) -> Result<(), git_sync::Refusal> {
+    if opts.sync || !opts.no_update {
+        let key = home().join(".ssh/id_ed25519");
+        r.run(
+            "gitway-add",
+            Command::new("gitway-add").arg(&key).current_dir(FLAKE_DIR),
+        );
+    }
+    if !opts.sync {
+        r.record("git-sync", Outcome::Skipped, Some("--no-sync".into()));
+        return Ok(());
+    }
+    let req = git_sync::Request {
+        dir: FLAKE_DIR,
+        branch: opts.branch,
+        dry: opts.dry,
+        lock_regenerated: !opts.no_update,
+    };
+    match git_sync::sync(req) {
+        Ok(detail) => r.record("git-sync", Outcome::Ok, Some(detail)),
+        // --dry promises no changes and builds nothing real, so a refusal
+        // there is reported, not fatal.
+        Err(e) if opts.dry => r.record(
+            "git-sync",
+            Outcome::Failed,
+            Some(format!("would refuse: {}", e.message)),
+        ),
+        Err(e) => return Err(e),
+    }
+    Ok(())
 }
 
 /// Everything after the switch except the closing disk report.

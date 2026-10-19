@@ -26,7 +26,7 @@ MCP_REPO=/spacecraft-software/mcp-servers
 FLATPAK_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/flatpak-update.log"
 STAMP="$HOME/.cache/bravais-vendored-check"
 
-dry=0; no_update=0; update_all=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0
+dry=0; no_sync=0; branch=""; no_update=0; update_all=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0
 
 # Colors only when stdout is a terminal — a piped or logged run stays clean,
 # and NO_COLOR is honored (Standard §18.2.1).
@@ -48,12 +48,16 @@ rebuild.sh — full system rebuild for steelbore-thinkpad
 
 Usage: scripts/rebuild.sh [OPTIONS]
 
-Bumps every flake input, frees disk while keeping a week of rollback
+Brings the checkout up to date with origin, bumps every flake input, frees disk while keeping a week of rollback
 targets, builds and switches, then mirrors the repo into /etc/nixos. A failed
 switch aborts before the mirror.
 
 Options:
   --dry           nixos-rebuild dry-build only; skips GC and the /etc mirror
+                  (the git sync fetches and reports, but does not move the checkout)
+  --no-sync       build the checkout as it is; skip git fetch and fast-forward
+  -b, --branch NAME
+                  switch to origin's NAME before building (testing a PR)
   --no-update     skip `nix flake update`
   --update-all    accepted for compatibility; every run bumps every input
   --no-gc         skip garbage collection and the journal vacuum
@@ -75,6 +79,11 @@ USAGE
 while [ $# -gt 0 ]; do
     case "$1" in
         --dry)         dry=1 ;;
+        --no-sync)     no_sync=1 ;;
+        -b|--branch)
+            [ $# -ge 2 ] || { say "$C_ERR" "$1 needs a branch name"; exit 2; }
+            branch=$2; shift ;;
+        --branch=*)    branch=${1#--branch=} ;;
         --no-update)   no_update=1 ;;
         --update-all)  update_all=1 ;;
         --no-gc)       no_gc=1 ;;
@@ -87,6 +96,17 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# The one user-supplied string that reaches git: refuse anything that could
+# be read as a flag or that no branch name can contain (Agentic CLI §7).
+if [ -n "$branch" ]; then
+    case "$branch" in
+        -*|*..*|*[[:space:]]*|*[[:cntrl:]]*)
+            say "$C_ERR" "invalid branch name '$branch'"; exit 2 ;;
+    esac
+    branch=${branch#origin/}
+    [ "$no_sync" -eq 0 ] || { say "$C_ERR" "--branch conflicts with --no-sync"; exit 2; }
+fi
 
 if [ "$update_all" -eq 1 ] && { [ "$no_update" -eq 1 ] || [ "$skills_only" -eq 1 ]; }; then
     say "$C_ERR" "--update-all conflicts with --no-update and --skills-only"; exit 2
@@ -150,6 +170,132 @@ http_get() {
     fi
 }
 
+# ── Signing key ─────────────────────────────────────────────────────────────
+# Before the git fetch and the flake update, both of which can need it.
+if [ "$no_sync" -eq 0 ] || [ "$no_update" -eq 0 ]; then
+    gitway-add "$HOME/.ssh/id_ed25519"
+fi
+
+# ── Git sync ────────────────────────────────────────────────────────────────
+# Build origin's code, not whatever the checkout happens to hold. Mirrors
+# pkgs/preflight/src/git_sync.rs, which carries the full reasoning; change all
+# three. In short: refuse uncommitted changes (flake.lock excepted -- every
+# full run leaves it modified); fetch --prune; keep the current branch while
+# its upstream exists, else (detached, or merged and deleted upstream) go to
+# origin's default branch; refuse a local-only branch; fast-forward only.
+# Exit codes follow the CLI Standard: 5 conflict, 3 not found, 1 failure.
+refuse() {  # <exit> <code> <message> <hint>
+    if [ "$dry" -eq 1 ]; then
+        warn "git-sync: dry run; would refuse ($2): $3"
+        return 1
+    fi
+    say "$C_ERR" "[ERROR] $2: $3"
+    dim "  try: $4"
+    exit "$1"
+}
+
+git_sync() {
+    if [ "$(git -C "$REPO" rev-parse --is-inside-work-tree 2>/dev/null)" != true ]; then
+        refuse 1 NOT_A_CHECKOUT "$REPO is not a git checkout (or git is not on PATH)" \
+            "rebuild.sh --no-sync   # build the tree as it is" || return 0
+    fi
+    # Porcelain columns 1-2 are the status, so the path starts at column 4.
+    porcelain=$(git -C "$REPO" status --porcelain=v1 --untracked-files=no)
+    blocking=$(printf '%s\n' "$porcelain" | sed -n 's/^...//p' | sed 's/.* -> //' \
+        | grep -vx 'flake\.lock' || true)
+    if [ -n "$blocking" ]; then
+        refuse 5 DIRTY_TREE \
+            "uncommitted changes would be built instead of origin's code: $(printf '%s' "$blocking" | tr '\n' ' ')" \
+            "git -C $REPO stash   # or build them as they are: rebuild.sh --no-sync" || return 0
+    fi
+    lock_dirty=0
+    if printf '%s\n' "$porcelain" | grep -q '^.. flake\.lock$'; then lock_dirty=1; fi
+
+    if ! git -C "$REPO" fetch --prune origin; then
+        refuse 1 FETCH_FAILED "git fetch from origin failed, so the latest code is unknown" \
+            "rebuild.sh --no-sync --no-update   # offline: build the tree as it is" || return 0
+    fi
+
+    current=$(git -C "$REPO" symbolic-ref --quiet --short HEAD || true)
+    default=$(git -C "$REPO" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)
+    default=${default#origin/}
+    [ -n "$default" ] || default=main
+    why=""
+    if [ -n "$branch" ]; then
+        want=$branch
+    elif [ -z "$current" ]; then
+        want=$default; why=" (HEAD was detached)"
+    elif ! git -C "$REPO" config --get "branch.$current.merge" >/dev/null; then
+        refuse 5 NO_UPSTREAM "branch '$current' has no upstream on origin, so there is nothing to update it from" \
+            "git -C $REPO switch $default   # or build it as it is: rebuild.sh --no-sync" || return 0
+    elif git -C "$REPO" rev-parse --verify --quiet "$current@{upstream}" >/dev/null; then
+        want=$current
+    else
+        want=$default; why=" ('$current' was deleted on origin)"
+    fi
+
+    if [ "$want" = "$current" ]; then
+        switching=0
+        target=$(git -C "$REPO" rev-parse --abbrev-ref "$current@{upstream}" 2>/dev/null || echo "origin/$want")
+    else
+        switching=1
+        target="origin/$want"
+    fi
+    if ! git -C "$REPO" rev-parse --verify --quiet "$target^{commit}" >/dev/null; then
+        refuse 3 NO_SUCH_BRANCH "origin has no branch '$want'" \
+            "git -C $REPO branch --remotes   # the branches origin has" || return 0
+    fi
+
+    # The last run's `nix flake update` leaves flake.lock modified. If the
+    # incoming commits change it too, git would refuse to move; when an update
+    # follows anyway the stale bump is worthless and is dropped. Under
+    # --no-update the lock IS what gets built, so it is never dropped silently.
+    lock_conflicts=0
+    if [ "$lock_dirty" -eq 1 ] && ! git -C "$REPO" diff --quiet HEAD "$target" -- flake.lock; then
+        lock_conflicts=1
+    fi
+
+    if [ "$dry" -eq 1 ]; then
+        behind=$(git -C "$REPO" rev-list --count "HEAD..$target" 2>/dev/null || echo '?')
+        dim "git-sync: dry run; would move to $want$why at $target ($behind commit(s) behind); building the tree as it is"
+        return 0
+    fi
+
+    if [ "$lock_conflicts" -eq 1 ]; then
+        if [ "$no_update" -eq 1 ]; then
+            refuse 5 LOCK_CONFLICT "flake.lock has an uncommitted bump and $target changes it too" \
+                "git -C $REPO restore flake.lock   # drop the local bump, then re-run"
+        fi
+        git -C "$REPO" restore --staged --worktree -- flake.lock || \
+            refuse 1 LOCK_CONFLICT "could not discard the uncommitted flake.lock bump" "git -C $REPO status"
+    fi
+
+    if [ "$switching" -eq 1 ]; then
+        if git -C "$REPO" rev-parse --verify --quiet "refs/heads/$want" >/dev/null; then
+            git -C "$REPO" switch "$want" || \
+                refuse 1 SWITCH_FAILED "could not switch to '$want'" "git -C $REPO status"
+        else
+            git -C "$REPO" switch --create "$want" --track "$target" || \
+                refuse 1 SWITCH_FAILED "could not switch to '$want'" "git -C $REPO status"
+        fi
+    fi
+
+    before=$(git -C "$REPO" rev-parse HEAD)
+    git -C "$REPO" merge --ff-only "$target" || \
+        refuse 5 NOT_FAST_FORWARD "'$want' has commits that $target does not, so it cannot be fast-forwarded" \
+            "git -C $REPO log --oneline $target..$want   # the local-only commits"
+    new=$(git -C "$REPO" rev-list --count "$before..HEAD")
+    note=""
+    [ "$lock_conflicts" -eq 0 ] || note="; dropped the uncommitted flake.lock bump"
+    say "$C_OK" "git-sync: $want at $(git -C "$REPO" rev-parse --short HEAD)$why; $new new commit(s)$note"
+}
+
+if [ "$no_sync" -eq 1 ]; then
+    dim "git-sync: skipped (--no-sync); building the tree as it is"
+else
+    git_sync
+fi
+
 # ── Monthly vendored-binary reminder ────────────────────────────────────────
 # claude-desktop, chrome-remote-desktop, ollama, obscura and BrowserOS pin
 # upstream binaries that `nix flake update` cannot bump.
@@ -165,7 +311,6 @@ fi
 # a rebuild is what re-points `pinned`/`current` at the new lock; `skills-sync`
 # moves the pointer without one.
 if [ "$no_update" -eq 0 ]; then
-    gitway-add "$HOME/.ssh/id_ed25519"
     # Anonymous, Nix resolves `github:` inputs through the GitHub API at 60
     # requests an hour, which a bare `nix flake update` exhausts (HTTP 403,
     # 2026-09-27). Borrow the gh CLI's keyring token for the update only:
