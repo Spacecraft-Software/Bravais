@@ -66,6 +66,11 @@
   # MCP launchers must resolve at runtime (npx / uvx)
   nodejs,
   uv,
+  # Extra Electron flags baked into the launcher. Empty for a bare
+  # `nix build .#claude-desktop`; modules/packages/ai.nix overrides it with
+  # `steelbore.keyring.chromiumFlag`, which a package cannot read itself
+  # (no `config` here) and must not restate.
+  extraFlags ? [ ],
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -182,6 +187,7 @@ stdenv.mkDerivation (finalAttrs: {
     #    sandboxed — unlike --no-sandbox) and works on NixOS (unprivileged userns
     #    is enabled by default).
     #  - Ozone hints: crisp rendering + client-side decorations under Wayland/Niri.
+    #  - extraFlags: the caller's additions (the keyring backend, from ai.nix).
     makeWrapper $out/lib/claude-desktop/claude-desktop $out/bin/claude-desktop \
       "''${gappsWrapperArgs[@]}" \
       --prefix PATH : ${
@@ -192,7 +198,8 @@ stdenv.mkDerivation (finalAttrs: {
       } \
       --add-flags "--disable-setuid-sandbox" \
       --add-flags "--ozone-platform-hint=auto" \
-      --add-flags "--enable-features=WaylandWindowDecorations"
+      --add-flags "--enable-features=WaylandWindowDecorations" \
+      ${lib.concatMapStringsSep " " (f: "--add-flags ${lib.escapeShellArg f}") extraFlags}
   '';
 
   meta = {

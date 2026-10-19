@@ -57,6 +57,10 @@
   libxscrnsaver,
   libxshmfence,
   libxtst,
+  # Extra Electron flags baked into the launcher. Empty for a bare
+  # `nix build .#goose-desktop`; modules/packages/ai.nix overrides it with
+  # `steelbore.keyring.chromiumFlag` (see the claude-desktop package).
+  extraFlags ? [ ],
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -175,7 +179,8 @@ stdenv.mkDerivation (finalAttrs: {
       }" \
       --add-flags "--disable-setuid-sandbox" \
       --add-flags "--ozone-platform-hint=auto" \
-      --add-flags "--enable-features=WaylandWindowDecorations"
+      --add-flags "--enable-features=WaylandWindowDecorations" \
+      ${lib.concatMapStringsSep " " (f: "--add-flags ${lib.escapeShellArg f}") extraFlags}
 
     # Fix Exec and Icon paths in the desktop file
     substituteInPlace $out/share/applications/goose-desktop.desktop \
