@@ -97,6 +97,8 @@ pub enum Exit {
     Usage = 2,
     NotFound = 3,
     Permission = 4,
+    /// The working tree disagrees with what the run needs (dirty, diverged).
+    Conflict = 5,
 }
 
 /// Structured error object (CLI Standard §8, non-negotiable #8).
@@ -188,6 +190,11 @@ pub struct Out {
     pub color: bool,
     /// Severity floor: messages below this are dropped.
     pub floor: Level,
+    /// Draw spinners and progress bars on stderr (`progress::detect`): a
+    /// human at a terminal only, never an agent, CI or a pipe.
+    pub live: bool,
+    /// Draw them in ASCII: the Linux console, or a non-UTF-8 locale.
+    pub ascii: bool,
 }
 
 impl Out {
@@ -229,10 +236,26 @@ impl Out {
             Level::Ok
         };
 
+        let (live, ascii) = crate::progress::detect(format == Format::Human, agent);
+
         Self {
             format,
             color,
             floor,
+            live,
+            ascii,
+        }
+    }
+
+    /// A non-live human policy for unit tests.
+    #[cfg(test)]
+    pub const fn for_tests(ascii: bool) -> Self {
+        Self {
+            format: Format::Human,
+            color: false,
+            floor: Level::Ok,
+            live: false,
+            ascii,
         }
     }
 

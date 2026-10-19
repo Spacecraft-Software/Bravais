@@ -41,7 +41,7 @@ One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whis
 
 ### 1.3 Principal Workflows
 
-- **Rebuild** — `preflight`: bump every flake input, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
+- **Rebuild** — `preflight`: sync the checkout with `origin`, bump every flake input, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
 - **Switch theme** — `theme set <slug>` (persist), `theme try <slug>` (live, reverts at the next rebuild), `theme now <slug>` (Standard §11.6-aware apps, no rebuild) (§2.2, §16.3).
 - **Change a default app** — `app set <role> <slug>` rewrites `default-apps.nix` (§2.6, §16.3).
 - **Sync agent skills** — `skills-sync` moves the skill pointer ahead of a rebuild; follow with `nu pkgs/sync-skills.nu` (§16.2).
@@ -609,7 +609,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 - **All LC_* variables:** `en_US.UTF-8` (ADDRESS, IDENTIFICATION, MEASUREMENT, MONETARY, NAME, NUMERIC, PAPER, TELEPHONE, TIME)
 - **Why `LC_TIME` is not an ISO locale:** `en_DK.UTF-8` was tried for system-wide ISO 8601 and reverted. Qt reads CLDR, not glibc, and CLDR's `en_DK` short time format uses a dot separator, which broke the Plasma panel clock; glibc also never generated the locale, so `date` fell back to C. ISO 8601 in the Plasma clock is pinned in `users/mj/plasma.nix` instead. Any new locale must keep a colon time separator under CLDR and be verified with `LC_ALL=<locale> date` (CONSTRAINTS.md #31)
 - **Console keymap:** `console.keyMap = "us"`, set in the shared host config (`hosts/common.nix`)
-- **Console mouse:** `services.gpm` (protocol `imps2` on `/dev/input/mice`), set in `hosts/common.nix`: select, paste and extend on every TTY. gpm is C; no Rust console-mouse daemon exists, and kmscon would replace the kernel console that greetd and the themed getty run on. xremap does not starve it, because a mouse it grabs is re-emitted through a uinput device the mice multiplexer also merges
+- **Console mouse:** `steelbore-reticle` (Rust, `pkgs/steelbore-reticle`), enabled as `steelbore.console.mouse` in `hosts/common.nix` (module `modules/core/reticle.nix`). It replaced gpm. It drives the kernel's own selection ioctls (`TIOCLINUX`: `TIOCL_SETSEL`, `TIOCL_PASTESEL`, `TIOCL_GETMOUSEREPORTING`), so the console that greetd and the themed getty run on is untouched: left-drag selects (double click a word, triple click a line), right-click extends, middle-click pastes, and a program that enables xterm mouse reporting gets the clicks. Input is read from every evdev pointing device without grabbing (mice, the TrackPoint, xremap's re-emitting uinput device, touchpads with tap-to-click, absolute tablets), with hotplug through inotify on `/dev/input`. The service runs as root bounded to `CAP_SYS_ADMIN` (required by `TIOCL_SETSEL` since Linux 6.7) and sandboxed; `steelbore-reticle device list` / `console get` / `schema` / `describe` follow the CLI Standard. No `/dev/gpmctl` protocol and no wheel (the console has no scrollback since Linux 5.9)
 - **Input method:** iBus enabled with an empty engine list — the daemon idles on US-only input but provides the D-Bus surface that the iBus Wayland panel autostart expects, which otherwise surfaces an error popup (notably under COSMIC)
 
 ### 5.4 Audio (`modules/core/audio.nix`)
@@ -2086,12 +2086,20 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 ### 16.1 Rebuild
 
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
-user, never as root. In order: bump every flake input (authenticated with
+user, never as root. In order: bring the checkout up to date with `origin`
+(fetch, then fast-forward, carrying uncommitted changes along with a
+warning; refuses uncommitted changes the incoming commits also touch, a
+local-only branch or diverged history; a branch deleted
+upstream falls back to `main`; `--branch <name>` switches to a PR branch,
+`--no-sync` builds the tree as it is), bump every flake input (authenticated with
 the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
 Flatpak update **detached**, because a full Flatpak refresh can take hours and
-must never block the switch. `--update-ai-tools` (implied by `--full-update`)
+must never block the switch. At a terminal the run then follows it with a live
+progress bar parsed from its log (Ctrl-C stops the watching, not the update;
+`--detach-flatpak` returns at once, as every agent, CI or piped run does);
+`preflight flatpak status|watch` reports on it later. `--update-ai-tools` (implied by `--full-update`)
 then runs the self-updater of every AI tool installed outside Nix, one at a
 time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. `preflight` wraps none of the tools it drives onto
 PATH, so they are never frozen in its closure (same reasoning as

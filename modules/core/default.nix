@@ -11,6 +11,7 @@
     ./security.nix
     ./keyring.nix
     ./dns.nix
+    ./reticle.nix # mouse on the TTYs (pkgs/steelbore-reticle)
     ./identity.nix # Steelbore OS os-release / lsb-release (lib/identity.nix)
   ];
 }

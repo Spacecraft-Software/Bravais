@@ -13,19 +13,23 @@
 // collection) or is ordered by a real dependency -- the flake must be updated
 // before the switch, the switch must succeed before /etc/nixos is mirrored.
 // The one genuinely independent tail, the Flatpak update, is not run
-// concurrently but DETACHED, for the reason recorded in `flatpak_detached`.
+// concurrently but DETACHED, for the reason recorded in `flatpak_start`; at a
+// terminal the run then follows it to the end (`flatpak_finish`).
 // Threading anything else would add contention and failure modes to a process
 // whose wall time is dominated by a single external build.
 
-use std::path::Path;
-use std::process::{Command, Stdio};
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
 use crate::ai_tools;
 use crate::disk;
+use crate::git_sync;
 use crate::output::{Level, Out};
+use crate::progress;
 
 /// Where the flake lives and what host it builds.
 pub const FLAKE_DIR: &str = "/spacecraft-software/bravais";
@@ -85,8 +89,13 @@ pub struct RunReport {
     reason = "mirrors the CLI flag surface one-to-one; the suggested remedies hide that the flags are independent"
 )]
 #[derive(Debug, Clone, Copy)]
-pub struct Options {
+pub struct Options<'a> {
     pub dry: bool,
+    /// Bring the checkout up to date with origin first (`git_sync`). Off
+    /// under `--no-sync`, which builds the tree exactly as it is.
+    pub sync: bool,
+    /// `--branch`: switch to this branch before building (testing a PR).
+    pub branch: Option<&'a str>,
     pub no_update: bool,
     /// Run `pkgs/update-vendored.nu` before the switch, bumping the
     /// `version` + `hash` pins that no flake update can move.
@@ -98,6 +107,9 @@ pub struct Options {
     pub trace: bool,
     pub skills_only: bool,
     pub no_flatpak: bool,
+    /// Start the Flatpak update and return, instead of following it to the
+    /// end at a terminal. Implied whenever the run is not live.
+    pub detach_flatpak: bool,
     pub reclaim: bool,
     /// Collect EVERY old generation (`nix-collect-garbage -d`) rather than
     /// keeping a week. Frees far more; costs the ability to roll back.
@@ -112,6 +124,8 @@ pub struct Options {
 struct Runner {
     out: Out,
     steps: Vec<StepReport>,
+    /// The detached Flatpak update, once started, and its log.
+    flatpak: Option<(Child, PathBuf)>,
 }
 
 impl Runner {
@@ -208,11 +222,17 @@ const fn fmt_outcome(o: Outcome) -> &'static str {
 
 /// Execute the sequence. Returns the report and whether the switch itself
 /// succeeded -- a failed probe is worth reporting but is not a failed rebuild.
-pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
+/// `Err` means the checkout could not be brought up to date and nothing was
+/// built: building a tree other than the one asked for is the failure the
+/// sync step exists to prevent, so it stops the run rather than warning.
+pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refusal> {
     let mut r = Runner {
         out,
         steps: Vec::new(),
+        flatpak: None,
     };
+
+    sync_checkout(&mut r, opts)?;
 
     // Asking for the bump is the check the nag exists to prompt, so the nag
     // would only be noise on top of it.
@@ -224,11 +244,6 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     if opts.no_update {
         r.record("flake-update", Outcome::Skipped, Some("--no-update".into()));
     } else {
-        let key = home().join(".ssh/id_ed25519");
-        r.run(
-            "gitway-add",
-            Command::new("gitway-add").arg(&key).current_dir(FLAKE_DIR),
-        );
         let mut cmd = Command::new("nix");
         cmd.args(["flake", "update"]).current_dir(FLAKE_DIR);
         github_token(&mut r, &mut cmd);
@@ -279,8 +294,7 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     }
 
     // --- preflight disk --------------------------------------------------
-    let mut before = disk::measure();
-    before.reclaimable_bytes = disk::reclaimable();
+    let before = progress::spin(out, "measuring disk", measure_disk);
     if out.format == crate::output::Format::Human {
         eprint!("{}", disk::render(&before, "preflight"));
     }
@@ -311,15 +325,18 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
     let after = if opts.dry {
         None
     } else {
-        let mut a = disk::measure();
-        a.reclaimable_bytes = disk::reclaimable();
+        let a = progress::spin(out, "measuring disk", measure_disk);
         if out.format == crate::output::Format::Human {
             eprint!("{}", disk::render(&a, "postflight"));
         }
         Some(a)
     };
 
-    (
+    // Last, after the closing disk report, so that the one wait that can
+    // run for hours holds nothing else up and Ctrl-C at it loses no report.
+    flatpak_finish(&mut r, opts);
+
+    Ok((
         RunReport {
             host: HOST,
             dry_run: opts.dry,
@@ -329,7 +346,67 @@ pub fn run(out: Out, opts: Options) -> (RunReport, bool) {
             reclaimed,
         },
         switched,
-    )
+    ))
+}
+
+/// Free space plus what is reclaimable. `vacuum` walks the caches for the
+/// second number, which is the slow part and the reason for the spinner.
+fn measure_disk() -> disk::Report {
+    let mut d = disk::measure();
+    d.reclaimable_bytes = disk::reclaimable();
+    d
+}
+
+/// Load the signing key, then bring the checkout up to date with origin.
+///
+/// First, before any step that reads the tree: the vendored bump, the flake
+/// update and the switch must all see origin's code. The key goes into the
+/// agent before the fetch because both the fetch and the flake update can
+/// need it.
+fn sync_checkout(r: &mut Runner, opts: Options) -> Result<(), git_sync::Refusal> {
+    if opts.sync || !opts.no_update {
+        let key = home().join(".ssh/id_ed25519");
+        r.run(
+            "gitway-add",
+            Command::new("gitway-add").arg(&key).current_dir(FLAKE_DIR),
+        );
+    }
+    if !opts.sync {
+        r.record("git-sync", Outcome::Skipped, Some("--no-sync".into()));
+        return Ok(());
+    }
+    let req = git_sync::Request {
+        dir: FLAKE_DIR,
+        branch: opts.branch,
+        dry: opts.dry,
+        lock_regenerated: !opts.no_update,
+    };
+    match git_sync::sync(req) {
+        Ok(synced) => {
+            // The build is origin's code plus these, so say so. Usually they
+            // are this tool's own leftovers (vendored pins awaiting a deps
+            // commit); occasionally an experiment someone forgot.
+            if !synced.carried.is_empty() {
+                r.out.say(
+                    Level::Warn,
+                    &format!(
+                        "building with uncommitted changes: {}",
+                        synced.carried.join(", ")
+                    ),
+                );
+            }
+            r.record("git-sync", Outcome::Ok, Some(synced.line));
+        }
+        // --dry promises no changes and builds nothing real, so a refusal
+        // there is reported, not fatal.
+        Err(e) if opts.dry => r.record(
+            "git-sync",
+            Outcome::Failed,
+            Some(format!("would refuse: {}", e.message)),
+        ),
+        Err(e) => return Err(e),
+    }
+    Ok(())
 }
 
 /// Everything after the switch except the closing disk report.
@@ -340,7 +417,7 @@ fn postflight(r: &mut Runner, opts: Options, switched: bool) {
     }
 
     if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
-        flatpak_detached(r);
+        flatpak_start(r);
     } else if opts.no_flatpak {
         r.record(
             "flatpak-update",
@@ -590,7 +667,12 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
     } else {
         cmd.arg("--dry-run");
     }
-    let Ok(out) = cmd.output() else {
+    let label = if deploy {
+        "deploying MCP host configs"
+    } else {
+        "checking MCP host configs"
+    };
+    let Ok(out) = progress::spin(r.out, label, || cmd.output()) else {
         r.record("mcpctl", Outcome::Skipped, Some("mcpctl absent".into()));
         return;
     };
@@ -704,8 +786,8 @@ fn github_token(r: &mut Runner, cmd: &mut Command) {
 ///
 /// Never fatal: a brief Cloud Run outage must not abort a rebuild.
 fn antigravity_probe(r: &mut Runner) {
-    let pinned = Command::new("nix")
-        .args([
+    let pinned = progress::spin(r.out, "probing antigravity-nix", || {
+        Command::new("nix").args([
             "eval",
             "--raw",
             "--impure",
@@ -716,7 +798,8 @@ fn antigravity_probe(r: &mut Runner) {
         .output()
         .ok()
         .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned());
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_owned())
+    });
     match pinned {
         Some(rev) if !rev.is_empty() => {
             r.record(
@@ -733,29 +816,101 @@ fn antigravity_probe(r: &mut Runner) {
     }
 }
 
-/// Start the Flatpak update and return immediately.
+/// The log the detached Flatpak update writes. The same path as the Nushell
+/// `flatpak-log` and `rebuild.sh`'s `FLATPAK_LOG`, so every watcher reads one
+/// file whichever implementation started the update.
+pub fn flatpak_log() -> PathBuf {
+    home().join(".local/state/flatpak-update.log")
+}
+
+/// Start the Flatpak update, detached, and keep its handle.
 ///
 /// DETACHED, not inline, and not `services.flatpak.update.onActivation`. The
 /// declarative spelling blocks activation on an unbounded download -- a browser
 /// is ~150 MB, a runtime bump ~250 MB, and the full set measured 4.4 GB at
 /// ~0.4 MB/s, roughly three hours. A switch held open for hours, or interrupted
 /// part-way, is a worse failure than a Flatpak being a few days old.
-fn flatpak_detached(r: &mut Runner) {
-    let log = home().join(".local/state/flatpak-update.log");
+///
+/// `setsid` without `--fork`: a spawned child is never a process-group
+/// leader, so `setsid` calls setsid(2) and execs in place, and the handle we
+/// keep is Flatpak's own PID. That buys an exit status for `flatpak_finish`
+/// while keeping everything detaching was for: in its own session the update
+/// gets neither the terminal's SIGINT nor its SIGHUP, so Ctrl-C, closing the
+/// terminal or preflight exiting all leave it running.
+fn flatpak_start(r: &mut Runner) {
+    let log = flatpak_log();
     if let Some(parent) = log.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
-    let ok = Command::new("setsid")
-        .args(["--fork", "sh", "-c"])
-        .arg(format!(
-            "flatpak update --assumeyes >{} 2>&1",
-            log.display()
-        ))
-        .status()
-        .is_ok_and(|s| s.success());
-    r.record(
-        "flatpak-update",
-        if ok { Outcome::Ok } else { Outcome::Failed },
-        Some(format!("detached → {}", log.display())),
+    let spawned = File::create(&log)
+        .and_then(|f| Ok((f.try_clone()?, f)))
+        .and_then(|(out, err)| {
+            Command::new("setsid")
+                .args(["flatpak", "update", "--assumeyes"])
+                .stdin(Stdio::null())
+                .stdout(out)
+                .stderr(err)
+                .spawn()
+        });
+    match spawned {
+        Ok(child) => r.flatpak = Some((child, log)),
+        Err(e) => r.record("flatpak-update", Outcome::Failed, Some(e.to_string())),
+    }
+}
+
+/// Follow the Flatpak update to its end, or leave it running.
+///
+/// Followed only when the run is live (a human at a terminal) and
+/// `--detach-flatpak` is not given: an agent, CI or a pipe gets the old
+/// behaviour, a step that records the log path and returns, because none of
+/// them should block for hours on a download nobody asked them to wait for.
+fn flatpak_finish(r: &mut Runner, opts: Options) {
+    let Some((mut child, log)) = r.flatpak.take() else {
+        return;
+    };
+    let shown = log.display().to_string();
+    if !r.out.live || opts.detach_flatpak {
+        r.record(
+            "flatpak-update",
+            Outcome::Ok,
+            Some(format!(
+                "detached → {shown}   (follow: preflight flatpak watch)"
+            )),
+        );
+        return;
+    }
+
+    progress::note(
+        r.out,
+        "following the Flatpak update — Ctrl-C stops following; the update keeps running (resume: preflight flatpak watch)",
     );
+    let start = std::time::Instant::now();
+    let mut status = None;
+    let last = progress::watch_flatpak(r.out, &log, &mut || match child.try_wait() {
+        Ok(None) => true,
+        Ok(Some(s)) => {
+            status = Some(s);
+            false
+        }
+        Err(_) => false,
+    });
+    let took = progress::elapsed(start.elapsed());
+    let tail = last.line.unwrap_or_default();
+    match status {
+        Some(s) if s.success() => r.record(
+            "flatpak-update",
+            Outcome::Ok,
+            Some(format!("{tail} ({took})")),
+        ),
+        Some(s) => r.record(
+            "flatpak-update",
+            Outcome::Failed,
+            Some(format!("{s}: {tail} — see {shown}")),
+        ),
+        None => r.record(
+            "flatpak-update",
+            Outcome::Failed,
+            Some(format!("lost track of the update — see {shown}")),
+        ),
+    }
 }
