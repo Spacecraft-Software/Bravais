@@ -452,8 +452,11 @@ in
 
   # Available sessions for greetd environments
   # All desktops share a unified `start-<de>` naming scheme.
+  # start-margo is margo's own crash-budget supervisor (pkgs/margo), so like
+  # start-cosmic it is not wrapped here; it is listed only when Margo is on.
   environment.etc."greetd/environments".text = ''
     start-niri
+    ${lib.optionalString config.steelbore.desktops.margo.enable "start-margo"}
     start-cosmic
     start-plasma
     start-plasma-x11

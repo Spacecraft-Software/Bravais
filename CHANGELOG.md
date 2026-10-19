@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Margo is a new session at the greeter.** Margo is a Rust (Smithay)
+  port of the mango compositor: tags instead of workspaces, mango's
+  layouts, and its sliding window animations. It is configured to animate
+  the way mango does by default (`users/mj/margo.nix`), and it reuses the
+  Niri session's bar, launcher, notifications, lock, idle and hardware keys.
+  Pick **Margo** in tuigreet, or run `start-margo`. Its config is
+  `~/.config/margo/config.conf`; `mctl check-config` validates it and
+  `Mod+Ctrl+R` reloads it in place.
 - **The Artcraft suite is installed as Flatpaks.** WordCraft, PhotoCraft,
   VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft,
   FigCraft, SoundCraft, DeckCraft, CADCraft and GridCraft come from each
