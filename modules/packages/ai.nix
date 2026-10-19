@@ -61,7 +61,19 @@
       # Claude Desktop — official Anthropic Linux beta, repackaged from the .deb
       # (no nixpkgs package). Derivation + version/hash-bump notes live in
       # pkgs/claude-desktop/. Unfree; allowUnfree is set in modules/core/nix.nix.
-      ++ [ (import ../../pkgs { inherit pkgs; }).claude-desktop ]
+      #
+      # The keyring flag is not optional under Niri, LeftWM or Margo: Electron
+      # picks its credential backend from XDG_CURRENT_DESKTOP, maps "niri" to
+      # DE_OTHER and falls back to plaintext, which Claude reports as "No
+      # system keyring is available" although gnome-keyring is running and
+      # unlocked (modules/core/keyring.nix). Same cause and cure as the editors
+      # in editors.nix; the flag goes into the package's own wrapper so the
+      # .desktop entry, a launcher and a terminal all get it.
+      ++ [
+        ((import ../../pkgs { inherit pkgs; }).claude-desktop.override {
+          extraFlags = [ config.steelbore.keyring.chromiumFlag ];
+        })
+      ]
       # GitHub Copilot Desktop — official GitHub Tauri app, repackaged from the
       # .deb. Derivation + version/hash-bump notes live in pkgs/github-copilot-app/.
       # Unfree; same allowUnfree gate as claude-desktop.
