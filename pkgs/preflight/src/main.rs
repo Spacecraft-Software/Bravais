@@ -28,6 +28,7 @@ mod ai_tools;
 mod disk;
 mod git_sync;
 mod output;
+mod progress;
 mod steps;
 
 use clap::{Parser, Subcommand};
@@ -69,6 +70,8 @@ const ABOUT: &str = concat!(
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
+        "  preflight --detach-flatpak    Start the Flatpak update and return instead of following it\n",
+        "  preflight flatpak watch       Follow a running Flatpak update with a progress bar\n",
         "  preflight disk report --json  Machine-readable free space and reclaimable bytes\n",
         "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
@@ -154,6 +157,10 @@ struct Cli {
     #[arg(long)]
     no_flatpak: bool,
 
+    /// Start the Flatpak update and return instead of following its progress (always the case off a terminal)
+    #[arg(long, conflicts_with = "no_flatpak")]
+    detach_flatpak: bool,
+
     /// Reclaim safe caches before the switch (implied when /nix is low)
     #[arg(long)]
     reclaim: bool,
@@ -178,10 +185,23 @@ enum Cmd {
         #[command(subcommand)]
         action: DiskCmd,
     },
+    /// The detached Flatpak update: progress now, or followed to the end
+    Flatpak {
+        #[command(subcommand)]
+        action: FlatpakCmd,
+    },
     /// Emit the JSON Schema of the command surface
     Schema,
     /// Emit a compact capability manifest
     Describe,
+}
+
+#[derive(Subcommand, Debug)]
+enum FlatpakCmd {
+    /// Whether an update is running, and how far it has got
+    Status,
+    /// Follow a running update to its end with a progress bar (off a terminal: wait, then report)
+    Watch,
 }
 
 #[derive(Subcommand, Debug)]
@@ -214,6 +234,7 @@ fn main() -> std::process::ExitCode {
     let code = match &cli.command {
         Some(Cmd::Schema) => cmd_schema(out),
         Some(Cmd::Describe) => cmd_describe(out),
+        Some(Cmd::Flatpak { action }) => cmd_flatpak(out, matches!(action, FlatpakCmd::Watch)),
         Some(Cmd::Disk { action }) => match action {
             DiskCmd::Report => cmd_disk_report(out),
             DiskCmd::Reclaim { yes } => cmd_disk_reclaim(out, *yes),
@@ -246,6 +267,7 @@ fn options(cli: &Cli) -> steps::Options<'_> {
         trace: cli.trace,
         skills_only: cli.skills_only,
         no_flatpak: cli.no_flatpak,
+        detach_flatpak: cli.detach_flatpak,
         reclaim: cli.reclaim,
         gc_all: cli.gc_all,
         journal_days: cli.journal_days,
@@ -280,6 +302,62 @@ fn cmd_run(out: Out, cli: &Cli) -> i32 {
             .with_hint("preflight --trace   # re-run with --show-trace --verbose"),
         )
     }
+}
+
+/// What `preflight flatpak status|watch` report.
+#[derive(Debug, serde::Serialize)]
+struct FlatpakStatus {
+    running: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pid: Option<u32>,
+    log: String,
+    progress: progress::FlatpakProgress,
+}
+
+fn flatpak_status(log: &std::path::Path) -> FlatpakStatus {
+    let pid = progress::running_update();
+    FlatpakStatus {
+        running: pid.is_some(),
+        pid,
+        log: log.display().to_string(),
+        progress: progress::read_tail(log)
+            .map(|t| progress::parse(&t))
+            .unwrap_or_default(),
+    }
+}
+
+fn cmd_flatpak(out: Out, watch: bool) -> i32 {
+    let log = steps::flatpak_log();
+    let command = if watch {
+        "preflight flatpak watch"
+    } else {
+        "preflight flatpak status"
+    };
+    if watch && progress::running_update().is_some() {
+        progress::note(
+            out,
+            "following the Flatpak update — Ctrl-C stops following; the update keeps running",
+        );
+        progress::watch_flatpak(out, &log, &mut || progress::running_update().is_some());
+    }
+    let st = flatpak_status(&log);
+    let p = &st.progress;
+    let state = if st.running {
+        match (p.percent, p.op, p.ops) {
+            (Some(pct), Some(a), Some(b)) => format!("running — operation {a}/{b}, {pct}% overall"),
+            (Some(pct), _, _) => format!("running — {pct}%"),
+            _ => "running".to_owned(),
+        }
+    } else {
+        "not running".to_owned()
+    };
+    let human = format!(
+        "  flatpak update: {state}\n  last line:      {}\n  log:            {}\n",
+        p.line.as_deref().unwrap_or("(no run recorded)"),
+        st.log
+    );
+    out.emit(command, &st, false, &human);
+    Exit::Success as i32
 }
 
 fn cmd_disk_report(out: Out) -> i32 {
@@ -357,12 +435,15 @@ fn cmd_schema(out: Out) -> i32 {
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
                     "--no-flatpak": "skip the detached Flatpak update",
+                    "--detach-flatpak": "start the Flatpak update and return; without it a live (terminal, non-agent) run follows the update to its end with a progress bar, and Ctrl-C stops following without stopping the update; conflicts with --no-flatpak",
                     "--reclaim": "reclaim safe caches before the switch",
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
                     "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually"
                 }
             },
+            "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },
+            "preflight flatpak watch": { "description": "Follow a running Flatpak update to its end (progress bar at a terminal; otherwise block, then emit the final status)" },
             "preflight disk report": { "description": "Free space and reclaimable bytes" },
             "preflight disk reclaim": { "description": "Reclaim safe caches; --yes to apply" },
             "preflight schema": { "description": "This document" },
@@ -396,6 +477,7 @@ fn cmd_describe(out: Out) -> i32 {
         "capabilities": [
             "git-sync",
             "rebuild-orchestration",
+            "flatpak-progress",
             "disk-report",
             "disk-reclaim",
         ],
@@ -490,6 +572,14 @@ mod tests {
         assert!(Cli::try_parse_from(["preflight", "--branch=-f"]).is_err());
         let ok = Cli::try_parse_from(["preflight", "-b", "origin/claude/x"]);
         assert!(ok.is_ok_and(|c| c.branch.as_deref() == Some("claude/x")));
+    }
+
+    #[test]
+    fn detach_flatpak_is_off_by_default_and_refuses_no_flatpak() {
+        assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| !options(&c).detach_flatpak));
+        assert!(Cli::try_parse_from(["preflight", "--detach-flatpak"])
+            .is_ok_and(|c| options(&c).detach_flatpak));
+        assert!(Cli::try_parse_from(["preflight", "--detach-flatpak", "--no-flatpak"]).is_err());
     }
 
     #[test]

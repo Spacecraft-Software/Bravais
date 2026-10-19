@@ -732,6 +732,18 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [ ] Decide whether KInfoCenter shows the codename
       (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
 
+## Rebuild progress display (2026-10-19)
+
+- [✓] `preflight` follows the detached Flatpak update with a live bar parsed
+      from its log (`pkgs/preflight/src/progress.rs`); `--detach-flatpak`
+      returns at once; `preflight flatpak status|watch`
+- [✓] Spinner beside the silent steps (disk accounting, Antigravity and
+      mcpctl probes); nothing drawn for agents, CI or pipes; ASCII on the
+      Linux console
+- [✓] Same watcher in `users/mj/rebuild.nu` (`flatpak-watch`) and
+      `scripts/rebuild.sh`
+- [ ] First live run on the ThinkPad against a real Flatpak update
+
 ## Rebuild builds origin's latest code (2026-10-19)
 
 - [✓] `preflight` fetches and fast-forwards the checkout before building

@@ -5,7 +5,7 @@
 # from Nix, so the two consumers cannot drift:
 #
 #   1. users/mj/shell.nix embeds it in Nushell's config.nu, so `rebuild`,
-#      `flatpak-status`, `flatpak-update`, `flatpak-log` and
+#      `flatpak-status`, `flatpak-update`, `flatpak-watch`, `flatpak-log` and
 #      `antigravity-status` stay available as interactive Nu commands.
 #   2. the same text is wrapped with a `nu` shebang and a `def main` and
 #      installed as the `rebuild` binary, so it is callable from Bash, Ion,
@@ -25,6 +25,121 @@ def flatpak-log []: nothing -> string {
   $nu.home-dir | path join ".local" "state" "flatpak-update.log"
 }
 
+# Whether a `flatpak update` is running. Matched on the command line, as
+# `running_update` in pkgs/preflight/src/progress.rs does: argv[0] must be
+# `flatpak` (or NixOS's `.flatpak-wrapped`) and an argument `update`.
+# flatpak-session-helper, -portal and -system-helper are always-on daemons
+# that share the name, so a bare name filter would report running = true
+# forever; none of them carries `update`.
+def flatpak-running []: nothing -> bool {
+  ps -l | where command =~ '^(\S*/)?\.?flatpak(-wrapped)?\s(.*\s)?update(\s|$)' | is-not-empty
+}
+
+# Draw live progress? Only for a human at a terminal: never for an agent,
+# CI or a pipe (CLI Standard §5), the same test as `progress::detect` in
+# pkgs/preflight/src/progress.rs.
+def bravais-live []: nothing -> bool {
+  let agent = (["AI_AGENT" "AGENT" "CI"] | any {|v|
+    let val = ($env | get -o $v | default "")
+    $val not-in ["" "0" "false"]
+  })
+  (not $agent) and (is-terminal --stdout) and (is-terminal --stderr) and (($env | get -o TERM) != "dumb")
+}
+
+# Progress out of the tail of a Flatpak log. Mirrors `parse` in
+# pkgs/preflight/src/progress.rs, which documents the two line shapes
+# Flatpak writes when its output is not a terminal: `Updating 2/5…` as an
+# operation starts, then `Updating 2/5… ████▌  23%  1.2 MB/s  00:30`.
+# The newest line with either shape decides; a counter with no percentage
+# is an operation that has just started, so it stands at 0%. `percent`
+# counts every operation as an equal share — Flatpak reports no total.
+def flatpak-progress [text: string]: nothing -> record {
+  # Split before `ansi strip`, which also drops the carriage returns.
+  let lines = ($text | split row -r '[\r\n]' | ansi strip | str trim | where $it != "")
+  let hit = ($lines | reverse | where {|l| ($l =~ '\d%') or ($l =~ '\d+/\d+(…|\.\.\.)?(\s|$)') } | get 0?)
+  let ctr = if $hit == null { null } else {
+    $hit | parse -r '(?<op>\d+)/(?<ops>\d+)(?:…|\.\.\.)?(?:\s|$)' | get 0? | if $in == null { null } else {
+      {op: ($in.op | into int), ops: ($in.ops | into int)}
+    } | if $in != null and $in.op >= 1 and $in.op <= $in.ops { $in } else { null }
+  }
+  let pct = if $hit == null { null } else {
+    $hit | parse -r '(?<p>\d{1,3})%\s*(?<rate>.*)$' | get 0?
+  }
+  let op_percent = if $pct != null { $pct.p | into int } else if $ctr != null { 0 } else { null }
+  let rate = if $pct != null and ($pct.rate | str trim) != "" { $pct.rate | str trim } else { null }
+  let percent = if $op_percent == null { null } else if $ctr == null { $op_percent } else {
+    (($ctr.op - 1) * 100 + $op_percent) // $ctr.ops
+  }
+  {
+    op: ($ctr | get -o op), ops: ($ctr | get -o ops)
+    op_percent: $op_percent, percent: $percent, rate: $rate
+    line: ($lines | last 1 | get 0?)
+  }
+}
+
+# `1m05s` / `12s`, compact because it shares a line with a bar; the same
+# shape as `progress::elapsed` in preflight.
+def bravais-elapsed [d: duration]: nothing -> string {
+  let s = ($d // 1sec)
+  if $s >= 3600 {
+    $"($s // 3600)h($s mod 3600 // 60 | fill -a right -c '0' -w 2)m"
+  } else if $s >= 60 {
+    $"($s // 60)m($s mod 60 | fill -a right -c '0' -w 2)s"
+  } else { $"($s)s" }
+}
+
+# Follow a running Flatpak update to its end: a spinner, the operation
+# counter, a bar and Flatpak's own rate. Ctrl-C stops following; the update
+# was started in its own session (`setsid`), so it keeps running. Off a
+# terminal nothing is drawn: it waits, then returns the final status.
+def flatpak-watch []: nothing -> record {
+  let log = (flatpak-log)
+  if not (flatpak-running) {
+    print -e "no Flatpak update running"
+    return (flatpak-status)
+  }
+  let live = (bravais-live)
+  # The Linux console font has no braille and no partial blocks.
+  let ascii = (($env | get -o TERM) == "linux") or not (($env | get -o LANG | default "") =~ '(?i)utf-?8')
+  let frames = if $ascii { ["|" "/" "-" "\\"] } else { ["⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏"] }
+  let glyphs = if $ascii { ["#" "-"] } else { ["█" "░"] }
+  if $live { print -e "following the Flatpak update — Ctrl-C stops following; the update keeps running (resume: flatpak-watch)" }
+  let start = (date now)
+  mut tick = 0
+  mut prog: any = {percent: null, line: null}
+  loop {
+    # Re-read the log and re-check the process every fifth frame: `ps -l`
+    # walks every process, which is too costly for each redraw.
+    if $tick mod 5 == 0 {
+      if not (flatpak-running) { break }
+      if ($log | path exists) { $prog = (flatpak-progress (^tail -c 16384 $log)) }
+    }
+    if $live {
+      let took = (bravais-elapsed ((date now) - $start))
+      let text = if $prog.percent == null {
+        $"($frames | get ($tick mod ($frames | length))) flatpak: ($prog.line | default 'starting…')  \(($took)\)"
+      } else {
+        let n = ($prog.percent * 24 // 100)
+        let bar = (("" | fill -c $glyphs.0 -w $n) + ("" | fill -c $glyphs.1 -w (24 - $n)))
+        let ops = if $prog.op == null { "" } else { $" ($prog.op)/($prog.ops)" }
+        let rate = if $prog.rate == null { "" } else { $"  ($prog.rate)" }
+        $"($frames | get ($tick mod ($frames | length))) flatpak($ops)  ($bar) ($prog.percent | fill -a right -w 3)%($rate)  \(($took)\)"
+      }
+      # Cut to the terminal width: a wrapped line cannot be erased with \r.
+      # A terminal that reports no size (0 columns) gets 80.
+      let cols = (term size).columns
+      let width = (if $cols > 0 { $cols } else { 80 }) - 1
+      print -e -n $"\r\e[2K($text | str substring --grapheme-clusters 0..<$width)"
+      sleep 200ms
+    } else {
+      sleep 2sec
+    }
+    $tick += 1
+  }
+  if $live { print -e -n "\r\e[2K" }
+  flatpak-status
+}
+
 # Progress of the declared system Flatpaks: how many refs are still
 # outdated, whether an update is running, free space, and the tail of
 # its log.
@@ -32,10 +147,7 @@ def flatpak-status []: nothing -> record {
   let log = (flatpak-log)
   {
     pending: (^flatpak remote-ls --updates | lines | length)
-    # The wrapper IS the update. flatpak-session-helper, -portal and
-    # -system-helper are always-on daemons, so a bare "flatpak"
-    # filter would report running = true forever.
-    running: (ps | where name =~ "flatpak-wrappe" | is-not-empty)
+    running: (flatpak-running)
     # /var/lib/flatpak, not / — this field exists to answer "is there
     # room for a 4.4 GB update", and / is a 16 GiB tmpfs that always
     # looks empty. The real target shares the nvme partition with /nix.
@@ -49,6 +161,9 @@ def flatpak-status []: nothing -> record {
     } else {
       "no run recorded"
     })
+    # The same log, parsed: operation k of n, its download, the overall
+    # percentage and Flatpak's rate. `flatpak-watch` draws these live.
+    parsed: (if ($log | path exists) { flatpak-progress (^tail -c 16384 $log) } else { null })
   }
 }
 
@@ -60,7 +175,7 @@ def flatpak-update []: nothing -> nothing {
   let log = (flatpak-log)
   mkdir ($log | path dirname)
   ^setsid --fork flatpak update --system -y o+e> $log
-  print "flatpak update started — watch with: flatpak-status"
+  print "flatpak update started — follow it with: flatpak-watch"
 }
 
 # ── git sync ──────────────────────────────────────────────────────
@@ -224,13 +339,13 @@ def antigravity-status [] {
 #   --update-all accepted for compatibility; every run bumps every input
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
-def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
+def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --detach-flatpak, --yes] {
   # Explicit usage rather than `help rebuild`. That resolved to nothing when
   # this file is run as the `rebuild` BINARY (where the outer command is
   # `main`), printing an empty response instead of help — so spell it out and
   # get identical behaviour from both the Nu command and the binary.
   if $topic == "help" {
-    print "Usage: rebuild [help] [--dry] [--no-sync] [--branch <name>] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--yes]"
+    print "Usage: rebuild [help] [--dry] [--no-sync] [--branch <name>] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--detach-flatpak] [--yes]"
     print ""
     print "  --dry          nixos-rebuild dry-build only; skips GC and the /etc mirror"
     print "                 (the git sync fetches and reports, but does not move the checkout)"
@@ -242,6 +357,8 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
     print "  --trace        add --show-trace --verbose (to diagnose eval failures)"
     print "  --skills-only  bump only `construct`; skip GC, the /etc mirror and the mcpctl probe"
     print "  --no-flatpak   skip the detached Flatpak update"
+    print "  --detach-flatpak  start the Flatpak update and return instead of following"
+    print "                 its progress bar (always the case off a terminal)"
     print "  --yes          skip the question about using `preflight` instead"
     print ""
     print "Superseded by `preflight` (Rust), which takes all of the above and adds"
@@ -260,6 +377,9 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
   }
   if $update_all and ($no_update or $skills_only) {
     print $"(ansi red)--update-all conflicts with --no-update and --skills-only(ansi reset)"; return
+  }
+  if $detach_flatpak and $no_flatpak {
+    print $"(ansi red)--detach-flatpak conflicts with --no-flatpak(ansi reset)"; return
   }
 
   # Deprecation gate. `preflight` (pkgs/preflight/, Rust) is the supported
@@ -474,14 +594,27 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
     # point, so nothing is left half-applied if the download is slow,
     # interrupted, or fails.
     #
-    # Skippable with --no-flatpak. `flatpak-status` reports progress
-    # afterwards, and the weekly timer in modules/packages/flatpak.nix
-    # stays as the safety net for stretches without a rebuild.
+    # Skippable with --no-flatpak. At a terminal the run then FOLLOWS
+    # the detached update with a progress bar (`flatpak-watch`) until it
+    # ends: detached still means Ctrl-C or a closed terminal only stops
+    # the watching, never the update. --detach-flatpak returns at once,
+    # as every run off a terminal (an agent, a script) always does;
+    # `flatpak-watch` picks the bar up again later, `flatpak-status`
+    # gives a one-shot record. The weekly timer in
+    # modules/packages/flatpak.nix stays as the safety net for stretches
+    # without a rebuild.
     if not $no_flatpak {
       let pending = (flatpak-status | get pending)
       if $pending > 0 {
         print $"(ansi blue)── flatpak: ($pending) update\(s\), detached ──(ansi reset)"
         flatpak-update
+        if (not $detach_flatpak) and (bravais-live) {
+          # Give the forked update a moment to exist, or the watcher
+          # finds nothing running and returns at once.
+          sleep 1sec
+          let done = (flatpak-watch)
+          print $"(ansi green)flatpak: ($done.progress)(ansi reset)"
+        }
       } else {
         print $"(ansi green)flatpak: up to date(ansi reset)"
       }
