@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-Bravais is a flake-based NixOS configuration implementing the Spacecraft Software Standard. It delivers a complete, reproducible system with a modular, opt-in architecture supporting five desktop environments: GNOME (Wayland), COSMIC (Wayland), KDE Plasma 6 (Wayland), Niri (Wayland), and LeftWM (X11). All five are enabled together on purpose; `modules/desktops/assertions.nix` guards only the genuine invariants, not mutual exclusivity.
+Bravais is a flake-based NixOS configuration implementing the Spacecraft Software Standard. It delivers a complete, reproducible system with a modular, opt-in architecture supporting six desktop environments: GNOME (Wayland), COSMIC (Wayland), KDE Plasma 6 (Wayland), Niri (Wayland), Margo (Wayland), and LeftWM (X11). All six are enabled together on purpose; `modules/desktops/assertions.nix` guards only the genuine invariants, not mutual exclusivity.
 
 **Core Principles:**
 
@@ -129,7 +129,8 @@ bravais/
 |   +-- hardware/                  # android, audio-led, bluetooth, fingerprint (explicit PAM policy), intel
 |   +-- platform/x86-64.nix        # ISA level (v1–v4 enum) + compiler/linker flags
 |   +-- desktops/                  # gnome, cosmic, cosmic-unmax, plasma, niri (eww bar + dunst),
-|   |                              #   niri-unmax, leftwm (eww bar, X11), shared (bare-WM services),
+|   |                              #   niri-unmax, margo (mango port), leftwm (eww bar, X11),
+|   |                              #   shared (bare-WM services),
 |   |                              #   mouse-workspace-nav (xremap), assertions
 |   +-- login/default.nix          # greetd + tuigreet + shell sessions
 |   +-- services/                  # adguardvpn, chrome-remote-desktop, ollama, podman, waydroid
@@ -910,7 +911,7 @@ The machine is an Intel i7-8665U (Whiskey Lake). A T490s-specific comment in thi
 
 - **Hostname:** `steelbore-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.{android,audioLed,bluetooth,fingerprint,intel}.enable`
-- **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" ]`. This is per-machine because the device name is. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick (CONSTRAINTS.md #29)
+- **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" "AT Translated Set 2 keyboard" ]`. This is per-machine because the device names are. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick, and keeping it off the keyboard keeps the Caps/Num Lock LEDs working in the session and on the console (CONSTRAINTS.md #29)
 - **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = false; user = primaryUser; }` (disabled since 2026-10-02; when enabled, a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
 - **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }`. The i7-8665U supports x86-64-v3 (AVX2/BMI2/FMA) but has **no AVX-512**, so v4 would emit illegal instructions on this CPU
 

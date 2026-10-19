@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
   on Niri and COSMIC. `Alt+Space`, `Alt+F2` and `Search` still work.
   *Peek at Desktop* loses its default `Meta+D` and has no key.
+- **Margo is a new session at the greeter.** Margo is a Rust (Smithay)
+  port of the mango compositor: tags instead of workspaces, mango's
+  layouts, and its sliding window animations. It is configured to animate
+  the way mango does by default (`users/mj/margo.nix`), and it reuses the
+  Niri session's bar, launcher, notifications, lock, idle and hardware keys.
+  Pick **Margo** in tuigreet, or run `start-margo`. Its config is
+  `~/.config/margo/config.conf`; `mctl check-config` validates it and
+  `Mod+Ctrl+R` reloads it in place.
 - **The Artcraft suite is installed as Flatpaks.** WordCraft, PhotoCraft,
   VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft,
   FigCraft, SoundCraft, DeckCraft, CADCraft and GridCraft come from each
@@ -119,6 +127,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Caps Lock and Num Lock LEDs light again on the console.** The
+  side-button remapper that runs under GNOME, COSMIC, Plasma and LeftWM
+  grabbed the built-in keyboard as well as the mouse, and while it held
+  that grab every LED change was dropped, so the lights stayed dark in
+  those sessions and on any TTY reached from one. It now leaves the
+  keyboard alone; it only ever needed the mouse buttons.
 - **LeftWM locks the screen, and Caffeine works there.** Ctrl+Alt+L ran
   gtklock, which is Wayland-only and exits at once under X, so LeftWM
   never locked; the Caffeine button paused a `swayidle` that does not run

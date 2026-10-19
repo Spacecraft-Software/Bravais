@@ -9,6 +9,7 @@
     ./shared.nix
     ./niri.nix
     ./niri-unmax.nix
+    ./margo.nix
     ./mouse-workspace-nav.nix
     ./leftwm.nix
     ./assertions.nix

@@ -17,6 +17,13 @@
 }:
 
 let
+  # The bare compositors/WMs that run the shared dunst/eww/helper stack
+  # rather than a desktop environment's own.
+  bareWm =
+    config.steelbore.desktops.leftwm.enable
+    || config.steelbore.desktops.niri.enable
+    || config.steelbore.desktops.margo.enable;
+
   # Bluetooth state detector — emits one of `off | on | connected` so the
   # Eww bar (bt/bt_state defpolls) and the toggle OSD share one truth
   # source. `off` = rfkill soft-blocked; `on` = radio up but no device
@@ -543,7 +550,7 @@ in
     (lib.mkIf (config.steelbore.desktops.plasma.enable || config.steelbore.desktops.cosmic.enable) {
       environment.systemPackages = [ caffeineToggle ];
     })
-    (lib.mkIf (config.steelbore.desktops.leftwm.enable || config.steelbore.desktops.niri.enable) {
+    (lib.mkIf bareWm {
       # Dunst notification configuration
       environment.etc."dunst/dunstrc".text = ''
         # Steelbore Dunst Configuration

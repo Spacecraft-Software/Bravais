@@ -128,6 +128,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Bind it in LeftWM (`FocusPreviousTag`/`FocusNextTag`) + start/stop from the theme hooks
 - [✓] Leave Niri on its native `MouseBack`/`MouseForward` binds
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
+- [✓] Keep xremap off the built-in keyboard (`ignoredDevices`), or its grab darkens the Caps/Num Lock LEDs on every TTY (CONSTRAINTS.md #29)
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
@@ -146,6 +147,13 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure input (keyboard `us,ar` with `grp:ctrl_space_toggle`, touchpad)
 - [✓] Map dedicated/multimedia keys (XF86): display + keyboard brightness, volume/mute/mic-mute, media (playerctl), Bluetooth + airplane-mode (rfkill wrappers w/ dunst feedback)
 - [✓] swayosd OSD bars for brightness/volume (swayosd-server startup; Steelbore-themed `~/.config/swayosd/style.css`); brightnessctl udev rules for rootless backlight
+
+### Margo (`margo.nix`)
+
+- [✓] Package margo in-tree (`pkgs/margo/`): compositor, `mctl` and `start-margo` only, no mshell
+- [✓] Define `steelbore.desktops.margo` option; register the session with greetd/tuigreet
+- [✓] Write `~/.config/margo/config.conf` from the palette with mango's default animations (`users/mj/margo.nix`)
+- [ ] Verify on hardware: session start, animations, eww bar, lock, idle, hardware keys, screen sharing
 
 ### LeftWM (`leftwm.nix`)
 
