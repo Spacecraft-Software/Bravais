@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The mouse works on the TTYs.** On any virtual console, drag with the
+  left button to select text, click the middle button to paste it, and
+  right-click to extend a selection. The TrackPoint, the touchpad and a
+  USB mouse all work. This is gpm (`services.gpm` in `hosts/common.nix`).
 - **Margo is a new session at the greeter.** Margo is a Rust (Smithay)
   port of the mango compositor: tags instead of workspaces, mango's
   layouts, and its sliding window animations. It is configured to animate
