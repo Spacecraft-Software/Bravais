@@ -100,6 +100,19 @@ rustPlatform.buildRustPackage (finalAttrs: {
     EOF
   '';
 
+  # Smithay dlopen()s libwayland-server, libwayland-egl and libEGL rather
+  # than linking them, so nothing puts them on the RUNPATH and margo exits
+  # with "could not load libwayland-server.so" before opening a socket.
+  # postFixup, not postInstall: fixupPhase's --shrink-rpath would drop them.
+  postFixup = ''
+    patchelf --add-rpath ${
+      lib.makeLibraryPath [
+        wayland
+        libGL
+      ]
+    } $out/bin/.margo-wrapped
+  '';
+
   passthru.providedSessions = [ "margo" ];
 
   meta = {
