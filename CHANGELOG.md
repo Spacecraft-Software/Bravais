@@ -72,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The shutdown screen glows red.** Poweroff and reboot now play a new
+  cut of the shutdown animation (`assets/boot/shutdown.mp4`): the same
+  logo and layout, with a red progress bar and dots in place of the blue
+  ones. It is shown the same way as before and stops at the same point,
+  before the clip's own fade to black.
 - **Dependencies bumped:** `nixpkgs`, `home-manager`, `home-manager-unstable`
   and `antigravity-nix` flake inputs, and the Claude Desktop, Codex Desktop
   and Ollama vendored packages.
