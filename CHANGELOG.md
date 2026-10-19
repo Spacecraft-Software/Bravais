@@ -149,6 +149,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The shutdown animation stays on screen until the power goes off.**
+  Near the end of a poweroff or reboot the screen used to switch to a
+  black console showing "Failed to unmount /run/shutdown/mounts/...:
+  Device or resource busy" and "Unable to finalize remaining file
+  systems, ignoring". The last step of shutdown pivoted into a small
+  shutdown ramdisk, and that pivot reset the screen to text mode. That
+  step is now off while the splash is enabled; the root file system is
+  still remounted read-only and synced before power-off. Press Esc during
+  the animation to see the shutdown messages, as before.
+
 - **Claude Desktop and the other Electron AI apps find the keyring under
   Niri, LeftWM and Margo.** Claude warned "No system keyring is available"
   and stored its sign-in in plaintext, because Electron does not recognise
