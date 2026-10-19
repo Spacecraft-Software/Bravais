@@ -214,4 +214,30 @@ in
       done
     fi
   '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Pinned panel launchers — by app id, never by store path
+  # ═══════════════════════════════════════════════════════════════════════════
+  # The task manager sometimes saves a pin as the file it resolved, e.g.
+  #   file:///nix/store/<hash>-system-path/share/applications/org.kde.dolphin.desktop
+  # instead of applications:org.kde.dolphin.desktop. Every rebuild makes a new
+  # system-path (and user-environment), and once GC takes the old one the pin
+  # shows a blank-file icon and launches nothing. The same .desktop is reached
+  # through /run/current-system/sw and /etc/profiles/per-user, both on
+  # XDG_DATA_DIRS, so the app id is the stable spelling of the same launcher.
+  #
+  # Only the launchers= lines are touched, and only their store-path entries;
+  # pins already written as applications: or preferred:// are left alone.
+  # A sed on the file rather than kwriteconfig6: the key's group is a runtime
+  # applet index, and a running plasmashell does not clobber an on-disk key
+  # it has not dirtied (see the clock block above). It reads the change at
+  # the next `systemctl --user restart plasma-plasmashell.service` or login.
+  home.activation.plasmaLaunchers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rc="${config.xdg.configHome}/plasma-org.kde.plasma.desktop-appletsrc"
+    if [ -f "$rc" ] && ${lib.getExe pkgs.gnugrep} -q '^launchers=.*file:///nix/store/' "$rc"; then
+      $DRY_RUN_CMD ${lib.getExe pkgs.gnused} -E -i \
+        '/^launchers=/ s#file:///nix/store/[0-9a-z]{32}-[^/,]+/share/applications/([^,/]+\.desktop)#applications:\1#g' \
+        "$rc"
+    fi
+  '';
 }

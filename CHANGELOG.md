@@ -128,6 +128,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Plasma panel pins no longer turn into blank-file icons after a
+  rebuild.** The task manager had saved some pins (Dolphin, Konsole,
+  Antigravity, Alacritty) as a path inside one build of the system, so
+  once a rebuild and garbage collection removed that build, the pin lost
+  its icon and launched nothing. Every rebuild now rewrites such pins to
+  the app's own name, which keeps working across builds. A running panel
+  picks it up after `systemctl --user restart plasma-plasmashell` or the
+  next login.
 - **The Caps Lock and Num Lock LEDs light again on the console.** The
   side-button remapper that runs under GNOME, COSMIC, Plasma and LeftWM
   grabbed the built-in keyboard as well as the mouse, and while it held
