@@ -116,6 +116,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Caps Lock and Num Lock LEDs light again on the console.** The
+  side-button remapper that runs under GNOME, COSMIC, Plasma and LeftWM
+  grabbed the built-in keyboard as well as the mouse, and while it held
+  that grab every LED change was dropped, so the lights stayed dark in
+  those sessions and on any TTY reached from one. It now leaves the
+  keyboard alone; it only ever needed the mouse buttons.
 - **LeftWM locks the screen, and Caffeine works there.** Ctrl+Alt+L ran
   gtklock, which is Wayland-only and exits at once under X, so LeftWM
   never locked; the Caffeine button paused a `swayidle` that does not run
