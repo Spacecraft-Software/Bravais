@@ -67,6 +67,10 @@
   libxscrnsaver,
   libxshmfence,
   libxtst,
+  # Extra Electron flags baked into the launcher. Empty for a bare
+  # `nix build .#codex-desktop`; modules/packages/ai.nix overrides it with
+  # `steelbore.keyring.chromiumFlag` (see the claude-desktop package).
+  extraFlags ? [ ],
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -205,7 +209,8 @@ stdenv.mkDerivation (finalAttrs: {
         ]
       }" \
       --add-flags "--ozone-platform-hint=auto" \
-      --add-flags "--enable-features=WaylandWindowDecorations"
+      --add-flags "--enable-features=WaylandWindowDecorations" \
+      ${lib.concatMapStringsSep " " (f: "--add-flags ${lib.escapeShellArg f}") extraFlags}
 
     substituteInPlace $out/share/applications/chatgpt.desktop \
       --replace-fail "Exec=chatgpt" "Exec=$out/bin/codex-desktop" \

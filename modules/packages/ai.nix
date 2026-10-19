@@ -8,6 +8,11 @@
   ...
 }:
 
+let
+  # Bake the Secret Service flag into an in-tree Electron package's launcher
+  # (each takes `extraFlags`). See the Claude Desktop entry for why.
+  withKeyringFlag = pkg: pkg.override { extraFlags = [ config.steelbore.keyring.chromiumFlag ]; };
+in
 {
   options.steelbore.packages.ai = {
     enable = lib.mkEnableOption "AI coding assistants and tools";
@@ -61,7 +66,19 @@
       # Claude Desktop — official Anthropic Linux beta, repackaged from the .deb
       # (no nixpkgs package). Derivation + version/hash-bump notes live in
       # pkgs/claude-desktop/. Unfree; allowUnfree is set in modules/core/nix.nix.
-      ++ [ (import ../../pkgs { inherit pkgs; }).claude-desktop ]
+      #
+      # The keyring flag is not optional under Niri, LeftWM or Margo: Electron
+      # picks its credential backend from XDG_CURRENT_DESKTOP, maps "niri" to
+      # DE_OTHER and falls back to plaintext, which Claude reports as "No
+      # system keyring is available" although gnome-keyring is running and
+      # unlocked (modules/core/keyring.nix). Same cause and cure as the editors
+      # in editors.nix; the flag goes into the package's own wrapper so the
+      # .desktop entry, a launcher and a terminal all get it. The other
+      # Electron apps below (OpenCode, Goose, Codex, Grok Bot) get it the same
+      # way. GitHub Copilot is Tauri, not Electron, so the flag does not apply.
+      ++ [
+        (withKeyringFlag (import ../../pkgs { inherit pkgs; }).claude-desktop)
+      ]
       # GitHub Copilot Desktop — official GitHub Tauri app, repackaged from the
       # .deb. Derivation + version/hash-bump notes live in pkgs/github-copilot-app/.
       # Unfree; same allowUnfree gate as claude-desktop.
@@ -69,19 +86,19 @@
       # OpenCode Desktop — official OpenCode agent app, repackaged from the
       # .deb. Derivation + version/hash-bump notes live in pkgs/opencode-desktop/.
       # MIT license.
-      ++ [ (import ../../pkgs { inherit pkgs; }).opencode-desktop ]
+      ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).opencode-desktop) ]
       # Goose Desktop — official Block AI agent app, repackaged from the .deb
       # (no Flathub listing yet — block/goose#6602 is open; revisit once
       # published). Derivation + version/hash-bump notes live in
       # pkgs/goose-desktop/. Apache-2.0 license.
-      ++ [ (import ../../pkgs { inherit pkgs; }).goose-desktop ]
+      ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).goose-desktop) ]
       # Codex Desktop — OpenAI's official Codex app, repackaged from the .deb
       # (upstream package name is `chatgpt`). Derivation + bump notes live in
       # pkgs/codex-desktop/. Unfree; same allowUnfree gate as claude-desktop.
       # NOTE: upstream publishes only a `latest` URL with no versioned path, so
       # this pin breaks whenever OpenAI ships a build and the pinned artifact
       # cannot be refetched — see the header of pkgs/codex-desktop/package.nix.
-      ++ [ (import ../../pkgs { inherit pkgs; }).codex-desktop ]
+      ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).codex-desktop) ]
       # Grok Bot — desktop agent, repackaged from the official .deb. Published
       # by Cursor/Anysphere rather than xAI despite the name (Vendor:
       # "SpaceXAI <hi@cursor.com>", Homepage: cursor.com). Not in nixpkgs on
@@ -90,7 +107,7 @@
       # NOTE: deliberately OUTSIDE update-vendored.nu — its URL carries an
       # opaque build hash and upstream publishes no release feed, so a bump is
       # manual. See the header of pkgs/grok-bot/package.nix.
-      ++ [ (import ../../pkgs { inherit pkgs; }).grok-bot ]
+      ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).grok-bot) ]
       # Obscura — headless browser for AI agents: fetch, run JS on a real V8
       # isolate, screenshot, scrape, and serve CDP — no Chromium, no Node.
       # Source-built rather than `unstablePkgs.obscura` because nixpkgs carries

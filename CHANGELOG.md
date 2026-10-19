@@ -149,6 +149,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Claude Desktop and the other Electron AI apps find the keyring under
+  Niri, LeftWM and Margo.** Claude warned "No system keyring is available"
+  and stored its sign-in in plaintext, because Electron does not recognise
+  those sessions and skips the Secret Service. Claude, OpenCode, Goose,
+  Codex and Grok Bot desktop now launch with the same
+  `--password-store=gnome-libsecret` flag the editors already get, so they
+  use the login keyring that greetd unlocks. Restart each app after
+  rebuilding; you may have to sign in once more.
 - **Margo starts from the greeter instead of dropping straight back to
   it.** margo loads the Wayland server and EGL libraries at run time
   rather than linking them, so the package never recorded where they
