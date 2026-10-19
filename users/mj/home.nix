@@ -25,6 +25,7 @@
     ./terminals.nix
     ./eww.nix
     ./niri.nix
+    ./margo.nix
     ./desktop-theme.nix
     ./editor-themes.nix
     # Plasma's clock keys + plasma-localerc formats (24h, ISO 8601). Separate

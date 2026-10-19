@@ -27,6 +27,13 @@
       '';
     }
     {
+      assertion = config.steelbore.desktops.margo.enable -> config.services.greetd.enable;
+      message = ''
+        steelbore.desktops.margo requires services.greetd.enable = true —
+        the Margo Wayland session is only reachable via greetd (modules/login).
+      '';
+    }
+    {
       assertion = config.steelbore.desktops.cosmic.enable -> config.services.greetd.enable;
       message = ''
         steelbore.desktops.cosmic requires services.greetd.enable = true —

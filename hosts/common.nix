@@ -63,6 +63,7 @@
     desktops.plasma.enable = true;
     desktops.niri.enable = true;
     desktops.niriUnmax.enable = true; # revert Chrome-style post-open self-maximize
+    desktops.margo.enable = true; # mango-style tags + fluid animations, Rust/Smithay (pkgs/margo)
     desktops.leftwm.enable = true;
     desktops.mouseWorkspaceNav.enable = true; # side buttons to workspace left/right (see modules/desktops/mouse-workspace-nav.nix)
 

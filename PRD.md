@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-Bravais is a flake-based NixOS configuration implementing the Spacecraft Software Standard. It delivers a complete, reproducible system with a modular, opt-in architecture supporting five desktop environments: GNOME (Wayland), COSMIC (Wayland), KDE Plasma 6 (Wayland), Niri (Wayland), and LeftWM (X11). All five are enabled together on purpose; `modules/desktops/assertions.nix` guards only the genuine invariants, not mutual exclusivity.
+Bravais is a flake-based NixOS configuration implementing the Spacecraft Software Standard. It delivers a complete, reproducible system with a modular, opt-in architecture supporting six desktop environments: GNOME (Wayland), COSMIC (Wayland), KDE Plasma 6 (Wayland), Niri (Wayland), Margo (Wayland), and LeftWM (X11). All six are enabled together on purpose; `modules/desktops/assertions.nix` guards only the genuine invariants, not mutual exclusivity.
 
 **Core Principles:**
 
@@ -129,7 +129,8 @@ bravais/
 |   +-- hardware/                  # android, audio-led, bluetooth, fingerprint (explicit PAM policy), intel
 |   +-- platform/x86-64.nix        # ISA level (v1–v4 enum) + compiler/linker flags
 |   +-- desktops/                  # gnome, cosmic, cosmic-unmax, plasma, niri (eww bar + dunst),
-|   |                              #   niri-unmax, leftwm (eww bar, X11), shared (bare-WM services),
+|   |                              #   niri-unmax, margo (mango port), leftwm (eww bar, X11),
+|   |                              #   shared (bare-WM services),
 |   |                              #   mouse-workspace-nav (xremap), assertions
 |   +-- login/default.nix          # greetd + tuigreet + shell sessions
 |   +-- services/                  # adguardvpn, chrome-remote-desktop, ollama, podman, waydroid
