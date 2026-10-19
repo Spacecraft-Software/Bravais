@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rebuilds show the Flatpak update's progress.** `preflight`, `rebuild`
+  and `scripts/rebuild.sh` now follow the Flatpak update they start with a
+  live progress bar (operation 2 of 5, percentage, speed and time left)
+  instead of returning and leaving you to run `flatpak-status` again and
+  again. The update still runs on its own, so Ctrl-C only stops the
+  watching. `--detach-flatpak` returns straight away as before, and
+  `preflight flatpak watch` (or `flatpak-watch` in Nushell) picks the bar
+  up again later. `preflight` also shows a spinner during its silent steps.
+  Agents, CI and piped runs see no spinners and get the same output as
+  before.
+
 - **The mouse works on the TTYs.** On any virtual console, drag with the
   left button to select text (double-click for a word, triple-click for a
   line), click the middle button to paste it, and right-click to extend a

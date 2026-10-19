@@ -2094,7 +2094,10 @@ the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
 Flatpak update **detached**, because a full Flatpak refresh can take hours and
-must never block the switch. `--update-ai-tools` (implied by `--full-update`)
+must never block the switch. At a terminal the run then follows it with a live
+progress bar parsed from its log (Ctrl-C stops the watching, not the update;
+`--detach-flatpak` returns at once, as every agent, CI or piped run does);
+`preflight flatpak status|watch` reports on it later. `--update-ai-tools` (implied by `--full-update`)
 then runs the self-updater of every AI tool installed outside Nix, one at a
 time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. `preflight` wraps none of the tools it drives onto
 PATH, so they are never frozen in its closure (same reasoning as

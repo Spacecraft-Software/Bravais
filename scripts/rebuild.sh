@@ -26,7 +26,7 @@ MCP_REPO=/spacecraft-software/mcp-servers
 FLATPAK_LOG="${XDG_STATE_HOME:-$HOME/.local/state}/flatpak-update.log"
 STAMP="$HOME/.cache/bravais-vendored-check"
 
-dry=0; no_sync=0; branch=""; no_update=0; update_all=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0
+dry=0; no_sync=0; branch=""; no_update=0; update_all=0; no_gc=0; trace=0; skills_only=0; no_flatpak=0; detach_flatpak=0
 
 # Colors only when stdout is a terminal — a piped or logged run stays clean,
 # and NO_COLOR is honored (Standard §18.2.1).
@@ -39,6 +39,112 @@ else
 fi
 
 say()  { printf '%s%s%s\n' "$1" "$2" "$C_OFF"; }
+
+# ── Live progress ───────────────────────────────────────────────────────────
+# Mirrors pkgs/preflight/src/progress.rs and `flatpak-watch` in
+# users/mj/rebuild.nu; change all three. Drawn only for a human at a terminal:
+# never for an agent, CI or a pipe (CLI Standard §5), which keep exactly the
+# old output.
+is_live() {
+    for v in "${AI_AGENT:-}" "${AGENT:-}" "${CI:-}"; do
+        case "$v" in ''|0|false) ;; *) return 1 ;; esac
+    done
+    [ -t 1 ] && [ -t 2 ] && [ "${TERM:-dumb}" != dumb ]
+}
+
+# A running `flatpak update`, matched on the command line as preflight's
+# `running_update` does: argv[0] `flatpak` (or NixOS's `.flatpak-wrapped`)
+# with an `update` argument. flatpak-session-helper, -portal and
+# -system-helper are always-on daemons and never carry one.
+flatpak_running() {
+    pgrep -f '^([^ ]*/)?\.?flatpak(-wrapped)? (.* )?update( |$)' >/dev/null 2>&1
+}
+
+# `op ops percent rate line` from the tail of the Flatpak log, separated by
+# the ASCII unit separator: a tab is IFS whitespace, so `read` would merge an
+# empty field into the next one.
+# Off a terminal Flatpak writes `Updating 2/5…` as an operation starts, then
+# `Updating 2/5… ████▌  23%  1.2 MB/s  00:30`; older releases separated the
+# same text with \r. The newest line of either shape decides; a counter with no
+# percentage is an operation just started, at 0%. `percent` counts each
+# operation as an equal share -- Flatpak reports no transaction total.
+flatpak_progress() {
+    esc=$(printf '\033')
+    tail -c 16384 "$FLATPAK_LOG" 2>/dev/null | tr '\r' '\n' | sed "s/${esc}\\[[0-9;]*[@-~]//g" | awk '
+        NF { last = $0 }
+        /[0-9]%/ || /[0-9]+\/[0-9]+/ { hit = $0 }
+        END {
+            op = ""; ops = ""; pct = ""; rate = ""
+            if (match(hit, /[0-9]+\/[0-9]+/)) {
+                split(substr(hit, RSTART, RLENGTH), a, "/")
+                if (a[1] + 0 >= 1 && a[1] + 0 <= a[2] + 0) { op = a[1]; ops = a[2] }
+            }
+            if (match(hit, /[0-9]+%/)) {
+                pct = substr(hit, RSTART, RLENGTH - 1)
+                rate = substr(hit, RSTART + RLENGTH); gsub(/^ +| +$/, "", rate)
+            } else if (op != "") pct = 0
+            all = pct
+            if (pct != "" && op != "") all = int(((op - 1) * 100 + pct) / ops)
+            gsub(/^ +| +$/, "", last)
+            printf "%s\037%s\037%s\037%s\037%s\n", op, ops, all, rate, last
+        }'
+}
+
+elapsed() {
+    if [ "$1" -ge 3600 ]; then printf '%dh%02dm' $(($1 / 3600)) $(($1 % 3600 / 60))
+    elif [ "$1" -ge 60 ]; then printf '%dm%02ds' $(($1 / 60)) $(($1 % 60))
+    else printf '%ds' "$1"; fi
+}
+
+# Follow the running update with a spinner, the operation counter, a bar and
+# Flatpak's own rate. Ctrl-C stops following only: the update runs in its own
+# session (setsid), so it gets neither the terminal's SIGINT nor its SIGHUP.
+flatpak_watch() {
+    # The Linux console font has no braille and no partial blocks.
+    case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
+        *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) frames='⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏'; full='█'; empty='░' ;;
+        *) frames="| / - \\"; full='#'; empty='-' ;;
+    esac
+    [ "${TERM:-}" != linux ] || { frames="| / - \\"; full='#'; empty='-'; }
+    say "$C_DIM" "following the Flatpak update — Ctrl-C stops following; the update keeps running" >&2
+    trap 'printf "\r\033[2K" >&2; dim "stopped following; the update keeps running (log: $FLATPAK_LOG)"; exit 130' INT
+    start=$(date +%s); tick=0; prog=""
+    while :; do
+        # Re-read the log and re-check the process every fifth frame.
+        if [ $((tick % 5)) -eq 0 ]; then
+            flatpak_running || break
+            prog=$(flatpak_progress)
+        fi
+        # shellcheck disable=SC2086 # word-splitting the frame list is the point
+        set -- $frames; shift $((tick % $#)); frame=$1
+        took=$(elapsed $(($(date +%s) - start)))
+        IFS=$(printf '\037') read -r op ops pct rate last <<EOF
+$prog
+EOF
+        if [ -n "$pct" ]; then
+            n=$((pct * 24 / 100)); bar=""; i=0
+            while [ "$i" -lt 24 ]; do
+                if [ "$i" -lt "$n" ]; then bar="$bar$full"; else bar="$bar$empty"; fi
+                i=$((i + 1))
+            done
+            [ -z "$op" ] || op=" $op/$ops"
+            [ -z "$rate" ] || rate="  $rate"
+            printf '\r\033[2K%s flatpak%s  %s %3d%%%s  (%s)' "$frame" "$op" "$bar" "$pct" "$rate" "$took" >&2
+        else
+            # Flatpak's own line, ASCII only so `cut` cannot split a character.
+            last=$(printf '%s' "${last:-starting}" | tr -cd ' -~' | cut -c1-50)
+            printf '\r\033[2K%s flatpak: %s  (%s)' "$frame" "$last" "$took" >&2
+        fi
+        sleep 0.2 2>/dev/null || sleep 1
+        tick=$((tick + 1))
+    done
+    trap - INT
+    printf '\r\033[2K' >&2
+    IFS=$(printf '\037') read -r _ _ _ _ last <<EOF
+$(flatpak_progress)
+EOF
+    say "$C_OK" "flatpak: ${last:-finished}"
+}
 warn() { say "$C_WARN" "$1"; }
 dim()  { say "$C_DIM"  "$1"; }
 
@@ -64,6 +170,9 @@ Options:
   --trace         add --show-trace --verbose (to diagnose eval failures)
   --skills-only   bump only `construct`; skip GC, the mirror and the probes
   --no-flatpak    skip the detached Flatpak update
+  --detach-flatpak
+                  start the Flatpak update and return instead of following
+                  its progress bar (always the case off a terminal)
   --yes           skip the question about using `preflight` instead
   -h, --help      show this help
 
@@ -90,6 +199,7 @@ while [ $# -gt 0 ]; do
         --trace)       trace=1 ;;
         --skills-only) skills_only=1 ;;
         --no-flatpak)  no_flatpak=1 ;;
+        --detach-flatpak) detach_flatpak=1 ;;
         --yes)         assume_yes=1 ;;
         -h|--help|help) usage; exit 0 ;;
         *) say "$C_ERR" "unknown argument '$1' — try: rebuild.sh --help"; exit 2 ;;
@@ -110,6 +220,9 @@ fi
 
 if [ "$update_all" -eq 1 ] && { [ "$no_update" -eq 1 ] || [ "$skills_only" -eq 1 ]; }; then
     say "$C_ERR" "--update-all conflicts with --no-update and --skills-only"; exit 2
+fi
+if [ "$detach_flatpak" -eq 1 ] && [ "$no_flatpak" -eq 1 ]; then
+    say "$C_ERR" "--detach-flatpak conflicts with --no-flatpak"; exit 2
 fi
 
 # ── Deprecation gate ────────────────────────────────────────────────────────
@@ -461,6 +574,15 @@ if [ "$no_flatpak" -eq 0 ] && command -v flatpak >/dev/null 2>&1; then
         # unless you split on \r before reading it.
         setsid --fork sh -c "flatpak update -y >'$FLATPAK_LOG' 2>&1" || \
             warn "could not detach the flatpak update"
+        # At a terminal, follow it with a progress bar until it ends
+        # (--detach-flatpak returns at once, as every run off a terminal does).
+        # The pause lets the forked update exist before the first check.
+        if [ "$detach_flatpak" -eq 0 ] && is_live; then
+            sleep 1
+            flatpak_watch
+        else
+            dim "flatpak: detached → $FLATPAK_LOG"
+        fi
     else
         say "$C_OK" "flatpak: up to date"
     fi
