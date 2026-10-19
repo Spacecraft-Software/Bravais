@@ -41,7 +41,7 @@ One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whis
 
 ### 1.3 Principal Workflows
 
-- **Rebuild** — `preflight`: bump every flake input, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
+- **Rebuild** — `preflight`: sync the checkout with `origin`, bump every flake input, GC, switch, then mirror to `/etc/nixos` and update Flatpaks detached (§16.1).
 - **Switch theme** — `theme set <slug>` (persist), `theme try <slug>` (live, reverts at the next rebuild), `theme now <slug>` (Standard §11.6-aware apps, no rebuild) (§2.2, §16.3).
 - **Change a default app** — `app set <role> <slug>` rewrites `default-apps.nix` (§2.6, §16.3).
 - **Sync agent skills** — `skills-sync` moves the skill pointer ahead of a rebuild; follow with `nu pkgs/sync-skills.nu` (§16.2).
@@ -2084,7 +2084,12 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 ### 16.1 Rebuild
 
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
-user, never as root. In order: bump every flake input (authenticated with
+user, never as root. In order: bring the checkout up to date with `origin`
+(fetch, then fast-forward, carrying uncommitted changes along with a
+warning; refuses uncommitted changes the incoming commits also touch, a
+local-only branch or diverged history; a branch deleted
+upstream falls back to `main`; `--branch <name>` switches to a PR branch,
+`--no-sync` builds the tree as it is), bump every flake input (authenticated with
 the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the

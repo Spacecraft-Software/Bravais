@@ -97,6 +97,8 @@ pub enum Exit {
     Usage = 2,
     NotFound = 3,
     Permission = 4,
+    /// The working tree disagrees with what the run needs (dirty, diverged).
+    Conflict = 5,
 }
 
 /// Structured error object (CLI Standard §8, non-negotiable #8).

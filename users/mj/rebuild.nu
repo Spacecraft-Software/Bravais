@@ -63,6 +63,120 @@ def flatpak-update []: nothing -> nothing {
   print "flatpak update started — watch with: flatpak-status"
 }
 
+# ── git sync ──────────────────────────────────────────────────────
+# `git -C <repo> ...args`, captured. Named for this file so it cannot
+# collide with anything in config.nu, which embeds this text. `--wrapped`
+# so git's own flags pass through instead of being parsed as this def's.
+def --wrapped bravais-git [repo: string, ...args: string]: nothing -> record {
+  ^git -C $repo ...$args | complete
+}
+
+# Bring the checkout up to date with origin before anything is built, so a
+# rebuild compiles origin's code and not whatever the checkout happens to
+# hold. Mirrors git_sync in pkgs/preflight/src/git_sync.rs, which carries the
+# full reasoning; change all three. In short: carry uncommitted changes along
+# (reported in `carried`; refused only when the incoming commits touch them
+# too); fetch --prune;
+# keep the current branch while its upstream exists, else (detached, or
+# merged and deleted upstream) go to origin's default branch; refuse a
+# local-only branch; fast-forward only.
+#
+# Returns a record rather than raising: `ok` false carries the same `code`,
+# `exit` and `hint` preflight reports, and `rebuild` decides what to do with
+# it (under --dry, only report).
+def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bool]: nothing -> record {
+  let refuse = {|exit: int, code: string, message: string, hint: string|
+    { ok: false, exit: $exit, code: $code, message: $message, hint: $hint }
+  }
+  if ((bravais-git $repo rev-parse --is-inside-work-tree).stdout | str trim) != "true" {
+    return (do $refuse 1 "NOT_A_CHECKOUT" $"($repo) is not a git checkout \(or git is not on PATH\)" "rebuild --no-sync   # build the tree as it is")
+  }
+  # Porcelain columns 1-2 are the status, so the path starts at column 4.
+  let paths = ((bravais-git $repo status --porcelain=v1 --untracked-files=no).stdout
+    | lines | where $it != "" | each {|l| $l | str substring 3.. | split row " -> " | last })
+  let carried = ($paths | where $it != "flake.lock")
+  let dirty = (do $refuse 5 "DIRTY_TREE" $"uncommitted changes conflict with the incoming commits: ($carried | str join ', ')" $"git -C ($repo) stash   # then re-run; or build the tree as it is: rebuild --no-sync")
+  let lock_dirty = ("flake.lock" in $paths)
+
+  let fetch = (bravais-git $repo fetch --prune origin)
+  if $fetch.exit_code != 0 {
+    print -e $fetch.stderr
+    return (do $refuse 1 "FETCH_FAILED" "git fetch from origin failed, so the latest code is unknown" "rebuild --no-sync --no-update   # offline: build the tree as it is")
+  }
+
+  let head = (bravais-git $repo symbolic-ref --quiet --short HEAD)
+  let current = (if $head.exit_code == 0 { $head.stdout | str trim } else { null })
+  let origin_head = (bravais-git $repo symbolic-ref --quiet --short refs/remotes/origin/HEAD)
+  let default = (if $origin_head.exit_code == 0 { $origin_head.stdout | str trim | str replace --regex '^origin/' "" } else { "main" })
+
+  let choice = if $branch != null {
+    { want: $branch, why: "" }
+  } else if $current == null {
+    { want: $default, why: " (HEAD was detached)" }
+  } else if (bravais-git $repo config --get $"branch.($current).merge").exit_code != 0 {
+    return (do $refuse 5 "NO_UPSTREAM" $"branch '($current)' has no upstream on origin, so there is nothing to update it from" $"git -C ($repo) switch ($default)   # or build it as it is: rebuild --no-sync")
+  } else if (bravais-git $repo rev-parse --verify --quiet $"($current)@{upstream}").exit_code == 0 {
+    { want: $current, why: "" }
+  } else {
+    { want: $default, why: $" \('($current)' was deleted on origin\)" }
+  }
+  let want = $choice.want
+  let switching = ($want != $current)
+  let target = if $switching {
+    $"origin/($want)"
+  } else {
+    let u = (bravais-git $repo rev-parse --abbrev-ref $"($want)@{upstream}")
+    if $u.exit_code == 0 { $u.stdout | str trim } else { $"origin/($want)" }
+  }
+  if (bravais-git $repo rev-parse --verify --quiet $"($target)^{commit}").exit_code != 0 {
+    return (do $refuse 3 "NO_SUCH_BRANCH" $"origin has no branch '($want)'" $"git -C ($repo) branch --remotes   # the branches origin has")
+  }
+
+  # The last run's `nix flake update` leaves flake.lock modified. If the
+  # incoming commits change it too, git would refuse to move; when an update
+  # follows anyway the stale bump is worthless and is dropped. Under
+  # --no-update the lock IS what gets built, so it is never dropped silently.
+  let lock_conflicts = $lock_dirty and ((bravais-git $repo diff --quiet HEAD $target -- flake.lock).exit_code != 0)
+
+  if $dry {
+    let behind = (bravais-git $repo rev-list --count $"HEAD..($target)").stdout | str trim
+    return { ok: true, carried: $carried, message: $"dry run; would move to ($want)($choice.why) at ($target) \(($behind) commit\(s\) behind\); building the tree as it is" }
+  }
+  if $lock_conflicts {
+    if not $lock_regenerated {
+      return (do $refuse 5 "LOCK_CONFLICT" $"flake.lock has an uncommitted bump and ($target) changes it too" $"git -C ($repo) restore flake.lock   # drop the local bump, then re-run")
+    }
+    if (bravais-git $repo restore --staged --worktree -- flake.lock).exit_code != 0 {
+      return (do $refuse 1 "LOCK_CONFLICT" "could not discard the uncommitted flake.lock bump" $"git -C ($repo) status")
+    }
+  }
+  if $switching {
+    let local = ((bravais-git $repo rev-parse --verify --quiet $"refs/heads/($want)").exit_code == 0)
+    let sw = if $local {
+      bravais-git $repo switch $want
+    } else {
+      bravais-git $repo switch --create $want --track $target
+    }
+    if $sw.exit_code != 0 {
+      print -e $sw.stderr
+      if ($carried | is-not-empty) { return $dirty }
+      return (do $refuse 1 "SWITCH_FAILED" $"could not switch to '($want)'" $"git -C ($repo) status")
+    }
+  }
+  let before = ((bravais-git $repo rev-parse HEAD).stdout | str trim)
+  if (bravais-git $repo merge --ff-only $target).exit_code != 0 {
+    # A fast-forward that is possible in history can only have been stopped
+    # by the working tree.
+    let ancestor = ((bravais-git $repo merge-base --is-ancestor HEAD $target).exit_code == 0)
+    if $ancestor and ($carried | is-not-empty) { return $dirty }
+    return (do $refuse 5 "NOT_FAST_FORWARD" $"'($want)' has commits that ($target) does not, so it cannot be fast-forwarded" $"git -C ($repo) log --oneline ($target)..($want)   # the local-only commits")
+  }
+  let new = ((bravais-git $repo rev-list --count $"($before)..HEAD").stdout | str trim)
+  let short = ((bravais-git $repo rev-parse --short HEAD).stdout | str trim)
+  let note = (if $lock_conflicts { "; dropped the uncommitted flake.lock bump" } else { "" })
+  { ok: true, carried: $carried, message: $"($want) at ($short)($choice.why); ($new) new commit\(s\)($note)" }
+}
+
 # Antigravity staleness probe.
 #
 # `nix flake update antigravity-nix` bumps the INPUT, but the Antigravity
@@ -97,25 +211,31 @@ def antigravity-status [] {
   { pinned: $pinned, latest: $latest, current: ($pinned == $latest) }
 }
 
-# Full system rebuild for steelbore-thinkpad: load the signing key, bump
+# Full system rebuild for steelbore-thinkpad: load the signing key, bring
+# the checkout up to date with origin (see `bravais-git-sync`), bump
 # every flake input (a bare `nix flake update`, so an input added to
 # flake.nix is tracked without an edit here), free disk while keeping a week of rollback targets,
 # build + switch, then mirror the repo into /etc/nixos. A failed
 # switch aborts before the mirror.
 #   --dry        nixos-rebuild dry-build only; skips GC and the /etc mirror
+#   --no-sync    build the checkout as it is; skip git fetch + fast-forward
+#   --branch     switch to origin's <name> before building (testing a PR)
 #   --no-update  skip `nix flake update`
 #   --update-all accepted for compatibility; every run bumps every input
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
-def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
+def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes] {
   # Explicit usage rather than `help rebuild`. That resolved to nothing when
   # this file is run as the `rebuild` BINARY (where the outer command is
   # `main`), printing an empty response instead of help — so spell it out and
   # get identical behaviour from both the Nu command and the binary.
   if $topic == "help" {
-    print "Usage: rebuild [help] [--dry] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--yes]"
+    print "Usage: rebuild [help] [--dry] [--no-sync] [--branch <name>] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--yes]"
     print ""
     print "  --dry          nixos-rebuild dry-build only; skips GC and the /etc mirror"
+    print "                 (the git sync fetches and reports, but does not move the checkout)"
+    print "  --no-sync      build the checkout as it is; skip git fetch and fast-forward"
+    print "  -b, --branch   switch to origin's <name> before building (testing a PR)"
     print "  --no-update    skip `nix flake update`"
     print "  --update-all   accepted for compatibility; every run bumps every input"
     print "  --no-gc        skip garbage collection + journal vacuum"
@@ -129,6 +249,15 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     return
   }
   if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
+  # The one user-supplied string that reaches git: refuse anything that could
+  # be read as a flag or that no branch name can contain (Agentic CLI §7).
+  let branch = if $branch == null { null } else {
+    if $no_sync { print $"(ansi red)--branch conflicts with --no-sync(ansi reset)"; return }
+    if ($branch | str starts-with "-") or ($branch | str contains "..") or ($branch =~ '[\s\p{Cc}]') or ($branch | is-empty) {
+      print $"(ansi red)invalid branch name '($branch)'(ansi reset)"; return
+    }
+    $branch | str replace --regex '^origin/' ""
+  }
   if $update_all and ($no_update or $skills_only) {
     print $"(ansi red)--update-all conflicts with --no-update and --skills-only(ansi reset)"; return
   }
@@ -161,6 +290,28 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
     }
   }
   cd /spacecraft-software/bravais
+  # The signing key goes in first: both the git fetch and the flake update
+  # can need it.
+  if (not $no_sync) or (not $no_update) { gitway-add ~/.ssh/id_ed25519 }
+  # Build origin's code, not whatever the checkout happens to hold.
+  if $no_sync {
+    print $"(ansi dark_gray)git-sync: skipped \(--no-sync\); building the tree as it is(ansi reset)"
+  } else {
+    let sync = (bravais-git-sync /spacecraft-software/bravais $branch $dry (not $no_update))
+    if $sync.ok {
+      print $"(ansi green)git-sync: ($sync.message)(ansi reset)"
+      # The build is origin's code plus these, so say so.
+      if ($sync.carried | is-not-empty) {
+        print $"(ansi yellow)building with uncommitted changes: ($sync.carried | str join ', ')(ansi reset)"
+      }
+    } else if $dry {
+      print $"(ansi yellow)git-sync: dry run; would refuse \(($sync.code)\): ($sync.message)(ansi reset)"
+    } else {
+      # `error make`, not `exit`: this text is also a def in the interactive
+      # shell, where `exit` would close the user's terminal.
+      error make --unspanned { msg: $"($sync.code): ($sync.message)", help: $"try: ($sync.hint)" }
+    }
+  }
   # Monthly vendored-binary reminder (elegance plan 5.1): claude-desktop,
   # chrome-remote-desktop, ollama, and BrowserOS pin upstream binaries
   # that `nix flake update` cannot bump.
@@ -178,7 +329,6 @@ def rebuild [topic?: string, --dry, --no-update, --update-all, --no-gc, --trace,
   # switch itself: a rebuild is what re-points `pinned`/`current` at the
   # new lock; `skills-sync` moves the pointer without one.
   if not $no_update {
-    gitway-add ~/.ssh/id_ed25519
     # Anonymous, Nix resolves `github:` inputs through the GitHub API at 60
     # requests an hour, which a bare `nix flake update` exhausts (HTTP 403,
     # 2026-09-27). Borrow the gh CLI's keyring token for the update only:

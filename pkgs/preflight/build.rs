@@ -18,7 +18,10 @@
 /// `(variable, fallback for a build outside Nix)`.
 const IDENTITY: [(&str, &str); 2] = [
     ("STEELBORE_OS_NAME", "Steelbore OS"),
-    ("STEELBORE_OS_URL", "https://Bravais.SpacecraftSoftware.org/"),
+    (
+        "STEELBORE_OS_URL",
+        "https://Bravais.SpacecraftSoftware.org/",
+    ),
 ];
 
 fn main() {

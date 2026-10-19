@@ -36,11 +36,11 @@ let
       # exactly; --yes skips the preflight deprecation question.
       def main [
         topic?: string,
-        --dry, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes
+        --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --yes
       ] {
         # One line on purpose: Nushell does not treat a trailing backslash as a
         # line continuation, it reads it as an extra positional argument.
-        rebuild $topic --dry=$dry --no-update=$no_update --update-all=$update_all --no-gc=$no_gc --trace=$trace --skills-only=$skills_only --no-flatpak=$no_flatpak --yes=$yes
+        rebuild $topic --dry=$dry --no-sync=$no_sync --branch=$branch --no-update=$no_update --update-all=$update_all --no-gc=$no_gc --trace=$trace --skills-only=$skills_only --no-flatpak=$no_flatpak --yes=$yes
       }
     '';
   };

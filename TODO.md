@@ -732,6 +732,22 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [ ] Decide whether KInfoCenter shows the codename
       (`UseOSReleaseVersion=true` in `kcm-about-distrorc`)
 
+## Rebuild builds origin's latest code (2026-10-19)
+
+- [✓] `preflight` fetches and fast-forwards the checkout before building
+      (`pkgs/preflight/src/git_sync.rs`); a branch deleted upstream falls
+      back to `main`; uncommitted changes are carried with a warning;
+      refuses clashing changes, local-only branches and diverged history
+      with exit 5 and a runnable hint
+- [✓] `--branch <name>` / `-b` to test a PR branch; `--no-sync` to build
+      the tree as it is; `--dry` only reports
+- [✓] Same step in `users/mj/rebuild.nu` and `scripts/rebuild.sh`
+- [✓] Scenario tests against throwaway git repos (all three implementations)
+- [✓] First live run on the ThinkPad (2026-10-19): the sync worked, then
+      refused the next run over preflight's own uncommitted vendored-pin
+      bumps; dirty trees are now carried, not refused
+- [ ] Second live run with uncommitted pins carried
+
 ## Out-of-band AI tool updates (2026-10-13)
 
 - [✓] `preflight --update-ai-tools` runs each out-of-band AI tool's own
