@@ -229,8 +229,10 @@ in
 
           // Window management
           Mod+Q hotkey-overlay-title="Close Focused Window" { close-window; }
-          Mod+F hotkey-overlay-title="Maximize Column" { maximize-column; }
-          Mod+Shift+F hotkey-overlay-title="Fullscreen Window" { fullscreen-window; }
+          // Mod+F is fullscreen in every Bravais session (docs/keybindings.md);
+          // maximize takes the Shift variant.
+          Mod+F hotkey-overlay-title="Fullscreen Window" { fullscreen-window; }
+          Mod+Shift+F hotkey-overlay-title="Maximize Column" { maximize-column; }
 
           // Floating
           Mod+V hotkey-overlay-title="Toggle Window Floating" { toggle-window-floating; }
@@ -348,6 +350,7 @@ in
           // Screenshots
           Print     hotkey-overlay-title="Take a Screenshot" { screenshot; }
           Mod+Print hotkey-overlay-title="Screenshot Window" { screenshot-window; }
+          Shift+Print hotkey-overlay-title="Screenshot the Whole Screen" { screenshot-screen; }
 
           // Dedicated / multimedia keys. Kept out of the hotkey overlay
           // (labelled hardware keys, not Mod-chords) and allow-when-locked

@@ -12,7 +12,7 @@ authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 jiff = "0.2"
-rustix = { version = "1", features = ["fs"] }
+rustix = { version = "1", features = ["fs", "termios"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

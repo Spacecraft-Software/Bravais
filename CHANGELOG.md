@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
+  on Niri and COSMIC and search on GNOME. `Alt+Space`, `Alt+F2` and
+  `Search` still work.
+  *Peek at Desktop* loses its default `Meta+D` and has no key.
+- **GNOME: Super opens the app grid, and Super+D searches.** Tapping Super
+  on its own (or clicking Activities, or the hot corner) now opens the
+  app grid instead of the window overview; tap it again to close it.
+  Super+D opens the overview with the search box ready, as Mod+D opens
+  the launcher under Niri, LeftWM and Margo. Super+A and Super+S keep
+  their GNOME meanings. The app-grid behaviour comes from the *Start
+  Overlay in Application View* extension, which is now installed and
+  switched on for you; your other extensions stay as they are.
+
+- **Rebuilds show the Flatpak update's progress.** `preflight`, `rebuild`
+  and `scripts/rebuild.sh` now follow the Flatpak update they start with a
+  live progress bar (operation 2 of 5, percentage, speed and time left)
+  instead of returning and leaving you to run `flatpak-status` again and
+  again. The update still runs on its own, so Ctrl-C only stops the
+  watching. `--detach-flatpak` returns straight away as before, and
+  `preflight flatpak watch` (or `flatpak-watch` in Nushell) picks the bar
+  up again later. `preflight` also shows a spinner during its silent steps.
+  Agents, CI and piped runs see no spinners and get the same output as
+  before.
+
 - **The mouse works on the TTYs.** On any virtual console, drag with the
   left button to select text (double-click for a word, triple-click for a
   line), click the middle button to paste it, and right-click to extend a
@@ -76,6 +100,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   D-Bus permission the relay needs. Tor Browser is left out on purpose.
 
 ### Changed
+
+- **Margo tiles the way mango does.** New windows take the master area
+  and push the others down the stack, instead of opening as a new column
+  on the right. Super+S still switches a tag to the scrolling layout,
+  and `users/mj/margo.nix` says how to make that the default.
+- **The mouse thumb buttons switch Margo's tags** the way they switch
+  workspaces in the other desktops (back goes right, forward goes left),
+  and Super+wheel does the same. Because Margo grabs the buttons itself,
+  browsers no longer see them as back/forward there, as under Niri.
+- **The same keys in every desktop.** GNOME, Plasma, Niri, LeftWM and
+  Margo now share one set of keys, listed in `docs/keybindings.md`:
+  Super+D launcher, Super+Return terminal, Super+Q close, Super+F
+  fullscreen, Super+V float, Super+1…9 and Super+Shift+1…9 workspaces,
+  Super+Space keyboard layout, Super+Shift+L lock, Super+Shift+E exit,
+  Super+Shift+C Caffeine, and Print / Super+Print / Shift+Print for
+  region, window and whole-screen captures. GNOME and Plasma keep their
+  own keys beside them (Alt+F4, Super+L, Ctrl+F1…F4); in exchange, their
+  Super+1…9 now switch workspaces instead of opening the Nth dock or
+  task-bar app. What moved in the window managers:
+  - **Niri:** Mod+F is fullscreen and Mod+Shift+F maximizes the column
+    (they were the other way round).
+  - **LeftWM:** Mod+V floats (was Mod+Shift+F), Mod+Space switches the
+    keyboard layout, and the tiling layouts move to Mod+Ctrl+Space.
+    Mod+Shift+L locks, and Ctrl+Alt+L still works. Mod+Print captures
+    the focused window, and Shift+Print captures the whole screen.
+  - **Margo:** it gets the Arabic layout. Super+V floats, Super+Space
+    switches the keyboard layout and Super+Ctrl+Space the tiling layout.
+    Super+Shift+L locks (was Alt+L), Super+Shift+E exits (was
+    Super+Shift+Q), and Super+Ctrl+E is the previous group. Super+Ctrl+←/→
+    switches workspaces, Shift+Print captures the screen (was
+    Ctrl+Print), and Super+Shift+/ lists the keys.
 
 - **`preflight` builds origin's latest code.** Every run now starts with a
   `git fetch` and a fast-forward of the checkout, so a rebuild no longer
@@ -158,6 +213,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   step is now off while the splash is enabled; the root file system is
   still remounted read-only and synced before power-off. Press Esc during
   the animation to see the shutdown messages, as before.
+- **Text consoles show their login prompt again.** Switching to
+  a text console from any desktop gave a blank screen: the console mouse
+  opened the new console the moment you switched, and logind only starts
+  a login prompt on a console nothing has open. It now waits for the
+  first mouse movement.
+- **Ctrl+Alt+F1…F12 switch to a text console from Margo.** Margo bound
+  the keys but never acted on them; a patch in `pkgs/margo/` does the
+  switch.
+- **Chrome web apps show their icons again.** Flatpak Chrome now writes
+  newer web apps (YouTube, YouTube Music, Anghami, Disney+) with an icon
+  path inside its sandbox that does not exist outside it, so every
+  launcher drew a blank placeholder. A user service points those
+  launchers at the icon Chrome did install, at login and whenever a web
+  app is added or updated.
+- **Rebuilds no longer fail on a ChatGPT/Codex desktop hash mismatch.**
+  OpenAI only publishes a "latest" download, so whenever garbage
+  collection removed the pinned file, the next rebuild fetched OpenAI's
+  newer upload and stopped on the hash. The pinned file is now kept
+  through garbage collection, so a new OpenAI release changes nothing
+  until you bump it with `nu pkgs/update-vendored.nu codex-desktop`. The
+  pin itself moves to OpenAI's current build.
+- **GNOME's Super+Alt+Left/Right switch workspaces again.** Bravais's own
+  workspace keys had left out these two GNOME defaults.
+
+- **PATH no longer repeats the out-of-band dirs.** `~/.local/bin`,
+  `~/.cargo/bin`, `~/.npm-packages/bin` and `~/.opencode/bin` were appended
+  once per nested shell, so a terminal under the login shell carried each
+  of them three times. Bash, Nushell and Ion now add a dir only when PATH
+  lacks it, in the same order and still after the Nix paths.
 
 - **Claude Desktop and the other Electron AI apps find the keyring under
   Niri, LeftWM and Margo.** Claude warned "No system keyring is available"

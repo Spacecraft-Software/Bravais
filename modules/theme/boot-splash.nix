@@ -46,7 +46,7 @@ in
     ];
 
     # Keep the shutdown animation's last frame on screen until the power goes
-    # (constraint #48). On SIGTERM, plymouthd hands its display to
+    # (constraint #51). On SIGTERM, plymouthd hands its display to
     # plymouthd-fd-escrow, which survives systemd-shutdown and holds the
     # frame; pivoting into the shutdown ramfs resets /dev/console to text
     # mode, which hands the screen back to the kernel console. The root is

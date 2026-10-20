@@ -72,10 +72,63 @@ let
     NoDisplay=true
     X-KDE-Shortcuts=Meta+Shift+C
   '';
+
+  # Terminal: Meta+Return, as Mod+Return under Niri, LeftWM and Margo. Shipped
+  # the same way as Caffeine above (a default, so a rebind sticks). Plasma's
+  # own Konsole key, Ctrl+Alt+T, is left as it is. Meta+Return is unbound in
+  # stock Plasma.
+  terminalShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Open a Terminal (Alacritty)
+    Exec=alacritty
+    Icon=Alacritty
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+Return
+  '';
+
+  # Meta+N / Meta+Shift+N for desktops 1-9, as under Niri, LeftWM and Margo.
+  # KWin ships keys for desktops 1-4 only (Meta+F1-F4 and Ctrl+F1-F4, kept
+  # here); entries for desktops that do not exist are inert. A shifted digit
+  # reaches kglobalaccel as its symbol, which is how System Settings records
+  # it ("Meta+!"), so both spellings are listed; the symbols are the US
+  # layout's.
+  shiftedDigit = [
+    "!"
+    "@"
+    "#"
+    "$"
+    "%"
+    "^"
+    "&"
+    "*"
+    "("
+  ];
+  desktopKeys = lib.concatMapStrings (
+    n:
+    let
+      i = toString n;
+      stock = lib.optionalString (n <= 4) "\\tMeta+F${i}\\tCtrl+F${i}";
+      stockDefault = if n <= 4 then "Meta+F${i}\\tCtrl+F${i}" else "none";
+      sym = builtins.elemAt shiftedDigit (n - 1);
+    in
+    ''
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Switch to Desktop ${i}" \
+        "$(printf '%b' 'Meta+${i}${stock},${stockDefault},Switch to Desktop ${i}')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window to Desktop ${i}" \
+        "$(printf '%b' 'Meta+${sym}\tMeta+Shift+${i},none,Window to Desktop ${i}')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group plasmashell --key "activate task manager entry ${i}" \
+        "none,Meta+${i},Activate Task Manager Entry ${i}"
+    ''
+  ) (lib.range 1 9);
 in
 {
   xdg.dataFile = schemeFiles // {
     "applications/steelbore-caffeine.desktop".text = caffeineShortcut;
+    "applications/steelbore-terminal.desktop".text = terminalShortcut;
     "plasma/look-and-feel/${ksplash.packageId}".source =
       "${ksplash}/share/plasma/look-and-feel/${ksplash.packageId}";
   };
@@ -130,6 +183,50 @@ in
       --group "KDE Keyboard Layout Switcher" --key "Switch to Next Keyboard Layout" \
       "$(printf 'Ctrl+Space\tMeta+Space,Meta+Alt+K,Switch to Next Keyboard Layout')"
   '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # KRunner: Meta+D alongside its stock Alt+Space, Alt+F2 and Search keys
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Matches Mod+D under Niri, COSMIC and GNOME (Super+D searches there).
+  # Meta+D is KWin's default for "Peek at Desktop", and kglobalaccel gives a
+  # key to only one action, so that action is left with no key. Both values are what System
+  # Settings › Shortcuts writes for this choice, pinned the same way as the
+  # layout shortcut above (with its trade-off). A [services] entry carries
+  # only the active keys, tab-separated; a [kwin] entry is
+  # "active,default,friendly name". Read at the next Plasma login.
+  home.activation.plasmaKrunnerShortcut = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+      --group services --group org.kde.krunner.desktop --key _launch \
+      "$(printf 'Alt+Space\tAlt+F2\tSearch\tMeta+D')"
+    $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+      --group kwin --key "Show Desktop" "none,Meta+D,Peek at Desktop"
+  '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # The keys every Bravais session shares (docs/keybindings.md)
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+Shift+L lock (Meta+L
+  # kept), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
+  # manager entries (Meta+1-9 by default; those are left with no key).
+  # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
+  # action is left with no key (Meta+Tab still cycles activities). Meta+F,
+  # Meta+Shift+L and Meta+Shift+N are unbound in stock Plasma.
+  # Pinned like the keys above, with the same trade-off; read at the next
+  # Plasma login. printf turns the \t separators into tabs.
+  home.activation.plasmaSharedShortcuts = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+    ''
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window Close" "$(printf 'Meta+Q\tAlt+F4,Alt+F4,Close Window')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window Fullscreen" "Meta+F,none,Make Window Fullscreen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group plasmashell --key "manage activities" "none,Meta+Q,Show Activity Switcher"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group ksmserver --key "Lock Session" \
+        "$(printf 'Meta+L\tMeta+Shift+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
+    ''
+    + desktopKeys
+  );
 
   # ═══════════════════════════════════════════════════════════════════════════
   # 24-hour time and ISO 8601 dates in Plasma

@@ -1066,6 +1066,8 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 **Composition guards** (`modules/desktops/assertions.nix`) deliberately do **not** enforce mutual exclusivity — they assert only the genuine invariants, so a future edit cannot silently produce a broken session: LeftWM requires `services.xserver.enable` (X11-only, via startx); Niri and COSMIC require greetd (their only route in); GNOME requires greetd **or** GDM and Plasma greetd **or** SDDM (their native DMs are only `mkDefault`-disabled). Each helper module asserts the desktop(s) it serves.
 
+**Keybindings:** one scheme across GNOME, Plasma, Niri, LeftWM and Margo (Super+D launcher, Super+Return terminal, Super+Q close, Super+F fullscreen, Super+V float, Super+1…9 workspaces, Super+Space keyboard layout, Super+Shift+L lock, Super+Shift+E exit, Super+Shift+C Caffeine), added to GNOME and Plasma next to their stock keys. The full table, where each session writes its keys and the per-session extras are in **[`docs/keybindings.md`](docs/keybindings.md)**; change one session, change all five.
+
 **Portal routing:** each full DE adds an explicit `xdg.portal.config.<de>` block so that, with several DEs installed, interfaces resolve deterministically for the active session instead of spilling over from another DE's `configPackages`. Niri keeps the upstream module default (`gnome;gtk`); LeftWM gets `gtk` plus Secret → `gnome-keyring` in `modules/theme/dark-mode.nix`.
 
 ### 9.1 GNOME (Wayland)
@@ -1074,8 +1076,12 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 **Services:** `services.xserver.enable = true`; `services.desktopManager.gnome.enable = true`; `services.displayManager.gdm.enable = lib.mkDefault false` (greetd used instead). GNOME 50 is always Wayland, so `gdm.wayland` is no longer set.
 
-**Extensions (14 enabled):**
-  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor
+**Extensions (15 installed):**
+  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor, start-overlay-in-application-view
+
+Installed is not enabled: GNOME loads only the UUIDs in `org.gnome.shell enabled-extensions`, which Extension Manager edits. Bravais enables exactly one itself, start-overlay-in-application-view, by appending its UUID to that list on activation (`users/mj/gnome.nix`), so the rest of the list stays the user's.
+
+**Keybindings (`users/mj/gnome.nix`):** Super alone opens the **app grid** rather than the window overview. GNOME has no setting for this (mutter's `overlay-key` only names the key; the shell always calls `Overview.toggle()`), so the start-overlay-in-application-view extension replaces `toggle()` with `showApps()`; the Activities button and hot corner follow. `Super+D` is media-keys `search` (Settings › Keyboard › Shortcuts › Launchers › Search), which opens the overview with search focused, matching `Mod+D` under Niri, LeftWM and Margo. `Super+A` (app grid) and `Super+S` (quick settings, GNOME 50) are left at their defaults. The shared keys ([`docs/keybindings.md`](docs/keybindings.md)) are added beside the stock ones: Super+Return terminal (a custom shortcut, appended to `custom-keybindings` the same way as the extension), Super+Q close, Super+F fullscreen, Super+1…9 / Super+Shift+1…9 workspaces (the "open the Nth dock app" keys give way), Super+Shift+L lock, Super+Shift+C Caffeine, Super+Print window capture. The side-button workspace keys (§9.1a) are restated there with every GNOME 50 stock accelerator.
 
 **Tiling:** `forge` is *the* tiling extension. `tiling-shell`, `smart-tiling` and `simple-tiling` stay commented out because they conflict with forge; re-enabling one means disabling forge first. `ollama-indicator` is also commented out.
 
@@ -1091,7 +1097,7 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces under **GNOME, Plasma, COSMIC and LeftWM**. Direction is deliberate: **back goes right, forward goes left** — do not "fix" it; `users/mj/niri.nix` is swapped to match and the two must move together.
 
-Only Niri can bind a mouse button natively; Mutter, KWin and cosmic accept keyboard accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore happens **below the compositor** via `xremap` (Rust, `--watch=device` so a Bluetooth mouse reconnecting after suspend is picked up), emitting **Super+Ctrl+Left/Right** — already the shipped default in Plasma and COSMIC, so only GNOME needed a binding, appended to its stock list in `users/mj/desktop-theme.nix` rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
+Only Niri can bind a mouse button natively; Mutter, KWin and cosmic accept keyboard accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore happens **below the compositor** via `xremap` (Rust, `--watch=device` so a Bluetooth mouse reconnecting after suspend is picked up), emitting **Super+Ctrl+Left/Right** — already the shipped default in Plasma and COSMIC, so only GNOME needed a binding, appended to its stock list in `users/mj/gnome.nix` rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
 
 **Niri is deliberately excluded:** it handles the buttons natively, and xremap grabs and re-emits the device, so a unit on `graphical-session.target` would consume them first. The unit is wanted only by the GNOME, COSMIC and Plasma session targets (CONSTRAINTS.md #29).
 
@@ -1123,6 +1129,10 @@ Fully Rust-based desktop from System76. The upstream module wires portals, dconf
 - `services.displayManager.sddm.enable` / `sddm.wayland.enable = lib.mkDefault false` (greetd used)
 - `services.xserver.enable = true` (XWayland support)
 - `programs.ssh.askPassword = lib.mkForce …ksshaskpass` (avoids askpass conflicts when multiple desktop modules are enabled)
+
+**KRunner:** `Meta+D` opens it, beside the stock `Alt+Space`, `Alt+F2` and `Search`, matching `Mod+D` under Niri, COSMIC and GNOME. KWin's *Peek at Desktop* gives up `Meta+D`, its default, and is left with no key. Both are pinned in `kglobalshortcutsrc` with `kwriteconfig6` on activation (`users/mj/plasma.nix`), so a change made in System Settings is reverted at the next rebuild.
+
+**Shared keys** ([`docs/keybindings.md`](docs/keybindings.md)): `Meta+Return` terminal (a default shortcut, shipped like Caffeine's below), and pinned in `kglobalshortcutsrc`: `Meta+Q` close (Alt+F4 kept; the Activity Switcher gives up Meta+Q), `Meta+F` fullscreen, `Meta+Shift+L` lock (Meta+L kept), `Meta+1…9` / `Meta+Shift+1…9` desktops (the task-manager entry keys give way; a shifted digit is written both as `Meta+!` and `Meta+Shift+1`).
 
 **Caffeine:** the Power and Battery applet's built-in *Manually Block Sleep and Screen Locking* toggle, plus `Meta+Shift+C` → `steelbore-caffeine`. Plasma has no global action for that checkbox, so the key holds the same two inhibits (PowerManagement + ScreenSaver) through `kde-inhibit`, and the applet lists it among the applications blocking sleep; the checkbox does not move. The key ships as a *default* shortcut — a hidden (`NoDisplay`) `applications/` desktop file with `X-KDE-Shortcuts`, `users/mj/plasma.nix` — so a rebind in System Settings sticks.
 
@@ -1161,12 +1171,12 @@ Key bindings (Mod = Super; primary binds carry `hotkey-overlay-title`, aliases a
 - **Session:** `Mod+Shift+E` quit, `Mod+Shift+L` lock (gtklock), `Mod+Shift+C` Caffeine (pauses swayidle), `Mod+Shift+Slash` hotkey overlay, `Mod+Shift+U` keyring unlock (rescue — `pam_gnome_keyring` normally unlocks at login)
 - **Idle:** swayidle locks at 5 min, powers off monitors at 6 min, locks before suspend
 - **Applications:** `Mod+Return` alacritty, `Mod+D` anyrun; `Mod+B`/`Mod+Shift+B` bluetui/overskride, `Mod+A`/`Mod+Shift+A` wiremix/pavucontrol
-- **Windows:** `Mod+Q` close, `Mod+F` maximize column, `Mod+Shift+F` fullscreen, `Mod+V` / `Mod+Shift+V` floating, `Mod+O` overview
+- **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+Shift+F` maximize column, `Mod+V` / `Mod+Shift+V` floating, `Mod+O` overview
 - **Focus / move:** `Mod+Arrows` or Vim keys; `Mod+Ctrl+Arrows` move (`Mod+Shift+L` is reserved for gtklock); `Mod+BracketLeft/Right` consume/expel
 - **Workspaces:** `Mod+1-9` focus, `Mod+Shift+1-9` move column, `Mod+Page_Down/Up` (+`Ctrl` to move), `Mod+Tab` previous
 - **Mouse side buttons** (no Mod): back → column right, forward → column left, matching the other desktops' horizontal direction since Niri's workspaces stack vertically. Binding without Mod costs browser back/forward, because niri grabs the buttons compositor-wide.
 - **Resize / scale:** `Mod+R` preset, `Mod+Minus/Equal` ∓10%; `Mod+Shift+Minus/Equal` steps the output scale live via `steelbore-output-scale` (forgotten on config reload — the persistent value is the `output` block)
-- **Screenshots:** `Print`, `Mod+Print` window
+- **Screenshots:** `Print`, `Mod+Print` window, `Shift+Print` whole screen
 - **XF86 keys** (hidden from the overlay; all but media `allow-when-locked`): brightness and volume via `swayosd-client` (volume capped at 100%); mic mute via `wpctl` then swayosd for the OSD only (swayosd's own mic toggle is a no-op here); media via `playerctl`; keyboard backlight via `steelbore-kbd-light-cycle` / `brightnessctl`; radios via `steelbore-bt-toggle` / `steelbore-airplane-toggle` (rootless rfkill, dunst feedback). The swayosd OSD is themed from role tokens in `users/mj/niri.nix`.
 
 #### 9.4.1 Niri status bar (Eww, `users/mj/eww.nix`)
@@ -1191,14 +1201,14 @@ leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, xs
 
 Key bindings:
 
-- **Session:** `Mod+Shift+E` kill session, `Ctrl+Alt+L` lock (`loginctl lock-session` → xss-lock → i3lock), `Mod+Shift+C` Caffeine, `Mod+Shift+U` keyring unlock (rescue)
+- **Session:** `Mod+Shift+E` kill session, `Mod+Shift+L` or `Ctrl+Alt+L` lock (`loginctl lock-session` → xss-lock → i3lock), `Mod+Shift+C` Caffeine, `Mod+Shift+U` keyring unlock (rescue)
 - **Idle:** xss-lock (started by `leftwm-session-inner`) runs i3lock when the X screensaver fires at 300 s and before sleep; DPMS powers the panel off at 360 s — the same timings as Niri's swayidle. gtklock cannot run under X (CONSTRAINTS.md #45).
 - **Applications:** `Mod+Return` alacritty (rio renders blank under startx-spawned Xorg), `Mod+D` rlaunch, `Mod+Shift+D` rofi
-- **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+Shift+F` float
+- **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+V` float
 - **Focus / move:** `Mod+K/J` or `Mod+Up/Down`; `Mod+Shift+K/J`. Up/down only: lefthk-core lacks the Left/Right commands and one panics its parser, disabling every bind; sloppy focus and tile-drag cover left/right.
-- **Layouts / workspaces:** `Mod+Space` / `Mod+Shift+Space` cycle layouts; `Mod+1-9` goto, `Mod+Shift+1-9` move; `Mod+Ctrl+Left/Right` previous/next tag (the side-button combo, §9.1a)
+- **Layouts / workspaces:** `Mod+Space` keyboard layout (`xkb-switch -n`; Ctrl+Space too), `Mod+Ctrl+Space` / `Mod+Ctrl+Shift+Space` cycle tiling layouts; `Mod+1-9` goto, `Mod+Shift+1-9` move; `Mod+Ctrl+Left/Right` previous/next tag (the side-button combo, §9.1a)
 - **Resize / scratchpad:** `Mod+Equal/Minus` ±5 main width; `Mod+Grave` scratchpad terminal
-- **Screenshots:** `Print` region, `Mod+Print` full screen — to `~/Pictures/Screenshots/` with an ISO timestamped name, and to the clipboard
+- **Screenshots:** `Print` region, `Mod+Print` focused window (`maim -i` on `xdotool getactivewindow`), `Shift+Print` full screen — to `~/Pictures/Screenshots/` with an ISO timestamped name, and to the clipboard
 - **Multimedia / hardware keys** mirror Niri, but without `allow-when-locked` (lefthk-core has no analog) and with `steelbore-osd` dunstify popups since swayosd is Wayland-only. `Mod+Shift+Slash` shows a rofi keybinding help list, kept by hand in sync because lefthk-core has no introspection.
 
 **Theme** (`~/.config/leftwm/themes/current` — one symlink to a store derivation, because leftwm intermittently fails to find `current/up` when `current` is a real directory):
@@ -2044,12 +2054,14 @@ xfce4-terminal, Konsole/Yakuake and XTerm.
 - **Secondary:** Arabic (`ara`)
 - **Toggle:**
   - X11 sessions (LeftWM) and desktops that honour the system XKB options: `Ctrl+Space` (`grp:ctrl_space_toggle`).
-  - Niri: `Mod+Space` (`switch-layout "next"`). Niri grabs keys for its own binds before xkbcommon's group-toggle action fires, so `grp:ctrl_space_toggle` is a no-op there; the option is kept in Niri's `xkb` block only for X11 parity.
+  - Every session: `Super+Space` (GNOME stock; Plasma's second layout key; Niri `switch-layout "next"`; LeftWM `xkb-switch -n`; Margo `cyclekblayout`).
+  - Niri: Niri grabs keys for its own binds before xkbcommon's group-toggle action fires, so `grp:ctrl_space_toggle` is a no-op there; the option is kept in Niri's `xkb` block only for X11 parity.
 - **Console:** the TTY stays on `us` (`console.keyMap = "us"`) — `ckbcomp` cannot resolve a multi-layout XKB config.
-- **Configuration:** `layout = "us,ara"` with `grp:ctrl_space_toggle` is stated in three places, which must agree:
+- **Configuration:** `layout = "us,ara"` with `grp:ctrl_space_toggle` is stated in four places, which must agree:
   - `hosts/common.nix` — system XKB (`services.xserver.xkb`)
   - `users/mj/home.nix` — user XKB (`home.keyboard`)
   - `users/mj/niri.nix` — Niri's own `input { keyboard { xkb { … } } }` block and the `Mod+Space` bind
+  - `users/mj/margo.nix` — `xkb_rules_layout` / `xkb_rules_options` and the `Super+Space` bind
 - **Layout indicator:** `steelbore-layout-state` (`modules/desktops/shared.nix`) backs the eww language indicator on both bars. On Niri it reads `niri msg --json keyboard-layouts`; on X11 it uses `xkb-switch -p`, because the active group lives in the X server and `setxkbmap -query` only echoes the static config.
 
 ---
@@ -2064,7 +2076,7 @@ All five sessions are enabled together in `hosts/common.nix` (`steelbore.desktop
 | COSMIC  | Wayland  | COSMIC Panel                 | cosmic-launcher                         | cosmic-notifications | upstream (COSMIC)                 |
 | Plasma 6| Wayland  | Plasma Panel                 | KRunner                                 | KDE Notifications    | upstream (Plasma)                 |
 | Niri    | Wayland  | eww                          | anyrun (`Mod+D`)                        | dunst                | gtklock + swayidle                |
-| LeftWM  | X11      | eww (separate `eww-leftwm` config) | rlaunch (`Mod+D`), rofi (`Mod+Shift+D`) | dunst            | i3lock via xss-lock (`Ctrl+Alt+L`, idle, sleep) |
+| LeftWM  | X11      | eww (separate `eww-leftwm` config) | rlaunch (`Mod+D`), rofi (`Mod+Shift+D`) | dunst            | i3lock via xss-lock (`Mod+Shift+L`/`Ctrl+Alt+L`, idle, sleep) |
 
 Notes:
 
@@ -2094,7 +2106,10 @@ the `gh` token, never stored), garbage-collect keeping a week of generations,
 vacuum the journal, `nixos-rebuild switch --flake .#steelbore-thinkpad`, and — only
 after a successful switch — mirror the tree into `/etc/nixos` and start the
 Flatpak update **detached**, because a full Flatpak refresh can take hours and
-must never block the switch. `--update-ai-tools` (implied by `--full-update`)
+must never block the switch. At a terminal the run then follows it with a live
+progress bar parsed from its log (Ctrl-C stops the watching, not the update;
+`--detach-flatpak` returns at once, as every agent, CI or piped run does);
+`preflight flatpak status|watch` reports on it later. `--update-ai-tools` (implied by `--full-update`)
 then runs the self-updater of every AI tool installed outside Nix, one at a
 time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. `preflight` wraps none of the tools it drives onto
 PATH, so they are never frozen in its closure (same reasoning as
@@ -2242,7 +2257,7 @@ A `--version` call proves only that a binary is on PATH, not that a session star
 
 - **Manual:** Panel or bar visible: the eww bar under Niri and LeftWM (clock in ISO 8601 with a UTC offset), the native panel under COSMIC, GNOME and Plasma.
 - **Manual:** A test notification (`dunstify test`) renders through dunst under Niri and LeftWM.
-- **Manual:** Lock screen: `Mod+Shift+L` (Niri) engages gtklock and `Ctrl+Alt+L` (LeftWM) engages i3lock; unlocking with the password works. LeftWM also locks after 300 s idle unless Caffeine is on.
+- **Manual:** Lock screen: `Mod+Shift+L` (Niri) engages gtklock and `Mod+Shift+L` (LeftWM, also `Ctrl+Alt+L`) engages i3lock; unlocking with the password works. LeftWM also locks after 300 s idle unless Caffeine is on.
 - **Manual:** Fingerprint unlocks gtklock and falls through to the password prompt on a failed scan; it is never offered at the greetd login (policy: `modules/hardware/fingerprint.nix`, §6.1).
 - **Manual:** Niri: `Mod+Shift+Slash` opens the hotkey overlay with every primary bind titled.
 - **Manual:** Mouse side buttons switch workspace in every desktop, and the TrackPoint is unaffected.

@@ -15,7 +15,9 @@
 # `version` below is read out of the .deb's own control file and is therefore
 # descriptive, not part of the URL. Expect this package to break on upstream's
 # schedule rather than on ours; `nu pkgs/update-vendored.nu codex-desktop` is
-# the fix.
+# the fix. modules/packages/ai.nix roots `src` in the system closure so a GC
+# cannot delete the pinned .deb (constraint #49): without that root, the next
+# rebuild after a nixpkgs bump refetches `latest` and fails on the hash.
 {
   lib,
   stdenv,
@@ -79,7 +81,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   src = fetchurl {
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb";
-    hash = "sha256-DgBrSTFxL1qQ1M0ElyxuC1M87c39srUZRtW5NnRx9VY=";
+    hash = "sha256-PKWef5pmQbni+5rWgGg3hLWrgCb/dBj7ISoOvl3zodc=";
   };
 
   nativeBuildInputs = [
