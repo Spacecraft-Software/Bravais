@@ -8,7 +8,7 @@ description: >
   Spacecraft Software-umbrella project — even if the user doesn't explicitly mention the Standard.
   If the user mentions "Spacecraft Software", a Spacecraft Software subproject name, or asks you to work on
   anything in the Spacecraft Software ecosystem, consult this skill immediately. It encodes
-  The Steelbore Standard v2.12 (§19-§26 assurance + requirements + V&V; §13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.3 security-by-design) so
+  The Steelbore Standard v2.14 (§19-§26 assurance + requirements + V&V; §13 design systems; §3.1.1 TypeScript; §5.7 AGENTS.md; §6.4 contribution targets; §5.6 skill packaging; §11 palettes + §11.6 system theme; §18 accessibility; §17 progress reporting; §3.3 security-by-design) so
   you never need to ask for it or have it attached to a prompt again.
 license: GPL-3.0-or-later
 maintainer: Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
@@ -17,7 +17,7 @@ website: https://Construct.SpacecraftSoftware.org/
 
 # The Steelbore Standard — Compliance Reference
 
-**Version:** 2.12 | **Date:** 2026-10-06 | **Author:** Mohamed Hammad
+**Version:** 2.14 | **Date:** 2026-10-20 | **Author:** Mohamed Hammad
 **Maintainer:** Mohamed Hammad | **Contact:** [Mohamed.Hammad@SpacecraftSoftware.org](mailto:Mohamed.Hammad@SpacecraftSoftware.org)
 **Copyright:** Copyright (C) 2026 Mohamed Hammad & Spacecraft Software | **License:** GPL-3.0-or-later
 **Website:** [https://Construct.SpacecraftSoftware.org/](https://Construct.SpacecraftSoftware.org/)
@@ -70,7 +70,7 @@ maps each section to its file.
 | §4 | Licensing & Compliance | [`references/s04-licensing.md`](references/s04-licensing.md) | Project License (GPL-3.0-or-later or AGPL-3.0-or-later); Upstream License Compliance (preserve what you build on); SPDX & REUSE Compliance |
 | §5 | Project Posture | [`references/s05-posture.md`](references/s05-posture.md) | Default Posture (Personal / Hobby); Required Posture Files (per project); General-Use Carve-Out; Maintainer Discretion; Package Distribution Requirements; Skill Packaging Requirements; Agent Context Files |
 | §6 | Platform & Systems Requirements | [`references/s06-platform.md`](references/s06-platform.md) | POSIX Compliance; Post-Quantum Cryptography; Signed & Verified Commits (Non-Negotiable); Authorized Contribution Targets (Non-Negotiable); Text File Format (LF, UTF-8, final newline) |
-| §7 | Shell Environment | [`references/s07-shell.md`](references/s07-shell.md) | Spacecraft Software tooling, documentation, and CI pipelines target **four first-class shell environments**: **Nushell**, **Ion**, **Brush**, and **Bash**. |
+| §7 | Shell Environment | [`references/s07-shell.md`](references/s07-shell.md) | Spacecraft Software tooling, documentation, and CI pipelines target **four first-class shell environments**: **Nushell**, **Ion**, **Brush**, and **Bash**. §7.2: two or more commands handed to a user end with one combined line that stops at the first failure. |
 | §8 | Documentation (Texinfo) | [`references/s08-documentation.md`](references/s08-documentation.md) | Spacecraft Software user-facing projects should ship a **Texinfo manual** as the canonical technical reference. |
 | §9 | Privacy-Friendly Application (PFA) Policy | [`references/s09-privacy.md`](references/s09-privacy.md) | No Tracking/No Ads; Minimal Permissions; Local Storage; No Third-Party Subresources |
 | §10 | Key Bindings | [`references/s10-key-bindings.md`](references/s10-key-bindings.md) | CUA; Vim; Remappability (mandatory); Reserved assistive-technology chords |
@@ -468,7 +468,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§5.7** Agent context files: `AGENTS.md` and `CLAUDE.md` both present at the repository root and version-controlled; `CLAUDE.md` is an `@AGENTS.md` import plus Claude-only content and restates nothing; neither file is gitignored; no credentials, private hostnames, or personal filesystem paths in either; managed blocks rendered into `AGENTS.md` only
 - [ ] **§6.1** POSIX-compliant CLI/system tools
 - [ ] **§6.5** Text files are LF-terminated, UTF-8 without BOM, and end with a newline; `.gitattributes` (`* text=auto eol=lf`) and `.editorconfig` (`charset`, `end_of_line`, `insert_final_newline`) present at the repository root; CI fails on a CR byte in a tracked text file; CRLF exceptions (vendored upstream, `cmd.exe` scripts) pinned explicitly in `.gitattributes`
-- [ ] **§7** Shell scripts are POSIX-compatible; Nushell/Ion native variants provided where shell-native idioms are required; no Bashisms in shared scripts
+- [ ] **§7** Shell scripts are POSIX-compatible; Nushell/Ion native variants provided where shell-native idioms are required; no Bashisms in shared scripts; two or more commands handed to a user end with one combined line that stops at the first failure (`&&` in POSIX shells, `;` in Nushell) (§7.2)
 - [ ] **§8** Texinfo manual present for user-facing programs (`doc/<project>.texi`); builds to `.info`, `.html`, and `.pdf`; `install-info` hook present in all three package manifests (§5.5) — N/A for scripts and internal tooling
 - [ ] **§9** PFA: no tracking, minimal permissions, local storage default; **§9.1** no third-party subresources — fonts declared `local()`-first and bundled only if fidelity requires it, other assets shipped beside the artifact, nothing fetched from a host the project does not control, with any unavoidable exception declared in `README.md`
 - [ ] **§10** CUA + Vim-like key bindings planned/implemented; bindings user-remappable; assistive-technology modifier chords (NVDA/Orca/VoiceOver) not captured — N/A for projects registered as games (§18.5)
@@ -492,7 +492,7 @@ Before finalising **any** Spacecraft Software artifact, mentally verify:
 - [ ] **§25** Baselines cut at all three gates covering source, dependencies, toolchain, requirements, budgets, and interfaces; anomalies classified S1–S4 by consequence, S1 and S2 closed only by a committed regression test citing the anomaly, and open anomalies listed in the release notes; release manifest assembled with identity, artifacts and checksums, provenance, verification and validation summaries, budgets, known issues, and the conformance claim; installation verified from each of the three §5.5 package definitions in a clean environment before the tag is pushed
 - [ ] **§26** `SECURITY.md` present with reporting channel, acknowledgement target, scope, supported versions, disclosure terms, and credit policy; advisories published for fixed vulnerabilities and citing the SBOM; deprecations announced in `CHANGELOG.md`, the ICD, and at run time, with the notice period the category requires and a named replacement; support window stated for the project's posture; an ended project taken through the §26.4 EOL procedure rather than left silent
 - [ ] **§6.3** All commits to Spacecraft Software Git remotes cryptographically signed with the `Mohamed.Hammad@SpacecraftSoftware.org` key and showing "Verified" on the hosting platform; rewrites preserve signatures; programmatic and assistant-driven commits signed too, only through the signing setup already configured on the host — no agent creates, reads, requests, or exposes a private key, passphrase, password, or token, and a signing failure is reported, never worked around
-- [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution
+- [ ] **§6.4** No commit, pull request, patch, issue, or package publication sent to a namespace outside `Spacecraft-Software` / `UnbreakableMJ` without explicit per-contribution maintainer authorization; automation, CI, and assistant-driven work never initiate an outbound contribution; every push to GitHub goes over HTTPS, never SSH
 
 If any item is not applicable to the current artifact type (e.g., color palette
 for a pure Rust library), note it as N/A rather than silently skipping it.

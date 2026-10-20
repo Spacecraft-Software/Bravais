@@ -180,6 +180,33 @@ All Spacecraft Software CLIs use a consistent hierarchy:
 <tool> <noun-singular> <verb> [flags]
 ```
 
+### Why noun first
+
+The noun leads because the two halves of the tree are not symmetric. The
+verb set is small and fixed across every Spacecraft Software CLI (see
+below), while each tool brings its own nouns. Grouping under the noun puts
+everything that can be done to one kind of resource in one place:
+
+- **Discovery is scoped to the resource.** `<tool> <noun> --help`,
+  `<tool> schema <noun>`, and tab completion after `<tool> <noun> ` each list
+  exactly the verbs that apply to that noun. Verb-first would scatter one
+  resource's operations across nine top-level commands and make every
+  top-level verb list every noun, including the ones it does not apply to.
+- **It matches how the operator, human or agent, arrives at the command.**
+  The resource is known first ("the module"), the operation second ("list
+  it"). An agent recovering from `NOT_FOUND` builds the hint
+  `<tool> <noun> list` from the noun it already holds.
+- **It grows without crowding the top level.** A new verb lands under the
+  nouns it applies to; a new noun adds one top-level entry, not one per verb.
+  Docker moved from verb-first `docker rmi` to `docker image rm` (the 1.13
+  management commands) for this reason.
+
+Verb-noun (`kubectl get pod`) reads closer to English and is a reasonable
+choice for a tool with one or two resource types; past that it scales worse
+on every point above. Spacecraft Software CLIs therefore use noun-verb
+uniformly, so the same muscle memory and the same agent heuristics carry from
+one tool to the next.
+
 ### Singular nouns
 
 - ✓ `ferrocast module list`

@@ -115,6 +115,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
+  `home-manager-unstable`, `antigravity-nix`, `construct`, `engram` and
+  `gitway` flake inputs, with the vendored Copilot skills re-synced from
+  the new `construct`.
 - **Margo tiles the way mango does.** New windows take the master area
   and push the others down the stack, instead of opening as a new column
   on the right. Super+S still switches a tag to the scrolling layout,

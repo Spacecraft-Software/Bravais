@@ -140,6 +140,41 @@ actual shell — or both, when it isn't confirmed:
 `references/nushell.md` documents `^` and `with-env` in full — consult it
 rather than reconstructing the rules here.
 
+### Several commands for the user — end with one combined line
+
+When the hand-off is **two or more commands meant to run one after the
+other**, list them as usual, then end with **one line that runs them all**
+in its own code block, so the user copies once (Standard §7.2). The line
+must **stop at the first failure**, so join with the target shell's
+fail-fast operator, never a bare separator:
+
+| Target shell | Joiner | Combined line |
+|---|---|---|
+| POSIX sh, Bash, Brush, dash, ash, zsh | `&&` | `cmd1 && cmd2 && cmd3` |
+| Ion, fish 3+, PowerShell 7+ | `&&` | `cmd1 && cmd2 && cmd3` |
+| **Nushell** | `;` | `cmd1 ; cmd2 ; cmd3` |
+| Windows PowerShell 5.1 | `; if ($?) { … }` | `cmd1; if ($?) { cmd2 }` |
+
+- **Nushell `;` is fail-fast.** A failed command, a non-zero external
+  included, raises an error that ends the line. `&&` between commands is a
+  parse error there, so never hand a Nushell user an `&&` line.
+- **POSIX `;` is not.** It runs the next command whatever happened, which
+  is why it is wrong for a Bash user even though it parses.
+- **Same shell as the commands above it**, routed per Step 0.5 (the
+  user's login shell). Exactly the listed commands, same order, no comments.
+- **Commands with their own operators** (POSIX): wrap a command containing
+  `||`, `;`, or `&` in `{ …; }` before joining. Pipelines need no wrapping.
+- **Leave out** interactive commands, anything that runs until stopped
+  (servers, watchers, editors), and destructive steps the user should run
+  only after reading earlier output. A long-running command may end the
+  line when everything before it only prepares for it.
+- **Don't combine** commands for different hosts or shells, or a sequence
+  with a "check the output first" point in it. A single command needs no
+  combined line.
+- **Unknown shell:** use its fail-fast operator if you know it; otherwise
+  join with its plain separator and say in one line that it won't stop on
+  failure.
+
 ## Step 1 — Detect the target shell
 
 **Auto-detect first, ask only as last resort.** Try these signals in order, stop at the first that resolves. The goal is to never pause the conversation for a question that context already answers.
