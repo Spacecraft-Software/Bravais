@@ -183,27 +183,7 @@ in
   };
 
   dconf.settings = {
-    # ── GNOME: accept the combo the side-button remap emits ─────────────────
-    # modules/desktops/mouse-workspace-nav.nix turns BTN_SIDE/BTN_EXTRA into
-    # Super+Ctrl+Left/Right. Plasma and COSMIC already bind exactly that for
-    # this action out of the box; GNOME does not, so it is added here ALONGSIDE
-    # the stock accelerators rather than replacing them — these keys are lists,
-    # and dropping <Super>Page_Up/<Control><Alt>Left would be an unrelated
-    # regression for anyone typing them.
-    "org/gnome/desktop/wm/keybindings" = {
-      switch-to-workspace-left = [
-        "<Super>Page_Up"
-        "<Super>KP_Prior"
-        "<Control><Alt>Left"
-        "<Super><Control>Left"
-      ];
-      switch-to-workspace-right = [
-        "<Super>Page_Down"
-        "<Super>KP_Next"
-        "<Control><Alt>Right"
-        "<Super><Control>Right"
-      ];
-    };
+    # GNOME keybindings live in ./gnome.nix.
 
     # ── Dark Mode (Niri + LeftWM appearance source) ─────────────────────────
     "org/gnome/desktop/interface" = {

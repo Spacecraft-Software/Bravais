@@ -51,6 +51,8 @@
       # gnomeExtensions.simple-tiling   # DISABLED — overlaps forge
       gnomeExtensions.warp-toggle
       gnomeExtensions.resource-monitor
+      # Super alone opens the app grid; enabled from users/mj/gnome.nix.
+      gnomeExtensions.start-overlay-in-application-view
     ];
 
     # Portal routing — NixOS's services.desktopManager.gnome.enable already

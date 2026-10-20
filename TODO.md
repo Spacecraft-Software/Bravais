@@ -94,8 +94,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable GNOME on Wayland, disable GDM (use greetd)
 - [✓] Install GNOME Tweaks, dconf-editor
 - [✓] Install extension manager and browser connector
-- [✓] Install curated extensions (14: Caffeine, Just Perfection, Forge, etc.)
+- [✓] Install curated extensions (15: Caffeine, Just Perfection, Forge, etc.)
 - [✓] Configure XDG portals (gnome, gtk)
+- [✓] Super alone opens the app grid (start-overlay-in-application-view, enabled by appending to `enabled-extensions`); `Super+D` opens search (`users/mj/gnome.nix`)
 - [✓] Exclude bloatware (Tour, Music, Epiphany, Geary, Totem)
 
 ### COSMIC (`cosmic.nix`)
@@ -811,14 +812,14 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 | 2. Core Modules | Complete | 31/31 |
 | 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 48/48 |
+| 5. Desktop Environments | Complete | 49/49 |
 | 6. Package Modules | In Progress | 135/142 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
 | 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **311/327** |
+| **Total** | **95%** | **312/328** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and
