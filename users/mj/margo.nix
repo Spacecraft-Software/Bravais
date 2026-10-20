@@ -136,6 +136,7 @@ in
       # (docs/keybindings.md).
       bind = super,Return,spawn,alacritty
       bind = super,d,spawn,anyrun
+      bind = super+shift,d,spawn,rofi -show drun
       bind = super,b,spawn,alacritty -e bluetui
       bind = super+shift,b,spawn,overskride
       bind = super+shift,a,spawn,pavucontrol

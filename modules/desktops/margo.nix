@@ -29,6 +29,7 @@ in
     ++ (with pkgs; [
       eww # Status bar (Rust)
       anyrun # Launcher (Rust)
+      rofi # App menu on Super+Shift+D, as under LeftWM (C; Wayland since 2.0)
       dunst # Notifications
       gtklock # Screen locker (ext-session-lock)
       swayidle # Idle management

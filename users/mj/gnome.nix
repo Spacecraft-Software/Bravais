@@ -89,6 +89,13 @@ in
           "<Alt>Print"
           "<Super>Print"
         ];
+        # Super+Shift+D opens the app grid, as it opens the app menu in
+        # every other session; Super+A (stock) and Super alone (the
+        # extension above) still do. Nothing in GNOME 50 claims it.
+        toggle-application-view = [
+          "<Super>a"
+          "<Super><Shift>d"
+        ];
       };
 
     "org/gnome/desktop/wm/keybindings" =

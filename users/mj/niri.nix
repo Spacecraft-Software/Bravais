@@ -214,6 +214,7 @@ in
           // Applications
           Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
           Mod+D hotkey-overlay-title="Run an Application: anyrun" { spawn "anyrun"; }
+          Mod+Shift+D hotkey-overlay-title="Application Menu: rofi" { spawn "rofi" "-show" "drun"; }
 
           // Bluetooth managers (BlueZ clients; stack enabled in
           // modules/hardware/bluetooth.nix). The XF86Bluetooth key below
