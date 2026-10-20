@@ -231,3 +231,8 @@ Compatibility was checked on 2026-10-11 by running both commands against the sam
 
 `modules/packages/ai.nix` therefore puts `codexDesktop.src` in `system.extraDependencies`, which keeps the `.deb` alive for as long as a generation references it (about 378 MB). Never drop that line. With it, an upstream release changes nothing until `nu pkgs/update-vendored.nu codex-desktop` moves the pin. A fresh machine or a store that has already lost the file still has to bump, since the old artifact cannot be fetched from anywhere.
 
+### 50. The console mouse must not open a VT when you switch to it
+
+logind starts `autovt@ttyN.service` (the getty) on a VT you switch to only when `vt_is_busy()` says nothing has that VT open; `VT_GETSTATE`'s `v_state` counts any open descriptor, `O_NOCTTY` and write-only included. `steelbore-reticle` (PR #159) reopened `/dev/ttyN` as soon as the sysfs `active` attribute raised `POLLPRI`, which is the same switch logind is handling, so it won the race on every switch: the consoles came up blank, with no login prompt, under every desktop. `systemctl stop steelbore-reticle` made the prompts appear on 2026-10-20. gpm never hit this because it talks to `/dev/tty0` only.
+
+`pkgs/steelbore-reticle/src/daemon.rs` therefore only closes the old VT on a switch and opens the new one on the first pointer event, by when the getty is already running. Never move the open back into `refresh_vt`, and never pre-open VTs to save the latency of the first event.

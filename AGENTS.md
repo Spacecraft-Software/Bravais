@@ -201,6 +201,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 46. **Every NixOS release either channel builds needs a codename in `lib/identity.nix`** — `codenameFor` throws on a missing one, so bumping `nixpkgs-unstable` onto a new release fails evaluation until an Arabic-origin star name is added to `codenames`.
 47. **`nixos-version` is `steelbore-version`'s alias** — the package ships `bin/nixos-version`, so `system.tools.nixos-version.enable` stays `false` or the system path collides; its record lives under `/run/current-system/sw/share/steelbore/`, not `/etc`, which sandboxes hide.
 49. **The pinned Codex `.deb` stays in `system.extraDependencies`** (`modules/packages/ai.nix`) — its URL is `…/latest/`, so a GC'd copy can only be refetched as the new upload and the rebuild fails on the hash; never drop the root.
+50. **`steelbore-reticle` never opens a VT on a console switch** — logind spawns `autovt@ttyN` only on a VT nothing has open, so opening it then leaves it blank with no getty; open it on the first pointer event.
 
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 

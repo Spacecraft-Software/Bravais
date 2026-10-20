@@ -59,6 +59,10 @@ struct Daemon {
     speed: f64,
     inputs: Vec<Input>,
     active_file: File,
+    /// The foreground VT number; 0 until the first read.
+    active: u16,
+    /// The foreground VT, opened on its first pointer event and closed on
+    /// every console switch (see [`Daemon::refresh_vt`]).
     vt: Option<Vt>,
     pointer: Pointer,
     sel: Selection,
@@ -118,6 +122,7 @@ pub fn run(out: Out, speed: f64) -> i32 {
         speed,
         inputs: Vec::new(),
         active_file,
+        active: 0,
         vt: None,
         pointer: Pointer {
             x: 0.0,
@@ -153,17 +158,23 @@ impl Daemon {
         }
     }
 
-    /// Re-reads the foreground VT and reopens it if it changed.
+    /// Re-reads the foreground VT and, if it changed, closes the old one.
+    ///
+    /// The new VT is NOT opened here. logind starts a getty on a VT you
+    /// switch to only when nothing has it open (`vt_is_busy`), and this runs
+    /// on the same switch, so opening it now wins that race and leaves the
+    /// VT blank with no login prompt. [`Daemon::handle`] opens it on the
+    /// first pointer event instead, by when the getty is already there.
     fn refresh_vt(&mut self) -> io::Result<()> {
         let number = read_active(&mut self.active_file)?;
-        if self.vt.as_ref().is_some_and(|vt| vt.number == number) {
+        if number == self.active {
             return Ok(());
         }
         // A console switch clears the kernel's selection highlight; an anchor
         // or a held button from the previous VT means nothing here.
         self.sel = Selection::default();
         self.vt = None;
-        self.vt = Some(Vt::open(number)?);
+        self.active = number;
         Ok(())
     }
 
@@ -182,6 +193,9 @@ impl Daemon {
     }
 
     fn handle(&mut self, frame: &Frame) -> io::Result<()> {
+        if self.vt.is_none() && self.active != 0 {
+            self.vt = Some(Vt::open(self.active)?);
+        }
         let Some(vt) = &self.vt else {
             return Ok(());
         };
@@ -353,11 +367,12 @@ impl Daemon {
                 {
                     // getty and login hang the VT up (vhangup) on every login
                     // and logout, which leaves an already-open descriptor
-                    // returning EIO forever. Reopen and replay the frame; the
-                    // first ioctl in `handle` fails before the pointer moves,
-                    // so the replay does not move it twice.
+                    // returning EIO forever. Drop it and replay the frame,
+                    // which reopens the VT; the first ioctl in `handle` fails
+                    // before the pointer moves, so the replay does not move
+                    // it twice.
                     self.vt = None;
-                    result = self.refresh_vt().and_then(|()| self.handle(frame));
+                    result = self.handle(frame);
                 }
                 self.report(result);
             }

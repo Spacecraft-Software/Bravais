@@ -43,7 +43,6 @@ pub struct Cell {
 /// node is then owned by that user.
 #[derive(Debug)]
 pub struct Vt {
-    pub number: u16,
     file: File,
 }
 
@@ -53,7 +52,7 @@ impl Vt {
             .write(true)
             .custom_flags(rustix::fs::OFlags::NOCTTY.bits().cast_signed())
             .open(format!("/dev/tty{number}"))?;
-        Ok(Self { number, file })
+        Ok(Self { file })
     }
 
     /// True when the VT shows text. A compositor or the X server puts its
