@@ -246,6 +246,9 @@
                   (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
                   // Lock via logind so xss-lock runs i3lock — the same path as
                   // the idle and before-sleep locks (CONSTRAINTS.md #45).
+                  // Mod+Shift+L is the lock key in every Bravais session
+                  // (docs/keybindings.md); Ctrl+Alt+L stays as an alias.
+                  (command: Execute, value: "loginctl lock-session", modifier: ["modkey", "Shift"], key: "l"),
                   (command: Execute, value: "loginctl lock-session", modifier: ["Control", "Alt"], key: "l"),
                   // Caffeine — keep awake: clears the X idle timers (mirrors Niri).
                   (command: Execute, value: "steelbore-caffeine", modifier: ["modkey", "Shift"], key: "c"),
@@ -267,7 +270,8 @@
                   // Window management
                   (command: CloseWindow, value: "", modifier: ["modkey"], key: "q"),
                   (command: ToggleFullScreen, value: "", modifier: ["modkey"], key: "f"),
-                  (command: ToggleFloating, value: "", modifier: ["modkey", "Shift"], key: "f"),
+                  // Mod+V floats, as under Niri and Margo.
+                  (command: ToggleFloating, value: "", modifier: ["modkey"], key: "v"),
 
                   // Focus / Move — only Up/Down survive. lefthk-core 0.2.2's
                   // BaseCommand enum is missing FocusWindowLeft, FocusWindowRight,
@@ -282,9 +286,12 @@
                   (command: MoveWindowUp, value: "", modifier: ["modkey", "Shift"], key: "k"),
                   (command: MoveWindowDown, value: "", modifier: ["modkey", "Shift"], key: "j"),
 
-                  // Layouts
-                  (command: NextLayout, value: "", modifier: ["modkey"], key: "space"),
-                  (command: PreviousLayout, value: "", modifier: ["modkey", "Shift"], key: "space"),
+                  // Layouts. Mod+Space switches the keyboard layout (us/ara) in
+                  // every Bravais session, so the tiling layouts take Ctrl.
+                  // Ctrl+Space still switches too (grp:ctrl_space_toggle).
+                  (command: Execute, value: "xkb-switch -n", modifier: ["modkey"], key: "space"),
+                  (command: NextLayout, value: "", modifier: ["modkey", "Control"], key: "space"),
+                  (command: PreviousLayout, value: "", modifier: ["modkey", "Control", "Shift"], key: "space"),
 
                   // Workspaces
                   // Accept the combo the side-button remap emits. modkey is
@@ -341,13 +348,15 @@
                   (command: Execute, value: "steelbore-airplane-toggle",    modifier: [], key: "XF86RFKill"),
                   // Screenshots (mirror Niri's Print / Mod+Print; maim is the
                   // X11 grabber — grim is Wayland-only). Print drag-selects a
-                  // region (maim -s); Mod+Print grabs the whole screen. `&&`
+                  // region (maim -s), Mod+Print grabs the focused window and
+                  // Shift+Print the whole screen, as in every session. `&&`
                   // chaining means a cancelled selection (maim exits non-zero)
                   // writes no empty file and skips the clipboard. tee-free: maim
                   // writes $f directly, then xclip loads it into the clipboard as
                   // image/png. $HOME (not ~) so the shell always expands it.
                   (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -s $f && xclip -selection clipboard -t image/png $f", modifier: [], key: "Print"),
-                  (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
+                  (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -i $(xdotool getactivewindow) $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
+                  (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["Shift"], key: "Print"),
                   // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
                   // Pipes a HM-rendered keybind summary through rofi -dmenu.
                   (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
@@ -368,7 +377,7 @@
         "leftwm/keybinds.txt".text = ''
           <b>Session</b>
           Mod+Shift+E           Exit LeftWM
-          Ctrl+Alt+L            Lock screen (i3lock)
+          Mod+Shift+L           Lock screen (i3lock; Ctrl+Alt+L too)
           Mod+Shift+C           Toggle Caffeine (keep awake)
           Mod+Shift+U           Unlock keyring
 
@@ -380,19 +389,21 @@
           <b>Window management</b>
           Mod+Q                 Close focused window
           Mod+F                 Toggle fullscreen
-          Mod+Shift+F           Toggle floating
+          Mod+V                 Toggle floating
           Mod+K / Mod+Up        Focus window up
           Mod+J / Mod+Down      Focus window down
           Mod+Shift+K           Move window up
           Mod+Shift+J           Move window down
 
           <b>Layouts</b>
-          Mod+Space             Next layout
-          Mod+Shift+Space       Previous layout
+          Mod+Space             Switch keyboard layout (us/ara; Ctrl+Space too)
+          Mod+Ctrl+Space        Next layout
+          Mod+Ctrl+Shift+Space  Previous layout
 
           <b>Workspaces</b>
           Mod+1..9              Switch to workspace 1-9
           Mod+Shift+1..9        Move window to workspace 1-9
+          Mod+Ctrl+Left/Right   Previous / next workspace
 
           <b>Resize</b>
           Mod+Equal             Increase main width
@@ -403,7 +414,8 @@
 
           <b>Screenshots</b>
           Print                 Region select → file + clipboard (maim -s)
-          Mod+Print             Full screen → file + clipboard (maim)
+          Mod+Print             Focused window → file + clipboard (maim -i)
+          Shift+Print           Full screen → file + clipboard (maim)
 
           <b>Multimedia / hardware keys</b>
           XF86AudioRaiseVolume  Volume up (steelbore-osd)
