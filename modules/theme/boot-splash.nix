@@ -44,5 +44,14 @@ in
       "udev.log_level=3"
       "systemd.show_status=auto"
     ];
+
+    # Keep the shutdown animation's last frame on screen until the power goes
+    # (constraint #51). On SIGTERM, plymouthd hands its display to
+    # plymouthd-fd-escrow, which survives systemd-shutdown and holds the
+    # frame; pivoting into the shutdown ramfs resets /dev/console to text
+    # mode, which hands the screen back to the kernel console. The root is
+    # plain ext4 with no LUKS, LVM or MD to detach, so systemd-shutdown's
+    # remount read-only plus sync is all the ramfs added here.
+    systemd.shutdownRamfs.enable = false;
   };
 }
