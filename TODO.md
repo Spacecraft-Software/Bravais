@@ -96,6 +96,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install extension manager and browser connector
 - [✓] Install curated extensions (15: Caffeine, Just Perfection, Forge, etc.)
 - [✓] Configure XDG portals (gnome, gtk)
+- [✓] Shared keys from `docs/keybindings.md` beside GNOME's own (terminal, close, fullscreen, workspaces 1–9, lock, Caffeine, window capture)
 - [✓] Super alone opens the app grid (start-overlay-in-application-view, enabled by appending to `enabled-extensions`); `Super+D` opens search (`users/mj/gnome.nix`)
 - [✓] Exclude bloatware (Tour, Music, Epiphany, Geary, Totem)
 
@@ -112,6 +113,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable Plasma 6 on Wayland, disable SDDM (use greetd)
 - [✓] Enable X server for XWayland support
 - [✓] Configure SSH askpass override (`ksshaskpass`)
+- [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+Shift+L, desktops 1–9)
 - [✓] KRunner on `Meta+D` beside its stock keys (matches `Mod+D` under Niri, COSMIC and GNOME); KWin's Peek at Desktop gives up its default `Meta+D`
 - [✓] Caffeine on `Meta+Shift+C` — default shortcut via a hidden `applications/` desktop file with `X-KDE-Shortcuts`; `steelbore-caffeine` holds the PowerManagement + ScreenSaver inhibits via `kde-inhibit` (no global action exists for the battery applet's manual-block checkbox)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)
@@ -813,14 +815,14 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 | 2. Core Modules | Complete | 31/31 |
 | 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 49/49 |
+| 5. Desktop Environments | Complete | 51/51 |
 | 6. Package Modules | In Progress | 135/142 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
 | 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **312/328** |
+| **Total** | **95%** | **314/330** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and

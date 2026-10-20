@@ -96,7 +96,10 @@ in
       scroller_proportion_preset  = 1.000, 0.800, 0.618, 0.500
 
       # ── Input ─────────────────────────────────────────────────────────────
-      xkb_rules_layout = us
+      # us,ara like every other session: Super+Space cycles (bound below),
+      # Ctrl+Space too where the option reaches xkb.
+      xkb_rules_layout  = us,ara
+      xkb_rules_options = grp:ctrl_space_toggle
       repeat_rate      = 35
       repeat_delay     = 250
       tap_to_click     = 1
@@ -122,6 +125,8 @@ in
       exec-once = sh -c "sleep 5 && steelbore-keyring-check"
 
       # ── Launch ────────────────────────────────────────────────────────────
+      # Keys follow the scheme every Bravais session shares
+      # (docs/keybindings.md).
       bind = super,Return,spawn,alacritty
       bind = super,d,spawn,anyrun
       bind = super,b,spawn,alacritty -e bluetui
@@ -131,7 +136,7 @@ in
       # ── Windows ───────────────────────────────────────────────────────────
       bind = super,q,killclient
       bind = super,f,togglefullscreen
-      bind = super+shift,space,togglefloating
+      bind = super,v,togglefloating
       bind = super,h,focusdir,left
       bind = super,j,focusdir,down
       bind = super,k,focusdir,up
@@ -143,7 +148,10 @@ in
       bind = super+shift,h,exchange_client,left
       bind = super+shift,j,exchange_client,down
       bind = super+shift,k,exchange_client,up
-      bind = super+shift,l,exchange_client,right
+      bind = super+shift,Left,exchange_client,left
+      bind = super+shift,Down,exchange_client,down
+      bind = super+shift,Up,exchange_client,up
+      bind = super+shift,Right,exchange_client,right
       bind = super+ctrl,h,movewin,-40,0
       bind = super+ctrl,j,movewin,0,40
       bind = super+ctrl,k,movewin,0,-40
@@ -183,13 +191,16 @@ in
       bind = super+shift,9,tag,256
       bind = super,Page_Up,viewtoleft
       bind = super,Page_Down,viewtoright
+      bind = super+ctrl,Left,viewtoleft
+      bind = super+ctrl,Right,viewtoright
       bind = super+ctrl,Page_Up,tagtoleft
       bind = super+ctrl,Page_Down,tagtoright
       gesturebind = NONE,left,3,viewtoright
       gesturebind = NONE,right,3,viewtoleft
 
       # ── Layout ────────────────────────────────────────────────────────────
-      bind = super,space,switch_layout
+      bind = super,space,cyclekblayout
+      bind = super+ctrl,space,switch_layout
       bind = super,t,setlayout,tile
       bind = super,s,setlayout,scroller
       bind = super,m,setlayout,monocle
@@ -199,7 +210,7 @@ in
       bind = super+shift,g,togglegaps
       bind = super,w,togglegroup
       bind = super,e,changegroupactive,next
-      bind = super+shift,e,changegroupactive,prev
+      bind = super+ctrl,e,changegroupactive,prev
 
       # ── Scratchpad ────────────────────────────────────────────────────────
       bind = super+ctrl,Return,toggle_named_scratchpad,^dropdown-terminal$,none,alacritty --class dropdown-terminal
@@ -207,7 +218,7 @@ in
 
       # ── Screenshots ───────────────────────────────────────────────────────
       bind = NONE,Print,spawn,sh -c 'grim -g "$(slurp)" - | wl-copy'
-      bind = ctrl,Print,spawn,sh -c 'grim - | wl-copy'
+      bind = shift,Print,spawn,sh -c 'grim - | wl-copy'
 
       # ── Hardware keys (same helpers as Niri) ──────────────────────────────
       bind = NONE,XF86MonBrightnessUp,spawn,swayosd-client --brightness raise
@@ -225,13 +236,16 @@ in
       bind = NONE,XF86RFKill,spawn,steelbore-airplane-toggle
 
       # ── System ────────────────────────────────────────────────────────────
-      # Lock is Alt+L: Super+Shift+L (Niri's lock) moves a window right here.
-      bind = alt,l,spawn,gtklock
+      # Super+Shift+L locks, as under Niri (so the vim-key swap stops at H/J/K
+      # and Super+Shift+Right swaps right instead).
+      bind = super+shift,l,spawn,gtklock
       bind = super+shift,c,spawn,steelbore-caffeine
       bind = super+shift,u,spawn,steelbore-keyring-unlock
       bind = super,F10,dpms,toggle
       bind = super+ctrl,r,reload_config
-      bind = super+shift,q,quit
+      bind = super+shift,e,quit
+      # The bind lines of this file, as Niri's Mod+Shift+/ hotkey overlay.
+      bind = super+shift,slash,spawn,alacritty --class steelbore-keys -e sh -c "grep -E '^ *(bind|mousebind|gesturebind) =' ~/.config/margo/config.conf | sed 's/^ *//' | less"
     '';
   };
 }

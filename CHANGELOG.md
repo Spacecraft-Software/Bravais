@@ -101,6 +101,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The same keys in every desktop.** GNOME, Plasma, Niri, LeftWM and
+  Margo now share one set of keys, listed in `docs/keybindings.md`:
+  Super+D launcher, Super+Return terminal, Super+Q close, Super+F
+  fullscreen, Super+V float, Super+1…9 and Super+Shift+1…9 workspaces,
+  Super+Space keyboard layout, Super+Shift+L lock, Super+Shift+E exit,
+  Super+Shift+C Caffeine, and Print / Super+Print / Shift+Print for
+  region, window and whole-screen captures. GNOME and Plasma keep their
+  own keys beside them (Alt+F4, Super+L, Ctrl+F1…F4); in exchange, their
+  Super+1…9 now switch workspaces instead of opening the Nth dock or
+  task-bar app. What moved in the window managers:
+  - **Niri:** Mod+F is fullscreen and Mod+Shift+F maximizes the column
+    (they were the other way round).
+  - **LeftWM:** Mod+V floats (was Mod+Shift+F), Mod+Space switches the
+    keyboard layout, and the tiling layouts move to Mod+Ctrl+Space.
+    Mod+Shift+L locks, and Ctrl+Alt+L still works. Mod+Print captures
+    the focused window, and Shift+Print captures the whole screen.
+  - **Margo:** it gets the Arabic layout. Super+V floats, Super+Space
+    switches the keyboard layout and Super+Ctrl+Space the tiling layout.
+    Super+Shift+L locks (was Alt+L), Super+Shift+E exits (was
+    Super+Shift+Q), and Super+Ctrl+E is the previous group. Super+Ctrl+←/→
+    switches workspaces, Shift+Print captures the screen (was
+    Ctrl+Print), and Super+Shift+/ lists the keys.
+
 - **`preflight` builds origin's latest code.** Every run now starts with a
   `git fetch` and a fast-forward of the checkout, so a rebuild no longer
   builds whatever branch happened to be checked out. If that branch was

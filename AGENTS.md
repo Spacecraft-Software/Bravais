@@ -68,7 +68,8 @@ themes/<slug>.nix          # local themes (filename = slug); `base` to derive, o
 default-apps.nix           # THE ACTIVE HANDLERS — one word per role; `app set <role> <slug>`
 apps/<slug>.nix            # app drop-ins (filename = slug); may shadow a built-in entry
 CONSTRAINTS.md             # Long form of "Known constraints" — read one `### N.` entry at a time
-docs/                      # Long form of AGENTS.md sections: rebuild, skill-pointer, vendored-binaries
+docs/                      # Long form of AGENTS.md sections: rebuild, skill-pointer, vendored-binaries;
+                           #   keybindings.md is THE cross-desktop key scheme (PRD §9)
 ```
 
 **Legacy v0 artifacts at repo root — not part of the flake, do not edit:**
@@ -127,6 +128,7 @@ The `app` commands, the role list, and how to add an app via `apps/<slug>.nix` a
 - **Default editor**: msedit (`EDITOR`/`VISUAL` in home.nix)
 - **Terminal configs**: Every terminal in `modules/packages/terminals.nix` is themed from `lib/terminal-theme.nix` — system-level configs in `/etc/` with Nushell as shell where the format allows (Rio at user level; Ptyxis/GNOME Console via dconf). Don't restate a count; WaveTerm is an AppImage outside Nix
 - **ISO 8601**: All date/time displays use `%Y-%m-%d %H:%M:%S` 24h format
+- **Keybindings**: one scheme across GNOME, Plasma, Niri, LeftWM and Margo, tabled in `docs/keybindings.md` with the file each session writes its keys in. Change one session, change all five, and update the table; GNOME and Plasma get the shared key *beside* their stock one wherever both fit (only their Super+1…9 dock/task-bar keys gave way).
 - **Niri binds**: primary binds get `hotkey-overlay-title="..."` so they appear in `show-hotkey-overlay`; silent aliases (vim moves, mouse wheel, individual workspace 2-5 numbers) omit the title to keep the overlay readable.
 - **`unstablePkgs` for always-latest / unstable-only packages**: `flake.nix` re-instantiates `nixpkgs-unstable` with `config.allowUnfree = true` and threads it into modules and HM via `specialArgs`/`extraSpecialArgs`. Active uses: `uv` (development.nix), `steam-run` (system.nix), `code-cursor-fhs` and `kiro-fhs` (editors.nix). Reach for `unstablePkgs.<name>` whenever a package is unstable-only on 26.05 or whenever stable's version lags meaningfully behind upstream.
 - **`home.packages` for user-level packages**: Declared at the top of `users/mj/home.nix` (after `home.stateVersion`), always using `with unstablePkgs;`. Currently hosts the Rust toolchain (`rustup` + cargo subcommands). Use this instead of `environment.systemPackages` for packages that are user-specific rather than system-wide.
