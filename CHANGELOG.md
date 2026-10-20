@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
+  on Niri and COSMIC and search on GNOME. `Alt+Space`, `Alt+F2` and
+  `Search` still work.
+  *Peek at Desktop* loses its default `Meta+D` and has no key.
 - **GNOME: Super opens the app grid, and Super+D searches.** Tapping Super
   on its own (or clicking Activities, or the hot corner) now opens the
   app grid instead of the window overview; tap it again to close it.

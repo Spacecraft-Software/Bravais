@@ -1128,6 +1128,8 @@ Fully Rust-based desktop from System76. The upstream module wires portals, dconf
 - `services.xserver.enable = true` (XWayland support)
 - `programs.ssh.askPassword = lib.mkForce …ksshaskpass` (avoids askpass conflicts when multiple desktop modules are enabled)
 
+**KRunner:** `Meta+D` opens it, beside the stock `Alt+Space`, `Alt+F2` and `Search`, matching `Mod+D` under Niri, COSMIC and GNOME. KWin's *Peek at Desktop* gives up `Meta+D`, its default, and is left with no key. Both are pinned in `kglobalshortcutsrc` with `kwriteconfig6` on activation (`users/mj/plasma.nix`), so a change made in System Settings is reverted at the next rebuild.
+
 **Caffeine:** the Power and Battery applet's built-in *Manually Block Sleep and Screen Locking* toggle, plus `Meta+Shift+C` → `steelbore-caffeine`. Plasma has no global action for that checkbox, so the key holds the same two inhibits (PowerManagement + ScreenSaver) through `kde-inhibit`, and the applet lists it among the applications blocking sleep; the checkbox does not move. The key ships as a *default* shortcut — a hidden (`NoDisplay`) `applications/` desktop file with `X-KDE-Shortcuts`, `users/mj/plasma.nix` — so a rebind in System Settings sticks.
 
 **KDE packages:**
