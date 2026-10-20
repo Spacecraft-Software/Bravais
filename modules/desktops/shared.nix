@@ -223,11 +223,17 @@ let
   '';
 
   # Keyboard-layout state — emits the active layout's display name (e.g.
-  # "English (US)" / "Arabic" on Niri, or the xkb layout code on X11).
-  # Backs the Eww language indicator (both eww.nix and leftwm.nix).
+  # "English (US)" / "Arabic" on Niri and Margo, or the xkb layout code on
+  # X11). Backs the Eww language indicator (both eww.nix and leftwm.nix).
   # Niri: `niri msg --json keyboard-layouts` reports the configured layout
   # names plus which index is active — parsed with jaq (already a system
-  # package, modules/packages/system.nix). LeftWM/X11: xkb toggle state
+  # package, modules/packages/system.nix). Margo: `mctl get keyboard-layout`
+  # over $MARGO_SOCKET; `mctl` by bare name (margo.nix installs it) so this
+  # script never drags the compositor into a closure without Margo. Margo
+  # fills the name on the first key event only, so until then the first
+  # `xkb_rules_layout` code in its config stands in. Without this branch
+  # Margo fell through to xkb-switch, which cannot read Xwayland's
+  # keyboard, and the bar showed "??". LeftWM/X11: xkb toggle state
   # lives in the X server itself, not a config file, so a *live* read needs
   # xkb-switch (-p prints the active layout) rather than `setxkbmap -query`
   # (which only echoes the static config, not which of the two is active).
@@ -236,6 +242,15 @@ let
     if [ -n "''${NIRI_SOCKET:-}" ]; then
       ${pkgs.niri}/bin/niri msg --json keyboard-layouts 2>/dev/null \
         | ${pkgs.jaq}/bin/jaq -r '.names[.current_idx] // "??"' 2>/dev/null || echo "??"
+    elif [ -n "''${MARGO_SOCKET:-}" ]; then
+      name=$(mctl get keyboard-layout 2>/dev/null \
+        | ${pkgs.jaq}/bin/jaq -r '.keyboard_layout // ""' 2>/dev/null || true)
+      if [ -z "$name" ]; then
+        name=$(${pkgs.gnused}/bin/sed -n \
+          's/^[[:space:]]*xkb_rules_layout[[:space:]]*=[[:space:]]*\([^,[:space:]]*\).*/\1/p' \
+          "''${XDG_CONFIG_HOME:-$HOME/.config}/margo/config.conf" 2>/dev/null | head -n 1 || true)
+      fi
+      echo "''${name:-??}"
     else
       ${pkgs.xkb-switch}/bin/xkb-switch -p 2>/dev/null || echo "??"
     fi
