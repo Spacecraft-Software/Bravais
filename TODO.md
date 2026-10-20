@@ -104,6 +104,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 
 - [✓] Define `steelbore.desktops.cosmic` option
 - [✓] Enable COSMIC DE, disable cosmic-greeter (use greetd)
+- [✓] F9 (gear, `XF86Tools`) opens COSMIC Settings — Plasma and GNOME already bind it to their settings apps by default
 - [✓] Caffeine on `Super+Shift+C` — `steelbore-caffeine` holds a ScreenSaver inhibit via `kde-inhibit`; independent of the applet below
 - [✓] Caffeine applet (`cosmic-ext-applet-caffeine`, nixpkgs) — `steelbore-caffeine` cannot reach cosmic-idle, which honours only `org.freedesktop.ScreenSaver` inhibits; the applet takes exactly that. Added to the panel by hand (Settings → Desktop → Panel)
 
@@ -815,14 +816,14 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 | 2. Core Modules | Complete | 31/31 |
 | 3. Theme Engine | Complete | 9/9 |
 | 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 51/51 |
+| 5. Desktop Environments | Complete | 52/52 |
 | 6. Package Modules | In Progress | 135/142 |
 | 7. Hardware Modules | Complete | 12/12 |
 | 8. Host & User Config | Complete | 35/35 |
 | 9. Overlays | Complete | 4/4 |
 | 10. Testing | In Progress | 13/22 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **314/330** |
+| **Total** | **95%** | **315/331** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and

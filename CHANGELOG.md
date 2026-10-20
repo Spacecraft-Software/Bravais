@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **F9 (the gear key) opens COSMIC Settings**, as it already opens
+  System Settings on Plasma and Settings on GNOME.
 - **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
   on Niri and COSMIC and search on GNOME. `Alt+Space`, `Alt+F2` and
   `Search` still work.
