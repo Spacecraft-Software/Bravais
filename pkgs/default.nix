@@ -30,6 +30,7 @@ in
   goose-desktop = pkgs.callPackage ./goose-desktop/package.nix { };
   codex-desktop = pkgs.callPackage ./codex-desktop/package.nix { };
   adguardvpn-cli = pkgs.callPackage ./adguardvpn-cli/package.nix { };
+  coderabbit-cli = pkgs.callPackage ./coderabbit-cli/package.nix { };
   crates-mcp = pkgs.callPackage ./crates-mcp/package.nix { };
   obscura = pkgs.callPackage ./obscura/package.nix { };
   skyroads = pkgs.callPackage ./skyroads/package.nix { };

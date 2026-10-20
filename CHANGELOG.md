@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Claude Code can hand coding work to your OpenCode Go models.** Each
+  model gets a Claude Code subagent (`oc-kimi`, `oc-deepseek-flash`,
+  `oc-deepseek-pro`, `oc-qwen`, `oc-grok`, `oc-gemini`, `oc-muse`) whose
+  description says what it is for, so Claude picks the model by task;
+  `oc-glm-review` reviews a finished change read-only with GLM-5.3. The
+  list and the routing live in `lib/opencode-go.nix`. Sign in once with
+  `opencode auth login`. See `docs/ai-delegation.md`.
+- **The CodeRabbit CLI is installed** (`coderabbit`, alias `cr`), pinned
+  and bumped with the other vendored binaries. Sign in once with
+  `coderabbit auth login`. A `.coderabbit.yaml` gives CodeRabbit's
+  GitHub reviews the repository's rules.
+
 - **F9 (the gear key) opens COSMIC Settings**, as it already opens
   System Settings on Plasma and Settings on GNOME.
 - **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
@@ -212,6 +224,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A stale COSMIC shortcuts backup no longer stops Home Manager.**
+  The rebuild failed with "custom.backup would be clobbered by backing up
+  custom" and left every user-level change unapplied, GNOME and Plasma
+  shortcuts included. The COSMIC shortcuts file is now overwritten
+  outright.
+- **Margo's bar shows the keyboard language instead of "??".** The
+  indicator now asks Margo for the active layout (`mctl get
+  keyboard-layout`) rather than falling through to the X11 reader, and
+  shows the first configured layout until the first key press.
+- **Meta+Enter opens Alacritty on Plasma.** The Krohnkite tiling script
+  had taken the key for its "Set master" action. It also held Meta+D,
+  Meta+F and Meta+Shift+L, so KRunner, fullscreen and lock could miss
+  them too; those four Krohnkite actions now have no key. Takes effect
+  at the next Plasma login.
 - **Super+Enter opens Alacritty on COSMIC too.** It opened COSMIC
   Terminal there, while every other session opens Alacritty. COSMIC
   Terminal is still on Super+T.

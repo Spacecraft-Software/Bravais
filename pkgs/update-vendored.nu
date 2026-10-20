@@ -18,6 +18,7 @@
 #   browseros              modules/packages/browsers.nix           GitHub releases
 #   obscura                pkgs/obscura/package.nix                GitHub releases
 #   codex-desktop          pkgs/codex-desktop/package.nix          blob ETag (see up-codex)
+#   coderabbit-cli         pkgs/coderabbit-cli/package.nix         releases/latest/VERSION
 #   artcraft               pkgs/artcraft/sources.nix               GitHub releases (13 apps)
 #
 # All but obscura vendor a prebuilt artifact, so a bump is "swap the URL, hash
@@ -315,6 +316,25 @@ def up-browseros [check: bool] {
   $result
 }
 
+# CodeRabbit publishes no GitHub releases; its own site names the newest
+# version in a one-line VERSION file and serves each release under a
+# versioned path, so a bump is still "swap the URL, hash the download".
+def up-coderabbit [check: bool] {
+  let file = "pkgs/coderabbit-cli/package.nix"
+  let base = "https://cli.coderabbit.ai/releases"
+  let cur = (extract $file 'version = "(?<x>[^"]+)"')
+  let latest = (http get --raw $"($base)/latest/VERSION" | decode utf-8 | str trim)
+  update-one "coderabbit-cli" $file $cur $latest $check {||
+    [
+      {from: $'version = "($cur)";', to: $'version = "($latest)";'}
+      {
+        from: (extract $file 'hash = "(?<x>sha256-[^"]+)"')
+        to: (prefetch-sri $"($base)/($latest)/coderabbit-linux-x64.zip")
+      }
+    ]
+  } "coderabbit-cli"
+}
+
 # One Artcraft pin as it is laid out in pkgs/artcraft/sources.nix — the exact
 # text `rewrite` swaps, so it must match nixfmt's layout of that file.
 def artcraft-entry [app: string, version: string, hash: string]: nothing -> string {
@@ -374,7 +394,7 @@ def main [package?: string, --check] {
     "claude-desktop" "chrome-remote-desktop" "ollama"
     "goose-desktop" "opencode-desktop" "github-copilot-app"
     "adguardvpn-cli" "browseros" "obscura" "codex-desktop"
-    "artcraft"
+    "coderabbit-cli" "artcraft"
   ]
   let targets = if $package == null {
     $known
@@ -395,6 +415,7 @@ def main [package?: string, --check] {
       "claude-desktop" => (up-claude $check)
       "chrome-remote-desktop" => (up-crd $check)
       "codex-desktop" => (up-codex $check)
+      "coderabbit-cli" => (up-coderabbit $check)
       "ollama" => (up-github "ollama" "ollama/ollama" {|v|
         $"https://github.com/ollama/ollama/releases/download/v($v)/ollama-linux-amd64.tar.zst"
       } $check)
