@@ -27,6 +27,8 @@
     ./niri.nix
     ./margo.nix
     ./desktop-theme.nix
+    # GNOME Shell keys: Super alone opens the app grid, Super+D searches.
+    ./gnome.nix
     ./editor-themes.nix
     # Plasma's clock keys + plasma-localerc formats (24h, ISO 8601). Separate
     # from desktop-theme.nix because it writes through kwriteconfig6 rather
