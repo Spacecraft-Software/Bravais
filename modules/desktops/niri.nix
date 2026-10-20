@@ -38,6 +38,9 @@
 
           # Launcher — Anyrun (Rust, Wayland)
           anyrun
+          # App menu — rofi drun on Mod+Shift+D, as under LeftWM (C; native
+          # Wayland since 2.0)
+          rofi
 
           # Notifications — dunst (cross-platform with LeftWM)
           dunst

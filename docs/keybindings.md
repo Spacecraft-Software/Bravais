@@ -26,7 +26,7 @@ Alacritty).
 | Action | Key | Notes |
 |---|---|---|
 | Launcher / search | Super+D | GNOME: overview search. Plasma: KRunner. WMs: anyrun / rlaunch (LeftWM Mod+Shift+D: rofi) |
-| App grid / menu | Super alone · Super+Shift+D | GNOME (app grid), Plasma (Kickoff) and COSMIC (App Library) take both; LeftWM has Super+Shift+D only (rofi drun); Niri and Margo have no app menu |
+| App grid / menu | Super alone · Super+Shift+D | GNOME (app grid), Plasma (Kickoff) and COSMIC (App Library) take both; the WMs have Super+Shift+D only (rofi drun) |
 | Terminal | Super+Return | Alacritty everywhere, COSMIC included. Plasma's Ctrl+Alt+T still opens Konsole; COSMIC's Super+T still opens COSMIC Terminal |
 | Close window | Super+Q | Alt+F4 still works in GNOME and Plasma |
 | Fullscreen | Super+F | |
