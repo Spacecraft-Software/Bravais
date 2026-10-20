@@ -519,6 +519,67 @@ in
     Install.WantedBy = [ "timers.target" ];
   };
 
+  # Flatpak web-app icons — by icon name, never by a sandbox-private path
+  # Flatpak Chrome now writes a web app's launcher with an absolute icon path
+  # under its own sandbox data directory, e.g.
+  #   Icon=~/.var/app/com.google.Chrome/data/icons/hicolor/256x256/apps/chrome-<id>-Default.png
+  # but that directory does not exist on the host: the PNGs land in
+  # ~/.local/share/icons/hicolor under the same relative path. Every launcher
+  # (anyrun, GNOME, Plasma) then draws a missing-image placeholder — YouTube
+  # and YouTube Music on 2026-10-20 — while older web apps, written as a
+  # plain `Icon=chrome-<id>-Default`, still resolve.
+  #
+  # The rewrite is to that plain name, and only when the sandbox path is
+  # missing AND the host icon tree holds that name at some size, so an entry
+  # whose icon really is absent stays as Chrome wrote it. The path unit re-runs it
+  # whenever a launcher is added or rewritten — Chrome rewrites them on each
+  # web-app update — and the service also runs once at login. Any Flatpak
+  # browser that writes the same shape (Brave, Edge, Opera) is covered.
+  systemd.user.services.steelbore-webapp-icons = {
+    Unit.Description = "Point Flatpak web-app launchers at their installed icons";
+    Service = {
+      Type = "oneshot";
+      ExecStart = toString (
+        pkgs.writeShellScript "steelbore-webapp-icons" ''
+          set -u
+          PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.gnugrep
+              pkgs.gnused
+            ]
+          }
+          data="''${XDG_DATA_HOME:-$HOME/.local/share}"
+          for f in "$data"/applications/*.desktop; do
+            # Symlinks are Nix- or Flatpak-managed exports; only the browser's
+            # own regular files are ours to touch.
+            [ -f "$f" ] && [ ! -L "$f" ] || continue
+            icon=$(grep -m1 -E '^Icon=/.*/\.var/app/[^/]+/data/icons/' "$f") || continue
+            path=''${icon#Icon=}
+            [ -e "$path" ] && continue
+            name=$(basename "$path")
+            name=''${name%.*}
+            # Any size will do: the icon theme picks the closest one.
+            set -- "$data"/icons/hicolor/*/apps/"$name".*
+            [ -e "$1" ] || continue
+            echo "steelbore-webapp-icons: $(basename "$f"): Icon=$name" >&2
+            sed -i "s|^Icon=/.*/\.var/app/[^/]*/data/icons/.*|Icon=$name|" "$f"
+          done
+        ''
+      );
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
+  systemd.user.paths.steelbore-webapp-icons = {
+    Unit.Description = "Watch for new or rewritten web-app launchers";
+    Path = {
+      PathChanged = "%h/.local/share/applications";
+      Unit = "steelbore-webapp-icons.service";
+    };
+    Install.WantedBy = [ "paths.target" ];
+  };
+
   # Refresh the tealdeer (tldr) cache on every home-manager activation.
   # `tldr --update` pulls the latest pages bundle. Failure is non-fatal so
   # an offline rebuild still succeeds.
