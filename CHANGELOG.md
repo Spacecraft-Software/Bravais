@@ -196,6 +196,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Rebuilds no longer fail on a ChatGPT/Codex desktop hash mismatch.**
+  OpenAI only publishes a "latest" download, so whenever garbage
+  collection removed the pinned file, the next rebuild fetched OpenAI's
+  newer upload and stopped on the hash. The pinned file is now kept
+  through garbage collection, so a new OpenAI release changes nothing
+  until you bump it with `nu pkgs/update-vendored.nu codex-desktop`. The
+  pin itself moves to OpenAI's current build.
 - **GNOME's Super+Alt+Left/Right switch workspaces again.** Bravais's own
   workspace keys had left out these two GNOME defaults.
 

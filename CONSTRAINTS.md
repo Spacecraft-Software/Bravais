@@ -224,3 +224,10 @@ Out of scope: `system.nixos.codeName` is `readOnly` upstream, so the bootspec la
 The binary reads its facts from a version record that `modules/core/identity.nix` writes to `/run/current-system/sw/share/steelbore/version.json`. That path, not `/etc`, is deliberate: bubblewrap FHS environments (AppImages, the Claude Code shell) mount a tmpfs over `/etc` but bind `/run`, so a record in `/etc` was invisible inside them. The record carries `schema = 1`, which must match `record::SCHEMA` in the binary; change both together.
 
 Compatibility was checked on 2026-10-11 by running both commands against the same system: the bare line differs only in the codename (Altair vs Yarara), and `--hash`, `--revision`, `--json` and the unknown `--configuration-revision` failure are byte-identical.
+
+### 49. The pinned Codex `.deb` must stay rooted in the system closure
+
+`pkgs/codex-desktop` fetches `…/codex-app-prod/linux/deb/latest/chatgpt_amd64.deb`: OpenAI publishes no versioned URL, so once they upload a new build the pinned file is gone for good. The store copy is then the only one left, and a fixed-output source is not in the system closure by default, so the GC `preflight` runs before every switch deletes it. The next rebuild after a nixpkgs bump changes the `codex-desktop` derivation, Nix refetches the source, gets the new upload, and the whole switch fails on a hash mismatch, on OpenAI's schedule rather than ours. This hit on 2026-10-20 right after a GC freed 7.1 GiB.
+
+`modules/packages/ai.nix` therefore puts `codexDesktop.src` in `system.extraDependencies`, which keeps the `.deb` alive for as long as a generation references it (about 378 MB). Never drop that line. With it, an upstream release changes nothing until `nu pkgs/update-vendored.nu codex-desktop` moves the pin. A fresh machine or a store that has already lost the file still has to bump, since the old artifact cannot be fetched from anywhere.
+
