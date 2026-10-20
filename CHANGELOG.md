@@ -204,6 +204,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Text consoles show their login prompt again.** Switching to
+  a text console from any desktop gave a blank screen: the console mouse
+  opened the new console the moment you switched, and logind only starts
+  a login prompt on a console nothing has open. It now waits for the
+  first mouse movement.
 - **Ctrl+Alt+F1…F12 switch to a text console from Margo.** Margo bound
   the keys but never acted on them; a patch in `pkgs/margo/` does the
   switch.
