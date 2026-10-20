@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Meta+D` opens KRunner on Plasma**, as `Mod+D` opens the launcher
   on Niri and COSMIC. `Alt+Space`, `Alt+F2` and `Search` still work.
   *Peek at Desktop* loses its default `Meta+D` and has no key.
+- **GNOME: Super opens the app grid, and Super+D searches.** Tapping Super
+  on its own (or clicking Activities, or the hot corner) now opens the
+  app grid instead of the window overview; tap it again to close it.
+  Super+D opens the overview with the search box ready, as Mod+D opens
+  the launcher under Niri, LeftWM and Margo. Super+A and Super+S keep
+  their GNOME meanings. The app-grid behaviour comes from the *Start
+  Overlay in Application View* extension, which is now installed and
+  switched on for you; your other extensions stay as they are.
+
 - **Rebuilds show the Flatpak update's progress.** `preflight`, `rebuild`
   and `scripts/rebuild.sh` now follow the Flatpak update they start with a
   live progress bar (operation 2 of 5, percentage, speed and time left)
@@ -162,6 +171,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bumped** in `flake.lock`.
 
 ### Fixed
+
+- **GNOME's Super+Alt+Left/Right switch workspaces again.** Bravais's own
+  workspace keys had left out these two GNOME defaults.
 
 - **PATH no longer repeats the out-of-band dirs.** `~/.local/bin`,
   `~/.cargo/bin`, `~/.npm-packages/bin` and `~/.opencode/bin` were appended

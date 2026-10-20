@@ -1074,8 +1074,12 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 **Services:** `services.xserver.enable = true`; `services.desktopManager.gnome.enable = true`; `services.displayManager.gdm.enable = lib.mkDefault false` (greetd used instead). GNOME 50 is always Wayland, so `gdm.wayland` is no longer set.
 
-**Extensions (14 enabled):**
-  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor
+**Extensions (15 installed):**
+  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor, start-overlay-in-application-view
+
+Installed is not enabled: GNOME loads only the UUIDs in `org.gnome.shell enabled-extensions`, which Extension Manager edits. Bravais enables exactly one itself, start-overlay-in-application-view, by appending its UUID to that list on activation (`users/mj/gnome.nix`), so the rest of the list stays the user's.
+
+**Keybindings (`users/mj/gnome.nix`):** Super alone opens the **app grid** rather than the window overview. GNOME has no setting for this (mutter's `overlay-key` only names the key; the shell always calls `Overview.toggle()`), so the start-overlay-in-application-view extension replaces `toggle()` with `showApps()`; the Activities button and hot corner follow. `Super+D` is media-keys `search` (Settings › Keyboard › Shortcuts › Launchers › Search), which opens the overview with search focused, matching `Mod+D` under Niri, LeftWM and Margo. `Super+A` (app grid) and `Super+S` (quick settings, GNOME 50) are left at their defaults. The side-button workspace keys (§9.1a) are restated there with every GNOME 50 stock accelerator.
 
 **Tiling:** `forge` is *the* tiling extension. `tiling-shell`, `smart-tiling` and `simple-tiling` stay commented out because they conflict with forge; re-enabling one means disabling forge first. `ollama-indicator` is also commented out.
 
@@ -1091,7 +1095,7 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces under **GNOME, Plasma, COSMIC and LeftWM**. Direction is deliberate: **back goes right, forward goes left** — do not "fix" it; `users/mj/niri.nix` is swapped to match and the two must move together.
 
-Only Niri can bind a mouse button natively; Mutter, KWin and cosmic accept keyboard accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore happens **below the compositor** via `xremap` (Rust, `--watch=device` so a Bluetooth mouse reconnecting after suspend is picked up), emitting **Super+Ctrl+Left/Right** — already the shipped default in Plasma and COSMIC, so only GNOME needed a binding, appended to its stock list in `users/mj/desktop-theme.nix` rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
+Only Niri can bind a mouse button natively; Mutter, KWin and cosmic accept keyboard accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore happens **below the compositor** via `xremap` (Rust, `--watch=device` so a Bluetooth mouse reconnecting after suspend is picked up), emitting **Super+Ctrl+Left/Right** — already the shipped default in Plasma and COSMIC, so only GNOME needed a binding, appended to its stock list in `users/mj/gnome.nix` rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
 
 **Niri is deliberately excluded:** it handles the buttons natively, and xremap grabs and re-emits the device, so a unit on `graphical-session.target` would consume them first. The unit is wanted only by the GNOME, COSMIC and Plasma session targets (CONSTRAINTS.md #29).
 

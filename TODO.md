@@ -94,8 +94,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable GNOME on Wayland, disable GDM (use greetd)
 - [✓] Install GNOME Tweaks, dconf-editor
 - [✓] Install extension manager and browser connector
-- [✓] Install curated extensions (14: Caffeine, Just Perfection, Forge, etc.)
+- [✓] Install curated extensions (15: Caffeine, Just Perfection, Forge, etc.)
 - [✓] Configure XDG portals (gnome, gtk)
+- [✓] Super alone opens the app grid (start-overlay-in-application-view, enabled by appending to `enabled-extensions`); `Super+D` opens search (`users/mj/gnome.nix`)
 - [✓] Exclude bloatware (Tour, Music, Epiphany, Geary, Totem)
 
 ### COSMIC (`cosmic.nix`)
