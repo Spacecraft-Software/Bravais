@@ -105,6 +105,9 @@ in
     # (modules/desktops/shared.nix). It cannot flip the Caffeine panel applet,
     # which keeps its inhibit in its own process; either one keeps the
     # machine awake. COSMIC binds nothing to Super+Shift+C by default.
+    # Super alone opens the App Library, and Super+Shift+D does too: the
+    # app-menu key in every session (Kickoff on Plasma, the app grid on
+    # GNOME, rofi drun on LeftWM). COSMIC binds nothing to Super+Shift+D.
     # XF86Tools is the ThinkPad's F9 gear key (thinkpad_acpi KEY_CONFIG). It
     # opens COSMIC Settings, as it opens System Settings on Plasma and GNOME
     # Settings on GNOME by their own defaults; COSMIC binds nothing to it.
@@ -134,6 +137,13 @@ in
               modifiers: [
                   Super,
               ],
+          ): System(AppLibrary),
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "d",
           ): System(AppLibrary),
           (
               modifiers: [

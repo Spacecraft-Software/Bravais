@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Super+Shift+D opens the app menu on COSMIC, GNOME and Plasma**, beside
+  Super alone: the App Library, the app grid and Kickoff. It matches
+  LeftWM, where Mod+Shift+D is rofi's app list.
 - **Claude Code can hand coding work to your OpenCode Go models.** Each
   model gets a Claude Code subagent (`oc-kimi`, `oc-deepseek-flash`,
   `oc-deepseek-pro`, `oc-qwen`, `oc-grok`, `oc-gemini`, `oc-muse`) whose
