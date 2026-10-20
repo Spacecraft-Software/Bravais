@@ -196,6 +196,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Chrome web apps show their icons again.** Flatpak Chrome now writes
+  newer web apps (YouTube, YouTube Music, Anghami, Disney+) with an icon
+  path inside its sandbox that does not exist outside it, so every
+  launcher drew a blank placeholder. A user service points those
+  launchers at the icon Chrome did install, at login and whenever a web
+  app is added or updated.
 - **Rebuilds no longer fail on a ChatGPT/Codex desktop hash mismatch.**
   OpenAI only publishes a "latest" download, so whenever garbage
   collection removed the pinned file, the next rebuild fetched OpenAI's
