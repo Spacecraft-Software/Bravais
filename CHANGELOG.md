@@ -218,6 +218,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Margo's bar shows the keyboard language instead of "??".** The
+  indicator now asks Margo for the active layout (`mctl get
+  keyboard-layout`) rather than falling through to the X11 reader, and
+  shows the first configured layout until the first key press.
 - **Meta+Enter opens Alacritty on Plasma.** The Krohnkite tiling script
   had taken the key for its "Set master" action. It also held Meta+D,
   Meta+F and Meta+Shift+L, so KRunner, fullscreen and lock could miss
