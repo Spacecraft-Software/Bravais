@@ -206,6 +206,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Meta+Enter opens Alacritty on Plasma.** The Krohnkite tiling script
+  had taken the key for its "Set master" action. It also held Meta+D,
+  Meta+F and Meta+Shift+L, so KRunner, fullscreen and lock could miss
+  them too; those four Krohnkite actions now have no key. Takes effect
+  at the next Plasma login.
 - **Super+Enter opens Alacritty on COSMIC too.** It opened COSMIC
   Terminal there, while every other session opens Alacritty. COSMIC
   Terminal is still on Super+T.
