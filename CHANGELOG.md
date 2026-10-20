@@ -206,6 +206,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Super+Enter opens Alacritty on COSMIC too.** It opened COSMIC
+  Terminal there, while every other session opens Alacritty. COSMIC
+  Terminal is still on Super+T.
 - **The shutdown animation stays on screen until the power goes off.**
   Near the end of a poweroff or reboot the screen used to switch to a
   black console showing "Failed to unmount /run/shutdown/mounts/...:

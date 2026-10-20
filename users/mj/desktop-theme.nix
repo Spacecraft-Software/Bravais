@@ -97,7 +97,9 @@ in
     # in this RON file at ~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom.
     # The COSMIC 1.0-alpha schema supports multiple bindings mapped to the
     # same action, so we ship pairs (Ctrl+Space + Super+Space → input-source
-    # switch; Super+Return + Super+T → terminal) here. Super+Shift+C runs
+    # switch) here. Super+Return spawns Alacritty, the terminal it opens in
+    # every other session; System(Terminal) would open COSMIC's own default,
+    # cosmic-term, which Super+T keeps. Super+Shift+C runs
     # steelbore-caffeine, matching Niri, LeftWM and Plasma: on COSMIC it holds
     # an org.freedesktop.ScreenSaver inhibit, the one cosmic-idle honours
     # (modules/desktops/shared.nix). It cannot flip the Caffeine panel applet,
@@ -144,7 +146,7 @@ in
                   Super,
               ],
               key: "Return",
-          ): System(Terminal),
+          ): Spawn("alacritty"),
           (
               modifiers: [
                   Super,
