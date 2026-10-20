@@ -103,6 +103,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The login screen is now Gantry**, Spacecraft Software's own greeter,
+  in place of tuigreet. It draws on the console in the Steelbore theme,
+  with an animated background, the GANTRY banner, a session picker (F2),
+  settings (F1), a power menu (F12) and an idle clock. F5 switches to a
+  line-by-line mode for screen readers. Fingerprint login stays off at
+  the login screen, as before.
 - **Margo tiles the way mango does.** New windows take the master area
   and push the others down the stack, instead of opening as a new column
   on the right. Super+S still switches a tag to the scrolling layout,

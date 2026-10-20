@@ -152,6 +152,26 @@
         "type": "github"
       }
     },
+    "gantry": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792513742,
+        "narHash": "sha256-XxkSWmZxlMtogG6Kd6jkOpxRsmb1LUETRQgXyh65bwc=",
+        "owner": "Spacecraft-Software",
+        "repo": "Gantry",
+        "rev": "71c652323d2a409f2c9f0ad1db3bce5011af9c56",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Spacecraft-Software",
+        "repo": "Gantry",
+        "type": "github"
+      }
+    },
     "gitway": {
       "inputs": {
         "flake-utils": "flake-utils_3",
@@ -343,6 +363,7 @@
         "antigravity-nix": "antigravity-nix",
         "construct": "construct",
         "engram": "engram",
+        "gantry": "gantry",
         "gitway": "gitway",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
