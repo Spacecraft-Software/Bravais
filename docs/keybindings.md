@@ -35,7 +35,7 @@ these keys.
 | Workspace 1–9 | Super+1…9 | GNOME and Plasma give up "open the Nth dock / task-bar app" for this |
 | Send window to 1–9 | Super+Shift+1…9 | |
 | Previous / next workspace | Super+Ctrl+←/→ | Niri's workspaces are vertical: Mod+PgUp/PgDn there |
-| Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Margo: not remapped (browser back/forward still work) |
+| Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
 | Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo |
 | Lock | Super+Shift+L | GNOME and Plasma keep Super+L; LeftWM keeps Ctrl+Alt+L |
@@ -73,7 +73,8 @@ These are kept as they are; they do not collide with the shared keys.
 - **Margo:** Super+Ctrl+Return scratchpad, Super+T / S / M / Ctrl+G layouts,
   Super+R proportion presets, Super+W / E / Ctrl+E groups, Super+Ctrl+H/J/K/L
   move, Super+Ctrl+Shift+H/J/K/L resize, Super+Ctrl+R reload, Super+F10
-  monitors off, Super+B / Super+Shift+B Bluetooth, Super+Shift+A audio.
+  monitors off, Super+B / Super+Shift+B Bluetooth, Super+Shift+A audio,
+  Super+wheel tags.
 
 ## Known gaps
 
@@ -84,7 +85,3 @@ These are kept as they are; they do not collide with the shared keys.
 - Plasma registers keys for desktops that exist; keys for desktops 5–9 are
   inert until those desktops are created. A shifted digit is recorded both as
   its symbol (`Meta+!`, as System Settings writes it) and as `Meta+Shift+1`.
-- Margo's thumb buttons are not remapped: the xremap unit
-  (`modules/desktops/mouse-workspace-nav.nix`) starts only on the GNOME, COSMIC
-  and Plasma session targets and from LeftWM's theme hook, and Margo has
-  neither (constraint #29).

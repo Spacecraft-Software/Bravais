@@ -106,6 +106,7 @@ path = [
     "pkgs/*/src/**",
     "pkgs/*/Cargo.toml",
     "pkgs/*/build.rs",
+    "pkgs/*/*.patch",
     "scripts/*.sh",
     "users/mj/*.nu",
     "pkgs/*.nu",
