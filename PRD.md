@@ -1674,6 +1674,13 @@ their own modules.
   self-update (CONSTRAINTS.md #4); `preflight --update-ai-tools` runs their updaters, and
   those of the other out-of-band AI CLIs (§16.1). `unstablePkgs.claude-code` stays commented out as the
   re-enable path.
+- **Code review:** `coderabbit-cli` (unfree, prebuilt; `pkgs/coderabbit-cli/`, bumped by
+  `nu pkgs/update-vendored.nu coderabbit-cli`) reviews local changes before a PR; the
+  CodeRabbit GitHub app reviews the PR, configured by `.coderabbit.yaml`.
+- **Delegation to OpenCode Go:** `users/mj/ai-delegation.nix` renders one Claude Code
+  subagent per model in `lib/opencode-go.nix` (`~/.claude/agents/oc-*.md`), plus a read-only
+  GLM-5.3 reviewer; each forwards one task to the out-of-band `opencode` CLI. See
+  `docs/ai-delegation.md`.
 - **Local models:** Ollama runs as a service from `modules/services/ollama.nix` (official
   prebuilt, pinned in `pkgs/ollama/`). Its GUI client Alpaca is a Flatpak (§11.10) pointed at
   that service, never its bundled one (CONSTRAINTS.md #18).
@@ -2158,7 +2165,7 @@ skill.
 
 ### 16.4 Vendored Upstream Binaries
 
-Ten packages, plus the thirteen Artcraft Flatpak bundles
+Eleven packages, plus the thirteen Artcraft Flatpak bundles
 (`pkgs/artcraft/sources.nix`), pin an upstream `version` + `hash` that
 `nix flake update` cannot move. They are bumped only by `pkgs/update-vendored.nu` (or
 `preflight --update-vendored`), **never by hand**, and a pinned version is **never

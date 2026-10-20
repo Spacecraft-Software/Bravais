@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review settings for Bravais (docs/ai-delegation.md). The rules
+# below are AGENTS.md's, shortened; AGENTS.md wins where they differ.
+language: en-US
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    # Lock-derived or generated.
+    - "!flake.lock"
+    - "!**/Cargo.lock"
+    - "!.github/skills/**"
+    # Legacy v0 artifacts: not part of the flake, never edited.
+    - "!home.nix"
+    - "!system.nix"
+    - "!ARCHITECTURE.md"
+    - "!BRAVAIS.md"
+    - "!USER_MANUAL.md"
+    - "!implementation_plan.md"
+    - "!PackagesMissing.md"
+    - "!v0/**"
+    - "!v0.zip"
+  path_instructions:
+    - path: "**/*.nix"
+      instructions: |
+        NixOS flake, built on two channels (stable 26.05 and nixos-unstable).
+        Flag: a brand colour name (moltenAmber, voidNavy, ...) or a literal
+        colour where a palette role token should be read; a retyped OS name,
+        URL or codename instead of steelboreIdentity; a literal `mj` instead
+        of primaryUser; overlays anywhere but modules/core/nix.nix; a second
+        xdg.mimeApps block; home.sessionPath; rustc/cargo/clippy beside rustup;
+        `or` fallbacks removed from stable/unstable name splits. Every file
+        starts with an SPDX-License-Identifier comment. A change to a numbered
+        constraint (#N) must match its entry in CONSTRAINTS.md.
+    - path: "pkgs/**/package.nix"
+      instructions: |
+        Vendored binaries pin version + hash and are bumped only by
+        pkgs/update-vendored.nu; flag hand-edited pins and versions restated in
+        prose. Prefer globs over hardcoded filenames in installPhase.
+    - path: "pkgs/preflight/**"
+      instructions: |
+        The rebuild sequence has three implementations: pkgs/preflight (Rust),
+        users/mj/rebuild.nu and scripts/rebuild.sh. A behaviour change in one
+        that is missing from the other two is a finding. Memory-safe Rust: flag
+        `unsafe` without a SAFETY comment and unwrap() on user input.
+    - path: "users/mj/rebuild.nu"
+      instructions: |
+        Must stay in step with pkgs/preflight and scripts/rebuild.sh.
+    - path: "scripts/**/*.sh"
+      instructions: |
+        POSIX sh only, no bashisms; must pass `shellcheck -s sh` with zero
+        findings. Must stay in step with pkgs/preflight and users/mj/rebuild.nu.
+    - path: "CHANGELOG.md"
+      instructions: |
+        Keep a Changelog: user-visible changes go under [Unreleased] with a type
+        heading; never two adjacent identical headings.
+    - path: "TODO.md"
+      instructions: |
+        Completed items use [✓], never [x].
+  tools:
+    shellcheck:
+      enabled: true
+
+chat:
+  auto_reply: true

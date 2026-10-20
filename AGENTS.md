@@ -56,11 +56,12 @@ users/mj/rebuild.nu        # THE Nushell `rebuild` — one text, used as both th
 users/mj/default-apps.nix  # THE ONLY xdg.mimeApps block + the FileManager1 D-Bus shadow
 pkgs/default.nix           # callPackage index — THE list of in-tree packages; also packages.*
 pkgs/<name>/               # One in-tree package each; also a flake output: `nix build .#<name>`
-pkgs/update-vendored.nu    # Bumps the 10 version+hash-pinned upstream packages (see below)
+pkgs/update-vendored.nu    # Bumps the 11 version+hash-pinned upstream packages (see below)
 pkgs/sync-skills.nu        # Rewrites .github/skills/ from the locked construct rev — run after skills-sync (CI: Skills Drift)
 pkgs/preflight/            # THE supported rebuild orchestrator (Rust) — supersedes
                            #   `rebuild` and scripts/rebuild.sh; both now gate on it
 scripts/rebuild.sh         # POSIX/Bash port of `rebuild` (keep ALL THREE in step)
+lib/opencode-go.nix        # THE OpenCode Go models Claude delegates to, and what each is for (docs/ai-delegation.md)
 lib/identity.nix           # THE OS IDENTITY — name, ids, URLs, codenames; read as `steelboreIdentity`, never retyped
 assets/brand/              # Steelbore OS emblem + wordmark (CC-BY-SA-4.0); recoloured from the palette at build time
 theme.nix                  # THE ACTIVE THEME — one word; `theme set <slug>` rewrites it
@@ -68,7 +69,7 @@ themes/<slug>.nix          # local themes (filename = slug); `base` to derive, o
 default-apps.nix           # THE ACTIVE HANDLERS — one word per role; `app set <role> <slug>`
 apps/<slug>.nix            # app drop-ins (filename = slug); may shadow a built-in entry
 CONSTRAINTS.md             # Long form of "Known constraints" — read one `### N.` entry at a time
-docs/                      # Long form of AGENTS.md sections: rebuild, skill-pointer, vendored-binaries;
+docs/                      # Long form of AGENTS.md sections: rebuild, skill-pointer, vendored-binaries, ai-delegation;
                            #   keybindings.md is THE cross-desktop key scheme (PRD §9)
 ```
 
@@ -204,9 +205,13 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 50. **`steelbore-reticle` never opens a VT on a console switch** — logind spawns `autovt@ttyN` only on a VT nothing has open, so opening it then leaves it blank with no getty; open it on the first pointer event.
 51. **`systemd.shutdownRamfs` stays off while the Plymouth splash is on** — the pivot into it resets the console to text mode and drops the retained shutdown frame for the kernel console; turn it back on for a LUKS, LVM, MD or ZFS root.
 
+## Delegating to OpenCode Go
+
+Claude Code plans and reviews; OpenCode Go models write the code. `lib/opencode-go.nix` is the registry (model id, monthly allowance, Contributor flag, what it is for) and `users/mj/ai-delegation.nix` renders one Claude Code subagent per entry into `~/.claude/agents/oc-<slug>.md`, plus the read-only `oc-glm-review`. **Change routing in the registry, never in a rendered agent file.** Contributor models train on prompts: public repos only. The order of a change is delegate → `oc-glm-review` → `coderabbit review` → PR → `@coderabbitai review` on GitHub (`.coderabbit.yaml` carries the review rules). The Go key, `~/.config/opencode/opencode.json` and both CodeRabbit sign-ins stay out of Nix. Long form: **`docs/ai-delegation.md`**.
+
 ## Vendored upstream binaries (`pkgs/update-vendored.nu`)
 
-Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). The Artcraft suite's Flatpak bundles are pinned the same way, all thirteen in one file (`pkgs/artcraft/sources.nix`, updater target `artcraft`).
+Eleven packages pin an upstream `version` + `hash` that `nix flake update` cannot touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`, `opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura`, `coderabbit-cli` (all in `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). The Artcraft suite's Flatpak bundles are pinned the same way, all thirteen in one file (`pkgs/artcraft/sources.nix`, updater target `artcraft`).
 
 They are **declarative, not self-updating — never bump one by hand**; run `nu pkgs/update-vendored.nu` (`--check` to report only), or `preflight --update-vendored` to bump them as part of a rebuild. **Never restate a pinned version in prose** — point at the package file instead; the ollama 0.31.1 → 0.32.5 bump orphaned five hardcoded copies across modules and docs.
 

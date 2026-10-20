@@ -1,11 +1,12 @@
 ---
 name: vendored-binaries
-description: How to bump the ten version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, codex-desktop, github-copilot-app, adguardvpn-cli, obscura, browseros) plus the Artcraft Flatpak bundles. Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
+description: How to bump the eleven version+hash-pinned upstream packages in the Bravais NixOS config that nix flake update cannot touch (claude-desktop, chrome-remote-desktop, ollama, goose-desktop, opencode-desktop, codex-desktop, github-copilot-app, adguardvpn-cli, obscura, coderabbit-cli, browseros) plus the Artcraft Flatpak bundles. Use when asked to update or check a vendored binary, or when a vendored package fails to build. Covers pkgs/update-vendored.nu, per-package failure isolation, and why obscura needs its own bumper with two hashes.
 ---
 
-Ten packages pin an upstream `version` + `hash` that `nix flake update` cannot
+Eleven packages pin an upstream `version` + `hash` that `nix flake update` cannot
 touch: `claude-desktop`, `chrome-remote-desktop`, `ollama`, `goose-desktop`,
-`opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura` (all in
+`opencode-desktop`, `codex-desktop`, `github-copilot-app`, `adguardvpn-cli`, `obscura`,
+`coderabbit-cli` (all in
 `pkgs/`), and `browseros` (inline in `modules/packages/browsers.nix`). The
 thirteen Artcraft Flatpak bundles are pinned the same way in one file,
 `pkgs/artcraft/sources.nix` (target `artcraft`). They are
