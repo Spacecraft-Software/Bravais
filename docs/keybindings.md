@@ -48,6 +48,9 @@ these keys.
 Hardware keys (volume, mute, mic mute, brightness, media, keyboard backlight,
 Bluetooth, airplane) work in all five: `swayosd` under Niri and Margo,
 `steelbore-osd` under LeftWM, the desktops' own OSDs in GNOME and Plasma.
+The F9 gear key (`XF86Tools`) opens the desktop's settings app: GNOME and
+Plasma bind it by default, and COSMIC gets it from the custom-shortcut RON in
+`users/mj/desktop-theme.nix`. The WMs leave it unbound.
 
 ## Per-session extras
 
