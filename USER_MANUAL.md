@@ -36,14 +36,7 @@ Bravais is a NixOS-based operating system built on the Spacecraft Software Stand
 
 ### 1.2 First Boot
 
-After installation, you will be greeted by the tuigreet login screen:
-
-```
-STEELBORE :: BRAVAIS
-2026-04-05 14:30:00
-
-Username: _
-```
+After installation, you will be greeted by the Gantry login screen: the identity banner and a login box over an animated background, in the Steelbore theme.
 
 Enter your username and password to log in.
 
@@ -51,13 +44,15 @@ Enter your username and password to log in.
 
 ## 2. Login and Session Selection
 
-### 2.1 tuigreet Interface
+### 2.1 Gantry Interface
 
 The login manager displays:
-- Current date and time (ISO 8601 format)
-- Username prompt
-- Password prompt (displayed as asterisks)
-- Session selector
+- Username and password prompts
+- Session picker (**F2**)
+- Settings (**F1**) and power menu (**F12**)
+- An idle clock after inactivity
+
+Press **F5** for a line-by-line mode that works with screen readers.
 
 ### 2.2 Selecting a Desktop Session
 

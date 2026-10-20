@@ -79,6 +79,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ## Phase 4: Login Management (`modules/login/`)
 
 - [✓] **`default.nix`**: greetd + tuigreet with Steelbore branding
+- [✓] **`default.nix`**: Gantry replaces tuigreet (`gantry` flake input, tracks main)
 - [✓] **`default.nix`**: Session memory and ISO 8601 time display
 - [✓] **`default.nix`**: Shell sessions (Ion, Nushell, Brush, mjsh) via `mkShellSession`
 - [✓] **`default.nix`**: Register session packages (niri, cosmic, ion, nushell, brush, mjsh)

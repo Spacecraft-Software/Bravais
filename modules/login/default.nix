@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Steelbore Bravais — greetd + tuigreet Login Manager
+# Steelbore Bravais — greetd + Gantry Login Manager
 {
   config,
   lib,
@@ -362,55 +362,39 @@ let
       '';
 in
 {
-  # greetd display manager with tuigreet
-  services.greetd = {
+  # greetd display manager with Gantry (Spacecraft Software's greeter; it
+  # replaced tuigreet). gantry.nixosModules.default (flake.nix) enables greetd,
+  # runs Gantry on the bare VT and reprograms the console palette to the
+  # active theme, which it reads from /etc/steelbore/theme.toml
+  # (modules/theme/declaration.nix). Sessions come from the same
+  # services.displayManager.sessionData.desktops that tuigreet was given; a
+  # directory named `xsessions` is treated as X11.
+  services.gantry = {
     enable = true;
-    settings = {
-      default_session = {
-        # tuigreet renders --time-format through chrono's strftime.
-        #
-        # The offset is DERIVED, not hardcoded: %:z renders the running
-        # system's own UTC offset, so this line stays correct by itself if
-        # time.timeZone (modules/core/locale.nix) ever changes, and across a
-        # DST transition in any zone that has one. Asia/Bahrain has none — one
-        # transition in its entire tzdata history, +04 -> +03 on 1972-06-01 —
-        # so a literal "UTC+3" would have been stable too, but it would have
-        # been a second place to remember when editing the timezone.
-        #
-        # The other two specifiers are the wrong shape: %Z renders a bare
-        # "+03" and %z an unpunctuated "+0300". %:z is the only one that reads
-        # as an offset, at the cost of "UTC+03:00" rather than "UTC+3".
-        #
-        # Labelling the offset is what makes the greeter's local time
-        # unambiguous rather than merely local (Standard §14.3, which permits
-        # local time as a human-facing companion).
-        #
-        # X sessions go to --xsessions, NOT --sessions: tuigreet stamps every
-        # --sessions entry XDG_SESSION_TYPE=wayland, so Plasma X11 started
-        # believing it was on Wayland — kded, plasmashell and kcminit each
-        # logged "Failed to create wl_display", and Orca refused to start.
-        # --xsessions makes it x11. --no-xsession-wrapper because every Exec
-        # there already runs startx (start-leftwm, start-plasma-x11); the
-        # default wrapper would start a second X server around it.
-        #
-        # The greeting is the identity banner (lib/identity.nix), never a
-        # literal here; escapeShellArg single-quotes it so a future banner
-        # with a quote, `$` or backslash cannot break the command line greetd
-        # hands to its shell.
-        command = ''
-          ${pkgs.tuigreet}/bin/tuigreet \
-            --time \
-            --time-format "%Y-%m-%d %H:%M:%S UTC%:z" \
-            --remember \
-            --remember-session \
-            --asterisks \
-            --greeting ${lib.escapeShellArg steelboreIdentity.banner} \
-            --sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions \
-            --xsessions ${config.services.displayManager.sessionData.desktops}/share/xsessions \
-            --no-xsession-wrapper
-        '';
-        user = "greeter";
-      };
+    mode = "vt";
+
+    # Fingerprint stays OFF at the greeter: modules/hardware/fingerprint.nix
+    # denies fprintAuth on `greetd` because a fingerprint login leaves the
+    # login keyring locked (the 2026-07-21 / 07-25 browser logouts). Stated
+    # here too so Gantry never shows a scanner that PAM will not run.
+    fingerprint.enable = false;
+
+    settings.general = {
+      # The identity banner (lib/identity.nix), never a literal here.
+      greeting = steelboreIdentity.banner;
+      # No synthetic "Shell" entry: a bare shell under greetd has no TTY or
+      # compositor (see mkShellSession above), so shells are offered only
+      # through their cage + rio session files.
+      default_session = [ ];
+      # Every X session's Exec already runs startx (start-leftwm,
+      # start-plasma-x11); a wrapper would start a second X server. Same
+      # reason tuigreet ran with --no-xsession-wrapper.
+      xsession_wrapper = [ ];
+      # Film-style digital rain behind the login box.
+      effect = "matrix";
+      # On the console, swap in a copy of the console font with half-width
+      # katakana while Gantry runs; the original is restored on exit.
+      console_font = true;
     };
   };
 
@@ -420,8 +404,8 @@ in
   # nixos-unstable) sets `mkDefault "niri"`, which collide with
   # "conflicting definition values" and fail evaluation. A plain definition
   # (priority 100) outranks both mkDefaults — no mkForce needed. Niri is the
-  # primary session here. tuigreet itself reads `--sessions`, not this option,
-  # and `--remember-session` still wins for the returning user; this only
+  # primary session here. Gantry reads the session directories, not this
+  # option, and remembers the returning user's last session itself; this only
   # settles the module-system conflict and the sessionNames assertion.
   services.displayManager.defaultSession = "niri";
 
@@ -468,18 +452,13 @@ in
     ${config.users.users.${primaryUser}.shell}
   '';
 
-  environment.systemPackages =
-    with pkgs;
-    [
-      tuigreet
-    ]
-    ++ [
-      start-gnome
-      start-plasma
-      start-plasma-x11
-      start-niri
-      start-leftwm
-    ];
+  environment.systemPackages = [
+    start-gnome
+    start-plasma
+    start-plasma-x11
+    start-niri
+    start-leftwm
+  ];
 
   # PAM configuration for greetd
   security.pam.services.greetd.enableGnomeKeyring = true;

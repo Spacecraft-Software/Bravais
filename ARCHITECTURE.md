@@ -72,7 +72,7 @@ graph TB
         subgraph LOGIN["login/"]
             direction TB
             LOGIN_DEF["default.nix"]
-            GREETD["greetd.nix<br/>━━━━━━━━━━━━━<br/>greetd service<br/>tuigreet<br/>Session selector"]
+            GREETD["greetd.nix<br/>━━━━━━━━━━━━━<br/>greetd service<br/>Gantry<br/>Session selector"]
         end
 
         subgraph HARDWARE["hardware/"]
@@ -103,7 +103,7 @@ graph TB
 
     subgraph LOGIN_FLOW["Login Flow"]
         direction LR
-        GREETD_SVC["greetd"] --> TUIGREET["tuigreet"]
+        GREETD_SVC["greetd"] --> TUIGREET["Gantry"]
         TUIGREET --> SEL{"Session<br/>Selector"}
         SEL -->|1| NIRI_SESS["Niri<br/>(Default)"]
         SEL -->|2| COSMIC_SESS["COSMIC"]
@@ -290,7 +290,7 @@ environment.systemPackages = [
                                   │
                                   ▼
                          ┌─────────────────┐
-                         │    tuigreet     │
+                         │     Gantry      │
                          │  Login Screen   │
                          └────────┬────────┘
                                   │
