@@ -90,7 +90,14 @@ in
       animation_clock_layer = bezier
 
       # ── Layout ────────────────────────────────────────────────────────────
-      default_layout              = scroller
+      # mango's own defaults: master-stack tiling where each new window takes
+      # the master slot and pushes the rest down the stack. For niri-style
+      # columns (new windows open to the right), set default_layout =
+      # scroller and new_is_master = 0; Mod+S switches the current tag live.
+      default_layout              = tile
+      new_is_master               = 1
+      default_mfact               = 0.55
+      default_nmaster             = 1
       scroller_default_proportion = 0.800
       scroller_focus_center       = 1
       scroller_proportion_preset  = 1.000, 0.800, 0.618, 0.500
@@ -197,6 +204,15 @@ in
       bind = super+ctrl,Page_Down,tagtoright
       gesturebind = NONE,left,3,viewtoright
       gesturebind = NONE,right,3,viewtoleft
+      # Thumb buttons switch tags like workspaces elsewhere: back (BTN_SIDE,
+      # mouse:275) goes RIGHT and forward (BTN_EXTRA, mouse:276) goes LEFT, the
+      # direction modules/desktops/mouse-workspace-nav.nix uses; keep them in
+      # step. Bound without a modifier, so apps lose back/forward on these
+      # buttons (the same trade niri makes). Mod+wheel matches niri too.
+      mousebind = NONE,mouse:275,viewtoright
+      mousebind = NONE,mouse:276,viewtoleft
+      axisbind = super,UP,viewtoleft
+      axisbind = super,DOWN,viewtoright
 
       # ── Layout ────────────────────────────────────────────────────────────
       bind = super,space,cyclekblayout

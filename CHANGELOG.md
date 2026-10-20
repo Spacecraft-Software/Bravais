@@ -101,6 +101,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Margo tiles the way mango does.** New windows take the master area
+  and push the others down the stack, instead of opening as a new column
+  on the right. Super+S still switches a tag to the scrolling layout,
+  and `users/mj/margo.nix` says how to make that the default.
+- **The mouse thumb buttons switch Margo's tags** the way they switch
+  workspaces in the other desktops (back goes right, forward goes left),
+  and Super+wheel does the same. Because Margo grabs the buttons itself,
+  browsers no longer see them as back/forward there, as under Niri.
 - **The same keys in every desktop.** GNOME, Plasma, Niri, LeftWM and
   Margo now share one set of keys, listed in `docs/keybindings.md`:
   Super+D launcher, Super+Return terminal, Super+Q close, Super+F
@@ -196,6 +204,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Ctrl+Alt+F1…F12 switch to a text console from Margo.** Margo bound
+  the keys but never acted on them; a patch in `pkgs/margo/` does the
+  switch.
 - **Rebuilds no longer fail on a ChatGPT/Codex desktop hash mismatch.**
   OpenAI only publishes a "latest" download, so whenever garbage
   collection removed the pinned file, the next rebuild fetched OpenAI's

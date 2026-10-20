@@ -1,0 +1,49 @@
+SPDX-License-Identifier: GPL-3.0-or-later
+
+margo 4.1.0 injects Ctrl+Alt+F1..F12 binds with the action "chvt" (margo-config
+parser.rs) but dispatch_action never handles it, so VT switching is a no-op.
+Keep the libseat session in the udev BackendData and switch through it.
+
+diff --git a/margo/src/backend/udev/mod.rs b/margo/src/backend/udev/mod.rs
+index 7e297ae..bff1ebe 100644
+--- a/margo/src/backend/udev/mod.rs
++++ b/margo/src/backend/udev/mod.rs
+@@ -301,6 +301,8 @@ pub(crate) struct BackendData {
+     pub(super) gbm: GbmDevice<DrmDeviceFd>,
+     pub(super) primary_node: DrmNode,
+     pub(super) renderer_formats: smithay::backend::allocator::format::FormatSet,
++    /// libseat session, kept so the `chvt` action can switch VTs.
++    pub(crate) session: LibSeatSession,
+ }
+ 
+ // ── Entry point ───────────────────────────────────────────────────────────────
+@@ -716,6 +718,7 @@ pub fn run(state: &mut MargoState, event_loop: &mut EventLoop<'static, MargoStat
+         gbm: gbm.clone(),
+         primary_node,
+         renderer_formats: renderer_formats.clone(),
++        session: session.clone(),
+     }));
+ 
+     // ── wp_drm_lease_device_v1 ────────────────────────────────────────────────
+diff --git a/margo/src/dispatch/mod.rs b/margo/src/dispatch/mod.rs
+index 14229da..9045e48 100644
+--- a/margo/src/dispatch/mod.rs
++++ b/margo/src/dispatch/mod.rs
+@@ -81,6 +81,17 @@ pub fn dispatch_action(state: &mut MargoState, action: &str, arg: &Arg) -> Dispa
+     debug!(action = %action, "dispatch");
+     match action {
+         "quit" => state.should_quit = true,
++        // Ctrl+Alt+F1..F12 (injected by margo-config). Only the udev
++        // backend owns a seat; nested (winit) sessions have no VTs.
++        "chvt" => {
++            if let Some(backend) = state.udev_backend.as_ref() {
++                use smithay::backend::session::Session;
++                let vt = tag_arg(arg) as i32;
++                if let Err(e) = backend.borrow_mut().session.change_vt(vt) {
++                    tracing::warn!(vt, error = ?e, "chvt failed");
++                }
++            }
++        }
+         "session_end" => state.session_end(arg.v.as_deref().unwrap_or("")),
+         "debug_dump" | "debug-dump" | "diagnose" => state.debug_dump(),
+         // Cycle the keyboard to the next configured xkb layout. Driven

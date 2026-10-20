@@ -43,6 +43,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
     hash = "sha256-5UKWJOuxU+wbSiWtfecZu5vsDtUNJXTEeLpMGSwhTfM=";
   };
 
+  # Ctrl+Alt+F<n> is bound upstream but never dispatched; see the patch header.
+  patches = [ ./chvt.patch ];
+
   cargoHash = "sha256-jIN9M5nV42SGpaM5VQhLYhryC5hXd6Rl2RHx0PyS2Wg=";
 
   cargoBuildFlags = [
