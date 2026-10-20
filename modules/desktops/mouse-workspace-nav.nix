@@ -23,7 +23,7 @@
 #   Plasma  `Switch One Desktop to the Left`  = Meta+Ctrl+Left   (kglobalshortcutsrc)
 #   COSMIC  `(modifiers: [Super, Ctrl], key: "Left"): PreviousWorkspace`
 #           (cosmic-comp's shipped .../Shortcuts/v1/defaults)
-# so only GNOME needs a binding added, in users/mj/desktop-theme.nix. Emitting
+# so only GNOME needs a binding added, in users/mj/gnome.nix. Emitting
 # GNOME's own Ctrl+Alt+Left/Right instead would have meant editing Plasma AND
 # COSMIC. Do not "simplify" this back to Ctrl+Alt without re-checking those two
 # defaults.
