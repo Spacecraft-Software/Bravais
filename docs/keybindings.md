@@ -17,7 +17,8 @@ they disagreed with each other. "Super", "Meta" and "Mod" are the same key.
 | Margo | `users/mj/margo.nix` | `bind =` lines; `Super+Shift+/` lists them |
 
 COSMIC is installed too but keeps its own defaults, which already share most of
-these keys.
+these keys; `users/mj/desktop-theme.nix` adds the few it lacks (Super+D,
+Super+Space, Super+Shift+C, F9, and Super+Return for Alacritty).
 
 ## The shared keys
 
@@ -25,7 +26,7 @@ these keys.
 |---|---|---|
 | Launcher / search | Super+D | GNOME: overview search. Plasma: KRunner. WMs: anyrun / rlaunch (LeftWM Mod+Shift+D: rofi) |
 | App grid / menu | Super alone | GNOME (app grid) and Plasma (Kickoff) only |
-| Terminal | Super+Return | Alacritty everywhere. Plasma's Ctrl+Alt+T still opens Konsole |
+| Terminal | Super+Return | Alacritty everywhere, COSMIC included. Plasma's Ctrl+Alt+T still opens Konsole; COSMIC's Super+T still opens COSMIC Terminal |
 | Close window | Super+Q | Alt+F4 still works in GNOME and Plasma |
 | Fullscreen | Super+F | |
 | Maximize | Super+Shift+F (Niri: column) · Super+Up (GNOME) · Meta+PgUp (Plasma) | LeftWM and Margo have none |
