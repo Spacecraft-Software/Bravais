@@ -134,9 +134,9 @@ in
   # ═══════════════════════════════════════════════════════════════════════════
   # KRunner: Meta+D alongside its stock Alt+Space, Alt+F2 and Search keys
   # ═══════════════════════════════════════════════════════════════════════════
-  # Matches Mod+D, the launcher under Niri and COSMIC. Meta+D is KWin's
-  # default for "Peek at Desktop", and kglobalaccel gives a key to only one
-  # action, so that action is left with no key. Both values are what System
+  # Matches Mod+D under Niri, COSMIC and GNOME (Super+D searches there).
+  # Meta+D is KWin's default for "Peek at Desktop", and kglobalaccel gives a
+  # key to only one action, so that action is left with no key. Both values are what System
   # Settings › Shortcuts writes for this choice, pinned the same way as the
   # layout shortcut above (with its trade-off). A [services] entry carries
   # only the active keys, tab-separated; a [kwin] entry is
