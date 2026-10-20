@@ -4,6 +4,18 @@ margo 4.1.0 injects Ctrl+Alt+F1..F12 binds with the action "chvt" (margo-config
 parser.rs) but dispatch_action never handles it, so VT switching is a no-op.
 Keep the libseat session in the udev BackendData and switch through it.
 
+diff --git a/margo/src/backend/udev/hotplug.rs b/margo/src/backend/udev/hotplug.rs
+index b421ad3..a411b56 100644
+--- a/margo/src/backend/udev/hotplug.rs
++++ b/margo/src/backend/udev/hotplug.rs
+@@ -46,6 +46,7 @@ pub(super) fn rescan_outputs(backend_data: &Rc<RefCell<BackendData>>, state: &mu
+         gbm: _,
+         primary_node: _,
+         renderer_formats: _,
++        session: _,
+     } = &mut *bd;
+ 
+     // Withdraw lease offers for unplugged non-desktop connectors.
 diff --git a/margo/src/backend/udev/mod.rs b/margo/src/backend/udev/mod.rs
 index 7e297ae..bff1ebe 100644
 --- a/margo/src/backend/udev/mod.rs
