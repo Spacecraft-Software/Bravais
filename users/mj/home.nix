@@ -43,6 +43,9 @@
     ./default-apps.nix
     # Once-per-boot startup sound at the first graphical login.
     ./startup-sound.nix
+    # Claude Code subagents that hand coding and review to OpenCode Go
+    # models, one per entry in lib/opencode-go.nix.
+    ./ai-delegation.nix
   ];
 
   # Construct skill hub — installs all cross-platform skills from

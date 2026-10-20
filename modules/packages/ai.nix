@@ -110,6 +110,10 @@ in
       # opaque build hash and upstream publishes no release feed, so a bump is
       # manual. See the header of pkgs/grok-bot/package.nix.
       ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).grok-bot) ]
+      # CodeRabbit CLI — local AI code review before a PR, the gate after the
+      # GLM review in docs/ai-delegation.md. Pinned release archive instead of
+      # upstream's curl installer; bumped by update-vendored.nu. Unfree.
+      ++ [ (import ../../pkgs { inherit pkgs; }).coderabbit-cli ]
       # Obscura — headless browser for AI agents: fetch, run JS on a real V8
       # isolate, screenshot, scrape, and serve CDP — no Chromium, no Node.
       # Source-built rather than `unstablePkgs.obscura` because nixpkgs carries

@@ -19,6 +19,7 @@ path = [
     "LICENSE",
     ".gitignore",
     ".gitattributes",
+    ".coderabbit.yaml",
     ".github/**",
     "flake.lock",
     "flakes/rapg/flake.lock",
