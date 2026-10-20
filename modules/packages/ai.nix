@@ -12,6 +12,8 @@ let
   # Bake the Secret Service flag into an in-tree Electron package's launcher
   # (each takes `extraFlags`). See the Claude Desktop entry for why.
   withKeyringFlag = pkg: pkg.override { extraFlags = [ config.steelbore.keyring.chromiumFlag ]; };
+
+  codexDesktop = withKeyringFlag (import ../../pkgs { inherit pkgs; }).codex-desktop;
 in
 {
   options.steelbore.packages.ai = {
@@ -98,7 +100,7 @@ in
       # NOTE: upstream publishes only a `latest` URL with no versioned path, so
       # this pin breaks whenever OpenAI ships a build and the pinned artifact
       # cannot be refetched — see the header of pkgs/codex-desktop/package.nix.
-      ++ [ (withKeyringFlag (import ../../pkgs { inherit pkgs; }).codex-desktop) ]
+      ++ [ codexDesktop ]
       # Grok Bot — desktop agent, repackaged from the official .deb. Published
       # by Cursor/Anysphere rather than xAI despite the name (Vendor:
       # "SpaceXAI <hi@cursor.com>", Homepage: cursor.com). Not in nixpkgs on
@@ -118,5 +120,13 @@ in
       # mcp-servers/mcp.toml resolves servers by BARE NAME on PATH (constraint
       # #23), so the system profile is where it has to land.
       ++ [ (import ../../pkgs { inherit pkgs; }).obscura ];
+
+    # Keep the pinned Codex .deb alive across garbage collection (#49). Its URL
+    # is `…/latest/`, so once OpenAI ships a build the pinned file can never
+    # be refetched. Without this root the weekly GC deletes the source, the
+    # next nixpkgs bump forces a rebuild, the refetch gets the new upload and
+    # the switch dies on a hash mismatch. Rooted, a rebuild reuses the store
+    # copy and only `update-vendored.nu codex-desktop` moves the pin.
+    system.extraDependencies = [ codexDesktop.src ];
   };
 }
