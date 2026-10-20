@@ -110,6 +110,12 @@ in
     # Settings on GNOME by their own defaults; COSMIC binds nothing to it.
     # Note: home-manager makes the file read-only, so future tweaks via the
     # Settings UI silently fail until the binding is also added/removed here.
+    # force = true: before the first activation COSMIC may have written a real
+    # file here, and HM would back it up to `custom.backup`; a `.backup` left
+    # by an earlier run then aborts the whole activation ("would be clobbered
+    # by backing up"), which strands every user-level change, GNOME and Plasma
+    # keys included (constraint #30).
+    "cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom".force = true;
     "cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom".text = ''
       {
           (

@@ -218,6 +218,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A stale COSMIC shortcuts backup no longer stops Home Manager.**
+  The rebuild failed with "custom.backup would be clobbered by backing up
+  custom" and left every user-level change unapplied, GNOME and Plasma
+  shortcuts included. The COSMIC shortcuts file is now overwritten
+  outright.
 - **Margo's bar shows the keyboard language instead of "??".** The
   indicator now asks Margo for the active layout (`mctl get
   keyboard-layout`) rather than falling through to the X11 reader, and
