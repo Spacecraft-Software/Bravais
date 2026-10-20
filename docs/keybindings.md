@@ -68,7 +68,11 @@ These are kept as they are; they do not collide with the shared keys.
   desktop, Meta+F1–F4 and Ctrl+F1–F4 desktops 1–4, Meta+V clipboard,
   Meta+Shift+S region capture, Alt+Space / Alt+F2 KRunner. *Peek at Desktop*
   gave Meta+D to KRunner and the *Activity Switcher* gave Meta+Q to Close
-  Window; both have no key now (Meta+Tab still cycles activities).
+  Window; both have no key now (Meta+Tab still cycles activities). The
+  Krohnkite tiling script keeps its own keys (Meta+H/J/K/L focus,
+  Meta+Shift+H/J/K move, Meta+T / Meta+M layouts, …) except the four it
+  shipped on shared keys: *Set master* (Meta+Return), *Decrease* (Meta+D),
+  *Toggle Float* (Meta+F) and *Move Right* (Meta+Shift+L) have no key.
 - **Niri:** Mod+O overview, Mod+R / Mod+Minus / Mod+Equal column widths,
   Mod+[ / Mod+] consume / expel, Mod+Tab previous workspace, Mod+wheel
   workspaces, Mod+B / Mod+Shift+B Bluetooth, Mod+A / Mod+Shift+A audio,

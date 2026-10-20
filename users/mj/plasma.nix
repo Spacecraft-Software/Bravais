@@ -74,9 +74,11 @@ let
   '';
 
   # Terminal: Meta+Return, as Mod+Return under Niri, LeftWM and Margo. Shipped
-  # the same way as Caffeine above (a default, so a rebind sticks). Plasma's
-  # own Konsole key, Ctrl+Alt+T, is left as it is. Meta+Return is unbound in
-  # stock Plasma.
+  # the same way as Caffeine above, but also pinned in kglobalshortcutsrc
+  # (plasmaSharedShortcuts below): Krohnkite claims Meta+Return for "Set
+  # master", and once kglobalaccel has recorded this entry with no key, the
+  # desktop-file default is never applied again. Plasma's own Konsole key,
+  # Ctrl+Alt+T, is left as it is.
   terminalShortcut = ''
     [Desktop Entry]
     Type=Application
@@ -211,6 +213,12 @@ in
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
   # action is left with no key (Meta+Tab still cycles activities). Meta+F,
   # Meta+Shift+L and Meta+Shift+N are unbound in stock Plasma.
+  # The Krohnkite tiling script (desktop-theme.nix) ships defaults on four of
+  # the shared keys: Meta+Return (set master), Meta+D (fewer master windows),
+  # Meta+F (toggle float) and Meta+Shift+L (move window right). Those four
+  # actions are left with no key, so the shared key reaches the action above;
+  # Krohnkite's other keys (Meta+H/J/K, Meta+Shift+H/J/K, Meta+I, ...) stay.
+  # Its shortcuts live under [kwin], keyed by the script's action name.
   # Pinned like the keys above, with the same trade-off; read at the next
   # Plasma login. printf turns the \t separators into tabs.
   home.activation.plasmaSharedShortcuts = lib.hm.dag.entryAfter [ "writeBoundary" ] (
@@ -224,6 +232,16 @@ in
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group ksmserver --key "Lock Session" \
         "$(printf 'Meta+L\tMeta+Shift+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group services --group steelbore-terminal.desktop --key _launch "Meta+Return"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteSetMaster "none,Meta+Return,Krohnkite: Set master"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteDecrease "none,Meta+D,Krohnkite: Decrease"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteToggleFloat "none,Meta+F,Krohnkite: Toggle Float"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftRight "none,Meta+Shift+L,Krohnkite: Move Right"
     ''
     + desktopKeys
   );
