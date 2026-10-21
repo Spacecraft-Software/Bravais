@@ -118,6 +118,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
+  `home-manager-unstable`, `antigravity-nix`, `construct`, `engram` and
+  `gitway` flake inputs, with the vendored Copilot skills re-synced from
+  the new `construct`.
 - **The login screen is now Gantry**, Spacecraft Software's own greeter,
   in place of tuigreet. It draws on the console in the Steelbore theme,
   with an animated background, the GANTRY banner, a session picker (F2),

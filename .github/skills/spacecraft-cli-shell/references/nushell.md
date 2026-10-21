@@ -151,7 +151,7 @@ To force a command to be treated as external even if a built-in shadows it, pref
 
 ## Gotchas
 
-- No `&&` short-circuiting with external commands the way Bash does — Nushell short-circuits on pipeline exit status differently. Use `if` blocks for explicit control flow.
+- No `&&` between commands — it is a parse error. Use `;` instead: a failed command, a non-zero external included, raises an error that ends the line, so `cmd1; cmd2` already stops at the first failure (it is the fail-fast joiner for a combined hand-off line, Standard §7.2). For Bash's `cmd1 || cmd2` fallback, use `try { cmd1 } catch { cmd2 }`; use `if` blocks for other explicit control flow.
 - Nushell scripts need `nu` installed — for cross-platform CI scripts, keep POSIX `.sh` for entrypoints and call `nu` explicitly for the Nushell-heavy bits.
 - Config lives at `$nu.config-path` (typically `~/.config/nushell/config.nu`) and `$nu.env-path`.
 - Glob patterns are first-class values; pass a bare `*.rs` where a glob is expected. To force string-not-glob, quote it.
