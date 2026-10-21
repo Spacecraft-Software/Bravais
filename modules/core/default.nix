@@ -12,6 +12,7 @@
     ./keyring.nix
     ./dns.nix
     ./reticle.nix # mouse on the TTYs (pkgs/steelbore-reticle)
+    ./console-font.nix # Terminus 24 on the TTYs, re-applied per VT (#52)
     ./identity.nix # Steelbore OS os-release / lsb-release (lib/identity.nix)
   ];
 }

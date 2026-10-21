@@ -108,7 +108,7 @@ After adding, update `PRD.md` (package inventory section) and `TODO.md` (relevan
 
 **These fonts are a deliberate, pinned choice — leave them as configured.** Do **not** swap them out because a skill (e.g. `spacecraft-brand-guidelines`, `spacecraft-theme-factory`) prescribes a different typeface, because the Standard names a brand font, or because some default seems "more on-brand." Only change a font when the **user explicitly asks for that specific font change** — never as a side effect of applying a skill, theme, or brand guideline.
 
-Current values: **UI = Hack Nerd Font**, **terminal = JetBrainsMono Nerd Font**. Both are defined in `modules/theme/fonts.nix`; the terminal font is a one-line edit to `theme.font` in `lib/terminal-theme.nix`.
+Current values: **UI = Hack Nerd Font**, **terminal = JetBrainsMono Nerd Font**. Both are defined in `modules/theme/fonts.nix`; the terminal font is a one-line edit to `theme.font` in `lib/terminal-theme.nix`. The text consoles (TTYs) use **Terminus 24** (`ter-v24n`, a PSF font, `modules/core/console-font.nix`, constraint #52), a separate setting chosen by the user on 2026-10-21.
 
 The full procedure — getting the real fontconfig family with `fc-scan` (the build does NOT catch a wrong family name), the non-generated spots that still need editing by hand, and the verification steps — is in the `changing-fonts` skill (`.claude/skills/changing-fonts/`).
 
@@ -204,6 +204,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 49. **The pinned Codex `.deb` stays in `system.extraDependencies`** (`modules/packages/ai.nix`) — its URL is `…/latest/`, so a GC'd copy can only be refetched as the new upload and the rebuild fails on the hash; never drop the root.
 50. **`steelbore-reticle` never opens a VT on a console switch** — logind spawns `autovt@ttyN` only on a VT nothing has open, so opening it then leaves it blank with no getty; open it on the first pointer event.
 51. **`systemd.shutdownRamfs` stays off while a boot splash (Fairing or Plymouth) is on** — the pivot into it resets the console to text mode and drops the retained shutdown frame for the kernel console; turn it back on for a LUKS, LVM, MD or ZFS root.
+52. **The console font is re-applied per VT** (`modules/core/console-font.nix`) — `systemd-vconsole-setup` runs before the framebuffer console takes over under a quiet boot, so its `setfont` fails with ENOSYS and nothing applies the font; keep the getty `ExecStartPre`, never force the fbcon bind before greetd.
 
 ## Delegating to OpenCode Go
 
