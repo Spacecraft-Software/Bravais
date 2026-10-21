@@ -17,12 +17,17 @@
 #     OpenCode writes both itself, and a managed copy would clash on every
 #     activation (constraint #30). Keys never go in the store.
 #   - the `opencode` CLI, which stays out-of-band in ~/.opencode/bin and is
-#     updated by `preflight --update-ai-tools`.
+#     updated by `preflight --update-ai-tools`. The forwarders call it by full
+#     path: outOfBandDirs (shell.nix) reaches PATH only through interactive
+#     shell init, which Claude Code's Bash tool does not always inherit (a
+#     Claude Code started from a service or a desktop launcher has no
+#     ~/.opencode/bin), so a bare `opencode` fails with "command not found".
 { lib, ... }:
 
 let
   go = import ../../lib/opencode-go.nix;
   model = m: "${go.provider}/${m.id}";
+  opencode = ''"$HOME/.opencode/bin/opencode"'';
 
   contributorNote =
     m:
@@ -45,7 +50,7 @@ let
     you were given between the TASK lines unchanged:
 
     ```sh
-    opencode run -m ${model m} --agent build "$(cat <<'TASK'
+    ${opencode} run -m ${model m} --agent build "$(cat <<'TASK'
     <the task, verbatim>
     TASK
     )"
@@ -74,7 +79,7 @@ let
     base=origin/main
     diff_file=$(mktemp --suffix=.diff)
     git diff "$(git merge-base "$base" HEAD)" >"$diff_file"
-    opencode run -m ${model r} --agent plan -f "$diff_file" "$(cat <<'REVIEW'
+    ${opencode} run -m ${model r} --agent plan -f "$diff_file" "$(cat <<'REVIEW'
     Review the attached diff of this repository. Report only real problems:
     bugs, evaluation or build failures, security issues, and breaks of the
     rules in AGENTS.md (read it first if it exists). For each finding give the

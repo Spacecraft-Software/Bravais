@@ -231,6 +231,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The `oc-*` OpenCode subagents find `opencode` from any Claude Code.**
+  They call `~/.opencode/bin/opencode` by full path; a Claude Code started
+  outside an interactive shell has no `~/.opencode/bin` on PATH, so every
+  delegation failed with "command not found".
+
 - **A stale COSMIC shortcuts backup no longer stops Home Manager.**
   The rebuild failed with "custom.backup would be clobbered by backing up
   custom" and left every user-level change unapplied, GNOME and Plasma

@@ -40,11 +40,15 @@ Meta train on the prompts: public repos only. Source:
 - **`~/.config/opencode/opencode.json`.** OpenCode writes it; a managed copy
   would clash on every activation (CONSTRAINTS.md #30).
 - **The `opencode` CLI.** Out-of-band in `~/.opencode/bin`, updated by
-  `preflight --update-ai-tools`.
+  `preflight --update-ai-tools`. The forwarders call it by full path
+  (`$HOME/.opencode/bin/opencode`), because that directory reaches PATH only
+  through interactive shell init, which Claude Code does not always inherit.
 - **Claude Code plugins.** `claude plugin install coderabbit` adds
-  `/coderabbit:coderabbit-review`; the OpenCode plugin adds `/opencode:rescue`
-  and `/opencode:review`, which take `--model opencode-go/<id>` and suit long
-  background runs better than the `oc-*` subagents.
+  `/coderabbit:coderabbit-review`. The OpenCode plugin (`/opencode:rescue`,
+  `/opencode:review`, the stop-time review gate) targets the OpenCode 1.17
+  server API; against 2.x `/opencode:setup` reports "not logged in" whatever
+  the sign-in state. Use the `oc-*` subagents, and never enable the review
+  gate while the mismatch lasts: it would block every stop.
 - **The CodeRabbit GitHub app** on the repository. Bravais is public, so the
   open-source plan applies; under 10 stars every PR review must be asked for
   with an `@coderabbitai review` comment.
@@ -52,11 +56,14 @@ Meta train on the prompts: public repos only. Source:
 ## Checking it works
 
 ```
-opencode models opencode-go
+~/.opencode/bin/opencode models --standalone
 coderabbit --version
 ```
 
-Both in one line (Nushell): `opencode models opencode-go ; coderabbit --version`
+Both in one line (Nushell): `~/.opencode/bin/opencode models --standalone ; coderabbit --version`
+
+OpenCode 2.x rejects a provider argument to `opencode models`; the
+`opencode-go/…` ids should appear in the list.
 
 Then ask Claude Code to use one subagent by name, for example "use oc-deepseek-flash
 to add the SPDX header to every file under scripts/ that lacks one", and
@@ -64,8 +71,8 @@ to add the SPDX header to every file under scripts/ that lacks one", and
 
 ## Limits
 
-- The forwarders make one `opencode run` call with a 10-minute ceiling. Longer
-  jobs belong in `/opencode:rescue --background --model …`.
+- The forwarders make one `opencode run` call with a 10-minute ceiling; split
+  longer jobs into smaller tasks.
 - `opencode run` is non-interactive: if a run stops on a permission prompt,
   the agent's permissions in OpenCode need loosening, not the forwarder.
 - CodeRabbit's CLI allowance on the free and open-source plans is 3 reviews an
