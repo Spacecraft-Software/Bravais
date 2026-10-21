@@ -51,10 +51,13 @@
   # Steelbore module toggles (software set shared across machines; a machine
   # MAY override individual toggles in its own default.nix).
   steelbore = {
-    # Plymouth boot splash (modules/theme/boot-splash.nix). Each initrd grows
-    # by the splash frames plus Plymouth's libraries, times the three the ESP keeps —
-    # the initrd has a ~49 MiB ceiling (constraint #43).
+    # Boot splash (modules/theme/boot-splash.nix): Fairing, Spacecraft
+    # Software's Rust splash, from the systemd initrd to the greetd handoff.
+    # `provider = "plymouth"` brings back the Plymouth theme. Each initrd is
+    # kept three times on the ESP — the initrd has a ~49 MiB ceiling
+    # (constraint #43).
     boot.splash.enable = true;
+    boot.splash.provider = "fairing";
 
     # Mouse on the virtual consoles (TTYs): select, paste, extend, and mouse
     # reporting to console programs. Rust, in-tree; replaces gpm

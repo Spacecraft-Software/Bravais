@@ -62,6 +62,27 @@
         "type": "github"
       }
     },
+    "fairing": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792569733,
+        "narHash": "sha256-zQCzLp0pJLF/XmbANoygJXwBkpK9qPNIs0kB62NbnyY=",
+        "ref": "main",
+        "rev": "7d03f14b42314dab5c104d062a5e5997bee7d9cc",
+        "revCount": 11,
+        "type": "git",
+        "url": "https://github.com/Spacecraft-Software/Fairing"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://github.com/Spacecraft-Software/Fairing"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -363,6 +384,7 @@
         "antigravity-nix": "antigravity-nix",
         "construct": "construct",
         "engram": "engram",
+        "fairing": "fairing",
         "gantry": "gantry",
         "gitway": "gitway",
         "home-manager": "home-manager",
