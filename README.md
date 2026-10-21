@@ -72,7 +72,7 @@ bravais/
 │   │   ├── plasma.nix             # KDE Plasma on Wayland/X11
 │   │   └── leftwm.nix             # LeftWM + Polybar on X11
 │   ├── login/                     # Display/login managers
-│   │   └── default.nix            # greetd + tuigreet + shell sessions
+│   │   └── default.nix            # greetd + Gantry + shell sessions
 │   └── packages/                  # Application bundles (opt-in)
 │       ├── default.nix            # Package module entry
 │       ├── browsers.nix           # Web browsers

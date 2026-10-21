@@ -19,7 +19,7 @@
     * **Lanzaboote** 🦀 `[CLI ⌨️]` *(Secure Boot Manager)*
 * **Login Managers**
     * **Greetd** 🦀 `[CLI ⌨️]` *(Minimal and flexible login daemon)*
-    * **Tuigreet** 🦀 `[TUI 🎛️]` *(Console UI greeter, best for Niri/LeftWM)*
+    * **Gantry** 🦀 `[TUI 🎛️]` *(Spacecraft Software's console greeter; replaced Tuigreet)*
     * **Lemurs** 🦀 `[TUI 🎛️]` *(Customizable terminal/TUI display manager)*
     * **cosmic-greeter** 🦀 `[GUI 🖱️]` *(Official COSMIC desktop login manager)*
 * **System Components**

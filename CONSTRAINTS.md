@@ -93,7 +93,7 @@ The `com.jeffser.Alpaca` Flatpak can manage its own bundled Ollama, but `steelbo
 
 ### 21. `services.displayManager.defaultSession` must stay pinned
 
-the five desktops are enabled at once, and upstream modules claim this option at equal priority: `plasma6.nix` sets `mkDefault "plasma"`, and `niri.nix` on nixos-unstable added `mkDefault "niri"`. Two `mkDefault`s with different values collide ("conflicting definition values") and fail evaluation on the unstable channel. `modules/login/default.nix` settles it with a *plain* definition (`= "niri"`, priority 100 > mkDefault's 1000 -- no `mkForce` needed). The option is inert here (greetd/tuigreet reads `--sessions`, and `--remember-session` wins for a returning user): pinning it left the stable `toplevel` store path byte-identical. Expect more of these as desktop modules gain opinions; the fix is always a plain definition, not `mkForce`.
+the five desktops are enabled at once, and upstream modules claim this option at equal priority: `plasma6.nix` sets `mkDefault "plasma"`, and `niri.nix` on nixos-unstable added `mkDefault "niri"`. Two `mkDefault`s with different values collide ("conflicting definition values") and fail evaluation on the unstable channel. `modules/login/default.nix` settles it with a *plain* definition (`= "niri"`, priority 100 > mkDefault's 1000 -- no `mkForce` needed). The option is inert here (the greeter reads the session directories itself and remembers a returning user's session): pinning it left the stable `toplevel` store path byte-identical. Expect more of these as desktop modules gain opinions; the fix is always a plain definition, not `mkForce`.
 
 ### 22. An empty file is `application/x-zerosize`, and a `text/plain` default does not cascade to it
 
@@ -197,11 +197,13 @@ systemd-boot copies every kept generation's kernel and initrd onto the ESP (`/de
 
 The largest single item is the 14.5 MiB uncompressed `kernel/x86/microcode/GenuineIntel.bin` prepended to every initrd (microcode for every Intel CPU); filtering it to this CPU with `iucode_tool` would free more than all of the above, but a wrong signature silently drops the microcode update, so it is not done here.
 
-### 44. X sessions go to tuigreet's `--xsessions`, never `--sessions`
+### 44. X sessions go to the greeter as X11, never as Wayland sessions
 
 tuigreet stamps every session found under `--sessions` with `XDG_SESSION_TYPE=wayland` (`crates/tuigreet/src/ipc.rs`, `wrap_session_command`); only `--xsessions` entries get `x11`. With `share/xsessions` listed under `--sessions`, Plasma X11 started believing it was on Wayland: `kcminit_startup`, `kded6`, `plasmashell`, `kactivitymanagerd` and the polkit agent each logged `Failed to create wl_display (No such file or directory)` (2026-10-07 23:44), and Orca exited with "Orca needs a usable display server, but the selected X11 or Wayland endpoint is unavailable" -- Electron derives `--ozone-platform` from `XDG_SESSION_TYPE`, and Orca checks that platform's endpoint before starting. Reproduced from a live X session: the same Orca launch fails with `XDG_SESSION_TYPE=wayland` and passes with `x11`. LeftWM had escaped only because `leftwm-xinitrc` re-exports `XDG_SESSION_TYPE=x11` itself.
 
 `modules/login/default.nix` therefore passes the X sessions directory to `--xsessions` together with `--no-xsession-wrapper`: every `Exec` there already runs `startx` (`start-leftwm`, `start-plasma-x11`), and tuigreet's default wrapper (`startx /usr/bin/env`) would start a second X server around it.
+
+Since Gantry replaced tuigreet, the same rule holds in its terms: the X sessions stay under `share/xsessions`, which Gantry treats as X11, and `settings.general.xsession_wrapper = [ ]` keeps it from wrapping the `startx` already in each `Exec`.
 
 ### 45. gtklock cannot lock an X session — LeftWM locks with i3lock via xss-lock
 

@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Super+Shift+D opens the app menu in every session.** On COSMIC, GNOME
+  and Plasma it sits beside Super alone (the App Library, the app grid and
+  Kickoff); Niri and Margo now open rofi's app list on it, as LeftWM did.
 - **Claude Code can hand coding work to your OpenCode Go models.** Each
   model gets a Claude Code subagent (`oc-kimi`, `oc-deepseek-flash`,
   `oc-deepseek-pro`, `oc-qwen`, `oc-grok`, `oc-gemini`, `oc-muse`) whose
@@ -119,6 +122,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `home-manager-unstable`, `antigravity-nix`, `construct`, `engram` and
   `gitway` flake inputs, with the vendored Copilot skills re-synced from
   the new `construct`.
+- **The login screen is now Gantry**, Spacecraft Software's own greeter,
+  in place of tuigreet. It draws on the console in the Steelbore theme,
+  with an animated background, the GANTRY banner, a session picker (F2),
+  settings (F1), a power menu (F12) and an idle clock. F5 switches to a
+  line-by-line mode for screen readers. Fingerprint login stays off at
+  the login screen, as before.
 - **Margo tiles the way mango does.** New windows take the master area
   and push the others down the stack, instead of opening as a new column
   on the right. Super+S still switches a tag to the scrolling layout,

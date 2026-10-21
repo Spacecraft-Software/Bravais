@@ -28,6 +28,10 @@
     gitway.url = "github:Spacecraft-Software/Gitway";
     gitway.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
+    # Gantry — Spacecraft Software's greetd greeter (replaces tuigreet, tracks main)
+    gantry.url = "github:Spacecraft-Software/Gantry";
+    gantry.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
     # Adit — Spacecraft Software's universal SSH_ASKPASS helper (GUI/TUI/keyring).
     # Replaces ksshaskpass as the askpass backend for gitway-add under Niri and
     # other non-KDE sessions. Currently in PRD stage (no flake.nix yet).
@@ -150,6 +154,7 @@
       home-manager-unstable,
       nix-flatpak,
       gitway,
+      gantry,
       construct,
       theme,
       rapg,
@@ -510,6 +515,7 @@
             ch.hm.nixosModules.home-manager
             nix-flatpak.nixosModules.nix-flatpak
             gitway.nixosModules.default
+            gantry.nixosModules.default
 
             # Bravais modules
             host

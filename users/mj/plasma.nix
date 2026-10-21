@@ -211,8 +211,10 @@ in
   # kept), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
-  # action is left with no key (Meta+Tab still cycles activities). Meta+F,
-  # Meta+Shift+L and Meta+Shift+N are unbound in stock Plasma.
+  # action is left with no key (Meta+Tab still cycles activities).
+  # Meta+Shift+D opens Kickoff beside Meta alone and Alt+F1, the app-menu
+  # key in every session. Meta+F, Meta+Shift+D, Meta+Shift+L and
+  # Meta+Shift+N are unbound in stock Plasma.
   # The Krohnkite tiling script (desktop-theme.nix) ships defaults on four of
   # the shared keys: Meta+Return (set master), Meta+D (fewer master windows),
   # Meta+F (toggle float) and Meta+Shift+L (move window right). Those four
@@ -229,6 +231,9 @@ in
         --group kwin --key "Window Fullscreen" "Meta+F,none,Make Window Fullscreen"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group plasmashell --key "manage activities" "none,Meta+Q,Show Activity Switcher"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group plasmashell --key "activate application launcher" \
+        "$(printf 'Meta\tAlt+F1\tMeta+Shift+D,Meta\tAlt+F1,Activate Application Launcher')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group ksmserver --key "Lock Session" \
         "$(printf 'Meta+L\tMeta+Shift+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
