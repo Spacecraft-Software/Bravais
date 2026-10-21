@@ -77,12 +77,49 @@
     }
   ];
 
-  # Read-only review of a finished change, before CodeRabbit.
-  reviewer = {
-    slug = "glm-review";
-    id = "glm-5.3";
-    name = "GLM-5.3";
-    allowance = 15;
-    contributor = false;
-  };
+  # Read-only reviews of a finished change, before CodeRabbit. Each entry
+  # renders one oc-<slug> subagent that attaches the branch's diff and sends
+  # `brief` as the prompt; `use` says when Claude should call it. Both share
+  # GLM-5.3's $15 allowance, so a security pass is for changes that touch a
+  # trust boundary, not for every edit.
+  reviewers = [
+    {
+      slug = "glm-review";
+      id = "glm-5.3";
+      name = "GLM-5.3";
+      allowance = 15;
+      contributor = false;
+      use = "General review: bugs, build failures and AGENTS.md rule breaks. Run it on every finished change.";
+      brief = ''
+        Review the attached diff of this repository. Report only real problems:
+        bugs, evaluation or build failures, security issues, and breaks of the
+        rules in AGENTS.md (read it first if it exists). For each finding give the
+        file, the line, what goes wrong and a concrete fix. Say "No findings" when
+        there are none. Do not restate the diff or praise it.
+      '';
+    }
+    {
+      slug = "glm-security";
+      id = "glm-5.3";
+      name = "GLM-5.3";
+      allowance = 15;
+      contributor = false;
+      use = "Security-only review: secrets, permissions, exposed services, unpinned downloads, injection. Run it when a change touches services, the firewall, users, sudo, secrets, fetchers or shell scripts; it is a second opinion beside /security-review and CodeRabbit, not the gate.";
+      brief = ''
+        Do a security review of the attached diff of this repository, a NixOS
+        flake configuration with in-tree packages. Read AGENTS.md first if it
+        exists. Report only exploitable or clearly risky problems, such as:
+        secrets, keys or tokens committed or copied into the world-readable Nix
+        store; files, sockets or services given wider permissions than needed;
+        new open ports, listeners or firewall holes; setuid wrappers, sudo or
+        polkit rules, and systemd units without sandboxing; downloads without a
+        pinned hash, `curl | sh`, or flake inputs on a moving ref; shell, Nushell
+        or Nix string interpolation that lets untrusted input run as code; path
+        traversal; and `unsafe` Rust. For each finding give a severity (critical,
+        high, medium, low), the file, the line, how it could be exploited and a
+        concrete fix. Say "No findings" when there are none. Do not report style,
+        restate the diff or praise it.
+      '';
+    }
+  ];
 }

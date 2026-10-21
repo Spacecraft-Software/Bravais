@@ -16,7 +16,7 @@ Claude plans ──> oc-<model> codes ──> oc-glm-review ──> coderabbit r
 | --- | --- | --- |
 | Model registry | `lib/opencode-go.nix` | The only place a model id or routing rule is written |
 | Delegate subagents | `users/mj/ai-delegation.nix` → `~/.claude/agents/oc-<slug>.md` | One per registry entry; Haiku forwarders around `opencode run -m opencode-go/<id> --agent build` |
-| Reviewer subagent | same file → `~/.claude/agents/oc-glm-review.md` | GLM-5.3, OpenCode's read-only `plan` agent, diff against `origin/main` attached |
+| Reviewer subagents | same file → `~/.claude/agents/oc-glm-review.md`, `oc-glm-security.md` | One per `reviewers` entry: GLM-5.3, OpenCode's read-only `plan` agent, diff against `origin/main` attached. `oc-glm-review` is the general pass; `oc-glm-security` is security-only, for changes that touch services, the firewall, users, sudo, secrets, fetchers or shell scripts |
 | CodeRabbit CLI | `pkgs/coderabbit-cli/` | `coderabbit` and `cr`; bumped by `nu pkgs/update-vendored.nu coderabbit-cli` |
 | GitHub review rules | `.coderabbit.yaml` | AGENTS.md's rules, shortened, as path instructions |
 
@@ -60,7 +60,9 @@ Both in one line (Nushell): `opencode models opencode-go ; coderabbit --version`
 
 Then ask Claude Code to use one subagent by name, for example "use oc-deepseek-flash
 to add the SPDX header to every file under scripts/ that lacks one", and
-`oc-glm-review` on the result.
+`oc-glm-review` on the result (and `oc-glm-security` when the change crosses a trust
+boundary). The security pass is a second opinion beside Claude Code's
+`/security-review` and CodeRabbit, not the gate.
 
 ## Limits
 
