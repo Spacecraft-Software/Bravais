@@ -25,11 +25,14 @@
 // closure weight on a tool whose whole job is to run other programs.
 
 mod ai_tools;
+mod appimages;
 mod disk;
 mod git_sync;
 mod output;
 mod progress;
 mod steps;
+
+use std::fmt::Write as _;
 
 use clap::{Parser, Subcommand};
 
@@ -67,11 +70,13 @@ const ABOUT: &str = concat!(
         "  preflight --update-all        Also bump the vendored pins and AI tools (alias: --full-update)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --update-ai-tools   Also run the out-of-band AI tools' updaters (claude, codex, …)\n",
+        "  preflight --update-appimages  Also apply the AppImage updates Gear Lever finds\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
         "  preflight --detach-flatpak    Start the Flatpak update and return instead of following it\n",
         "  preflight flatpak watch       Follow a running Flatpak update with a progress bar\n",
+        "  preflight appimage status     Which AppImages have updates (asks Gear Lever)\n",
         "  preflight disk report --json  Machine-readable free space and reclaimable bytes\n",
         "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
@@ -126,7 +131,7 @@ struct Cli {
     #[arg(long)]
     no_update: bool,
 
-    /// Update everything: every flake input (as always), the vendored pins and the out-of-band AI tools; implies --update-vendored and --update-ai-tools
+    /// Update everything: every flake input (as always), the vendored pins, the out-of-band AI tools and the AppImages; implies --update-vendored, --update-ai-tools and --update-appimages
     // `--full-update` is the spelling people reach for. Without the alias,
     // clap's did-you-mean answered it with `--no-update` -- the opposite
     // request, which a user following the tip would have run.
@@ -140,6 +145,14 @@ struct Cli {
     /// Also run the self-updaters of the AI tools installed outside Nix (claude update, opencode upgrade, …)
     #[arg(long, conflicts_with = "skills_only")]
     update_ai_tools: bool,
+
+    /// Also apply the AppImage updates Gear Lever finds (the report-only check runs on every run)
+    #[arg(long, conflicts_with_all = ["skills_only", "no_appimages"])]
+    update_appimages: bool,
+
+    /// Skip the AppImage update check
+    #[arg(long)]
+    no_appimages: bool,
 
     /// Skip garbage collection and journal vacuum
     #[arg(long)]
@@ -180,6 +193,11 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Cmd {
+    /// AppImages: which have updates (asks Gear Lever)
+    Appimage {
+        #[command(subcommand)]
+        action: AppimageCmd,
+    },
     /// Disk space accounting
     Disk {
         #[command(subcommand)]
@@ -202,6 +220,12 @@ enum FlatpakCmd {
     Status,
     /// Follow a running update to its end with a progress bar (off a terminal: wait, then report)
     Watch,
+}
+
+#[derive(Subcommand, Debug)]
+enum AppimageCmd {
+    /// List the AppImages with updates, and those Gear Lever does not manage
+    Status,
 }
 
 #[derive(Subcommand, Debug)]
@@ -235,6 +259,9 @@ fn main() -> std::process::ExitCode {
         Some(Cmd::Schema) => cmd_schema(out),
         Some(Cmd::Describe) => cmd_describe(out),
         Some(Cmd::Flatpak { action }) => cmd_flatpak(out, matches!(action, FlatpakCmd::Watch)),
+        Some(Cmd::Appimage {
+            action: AppimageCmd::Status,
+        }) => cmd_appimage_status(out),
         Some(Cmd::Disk { action }) => match action {
             DiskCmd::Report => cmd_disk_report(out),
             DiskCmd::Reclaim { yes } => cmd_disk_reclaim(out, *yes),
@@ -263,6 +290,10 @@ fn options(cli: &Cli) -> steps::Options<'_> {
         update_vendored: cli.update_vendored || cli.update_all,
         // The same for the AI tools outside Nix, which no rebuild reaches.
         update_ai_tools: cli.update_ai_tools || cli.update_all,
+        // The check is cheap (one small request per source) and report-only,
+        // so it runs unasked; applying is the part that downloads.
+        check_appimages: !cli.no_appimages,
+        update_appimages: cli.update_appimages || (cli.update_all && !cli.no_appimages),
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
@@ -360,6 +391,63 @@ fn cmd_flatpak(out: Out, watch: bool) -> i32 {
     Exit::Success as i32
 }
 
+fn cmd_appimage_status(out: Out) -> i32 {
+    const COMMAND: &str = "preflight appimage status";
+    if !appimages::gear_lever_installed() {
+        return out.fail(
+            &AppError::new(
+                "NO_GEAR_LEVER",
+                Exit::NotFound,
+                "Gear Lever is not installed, and it is what checks AppImages",
+                COMMAND,
+            )
+            .with_hint(format!("flatpak install flathub {}", appimages::GEAR_LEVER)),
+        );
+    }
+    match progress::spin(out, "checking AppImages for updates", appimages::check) {
+        Ok(rep) => {
+            let mut human = format!("  managed by Gear Lever: {}\n", rep.managed);
+            if rep.updates.is_empty() {
+                human.push_str("  updates:               none\n");
+            }
+            for u in &rep.updates {
+                let running = if u.running == Some(true) {
+                    "  (running)"
+                } else {
+                    ""
+                };
+                let _ = writeln!(
+                    human,
+                    "  update:    {}  {}{running}",
+                    u.name,
+                    u.current_version.as_deref().unwrap_or("?")
+                );
+            }
+            for u in &rep.unmanaged {
+                let _ = writeln!(
+                    human,
+                    "  unmanaged: {}  {}",
+                    u.path,
+                    u.update_info
+                        .as_deref()
+                        .unwrap_or("(no update information)")
+                );
+            }
+            if !rep.updates.is_empty() {
+                let _ = writeln!(human, "  apply:     {}", appimages::update_command());
+            }
+            out.emit(COMMAND, &rep, false, &human);
+            Exit::Success as i32
+        }
+        Err(e) => out.fail(
+            &AppError::new("APPIMAGE_CHECK_FAILED", Exit::Failure, e, COMMAND).with_hint(format!(
+                "flatpak run {} --list-updates",
+                appimages::GEAR_LEVER
+            )),
+        ),
+    }
+}
+
 fn cmd_disk_report(out: Out) -> i32 {
     let mut r = disk::measure();
     r.reclaimable_bytes = disk::reclaimable();
@@ -430,6 +518,8 @@ fn cmd_schema(out: Out) -> i32 {
                     "--no-update": "skip nix flake update",
                     "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored and --update-ai-tools; conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
+                    "--update-appimages": "after the switch, whether or not it succeeded, apply the AppImage updates Gear Lever found (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
+                    "--no-appimages": "skip the AppImage update check (a full run asks Gear Lever which AppImages have updates, report-only)",
                     "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
@@ -444,6 +534,7 @@ fn cmd_schema(out: Out) -> i32 {
             },
             "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },
             "preflight flatpak watch": { "description": "Follow a running Flatpak update to its end (progress bar at a terminal; otherwise block, then emit the final status)" },
+            "preflight appimage status": { "description": "AppImages with updates (Gear Lever's --list-updates --json, schema 1) and AppImages in ~/Applications or ~/AppImages it does not manage, with their embedded update information" },
             "preflight disk report": { "description": "Free space and reclaimable bytes" },
             "preflight disk reclaim": { "description": "Reclaim safe caches; --yes to apply" },
             "preflight schema": { "description": "This document" },
@@ -478,6 +569,7 @@ fn cmd_describe(out: Out) -> i32 {
             "git-sync",
             "rebuild-orchestration",
             "flatpak-progress",
+            "appimage-updates",
             "disk-report",
             "disk-reclaim",
         ],
@@ -580,6 +672,27 @@ mod tests {
         assert!(Cli::try_parse_from(["preflight", "--detach-flatpak"])
             .is_ok_and(|c| options(&c).detach_flatpak));
         assert!(Cli::try_parse_from(["preflight", "--detach-flatpak", "--no-flatpak"]).is_err());
+    }
+
+    #[test]
+    fn appimages_are_checked_by_default_and_updated_on_request() {
+        assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| {
+            let o = options(&c);
+            o.check_appimages && !o.update_appimages
+        }));
+        assert!(Cli::try_parse_from(["preflight", "--update-appimages"])
+            .is_ok_and(|c| options(&c).update_appimages));
+        assert!(Cli::try_parse_from(["preflight", "--full-update"])
+            .is_ok_and(|c| options(&c).update_appimages));
+        assert!(
+            Cli::try_parse_from(["preflight", "--full-update", "--no-appimages"]).is_ok_and(|c| {
+                let o = options(&c);
+                !o.check_appimages && !o.update_appimages
+            })
+        );
+        for other in ["--no-appimages", "--skills-only"] {
+            assert!(Cli::try_parse_from(["preflight", "--update-appimages", other]).is_err());
+        }
     }
 
     #[test]

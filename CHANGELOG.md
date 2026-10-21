@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`preflight` checks your AppImages for updates.** Every run asks Gear
+  Lever which of the AppImages it manages have a newer release and says
+  so; `preflight --update-appimages` (or `--full-update`) installs them,
+  skipping any app that is running. AppImages in `~/Applications` or
+  `~/AppImages` that Gear Lever does not manage are named, with a hint to
+  integrate the ones that carry update information. `--no-appimages`
+  skips the check; `preflight appimage status` runs it on its own.
 - **Super+Shift+D opens the app menu in every session.** On COSMIC, GNOME
   and Plasma it sits beside Super alone (the App Library, the app grid and
   Kickoff); Niri and Margo now open rofi's app list on it, as LeftWM did.

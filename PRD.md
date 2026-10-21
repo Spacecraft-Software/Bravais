@@ -47,6 +47,7 @@ One reference machine today: a ThinkPad T490s-class laptop (Intel i7-8665U, Whis
 - **Sync agent skills** — `skills-sync` moves the skill pointer ahead of a rebuild; follow with `nu pkgs/sync-skills.nu` (§16.2).
 - **Bump vendored binaries** — `nu pkgs/update-vendored.nu` or `preflight --update-vendored`; never by hand (§16.4).
 - **Update the AI tools installed outside Nix** — `preflight --update-ai-tools` runs each one's own updater (`claude update`, `opencode upgrade`, …); `--full-update` includes it (§16.1).
+- **Update AppImages** — every `preflight` run asks Gear Lever which AppImages have updates; `preflight --update-appimages` applies them, `preflight appimage status` only reports; `--full-update` includes it (§16.1).
 - **Add a package** — the matching `modules/packages/*.nix`, Rust preferred, with a language comment; then update this PRD's inventory and `TODO.md` (§11).
 
 ### 1.4 Non-Goals
@@ -2125,7 +2126,12 @@ progress bar parsed from its log (Ctrl-C stops the watching, not the update;
 `--detach-flatpak` returns at once, as every agent, CI or piped run does);
 `preflight flatpak status|watch` reports on it later. `--update-ai-tools` (implied by `--full-update`)
 then runs the self-updater of every AI tool installed outside Nix, one at a
-time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. `preflight` wraps none of the tools it drives onto
+time with a 30-minute cap each; the list is `pkgs/preflight/src/ai_tools.rs`. Every run
+also asks Gear Lever (`flatpak run it.mijorus.gearlever --list-updates --json`)
+which AppImages have updates and reports them; `--update-appimages` (also implied
+by `--full-update`) applies them with Gear Lever's own updater, and AppImages in
+`~/Applications` or `~/AppImages` that Gear Lever does not manage are named with
+whether they embed update information. `preflight` wraps none of the tools it drives onto
 PATH, so they are never frozen in its closure (same reasoning as
 CONSTRAINTS.md #23).
 

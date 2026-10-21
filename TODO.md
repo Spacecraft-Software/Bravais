@@ -773,6 +773,16 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       bumps; dirty trees are now carried, not refused
 - [ ] Second live run with uncommitted pins carried
 
+## AppImage updates (2026-10-21)
+
+- [✓] Every `preflight` run asks Gear Lever which AppImages have updates;
+      `--update-appimages` applies them, `--full-update` implies it, `--no-appimages`
+      skips the check, `preflight appimage status` reports alone
+- [ ] First live run: confirm Gear Lever's `--list-updates --json` on the machine
+- [ ] Decide for Orca, Warp and WaveTerm in `~/Applications`: integrate them in
+      Gear Lever (and set an update source where none is embedded) or leave them
+      self-updating
+
 ## Out-of-band AI tool updates (2026-10-13)
 
 - [✓] `preflight --update-ai-tools` runs each out-of-band AI tool's own
