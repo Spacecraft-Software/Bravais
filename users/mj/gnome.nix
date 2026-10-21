@@ -81,6 +81,17 @@ in
       window-move-right = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
     };
 
+    # O-tiling (installed by hand from extensions.gnome.org, not by this
+    # flake) ships "enter tiling mode" on Super+Return and Super+KP_Enter and
+    # "toggle floating" on Super+F. Its grab wins over gnome-settings-daemon's,
+    # so Super+Return never reached Alacritty and Super+F never went
+    # fullscreen. Both are left with no key; its other keys stay. Writing the
+    # dconf path is harmless while the extension is absent.
+    "org/gnome/shell/extensions/o-tiling" = {
+      tile-enter = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+      toggle-floating = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+    };
+
     # Caffeine: Super+Shift+C, as in every other session. The extension ships
     # the key unbound.
     "org/gnome/shell/extensions/caffeine" = {

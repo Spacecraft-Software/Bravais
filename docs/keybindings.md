@@ -68,6 +68,8 @@ These are kept as they are; they do not collide with the shared keys.
   Super+Ctrl+H/J/K/L swap, Super+W, …) except the four it shipped on shared
   keys: *swap with last active* (Super+Return), *split vertical* (Super+V),
   *always float* (Super+Shift+C) and *move right* (Super+Shift+L) have no key.
+  The same goes for O-tiling (installed by hand): *enter tiling mode*
+  (Super+Return, Super+KP_Enter) and *toggle floating* (Super+F) have no key.
 - **Plasma:** Meta+W overview, Meta+G desktop grid, Meta+PgDown minimize,
   Meta+arrows quick tile, Meta+Alt+arrows focus, Meta+Ctrl+Shift+←/→ window to
   desktop, Meta+F1–F4 and Ctrl+F1–F4 desktops 1–4, Meta+V clipboard,
