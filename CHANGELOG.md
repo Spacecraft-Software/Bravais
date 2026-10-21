@@ -123,6 +123,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Claude Desktop moves to the 3.x line**, the release the app was
+  offering as an update (`pkgs/claude-desktop/package.nix`).
+
 - **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
   `home-manager-unstable`, `antigravity-nix`, `construct`, `engram` and
   `gitway` flake inputs, with the vendored Copilot skills re-synced from
