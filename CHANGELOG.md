@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The text consoles (tty2 to tty6) use Terminus 24.** NixOS sets no console
+  font, so they ran on the kernel's small VGA font. The font is also
+  re-applied as each console's login prompt starts: under a quiet boot the
+  one boot-time attempt ran before the screen console was ready and failed
+  silently (constraint #52).
 - **Super+Shift+D opens the app menu in every session.** On COSMIC, GNOME
   and Plasma it sits beside Super alone (the App Library, the app grid and
   Kickoff); Niri and Margo now open rofi's app list on it, as LeftWM did.
