@@ -66,6 +66,21 @@ in
       binding = "<Super>Return";
     };
 
+    # The Forge tiling extension (installed by modules/desktops/gnome.nix)
+    # ships defaults on four of the shared keys: Super+Return (swap with the
+    # last active window), Super+V (vertical split), Super+Shift+C (always
+    # float) and Super+Shift+L (move window right). An extension's grab wins
+    # over gnome-settings-daemon's, so once Forge is enabled in Extension
+    # Manager those four did nothing, or the wrong thing. They are left with
+    # no key; Forge's other keys (Super+H/J/K/L focus, Super+Ctrl+H/J/K/L
+    # swap, Super+W, ...) stay.
+    "org/gnome/shell/extensions/forge/keybindings" = {
+      window-swap-last-active = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+      con-split-vertical = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+      window-toggle-always-float = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+      window-move-right = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+    };
+
     # Caffeine: Super+Shift+C, as in every other session. The extension ships
     # the key unbound.
     "org/gnome/shell/extensions/caffeine" = {

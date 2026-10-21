@@ -250,6 +250,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Super+Enter opens Alacritty on GNOME with Forge enabled.** The Forge
+  tiling extension binds Super+Return itself and its grab wins. It also
+  held Super+V, Super+Shift+C and Super+Shift+L, so Caffeine and lock could
+  miss them; those four Forge actions now have no key. Takes effect at the
+  next GNOME login.
 - **The `oc-*` OpenCode subagents find `opencode` from any Claude Code.**
   They call `~/.opencode/bin/opencode` by full path; a Claude Code started
   outside an interactive shell has no `~/.opencode/bin` on PATH, so every

@@ -64,6 +64,10 @@ These are kept as they are; they do not collide with the shared keys.
   Super+PgUp/PgDn and Super+Alt+←/→ (and Ctrl+Alt+←/→) workspaces,
   Super+Home / Super+End first / last workspace, Super+Ctrl+1…9 new window of
   the Nth dock app, Alt+Tab / Super+Tab app switcher, Alt+F2 run.
+  The Forge tiling extension keeps its own keys (Super+H/J/K/L focus,
+  Super+Ctrl+H/J/K/L swap, Super+W, …) except the four it shipped on shared
+  keys: *swap with last active* (Super+Return), *split vertical* (Super+V),
+  *always float* (Super+Shift+C) and *move right* (Super+Shift+L) have no key.
 - **Plasma:** Meta+W overview, Meta+G desktop grid, Meta+PgDown minimize,
   Meta+arrows quick tile, Meta+Alt+arrows focus, Meta+Ctrl+Shift+←/→ window to
   desktop, Meta+F1–F4 and Ctrl+F1–F4 desktops 1–4, Meta+V clipboard,
