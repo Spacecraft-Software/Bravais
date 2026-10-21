@@ -61,11 +61,10 @@ let
     ${model m}, so the caller can pick another model.
   '';
 
-  r = go.reviewer;
-  reviewer = ''
+  reviewer = r: ''
     ---
     name: oc-${r.slug}
-    description: ${builtins.toJSON "Read-only code review of a finished change by ${r.name} through OpenCode Go. Use after the work is done and before the CodeRabbit review and the PR. Pass a base ref if it is not origin/main. It changes no files."}
+    description: ${builtins.toJSON "Read-only review of a finished change by ${r.name} through OpenCode Go. Use for: ${r.use} Run it after the work is done and before the CodeRabbit review and the PR. Pass a base ref if it is not origin/main. It changes no files."}
     tools: Bash
     model: haiku
     ---
@@ -80,11 +79,10 @@ let
     diff_file=$(mktemp --suffix=.diff)
     git diff "$(git merge-base "$base" HEAD)" >"$diff_file"
     ${opencode} run -m ${model r} --agent plan -f "$diff_file" "$(cat <<'REVIEW'
-    Review the attached diff of this repository. Report only real problems:
-    bugs, evaluation or build failures, security issues, and breaks of the
-    rules in AGENTS.md (read it first if it exists). For each finding give the
-    file, the line, what goes wrong and a concrete fix. Say "No findings" when
-    there are none. Do not restate the diff or praise it.
+    Review the attached diff of this repository. Report only real problems of
+    these kinds: ${r.focus}. For each finding give the file, the line,
+    what goes wrong and a concrete fix. Say "No findings" when there are none.
+    Do not restate the diff or praise it.
     REVIEW
     )"
     status=$?
@@ -100,8 +98,6 @@ in
   home.file =
     lib.listToAttrs (
       map (m: lib.nameValuePair ".claude/agents/oc-${m.slug}.md" { text = coder m; }) go.coders
-    )
-    // {
-      ".claude/agents/oc-${r.slug}.md".text = reviewer;
-    };
+      ++ map (r: lib.nameValuePair ".claude/agents/oc-${r.slug}.md" { text = reviewer r; }) go.reviewers
+    );
 }

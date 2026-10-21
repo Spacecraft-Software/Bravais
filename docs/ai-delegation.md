@@ -16,9 +16,15 @@ Claude plans ──> oc-<model> codes ──> oc-glm-review ──> coderabbit r
 | --- | --- | --- |
 | Model registry | `lib/opencode-go.nix` | The only place a model id or routing rule is written |
 | Delegate subagents | `users/mj/ai-delegation.nix` → `~/.claude/agents/oc-<slug>.md` | One per registry entry; Haiku forwarders around `opencode run -m opencode-go/<id> --agent build` |
-| Reviewer subagent | same file → `~/.claude/agents/oc-glm-review.md` | GLM-5.3, OpenCode's read-only `plan` agent, diff against `origin/main` attached |
+| Reviewer subagents | same file → `~/.claude/agents/oc-glm-review.md`, `oc-glm-security.md` | GLM-5.3, OpenCode's read-only `plan` agent, diff against `origin/main` attached; one general, one security only |
 | CodeRabbit CLI | `pkgs/coderabbit-cli/` | `coderabbit` and `cr`; bumped by `nu pkgs/update-vendored.nu coderabbit-cli` |
 | GitHub review rules | `.coderabbit.yaml` | AGENTS.md's rules, shortened, as path instructions |
+
+`oc-glm-security` reports only security problems (injection, secrets in the
+store, loose permissions, privilege escalation, unverified downloads, impure
+builds, unsafe Rust). Run it beside `oc-glm-review` on any change that touches
+PAM, sudo, systemd units, secrets, network services or downloads. It is a
+second opinion, not the gate: CodeRabbit and Claude's own review still run.
 
 Routing is the `use` line of each registry entry; it becomes the subagent's
 description, which is what Claude reads when choosing. Edit the registry and

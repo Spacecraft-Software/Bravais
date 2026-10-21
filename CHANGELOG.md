@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and bumped with the other vendored binaries. Sign in once with
   `coderabbit auth login`. A `.coderabbit.yaml` gives CodeRabbit's
   GitHub reviews the repository's rules.
+- **`oc-glm-security` gives a change a security-only review** with
+  GLM-5.3, read-only: injection, secrets in the store, loose permissions,
+  privilege escalation, unverified downloads, impure builds and unsafe
+  Rust. Use it beside `oc-glm-review` on changes to PAM, sudo, units,
+  secrets, network services or downloads.
 
 - **F9 (the gear key) opens COSMIC Settings**, as it already opens
   System Settings on Plasma and Settings on GNOME.
