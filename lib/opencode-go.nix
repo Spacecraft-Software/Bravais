@@ -77,12 +77,26 @@
     }
   ];
 
-  # Read-only review of a finished change, before CodeRabbit.
-  reviewer = {
-    slug = "glm-review";
-    id = "glm-5.3";
-    name = "GLM-5.3";
-    allowance = 15;
-    contributor = false;
-  };
+  # Read-only reviews of a finished change, before CodeRabbit. Each entry is
+  # one subagent; `focus` is what its prompt asks the model to report.
+  reviewers = [
+    {
+      slug = "glm-review";
+      id = "glm-5.3";
+      name = "GLM-5.3";
+      allowance = 15;
+      contributor = false;
+      use = "General review: bugs, build failures, security and AGENTS.md rule breaks.";
+      focus = "bugs, evaluation or build failures, security issues, and breaks of the rules in AGENTS.md (read it first if it exists)";
+    }
+    {
+      slug = "glm-security";
+      id = "glm-5.3";
+      name = "GLM-5.3";
+      allowance = 15;
+      contributor = false;
+      use = "Security-only review, for changes touching PAM, sudo, systemd units, secrets, network services, downloads or unsafe Rust.";
+      focus = "shell or Nix-string injection into scripts, secrets or keys committed or written to the Nix store, world-readable files and loose permissions, privilege escalation (sudo, setuid, PAM, polkit, units running as root), path traversal, unpinned or unverified downloads (a missing hash, curl piped to sh), impure or sandbox-escaping builds, and unsafe Rust blocks without a SAFETY comment or with unchecked input. Ignore style and bugs with no security impact";
+    }
+  ];
 }

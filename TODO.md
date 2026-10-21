@@ -343,7 +343,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Goose Desktop `LD_LIBRARY_PATH` prefix (libglvnd/libgbm/vulkan-loader) — bundled ANGLE `libEGL.so` dlopens `libEGL.so.1`, and `DT_RUNPATH` isn't transitive, so `runtimeDependencies` alone left the GPU process dying with "Could not dlopen native EGL". Same fix opencode-desktop already carried
 - [✓] Install Obscura (headless browser for AI agents) — built from source in `pkgs/obscura/` with the `render` + `stealth` features. Not from nixpkgs: its 0.1.10 predates the `obscura-render` crate outright, so `render` cannot be switched on there. Needs its own `librusty_v8.nix` (v8 137.3.0; `deno.librusty_v8` is 147.4.0), `-p obscura-cli --bins` (virtual workspace rejects `--features` at the root), and `git` at build time for btls-sys's BoringSSL patching. System-wide so `mcp.toml` can resolve it by bare name. See CONSTRAINTS.md #24
 
-- [✓] Claude Code delegates to OpenCode Go — `lib/opencode-go.nix` registry, one `~/.claude/agents/oc-*.md` subagent per model plus the read-only GLM-5.3 reviewer (`users/mj/ai-delegation.nix`); `docs/ai-delegation.md`
+- [✓] Claude Code delegates to OpenCode Go — `lib/opencode-go.nix` registry, one `~/.claude/agents/oc-*.md` subagent per model plus the read-only GLM-5.3 reviewers (`oc-glm-review`, security-only `oc-glm-security`) (`users/mj/ai-delegation.nix`); `docs/ai-delegation.md`
 - [✓] Install the CodeRabbit CLI — pinned release archive in `pkgs/coderabbit-cli/`, `coderabbit-cli` target in `update-vendored.nu`; `.coderabbit.yaml` for the GitHub app
 - [ ] Confirm on the ThinkPad: the CodeRabbit archive hash, `coderabbit --version`, and one `oc-*` subagent run end to end
 
