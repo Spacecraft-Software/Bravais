@@ -143,6 +143,23 @@
     # Pathfinder's CI pins and its 108-case differential suite was run against.
     pathfinder.url = "github:Spacecraft-Software/Pathfinder";
     pathfinder.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Fairing — Spacecraft Software's Rust boot splash (replaces Plymouth,
+    # tracks main). A Fairing change must be pushed before
+    # `nix flake update fairing` can see it, as for engram and vacuum.
+    #
+    # `git+https:`, NOT `github:`. Fairing marks flake.nix, flake.lock and
+    # packaging/ `export-ignore` (they stay out of its reproducible release
+    # archive), and a `github:` input is GitHub's tarball, which honours
+    # export-ignore: the lock fails with "flake.nix does not exist". A git
+    # fetch takes the tree as committed.
+    #
+    # Its nixosModules.default builds the flake's tree with the SYSTEM's own
+    # pkgs, so the follows below only spares the lock a third nixpkgs; it does
+    # not choose the toolchain. Toggled by steelbore.boot.splash.provider
+    # (modules/theme/boot-splash.nix).
+    fairing.url = "git+https://github.com/Spacecraft-Software/Fairing?ref=main";
+    fairing.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
   outputs =
@@ -164,6 +181,7 @@
       vacuum,
       engram,
       pathfinder,
+      fairing,
       ...
     }@inputs:
     let
@@ -516,6 +534,7 @@
             nix-flatpak.nixosModules.nix-flatpak
             gitway.nixosModules.default
             gantry.nixosModules.default
+            fairing.nixosModules.default
 
             # Bravais modules
             host

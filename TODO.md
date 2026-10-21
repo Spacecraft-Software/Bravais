@@ -69,6 +69,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
 - [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot animation from `assets/boot/shutdown.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
+- [✓] **`boot-splash.nix`**: Fairing (`fairing` flake input) as the default provider, Plymouth selectable by `steelbore.boot.splash.provider`; systemd initrd on for Fairing
 - [✓] **`pkgs/steelbore-ksplash`**: the same animation as the KDE Plasma splash screen (selected in `users/mj/plasma.nix`)
 - [✓] **`pkgs/steelbore-quantize`**: pure-Rust PNG quantizer (`imagequant` + `png`) replacing pngquant in the splash build
 - [✓] **`users/mj/startup-sound.nix`**: once-per-boot startup sound at the first graphical login
@@ -485,6 +486,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [ ] Verify Podman with `docker` compat alias
 - [✓] Verify Flatpak apps install from Flathub
 - [ ] Verify AppImage binfmt execution
+- [ ] Verify the Fairing splash on a real boot: progress, Esc journal overlay, no black console before Gantry, shutdown splash (Fairing T-047, T-094); the initrd stays within the ESP budget (#43)
 - [ ] Verify the Plymouth boot animation renders on a real boot, and the startup sound plays once per boot
 - [ ] Verify the shutdown animation plays at poweroff and reboot, and the Plasma splash plays at a Plasma login
 

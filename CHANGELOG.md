@@ -123,6 +123,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Fairing draws the boot splash in place of Plymouth.** Fairing,
+  Spacecraft Software's Rust splash, shows real boot progress from the
+  first seconds of the boot until the Gantry login screen, and paints the
+  login console with the theme's background before it lets go, so there
+  is no black console in between. Press Esc to see the boot messages over
+  the splash. Poweroff and reboot get Fairing's shutdown screen. The boot
+  now uses the systemd initrd, which Fairing needs. Plymouth stays one
+  word away: `steelbore.boot.splash.provider = "plymouth"` in
+  `hosts/common.nix`. If a boot misbehaves, pick the previous generation
+  in the boot menu.
+
 - **Claude Desktop moves to the 3.x line**, the release the app was
   offering as an update (`pkgs/claude-desktop/package.nix`).
 

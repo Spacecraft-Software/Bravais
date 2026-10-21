@@ -203,7 +203,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 47. **`nixos-version` is `steelbore-version`'s alias** — the package ships `bin/nixos-version`, so `system.tools.nixos-version.enable` stays `false` or the system path collides; its record lives under `/run/current-system/sw/share/steelbore/`, not `/etc`, which sandboxes hide.
 49. **The pinned Codex `.deb` stays in `system.extraDependencies`** (`modules/packages/ai.nix`) — its URL is `…/latest/`, so a GC'd copy can only be refetched as the new upload and the rebuild fails on the hash; never drop the root.
 50. **`steelbore-reticle` never opens a VT on a console switch** — logind spawns `autovt@ttyN` only on a VT nothing has open, so opening it then leaves it blank with no getty; open it on the first pointer event.
-51. **`systemd.shutdownRamfs` stays off while the Plymouth splash is on** — the pivot into it resets the console to text mode and drops the retained shutdown frame for the kernel console; turn it back on for a LUKS, LVM, MD or ZFS root.
+51. **`systemd.shutdownRamfs` stays off while a boot splash (Fairing or Plymouth) is on** — the pivot into it resets the console to text mode and drops the retained shutdown frame for the kernel console; turn it back on for a LUKS, LVM, MD or ZFS root.
 
 ## Delegating to OpenCode Go
 
