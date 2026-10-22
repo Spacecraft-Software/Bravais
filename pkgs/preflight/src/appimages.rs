@@ -26,9 +26,11 @@
 // Rust guideline compliant 2026-05-18
 
 use std::fs::File;
+use std::io::Read;
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Command, Output, Stdio};
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
@@ -149,9 +151,8 @@ fn canonical(p: &Path) -> PathBuf {
 
 /// Run Gear Lever and return its stdout as a parsed JSON document.
 fn run_json(args: &[&str]) -> Result<serde_json::Value, String> {
-    let out = gear_lever(args)
-        .output()
-        .map_err(|e| format!("could not run Gear Lever: {e}"))?;
+    let out = output_within(gear_lever(args), CHECK_TIMEOUT)
+        .map_err(|e| format!("Gear Lever {}: {e}", args[0]))?;
     if !out.status.success() {
         // The last thing it said is the reason ("Internet connection not
         // available" goes to stderr under --json), whichever stream has it.
@@ -176,6 +177,65 @@ fn run_json(args: &[&str]) -> Result<serde_json::Value, String> {
             "Gear Lever {} printed no JSON document (needs Gear Lever 4.6 or later)",
             args[0]
         )
+    })
+}
+
+/// How long one Gear Lever query may take before it is killed. Listing makes
+/// one request per update source; a stalled one must not hold the rebuild
+/// open, since the check runs before the Flatpak update starts.
+pub const CHECK_TIMEOUT: Duration = Duration::from_mins(5);
+
+/// [`Command::output`] with a time limit. The pipes are drained on their own
+/// threads while the child is polled, so a large document cannot fill a pipe
+/// and stall the child against a parent that is only waiting.
+fn output_within(mut cmd: Command, limit: Duration) -> Result<Output, String> {
+    let mut child = cmd
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("could not run: {e}"))?;
+    let drain = |pipe: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut p) = pipe {
+                let _ = p.read_to_end(&mut buf);
+            }
+            buf
+        })
+    };
+    let out = drain(
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let err = drain(
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let start = Instant::now();
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(s)) => break s,
+            Ok(None) if start.elapsed() >= limit => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!("timed out after {} s; killed", limit.as_secs()));
+            }
+            Ok(None) => std::thread::sleep(crate::ai_tools::POLL),
+            Err(e) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!("could not wait: {e}"));
+            }
+        }
+    };
+    Ok(Output {
+        status,
+        stdout: out.join().unwrap_or_default(),
+        stderr: err.join().unwrap_or_default(),
     })
 }
 
@@ -300,7 +360,7 @@ fn upd_info(read: &dyn Fn(u64, usize) -> Option<Vec<u8>>) -> Option<String> {
     let shentsize = u64::from(le_u16(&eh, 0x3A)?);
     let shnum = u64::from(le_u16(&eh, 0x3C)?);
     let shstrndx = u64::from(le_u16(&eh, 0x3E)?);
-    if shentsize < 64 || shnum == 0 || shnum > MAX_SECTIONS || shstrndx >= shnum {
+    if shentsize != 64 || shnum == 0 || shnum > MAX_SECTIONS || shstrndx >= shnum {
         return None;
     }
     let table = read(shoff, usize::try_from(shentsize.checked_mul(shnum)?).ok()?)?;
@@ -468,6 +528,23 @@ mod tests {
             parse_updates(&doc).is_err(),
             "a document without schema_version is not Gear Lever's"
         );
+    }
+
+    #[test]
+    fn output_within_returns_output_and_kills_a_hung_child() {
+        let mut ok = Command::new("sh");
+        ok.args(["-c", "echo out; echo err >&2"]);
+        let o = output_within(ok, Duration::from_secs(10)).unwrap();
+        assert!(o.status.success());
+        assert_eq!(
+            (o.stdout.as_slice(), o.stderr.as_slice()),
+            (&b"out\n"[..], &b"err\n"[..])
+        );
+        let mut hung = Command::new("sleep");
+        hung.arg("30");
+        let start = Instant::now();
+        assert!(output_within(hung, Duration::from_millis(300)).is_err());
+        assert!(start.elapsed() < Duration::from_secs(10));
     }
 
     #[test]

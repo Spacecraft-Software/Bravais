@@ -516,7 +516,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--no-sync": "build the checkout as it is; skip git fetch and the fast-forward",
                     "--branch": "switch to origin's <NAME> before building (testing a PR); conflicts with --no-sync",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored and --update-ai-tools; conflicts with --no-update and --skills-only; alias --full-update",
+                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored, --update-ai-tools and --update-appimages (unless --no-appimages); conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
                     "--update-appimages": "after the switch, whether or not it succeeded, apply the AppImage updates Gear Lever found (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
                     "--no-appimages": "skip the AppImage update check (a full run asks Gear Lever which AppImages have updates, report-only)",
