@@ -18,6 +18,7 @@
 // Threading anything else would add contention and failure modes to a process
 // whose wall time is dominated by a single external build.
 
+use std::fmt::Write as _;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -26,6 +27,7 @@ use std::time::{Duration, Instant};
 use serde::Serialize;
 
 use crate::ai_tools;
+use crate::appimages;
 use crate::disk;
 use crate::git_sync;
 use crate::output::{Level, Out};
@@ -103,6 +105,11 @@ pub struct Options<'a> {
     /// Run each out-of-band AI tool's own updater after the switch
     /// (`ai_tools::TOOLS`); nothing else in a rebuild reaches them.
     pub update_ai_tools: bool,
+    /// Ask Gear Lever which AppImages have updates, after the switch.
+    /// Report-only; off under `--no-appimages`.
+    pub check_appimages: bool,
+    /// Apply those updates too (`--update-appimages`).
+    pub update_appimages: bool,
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
@@ -416,6 +423,13 @@ fn postflight(r: &mut Runner, opts: Options, switched: bool) {
         mcpctl(r, opts.mcp_deploy);
     }
 
+    // Before the Flatpak update starts, so an AppImage download does not
+    // share the link with it. Not gated on `switched`, for the reason given
+    // for the AI tools below.
+    if !opts.skills_only {
+        appimages(r, opts);
+    }
+
     if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
         flatpak_start(r);
     } else if opts.no_flatpak {
@@ -611,6 +625,123 @@ fn update_ai_tools(r: &mut Runner, dry: bool) {
             .stdout(std::io::stderr());
         r.run_timed(tool.step, &mut cmd, ai_tools::TIMEOUT);
     }
+}
+
+/// Report which AppImages have updates, and apply them on request.
+///
+/// Gear Lever does the checking (see `appimages` for why); this step only
+/// asks it, reports, and -- under `--update-appimages` -- runs its updater,
+/// and only when there is something to update, since Gear Lever's own
+/// `--update --all` re-checks every source before it says so.
+///
+/// Never fatal: a missing Gear Lever or a dead link is a reported step, not a
+/// failed rebuild.
+fn appimages(r: &mut Runner, opts: Options) {
+    if !opts.check_appimages {
+        r.record(
+            "appimage-check",
+            Outcome::Skipped,
+            Some("--no-appimages".into()),
+        );
+        return;
+    }
+    if !appimages::gear_lever_installed() {
+        r.record(
+            "appimage-check",
+            Outcome::Skipped,
+            Some(format!(
+                "Gear Lever ({}) not installed; nothing checks AppImages",
+                appimages::GEAR_LEVER
+            )),
+        );
+        return;
+    }
+    let report = match progress::spin(r.out, "checking AppImages for updates", appimages::check) {
+        Ok(rep) => rep,
+        Err(e) => {
+            r.record("appimage-check", Outcome::Failed, Some(e));
+            return;
+        }
+    };
+
+    // Outside Gear Lever, nothing checks a file. One that embeds update
+    // information would be checked once integrated, so it gets the hint; one
+    // without updates itself or not at all, which is worth knowing but not a
+    // warning on every run.
+    for u in &report.unmanaged {
+        match &u.update_info {
+            Some(info) => r.out.say(
+                Level::Warn,
+                &format!(
+                    "{} is not managed by Gear Lever, so its updates ({info}) go unchecked — run: flatpak run {} --integrate '{}'",
+                    appimages::file_name(&u.path),
+                    appimages::GEAR_LEVER,
+                    u.path
+                ),
+            ),
+            None => r.out.say(
+                Level::Info,
+                &format!(
+                    "{} carries no update information; it updates itself or by hand",
+                    appimages::file_name(&u.path)
+                ),
+            ),
+        }
+    }
+
+    let names: Vec<&str> = report.updates.iter().map(|u| u.name.as_str()).collect();
+    let mut detail = format!("{} managed", report.managed);
+    if report.updates.is_empty() {
+        detail.push_str(", all current");
+    } else {
+        let _ = write!(detail, ", {} update(s): {}", names.len(), names.join(", "));
+    }
+    if !report.unmanaged.is_empty() {
+        let _ = write!(detail, "; {} outside Gear Lever", report.unmanaged.len());
+    }
+    r.record("appimage-check", Outcome::Ok, Some(detail));
+
+    if report.updates.is_empty() {
+        return;
+    }
+    if !opts.update_appimages {
+        r.out.say(
+            Level::Warn,
+            &format!(
+                "{} AppImage update(s) available — run: preflight --update-appimages   (or: {})",
+                names.len(),
+                appimages::update_command()
+            ),
+        );
+        return;
+    }
+    if opts.dry {
+        r.record(
+            "appimage-update",
+            Outcome::Skipped,
+            Some(format!(
+                "dry run; would run: {}",
+                appimages::update_command()
+            )),
+        );
+        return;
+    }
+    for u in report.updates.iter().filter(|u| u.running == Some(true)) {
+        r.out.say(
+            Level::Warn,
+            &format!(
+                "{} is running; Gear Lever will skip it — close it and re-run to update",
+                u.name
+            ),
+        );
+    }
+    r.out.say(
+        Level::Info,
+        &format!("running: {}", appimages::update_command()),
+    );
+    let mut cmd = appimages::gear_lever(appimages::UPDATE_ARGS);
+    cmd.stdout(std::io::stderr());
+    r.run_timed("appimage-update", &mut cmd, ai_tools::TIMEOUT);
 }
 
 /// Mirror the working tree into /etc/nixos.

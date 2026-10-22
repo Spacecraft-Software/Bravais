@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# The product is spelled "AppImage", and its doc comments double as clap help
+# text, where backticks would print literally. ".." keeps clippy's defaults.
+doc-valid-idents = ["AppImage", "AppImages", ".."]

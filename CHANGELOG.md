@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`preflight` checks your AppImages for updates.** Every run asks Gear
+  Lever which of the AppImages it manages have a newer release and says
+  so; `preflight --update-appimages` (or `--full-update`) installs them,
+  skipping any app that is running. AppImages in `~/Applications` or
+  `~/AppImages` that Gear Lever does not manage are named, with a hint to
+  integrate the ones that carry update information. `--no-appimages`
+  skips the check; `preflight appimage status` runs it on its own.
 - **The text consoles (tty2 to tty6) use Terminus 24.** NixOS sets no console
   font, so they ran on the kernel's small VGA font. The font is also
   re-applied as each console's login prompt starts: under a quiet boot the

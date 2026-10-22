@@ -106,6 +106,7 @@ path = [
     "**/*.nix",
     "pkgs/*/src/**",
     "pkgs/*/Cargo.toml",
+    "pkgs/*/clippy.toml",
     "pkgs/*/build.rs",
     "pkgs/*/*.patch",
     "scripts/*.sh",
