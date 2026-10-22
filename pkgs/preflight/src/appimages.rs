@@ -92,13 +92,9 @@ pub fn update_command() -> String {
 
 /// Whether Gear Lever is installed (user or system installation).
 pub fn gear_lever_installed() -> bool {
-    Command::new("flatpak")
-        .args(["info", GEAR_LEVER])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
+    let mut cmd = Command::new("flatpak");
+    cmd.args(["info", GEAR_LEVER]).stdin(Stdio::null());
+    output_within(cmd, CHECK_TIMEOUT).is_ok_and(|out| out.status.success())
 }
 
 /// `flatpak run it.mijorus.gearlever <args>`, with a null stdin so that no
