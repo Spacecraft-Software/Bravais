@@ -491,6 +491,7 @@ family name must be read from the package with `fc-scan`, not guessed (the build
 |---------------------|-----------------------|---------|----------------------|
 | Main / UI (sans+serif) | Hack Nerd Font     | MIT     | —                    |
 | Terminal / code (mono) | JetBrainsMono Nerd Font | OFL | CaskaydiaMono Nerd Font |
+| Text consoles (TTY) | Terminus 24 (`ter-v24n`, PSF) | OFL | kernel VGA 8x16 |
 | Icon glyph fallback | Symbols Nerd Font / Symbols Nerd Font Mono | MIT | —          |
 
 **Font packages installed:** `nerd-fonts.hack`, `nerd-fonts.jetbrains-mono`, `nerd-fonts.caskaydia-mono`, `nerd-fonts.symbols-only` (the last is required by Rio for icon glyph fallback).
