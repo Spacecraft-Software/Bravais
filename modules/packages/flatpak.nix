@@ -158,6 +158,10 @@ in
         appId = "io.wavebox.Wavebox";
         origin = "flathub";
       }
+      {
+        appId = "com.slack.Slack";
+        origin = "flathub";
+      }
 
       # ── Phone connectivity ─────────────────────────────────────────────────
       # Both come from the `cosmic` remote, and they are NOT two builds of the
@@ -438,6 +442,7 @@ in
             "com.brave.Browser"
             "com.discordapp.Discord"
             "io.wavebox.Wavebox"
+            "com.slack.Slack"
             "com.visualstudio.code"
             "com.vscodium.codium"
             "io.github.shiftey.Desktop"

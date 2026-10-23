@@ -50,7 +50,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`keyring.nix`**: Expose `steelbore.keyring.chromiumFlag` (`--password-store=gnome-libsecret`)
 - [✓] **`editors.nix`**: Wrap Cursor / Kiro / Antigravity Desktop + IDE with the Chromium keyring flag
 - [✓] **`ai.nix`**: Pass the Chromium keyring flag to Claude / OpenCode / Goose / Codex / Grok Bot desktop (`extraFlags` override)
-- [✓] **`flatpak.nix`**: Sandbox-scoped `XDG_CURRENT_DESKTOP=GNOME` override for Chromium-family Flatpaks (Opera, Chrome, Edge, Brave, Discord, Wavebox, VS Code, GitHub Desktop)
+- [✓] **`flatpak.nix`**: Sandbox-scoped `XDG_CURRENT_DESKTOP=GNOME` override for Chromium-family Flatpaks (Opera, Chrome, Edge, Brave, Discord, Wavebox, Slack, VS Code, GitHub Desktop)
 - [✓] **`dns.nix`**: Enable `systemd-resolved` with DNS-over-TLS and DNSSEC enforced
 - [✓] **`dns.nix`**: Cloudflare malware-block primary (`1.1.1.2` / `1.0.0.2` + v6, SNI `security.cloudflare-dns.com`)
 - [✓] **`dns.nix`**: Plain Cloudflare fallback (`1.1.1.1` / `1.0.0.1` + v6, SNI `cloudflare-dns.com`)
@@ -316,7 +316,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install file managers (yazi, broot, superfile, spacedrive, fclones, kondo, pipe-rename, ouch)
 - [✓] Install disk tools (gptman, parted, tparted, gparted)
 - [✓] Install monitoring (bottom, kmon, macchina, bandwhich, mission-center, htop, btop, gotop, fastfetch, i7z, hw-probe)
-- [✓] Install text processing (jaq, jq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell)
+- [✓] Install text processing (jaq, teip, htmlq, skim, tealdeer, mdcat, difftastic, texinfo, pandoc, reuse, hunspell)
 - [✓] Install Rust shells (nushell, brush, ion, starship, atuin, carapace, pipr, moor, powershell)
 - [✓] Install multiplexers (zellij, screen)
 - [✓] Install t-rec (terminal recorder)

@@ -642,7 +642,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 - **Tools:** `libsecret` (`secret-tool` — store/lookup/clear round-trip is the "is the bus up?" diagnostic), `seahorse` (GUI manager)
 - **Chromium/Electron backend pinning:** Chromium reads `XDG_CURRENT_DESKTOP` to select a credential backend; under Niri/LeftWM it reads `niri`/`leftwm` → `DE_OTHER` → plaintext fallback ("An OS keyring couldn't be identified…"). Two routes, one cause:
   - **Nix-installed** (Cursor, Kiro, VSCodium, Antigravity Desktop + IDE): wrapped with the read-only option `steelbore.keyring.chromiumFlag` = `--password-store=gnome-libsecret` (`modules/packages/editors.nix`) — the single place that flag is spelled
-  - **Flatpak** (Chrome, Edge, Opera, Brave, Discord, Wavebox, VS Code, VSCodium, GitHub Desktop): rather than the imperative per-app flags file under `~/.var/app/`, `services.flatpak.overrides.settings.<app>.Environment.XDG_CURRENT_DESKTOP = "GNOME"` — declarative and scoped to the sandbox, so host portal-backend selection is untouched (`modules/packages/flatpak.nix`)
+  - **Flatpak** (Chrome, Edge, Opera, Brave, Discord, Wavebox, Slack, VS Code, VSCodium, GitHub Desktop): rather than the imperative per-app flags file under `~/.var/app/`, `services.flatpak.overrides.settings.<app>.Environment.XDG_CURRENT_DESKTOP = "GNOME"` — declarative and scoped to the sandbox, so host portal-backend selection is untouched (`modules/packages/flatpak.nix`)
 
 ### 5.7 DNS (`modules/core/dns.nix`)
 
@@ -1650,7 +1650,7 @@ their own modules.
 - **Disk Management:** gptman (Rust), parted, tparted (TUI), gparted (GUI)
 - **System Monitoring:** bottom (Rust), kmon (Rust), macchina (Rust), bandwhich
   (Rust), mission-center (Rust), htop, btop, gotop, fastfetch, i7z, hw-probe
-- **Text Processing:** jaq (Rust), jq (C — kept for scripts pinned to its exact semantics),
+- **Text Processing:** jaq (Rust; `jq` is Pathfinder, user-level — §11.9 table),
   teip (Rust), htmlq (Rust), skim (Rust), tealdeer (Rust), mdcat (Rust), difftastic (Rust),
   texinfo (C), pandoc (Haskell), reuse (Python — SPDX/REUSE checker), hunspell
   (+ `hunspellDicts.en_US`)
@@ -1701,7 +1701,7 @@ each must be Nix-provided (CONSTRAINTS.md #23).
 | `bravais-mcp` | in-tree crate `bravais-mcp/`, packaged at `pkgs/bravais-mcp/` | `ai.nix` (system) | First-party Rust MCP server; main program `bravais-cli`. GPL-3.0-or-later. |
 | `crates-mcp` | third-party crate, `pkgs/crates-mcp/` (version + hash pinned) | `home.nix` (user) | crates.io / docs.rs lookups; `cargoHash` must be regenerated on every bump. |
 | `engram` | `engram` flake input (first-party) | `home.nix` (user) | Shared chat memory; needs an explicit `--db` (CONSTRAINTS.md #23). User-scoped because its state lives in `$HOME`. |
-| `pathfinder-jq` | `pathfinder` flake input (first-party) | `home.nix` (user) | Provides `jq` for mj. Deliberately shadows the system reference jq (per-user profile precedes the system one on `PATH`); root and full-path callers keep jq 1.8.2. |
+| `pathfinder-jq` | `pathfinder` flake input (first-party) | `home.nix` (user) | Provides `jq` for mj, and is the only `jq` installed: the C jq was dropped from `system.nix`, so root and services use jaq. Ships no `jaq` command, so jaq stays a system package. |
 | `mcpctl` | `mcp-servers` flake input (first-party) | `home.nix` (user) | Renders and deploys each MCP host's config; user-scoped because it writes into `$HOME`. |
 | `vacuum` | `vacuum` flake input (first-party) | `home.nix` (user) | Disk-space recovery CLI + TUI; config HM-managed (`users/mj/apps.nix`); its own NixOS module deliberately unused. |
 | `obscura` | built from source, `pkgs/obscura/` | `ai.nix` (system) | Also an MCP server (`obscura mcp`); see below. |
@@ -1753,20 +1753,20 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
   generous restart budget, because multi-GB runtime pulls routinely trip libostree's curl
   timeouts and systemd's default start limit would give up after one retry.
 - **Keyring override:** the Chromium-based Flatpaks (Chrome, Edge, Opera, Brave, Discord,
-  Wavebox, VS Code, VSCodium, GitHub Desktop) get `XDG_CURRENT_DESKTOP=GNOME` inside the
+  Wavebox, Slack, VS Code, VSCodium, GitHub Desktop) get `XDG_CURRENT_DESKTOP=GNOME` inside the
   sandbox only, so Chromium uses the Secret Service instead of plaintext under niri/LeftWM.
 
 > VS Code and VSCodium share one declarative user-level override (HM `xdg.dataFile` in
 > `users/mj/apps.nix`) that keeps `/app/bin:/usr/bin` first on PATH so each entrypoint
 > resolves inside the sandbox.
 
-**Packages (49 declared — 36 by app ID, 13 Artcraft bundles; parked entries are commented out and not installed):**
+**Packages (50 declared — 37 by app ID, 13 Artcraft bundles; parked entries are commented out and not installed):**
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
 | COSMIC applets      | io.github.cosmic_utils.cosmic-ext-applet-clipboard-manager, io.github.cosmic_utils.minimon-applet (`cosmic` remote; system-wide to avoid a second, per-user installation that made unqualified `flatpak` commands ambiguous) |
 | Browsers            | com.google.Chrome, com.microsoft.Edge, com.opera.Opera, com.brave.Browser (Zen and LibreWolf parked; Firefox is nixpkgs) |
-| Communication       | com.discordapp.Discord, im.riot.Riot (Element), io.wavebox.Wavebox |
+| Communication       | com.discordapp.Discord, im.riot.Riot (Element), io.wavebox.Wavebox, com.slack.Slack |
 | Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (a second daemon overlapping `kdePackages.kdeconnect-kde` — if they fight, drop this, never the host daemon). Both `cosmic` remote; neither pairs until 1714-1764/tcp+udp are opened, which nothing here does yet |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client) |
 | Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — nixpkgs, §11.4) |

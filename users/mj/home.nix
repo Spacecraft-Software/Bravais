@@ -257,13 +257,10 @@
       # Pathfinder translates, polyfills, and exec()s jaq — one execve, no
       # wrapper — with jaq pinned by store path at build time.
       #
-      # Deliberately shadows the reference jq in modules/packages/system.nix:
-      # /etc/profiles/per-user/mj/bin precedes /run/current-system/sw/bin on
-      # PATH. That jq (1.8.2) stays installed for root, system services, and any
-      # script that calls /run/current-system/sw/bin/jq by full path.
-      # Pathfinder reports `jq-1.8.1`, its compatibility baseline.
-      #
-      # Opt out per call:  /run/current-system/sw/bin/jq …
+      # The only `jq` on the system: the C reference jq was dropped from
+      # modules/packages/system.nix, so root and system services have no `jq`
+      # (they use jaq). Pathfinder reports `jq-1.8.1`, its compatibility
+      # baseline. It provides no `jaq` command; jaq stays a system package.
       pathfinder.packages.${pkgs.stdenv.hostPlatform.system}.pathfinder-jq
 
       # `crates-mcp` — the `crates` MCP server (crates.io / docs.rs lookups),
