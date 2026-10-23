@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Slack is installed as a Flatpak** (`com.slack.Slack`, from Flathub). Like
+  the other Electron Flatpaks it is told it runs under GNOME inside its
+  sandbox, so it keeps its sign-in in the keyring under Niri and LeftWM.
 - **`preflight` checks your AppImages for updates.** Every run asks Gear
   Lever which of the AppImages it manages have a newer release and says
   so; `preflight --update-appimages` (or `--full-update`) installs them,
@@ -135,6 +138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The C `jq` is no longer installed.** `jq` is Pathfinder, the
+  jq-compatible shim over jaq that was already answering `jq` for you, so
+  root and system services now have no `jq` and use jaq. jaq stays:
+  Pathfinder runs its own pinned copy and provides no `jaq` command.
 - **`construct` bumped** to bring in the `spacecraft-coding-orchestrator`
   skill, the procedure for Claude Code to plan and review while the
   OpenCode Go delegates write the code. It loads only when asked for by
