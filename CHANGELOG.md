@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   same commit. Nothing is pushed: the run prints the `git push` command.
   On a PR branch, under `--dry`, or when the switch fails, the bumps are
   left uncommitted as before. `--no-commit` turns it off.
+- **Plain `preflight` no longer needs any git first.** Uncommitted edits to
+  files that the update also changes (a vendored pin bumped locally and on
+  `main`, say) no longer stop the run: an edit identical to the incoming one
+  is dropped, any other is stashed and reapplied after the move, and one that
+  clashes stays in `git stash` while the incoming version is built. A local
+  branch already merged into `main` returns to `main` like a deleted one.
 
 - **Slack is installed as a Flatpak** (`com.slack.Slack`, from Flathub). Like
   the other Electron Flatpaks it is told it runs under GNOME inside its
