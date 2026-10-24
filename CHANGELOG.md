@@ -276,6 +276,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Chrome Remote Desktop builds again on Google's newest release.** The
+  new .deb moved the X-server code out of the `chrome-remote-desktop`
+  script into a `shared_lib.py` beside it, so the store-path substitutions
+  no longer matched and the vendored-package update failed the build. They
+  now patch the file each string lives in, including the new
+  `/usr/lib/xorg/Xorg` lookup and the new `desktop-session` entry point
+  (`pkgs/chrome-remote-desktop/package.nix`).
+
 - **Super+Enter opens Alacritty on GNOME with a tiling extension enabled.**
   O-tiling binds Super+Return (and Super+F for toggle floating) itself and
   its grab wins; Forge does the same with Super+Return, Super+V,
