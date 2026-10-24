@@ -15,9 +15,12 @@
 //   1. Uncommitted changes to tracked files are carried along, the way
 //      `git switch` and `git merge --ff-only` carry them, and named in a
 //      warning. Refusing on them was the first design and it refused the
-//      very next run on the ThinkPad: preflight's own updaters leave
-//      `flake.lock` and the vendored pins modified, so a dirty tree is the
-//      normal state between a rebuild and the commit that records its bumps.
+//      very next run on the ThinkPad: preflight's own updaters left
+//      `flake.lock` and the vendored pins modified, so a dirty tree was the
+//      normal state between a rebuild and the commit that recorded its bumps.
+//      Since 2026-10-24 the run commits them itself (`deps_commit`), but a
+//      run on a PR branch, under `--no-commit`, or whose switch failed still
+//      leaves them behind.
 //      What is refused is a change git cannot carry -- one the incoming
 //      commits also touch -- since moving would overwrite it (`DIRTY_TREE`).
 //      The one exception is `flake.lock` when a flake update follows: that
@@ -173,13 +176,13 @@ pub fn parse_branch(s: &str) -> Result<String, String> {
 
 /// Run git and capture its trimmed stdout; `None` if it fails to run or exits
 /// non-zero.
-fn git(dir: &str, args: &[&str]) -> Option<String> {
+pub(crate) fn git(dir: &str, args: &[&str]) -> Option<String> {
     git_raw(dir, args).map(|s| s.trim().to_owned())
 }
 
 /// [`git`] without the trim. Porcelain status needs this: its first column is
 /// a space for an unstaged change, and trimming it shifts the path by one.
-fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
+pub(crate) fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
     Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -192,7 +195,7 @@ fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
 
 /// Run git with its output shown. Its stdout goes to OUR stderr, as with
 /// every other child here, so `--json` keeps exactly one payload on stdout.
-fn git_shown(dir: &str, args: &[&str]) -> bool {
+pub(crate) fn git_shown(dir: &str, args: &[&str]) -> bool {
     Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -203,7 +206,7 @@ fn git_shown(dir: &str, args: &[&str]) -> bool {
 }
 
 /// Whether `rev` names an existing object (`git rev-parse --verify`).
-fn exists(dir: &str, rev: &str) -> bool {
+pub(crate) fn exists(dir: &str, rev: &str) -> bool {
     git(dir, &["rev-parse", "--verify", "--quiet", rev]).is_some()
 }
 
@@ -311,6 +314,21 @@ impl Plan {
     }
 }
 
+/// origin's default branch (`origin/HEAD`), or `main` when that ref is unset.
+pub(crate) fn default_branch(dir: &str) -> String {
+    git(
+        dir,
+        &[
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "refs/remotes/origin/HEAD",
+        ],
+    )
+    .and_then(|r| r.strip_prefix("origin/").map(ToOwned::to_owned))
+    .unwrap_or_else(|| "main".to_owned())
+}
+
 /// Fetch, then decide the branch and the ref to move it to.
 fn plan(req: Request) -> Result<Plan, Refusal> {
     let dir = req.dir;
@@ -323,17 +341,7 @@ fn plan(req: Request) -> Result<Plan, Refusal> {
     }
 
     let current = git(dir, &["symbolic-ref", "--quiet", "--short", "HEAD"]);
-    let default = git(
-        dir,
-        &[
-            "symbolic-ref",
-            "--quiet",
-            "--short",
-            "refs/remotes/origin/HEAD",
-        ],
-    )
-    .and_then(|r| r.strip_prefix("origin/").map(ToOwned::to_owned))
-    .unwrap_or_else(|| "main".to_owned());
+    let default = default_branch(dir);
     let upstream = current.as_deref().map_or(Upstream::Unset, |c| {
         if git(dir, &["config", "--get", &format!("branch.{c}.merge")]).is_none() {
             Upstream::Unset

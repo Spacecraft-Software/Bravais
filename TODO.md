@@ -773,6 +773,15 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       bumps; dirty trees are now carried, not refused
 - [ ] Second live run with uncommitted pins carried
 
+## Deps commit (2026-10-24)
+
+- [✓] After a successful switch on `main`, `preflight` commits the paths it
+      bumped (`flake.lock`, vendored pins, `.github/skills/` when `construct`
+      moved) on a new local `chore/deps-bump-<date>` branch with a plain,
+      signed `git commit`, switches back and never pushes; `--no-commit`
+      opts out (`pkgs/preflight/src/deps_commit.rs`, constraint #53)
+- [ ] First live run: confirm the SSH-signed commit and the switch back
+
 ## AppImage updates (2026-10-21)
 
 - [✓] Every `preflight` run asks Gear Lever which AppImages have updates;

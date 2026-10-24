@@ -28,6 +28,7 @@ use serde::Serialize;
 
 use crate::ai_tools;
 use crate::appimages;
+use crate::deps_commit;
 use crate::disk;
 use crate::git_sync;
 use crate::output::{Level, Out};
@@ -110,6 +111,9 @@ pub struct Options<'a> {
     pub check_appimages: bool,
     /// Apply those updates too (`--update-appimages`).
     pub update_appimages: bool,
+    /// Leave the bumps uncommitted instead of committing them on a
+    /// `chore/deps-bump-<date>` branch (`deps_commit`).
+    pub no_commit: bool,
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
@@ -133,6 +137,8 @@ struct Runner {
     steps: Vec<StepReport>,
     /// The detached Flatpak update, once started, and its log.
     flatpak: Option<(Child, PathBuf)>,
+    /// What this run bumped, for the deps commit.
+    bumps: deps_commit::Bumps,
 }
 
 impl Runner {
@@ -237,6 +243,7 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
         out,
         steps: Vec::new(),
         flatpak: None,
+        bumps: deps_commit::Bumps::default(),
     };
 
     sync_checkout(&mut r, opts)?;
@@ -259,7 +266,9 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
         if opts.skills_only {
             cmd.arg(SKILLS_INPUT);
         }
-        r.run("flake-update", &mut cmd);
+        if r.run("flake-update", &mut cmd) {
+            r.bumps.lock = deps_commit::changed(FLAKE_DIR, git_sync::LOCK);
+        }
         if !opts.skills_only {
             antigravity_probe(&mut r);
         }
@@ -423,6 +432,10 @@ fn postflight(r: &mut Runner, opts: Options, switched: bool) {
         mcpctl(r, opts.mcp_deploy);
     }
 
+    // After the mirror, which has to copy the tree that was built: the
+    // commit switches the checkout back to a tree without the bumps.
+    commit_bumps(r, opts, switched);
+
     // Before the Flatpak update starts, so an AppImage download does not
     // share the link with it. Not gated on `switched`, for the reason given
     // for the AI tools below.
@@ -444,6 +457,72 @@ fn postflight(r: &mut Runner, opts: Options, switched: bool) {
     // so a failed switch is no reason to leave them stale.
     if opts.update_ai_tools {
         update_ai_tools(r, opts.dry);
+    }
+}
+
+/// Commit what the run bumped on a `chore/deps-bump-<date>` branch.
+///
+/// `deps_commit` has the policy; this decides whether it applies. Every way
+/// out names the paths, so a bump left uncommitted is never silent.
+fn commit_bumps(r: &mut Runner, opts: Options, switched: bool) {
+    if r.bumps.is_empty() {
+        r.record(
+            "deps-commit",
+            Outcome::Skipped,
+            Some("nothing bumped".into()),
+        );
+        return;
+    }
+    let paths = r.bumps.paths();
+    let why = if opts.no_commit {
+        Err("--no-commit".to_owned())
+    } else if opts.dry {
+        Err("dry run".to_owned())
+    } else if switched {
+        deps_commit::base(FLAKE_DIR)
+    } else {
+        Err("the switch failed".to_owned())
+    };
+    let base = match why {
+        Ok(b) => b,
+        Err(why) => {
+            let detail = format!("{why}; left uncommitted: {}", paths.join(", "));
+            // Skipped steps print only under --verbose; a skip nobody asked
+            // for must still be seen.
+            if !(opts.no_commit || opts.dry) {
+                r.out.say(Level::Warn, &format!("deps-commit: {detail}"));
+            }
+            r.record("deps-commit", Outcome::Skipped, Some(detail));
+            return;
+        }
+    };
+
+    // CI's Skills Drift check fails a lock that moves `construct` without
+    // the copy of its skills that `.github/skills/` carries.
+    if r.bumps.lock && deps_commit::construct_moved(FLAKE_DIR) {
+        let mut cmd = Command::new("nu");
+        cmd.arg("pkgs/sync-skills.nu")
+            .current_dir(FLAKE_DIR)
+            .stdout(std::io::stderr());
+        if r.run("sync-skills", &mut cmd) {
+            r.bumps.skills = deps_commit::changed(FLAKE_DIR, deps_commit::SKILLS_DIR);
+        }
+    }
+
+    let date = jiff::Zoned::now().strftime("%Y-%m-%d").to_string();
+    match deps_commit::commit(FLAKE_DIR, &base, &r.bumps, &date) {
+        Ok(c) => r.record(
+            "deps-commit",
+            Outcome::Ok,
+            Some(format!(
+                "{} on {} ({}); {base} is back without them. Not pushed: git -C {FLAKE_DIR} push -u origin {}",
+                c.commit,
+                c.branch,
+                r.bumps.paths().join(", "),
+                c.branch
+            )),
+        ),
+        Err(e) => r.record("deps-commit", Outcome::Failed, Some(e)),
     }
 }
 
@@ -562,6 +641,7 @@ fn update_vendored(r: &mut Runner, dry: bool) {
         format!("changed: {}", bumped.join(", "))
     };
     r.record("vendored-pins", Outcome::Ok, Some(detail));
+    r.bumps.vendored = bumped;
 }
 
 /// Paths under [`VENDORED_PATHS`] that differ from `HEAD`. Empty if `git` is
