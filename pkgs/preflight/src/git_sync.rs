@@ -309,13 +309,13 @@ fn dirty_refusal(dir: &str, carried: &[String]) -> Refusal {
 /// plain `preflight` has to work whatever the last run left behind (the case
 /// that bit: a vendored pin bump left in the tree that arrived on `main` too).
 ///
-/// - Identical to the incoming version: dropped; the move brings it.
-/// - Different: stashed, the move made, then reapplied. If the reapply
-///   conflicts the incoming version stands, and the edits stay in the stash
-///   (named in the report), so nothing is ever lost and nothing aborts.
+/// The edits are stashed, the move made, and the stash reapplied. An edit
+/// identical to the incoming file reapplies as a no-op; one that clashes
+/// leaves the incoming version in place and stays in the stash, named in the
+/// report. A refused move pops the stash back, so nothing is ever lost and
+/// nothing aborts.
 #[derive(Debug, Default)]
 struct Clash {
-    dropped: Vec<String>,
     stashed: Vec<String>,
 }
 
@@ -335,25 +335,13 @@ impl Clash {
         ) {
             incoming = format!("{incoming}\n{local}");
         }
-        let mut c = Self::default();
-        for path in carried
-            .iter()
-            .filter(|p| incoming.lines().any(|l| l == p.as_str()))
-        {
-            let same = git_raw(dir, &["show", &format!("{}:{path}", plan.target)])
-                .zip(std::fs::read_to_string(std::path::Path::new(dir).join(path)).ok())
-                .is_some_and(|(a, b)| a == b);
-            if same {
-                c.dropped.push(path.clone());
-            } else {
-                c.stashed.push(path.clone());
-            }
-        }
-        if !c.dropped.is_empty() {
-            let mut args = vec!["restore", "--staged", "--worktree", "--"];
-            args.extend(c.dropped.iter().map(String::as_str));
-            git_shown(dir, &args);
-        }
+        let mut c = Self {
+            stashed: carried
+                .iter()
+                .filter(|p| incoming.lines().any(|l| l == p.as_str()))
+                .cloned()
+                .collect(),
+        };
         if !c.stashed.is_empty() {
             let mut args = vec![
                 "stash",
@@ -378,32 +366,21 @@ impl Clash {
         }
     }
 
-    /// After the move: report what was dropped and reapply what was stashed.
+    /// After the move: reapply what was stashed.
     fn reapply(&self, dir: &str) -> Vec<String> {
-        let mut notes = Vec::new();
-        if !self.dropped.is_empty() {
-            notes.push(format!(
-                "dropped local edits identical to the incoming ones: {}",
-                self.dropped.join(", ")
-            ));
+        if self.stashed.is_empty() {
+            return Vec::new();
         }
-        if !self.stashed.is_empty() {
-            if git_shown(dir, &["stash", "pop", "--quiet"]) {
-                notes.push(format!(
-                    "reapplied your edits to {}",
-                    self.stashed.join(", ")
-                ));
-            } else {
-                let mut args = vec!["restore", "--source=HEAD", "--staged", "--worktree", "--"];
-                args.extend(self.stashed.iter().map(String::as_str));
-                git_shown(dir, &args);
-                notes.push(format!(
-                    "your edits to {} clash with the incoming ones and stay in `git stash` (git -C {dir} stash show -p)",
-                    self.stashed.join(", ")
-                ));
-            }
+        let files = self.stashed.join(", ");
+        if git_shown(dir, &["stash", "pop", "--quiet"]) {
+            return vec![format!("reapplied your edits to {files}")];
         }
-        notes
+        let mut args = vec!["restore", "--source=HEAD", "--staged", "--worktree", "--"];
+        args.extend(self.stashed.iter().map(String::as_str));
+        git_shown(dir, &args);
+        vec![format!(
+            "your edits to {files} clash with the incoming ones and stay in `git stash` (git -C {dir} stash show -p)"
+        )]
     }
 }
 
@@ -871,19 +848,34 @@ mod tests {
         }
 
         #[test]
-        fn an_edit_identical_to_the_incoming_one_is_dropped() {
+        fn an_edit_identical_to_the_incoming_one_leaves_a_clean_tree() {
             let Some(lab) = Lab::new("same") else { return };
             lab.commit("seed", "flake.nix", "nix 2");
             lab.git("seed", &["push", "--quiet"]);
             lab.write("work", "flake.nix", "nix 2");
             let got = sync(lab.request());
-            assert!(
-                got.as_ref()
-                    .is_ok_and(|l| l.line.contains("dropped local edits")),
-                "{got:?}"
-            );
+            assert!(got.is_ok(), "{got:?}");
             assert_eq!(lab.git("work", &["status", "--porcelain"]), "");
             assert_eq!(lab.git("work", &["stash", "list"]), "");
+        }
+
+        #[test]
+        fn a_refused_move_gives_the_edits_back() {
+            let Some(lab) = Lab::new("refused") else {
+                return;
+            };
+            lab.commit("seed", "flake.nix", "nix 2");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.commit("work", "other.nix", "local");
+            lab.write("work", "flake.nix", "nix 2");
+            let got = sync(lab.request());
+            assert!(got.is_err_and(|r| r.code == "NOT_FAST_FORWARD"));
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("nix 2")
+            );
         }
 
         #[test]

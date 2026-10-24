@@ -266,8 +266,11 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
         if opts.skills_only {
             cmd.arg(SKILLS_INPUT);
         }
+        // A lock that was already modified is somebody's change (or an
+        // earlier run's uncommitted bump), not this run's.
+        let lock_was_dirty = deps_commit::changed(FLAKE_DIR, git_sync::LOCK);
         if r.run("flake-update", &mut cmd) {
-            r.bumps.lock = deps_commit::changed(FLAKE_DIR, git_sync::LOCK);
+            r.bumps.lock = !lock_was_dirty && deps_commit::changed(FLAKE_DIR, git_sync::LOCK);
         }
         if !opts.skills_only {
             antigravity_probe(&mut r);
@@ -504,8 +507,18 @@ fn commit_bumps(r: &mut Runner, opts: Options, switched: bool) {
         cmd.arg("pkgs/sync-skills.nu")
             .current_dir(FLAKE_DIR)
             .stdout(std::io::stderr());
+        // Without the re-synced skills the lock bump would fail CI's Skills
+        // Drift check, so a failure leaves everything uncommitted.
         if r.run("sync-skills", &mut cmd) {
             r.bumps.skills = deps_commit::changed(FLAKE_DIR, deps_commit::SKILLS_DIR);
+        } else {
+            let detail = format!(
+                "pkgs/sync-skills.nu failed; left uncommitted: {}",
+                paths.join(", ")
+            );
+            r.out.say(Level::Warn, &format!("deps-commit: {detail}"));
+            r.record("deps-commit", Outcome::Skipped, Some(detail));
+            return;
         }
     }
 
