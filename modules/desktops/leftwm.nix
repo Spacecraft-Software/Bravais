@@ -644,17 +644,18 @@
               (box :orientation "h" :spacing 16 :space-evenly false :halign "end" :class "metrics"
                 ;; Keyboard language — leftmost in the metrics group. Text
                 ;; from `lang`, color from `lang_state` (en=steel blue,
-                ;; ar=molten amber). Clickable — matches the Ctrl+Space toggle.
-                (button :onclick "xkb-switch -n"
+                ;; ar=molten amber). Right click cycles — matches the Ctrl+Space toggle.
+                (button :onrightclick "xkb-switch -n"
                   (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
                 ;; Caffeine — glyph from `caf`,
-                ;; color from caf_state (on=green, off=red). Clickable toggles.
-                (button :onclick "steelbore-caffeine"
+                ;; color from caf_state (on=green, off=red). Right click toggles.
+                (button :onrightclick "steelbore-caffeine"
                   (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
                 ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
-                ;; off=red, on=dim steel blue, connected=green). Clickable
-                ;; toggles radio state, same as the XF86Bluetooth key.
-                (button :onclick "steelbore-bt-toggle"
+                ;; off=red, on=dim steel blue, connected=green). Left click
+                ;; opens bluetui; right click toggles the radio, like the
+                ;; XF86Bluetooth key.
+                (button :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
                   (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
                 ;; Network — glyph from `net`, color from net_state. Clickable
                 ;; opens NetworkManager TUI for connection management.
@@ -680,14 +681,17 @@
                   ;; Volume and microphone — green while live, red while muted. The glyph
                   ;; changes with the state too (volume_off / microphone_off), so muted
                   ;; reads correctly without relying on color alone.
-                  (box :orientation "h" :spacing 3 :space-evenly false
-                    (label :class {beacon.muted ? "ind-muted" : "ind-live"}
-                           :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
-                    (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%"))
-                  (box :orientation "h" :spacing 3 :space-evenly false
-                    (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
-                           :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
-                    (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"} :text "''${beacon.mic}%"))
+                  ;; Left click opens wiremix; right click toggles mute.
+                  (button :onclick "alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+                    (box :orientation "h" :spacing 3 :space-evenly false
+                      (label :class {beacon.muted ? "ind-muted" : "ind-live"}
+                             :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
+                      (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%")))
+                  (button :onclick "alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+                    (box :orientation "h" :spacing 3 :space-evenly false
+                      (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
+                             :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
+                      (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"} :text "''${beacon.mic}%")))
                   ;; Display backlight.
                   (box :orientation "h" :spacing 3 :space-evenly false
                     (label :class "ind-bright" :text ico-bright)
@@ -700,8 +704,10 @@
                 ;; md-battery's ink sits inside its 600-unit advance (RSB +50),
                 ;; while oct-cpu/fa-memory overflow theirs (RSB -400/-438) into
                 ;; the following space — matches the Niri bar (users/mj/eww.nix).
-                (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%")
-                (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
+                (button :onclick "alacritty -e btm"
+                  (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%"))
+                (button :onclick "alacritty -e btm"
+                  (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%"))
                 (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%")
                 ;; System tray — SNI/D-Bus protocol. Works natively on X11
                 ;; (LeftWM); known issues on Wayland (not used here).

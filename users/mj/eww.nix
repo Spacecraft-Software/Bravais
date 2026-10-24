@@ -140,19 +140,33 @@ in
           (label :class "title" :halign "start" :text ${titleYuck})
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 8 :space-evenly false :halign "end" :class "metrics"
+            ;; System tray. eww's `systray` is its own StatusNotifierItem
+            ;; host *and* watcher (Rust, no extra daemon), so Bitwarden,
+            ;; Claude Desktop and every other SNI app lands here under Niri
+            ;; and Margo, which have no panel of their own. Leftmost so
+            ;; icons appearing or leaving never shift the indicators.
+            (systray :class "tray" :icon-size 16 :spacing 4 :space-evenly false :prepend-new true)
             ;; Keyboard language — leftmost in the metrics group. Text from
             ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
-            (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
+            ;; Right click cycles the layout, like Mod+Space: niri if it is
+            ;; the compositor, otherwise Margo's dispatcher.
+            (eventbox :onrightclick "sh -c 'niri msg action switch-layout next 2>/dev/null || mctl dispatch cyclekblayout'"
+              (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
             ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
-            ;; off=red, on=dim steel blue, connected=green). Click handling
-            ;; not wired; XF86Bluetooth key still toggles the radio.
-            (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt)
+            ;; off=red, on=dim steel blue, connected=green). Left click
+            ;; opens bluetui; right click toggles the radio, like the
+            ;; XF86Bluetooth key.
+            (eventbox :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+              (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
             ;; Mod+Shift+C → steelbore-caffeine.
-            (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf)
+            (eventbox :onrightclick "steelbore-caffeine"
+              (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
-            (label :class {net_state == "down" ? "net-down" : "net-up"} :text net)
+            ;; Click opens nmtui.
+            (eventbox :onclick "alacritty -e nmtui"
+              (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
             ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
             ;; box, not one interpolated string, because these glyphs disagree about
             ;; their own metrics: volume_high overflows its 600-unit advance by 150
@@ -173,14 +187,18 @@ in
               ;; Volume and microphone — green while live, red while muted. The glyph
               ;; changes with the state too (volume_off / microphone_off), so muted
               ;; reads correctly without relying on color alone.
-              (box :orientation "h" :spacing 3 :space-evenly false
-                (label :class {beacon.muted ? "ind-muted" : "ind-live"}
-                       :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
-                (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%"))
-              (box :orientation "h" :spacing 3 :space-evenly false
-                (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
-                       :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
-                (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"} :text "''${beacon.mic}%"))
+              ;; Left click opens wiremix; right click toggles mute (the
+              ;; XF86Audio keys' action), and the glyph flips with it.
+              (eventbox :onclick "alacritty -e wiremix" :onrightclick "swayosd-client --output-volume mute-toggle"
+                (box :orientation "h" :spacing 3 :space-evenly false
+                  (label :class {beacon.muted ? "ind-muted" : "ind-live"}
+                         :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
+                  (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%")))
+              (eventbox :onclick "alacritty -e wiremix" :onrightclick "sh -c 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && swayosd-client --input-volume mute-toggle'"
+                (box :orientation "h" :spacing 3 :space-evenly false
+                  (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
+                         :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
+                  (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"} :text "''${beacon.mic}%")))
               ;; Display backlight.
               (box :orientation "h" :spacing 3 :space-evenly false
                 (label :class "ind-bright" :text ico-bright)
@@ -197,8 +215,11 @@ in
             ;; "metric-group-start" adds a bit of breathing room ahead of the
             ;; cpu/ram/battery trio, setting it visually apart from the
             ;; radio/caffeine cluster (lang/bt/caf/net) to its left.
-            (label :class {"metric-group-start " + (cpu >= 90 ? "metric-crit" : cpu >= 75 ? "metric-warn" : "metric")} :text "''${cpu-icon} ''${cpu}%")
-            (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%")
+            ;; CPU and RAM open bottom on click.
+            (eventbox :class "metric-group-start" :onclick "alacritty -e btm"
+              (label :class {cpu >= 90 ? "metric-crit" : cpu >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%"))
+            (eventbox :onclick "alacritty -e btm"
+              (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%"))
             (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%"))))
 
       (defwindow bar
@@ -275,6 +296,8 @@ in
       // Separates the beacon cluster from the radio/network icons on its
       // left; the cpu label's own margin handles the right-hand side.
       .beacon-group { margin-left: 10px; }
+
+      .tray { padding: 0 4px; }
 
       .lang-en { color: $accent; }
       .lang-ar { color: $foreground; }
