@@ -849,3 +849,17 @@ are not counted here.
 ---
 
 *Last updated: 2026-04-20*
+
+---
+
+## Planned: Full-Disk Encryption (PRD §16.8)
+
+Not started; the conversion path (disko reinstall or in-place) is still undecided.
+
+- [ ] L-001 Choose the conversion path: disko reinstall (recommended) or in-place reencrypt
+- [ ] L-002 Back up `/home` (155G) and `/var/lib` state before any disk change
+- [ ] L-003 Add a default-off `steelbore.boot.luks` option: `boot.initrd.luks.devices.cryptroot` with `allowDiscards` and `bypassWorkqueues`, and `fileSystems."/"` pointed at `/dev/mapper/cryptroot`
+- [ ] L-004 Disable `boot.initrd.systemd.tpm2` for passphrase-only unlock, and re-measure the initrd against constraint #43
+- [ ] L-005 Convert or reinstall the root, then enable the option on conversion day
+- [ ] L-006 Verify unlock through the Fairing splash, and that greetd starts after unlock
+- [ ] L-007 Later: TPM2 enrolment (`systemd-cryptenroll --tpm2-pcrs=7`) together with lanzaboote Secure Boot, with a recovery key kept

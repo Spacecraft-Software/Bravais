@@ -2219,6 +2219,19 @@ the project procedures; `README.md`, `CONTRIBUTING.md` and `NOTICE.md` face user
 
 ---
 
+### 16.8 Planned: Full-Disk Encryption (LUKS)
+
+**Status:** Planned, not started. No decision yet on the conversion path.
+
+The root filesystem on the reference machine is a single unencrypted ext4 partition (`nvme0n1p5`, holding `/`, `/home` and `/nix`), and the ESP is 196 MiB. The plan is to encrypt the root with LUKS2 and unlock it at boot.
+
+- **Paths.** Either reinstall with disko (back up `/home` and `/var/lib`, then repartition with a 1 GiB ESP and LUKS2 over ext4), or convert in place with `resize2fs` and `cryptsetup reencrypt`. Both need a full backup first.
+- **Boot budget.** Constraint #43 caps the initrd at about 49 MiB. Measured: 47.4 MiB today, 47.6 MiB with LUKS, 44.8 MiB with LUKS and the TPM2 stack disabled.
+- **Unlock.** Passphrase only for now. The Fairing in-splash prompt handles it on this machine's US keymap. TPM2 enrolment is deferred until Secure Boot (lanzaboote) is in place, because PCR 7 alone is weak with Secure Boot off.
+- **Gating.** The NixOS change lands behind a default-off option, since existing boot entries stop working once the root is encrypted.
+
+Detailed analysis: `/mnt/project-files/bravais-luks-plan.md` (thread attachment).
+
 ## 17. Verification Plan
 
 ### 17.1 Build Verification
