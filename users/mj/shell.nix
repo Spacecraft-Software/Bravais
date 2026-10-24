@@ -147,6 +147,8 @@ let
     # (their own install dirs are gone), plus gemini and friends.
     ".npm-packages/bin"
     ".opencode/bin"
+    # Gear Lever's AppImages (and the hand-installed ones) run from a terminal
+    "Applications"
   ];
   # Each shell appends a dir only when PATH lacks it. Every nested shell
   # (login mjsh, the session, each terminal's Nushell) runs its init again
@@ -236,6 +238,12 @@ in
     # spawn, see modules/desktops/{niri,leftwm}.nix.
     bash = {
       enable = true;
+      shellAliases = {
+        wifi = "nmtui";
+        audio = "wiremix";
+        mixer = "wiremix";
+        bluetooth = "bluetui";
+      };
       bashrcExtra = ''
         export SSH_AUTH_SOCK="${gitwaySockPosix}"
         for d in ${posixPathAppend}; do
@@ -629,6 +637,11 @@ in
         alias top-processes = bottom
         alias disk-telemetry = yazi
         alias edit = ${termEditor}
+        # TUI managers (Rust: wiremix, bluetui; nmtui ships with NetworkManager)
+        alias wifi = nmtui
+        alias audio = wiremix
+        alias mixer = wiremix
+        alias bluetooth = bluetui
 
         # Project Steelbore Identity
         def steelbore [] {
@@ -1023,6 +1036,10 @@ in
       alias top-processes = bottom
       alias disk-telemetry = yazi
       alias edit = ${termEditor}
+      alias wifi = nmtui
+      alias audio = wiremix
+      alias mixer = wiremix
+      alias bluetooth = bluetui
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════
