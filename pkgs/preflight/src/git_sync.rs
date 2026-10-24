@@ -15,11 +15,16 @@
 //   1. Uncommitted changes to tracked files are carried along, the way
 //      `git switch` and `git merge --ff-only` carry them, and named in a
 //      warning. Refusing on them was the first design and it refused the
-//      very next run on the ThinkPad: preflight's own updaters leave
-//      `flake.lock` and the vendored pins modified, so a dirty tree is the
-//      normal state between a rebuild and the commit that records its bumps.
-//      What is refused is a change git cannot carry -- one the incoming
-//      commits also touch -- since moving would overwrite it (`DIRTY_TREE`).
+//      very next run on the ThinkPad: preflight's own updaters left
+//      `flake.lock` and the vendored pins modified, so a dirty tree was the
+//      normal state between a rebuild and the commit that recorded its bumps.
+//      Since 2026-10-24 the run commits them itself (`deps_commit`), but a
+//      run on a PR branch, under `--no-commit`, or whose switch failed still
+//      leaves them behind.
+//      A change the incoming commits also touch is resolved, never refused
+//      (`Clash`): identical to the incoming version, it is dropped; else
+//      stashed, the move made and the stash reapplied, and if that clashes
+//      the incoming version stands and the edits stay in `git stash`.
 //      The one exception is `flake.lock` when a flake update follows: that
 //      bump is about to be redone, so it is dropped instead.
 //   2. `git fetch --prune origin`. Pruning is what makes a deleted upstream
@@ -29,7 +34,8 @@
 //      that was merged and deleted -- origin's default branch. A local branch
 //      that never had an upstream is refused: it is somebody's deliberate
 //      local work, and silently leaving it for `main` would be the same
-//      surprise in the other direction.
+//      surprise in the other direction. One already merged into the default
+//      branch has no work of its own, so it goes to the default branch too.
 //   4. Fast-forward only. A branch with commits origin does not have is
 //      refused, never merged or reset: rewriting someone's work to make a
 //      rebuild go is not this tool's call.
@@ -100,6 +106,9 @@ pub enum Upstream {
     Gone,
     /// Never configured: a local-only branch.
     Unset,
+    /// Never configured, but every commit is already in origin's default
+    /// branch (a finished local branch, e.g. a deps branch that was merged).
+    Merged,
 }
 
 /// Why a branch was chosen, for the report.
@@ -109,6 +118,7 @@ pub enum Why {
     Current,
     Detached,
     UpstreamGone,
+    AlreadyMerged,
 }
 
 /// Decide which branch to build. Pure, so the policy is testable without git.
@@ -128,6 +138,7 @@ pub fn choose(
     match upstream {
         Upstream::Live => Ok((cur.to_owned(), Why::Current)),
         Upstream::Gone => Ok((default.to_owned(), Why::UpstreamGone)),
+        Upstream::Merged => Ok((default.to_owned(), Why::AlreadyMerged)),
         Upstream::Unset => Err(Refusal::conflict(
             "NO_UPSTREAM",
             format!(
@@ -173,13 +184,13 @@ pub fn parse_branch(s: &str) -> Result<String, String> {
 
 /// Run git and capture its trimmed stdout; `None` if it fails to run or exits
 /// non-zero.
-fn git(dir: &str, args: &[&str]) -> Option<String> {
+pub(crate) fn git(dir: &str, args: &[&str]) -> Option<String> {
     git_raw(dir, args).map(|s| s.trim().to_owned())
 }
 
 /// [`git`] without the trim. Porcelain status needs this: its first column is
 /// a space for an unstaged change, and trimming it shifts the path by one.
-fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
+pub(crate) fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
     Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -192,7 +203,7 @@ fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
 
 /// Run git with its output shown. Its stdout goes to OUR stderr, as with
 /// every other child here, so `--json` keeps exactly one payload on stdout.
-fn git_shown(dir: &str, args: &[&str]) -> bool {
+pub(crate) fn git_shown(dir: &str, args: &[&str]) -> bool {
     Command::new("git")
         .arg("-C")
         .arg(dir)
@@ -203,7 +214,7 @@ fn git_shown(dir: &str, args: &[&str]) -> bool {
 }
 
 /// Whether `rev` names an existing object (`git rev-parse --verify`).
-fn exists(dir: &str, rev: &str) -> bool {
+pub(crate) fn exists(dir: &str, rev: &str) -> bool {
     git(dir, &["rev-parse", "--verify", "--quiet", rev]).is_some()
 }
 
@@ -243,12 +254,23 @@ pub fn sync(req: Request) -> Result<Synced, Refusal> {
     if lock_conflicts {
         drop_lock_bump(req, &plan.target)?;
     }
-    let line = apply(req.dir, &plan, &carried)?;
-    let line = if lock_conflicts {
-        format!("{line}; dropped the uncommitted {LOCK} bump")
-    } else {
-        line
+    let clash = Clash::resolve(req.dir, &plan, &carried);
+    let line = match apply(req.dir, &plan, &carried) {
+        Ok(l) => l,
+        Err(e) => {
+            // Put the edits back; the refusal then describes a tree the way
+            // the user left it.
+            clash.restore(req.dir);
+            return Err(e);
+        }
     };
+    let mut line = line;
+    if lock_conflicts {
+        line = format!("{line}; dropped the uncommitted {LOCK} bump");
+    }
+    for note in clash.reapply(req.dir) {
+        line = format!("{line}; {note}");
+    }
     Ok(Synced { line, carried })
 }
 
@@ -282,6 +304,86 @@ fn dirty_refusal(dir: &str, carried: &[String]) -> Refusal {
     )
 }
 
+/// Uncommitted edits to files the incoming commits also change. Moving would
+/// overwrite them, so git refuses; preflight resolves it instead, because a
+/// plain `preflight` has to work whatever the last run left behind (the case
+/// that bit: a vendored pin bump left in the tree that arrived on `main` too).
+///
+/// The edits are stashed, the move made, and the stash reapplied. An edit
+/// identical to the incoming file reapplies as a no-op; one that clashes
+/// leaves the incoming version in place and stays in the stash, named in the
+/// report. A refused move pops the stash back, so nothing is ever lost and
+/// nothing aborts.
+#[derive(Debug, Default)]
+struct Clash {
+    stashed: Vec<String>,
+}
+
+impl Clash {
+    fn resolve(dir: &str, plan: &Plan, carried: &[String]) -> Self {
+        let mut incoming =
+            git(dir, &["diff", "--name-only", "HEAD", &plan.target]).unwrap_or_default();
+        // Switching onto an existing local branch is judged against it too.
+        if let Some(local) = git(
+            dir,
+            &[
+                "diff",
+                "--name-only",
+                "HEAD",
+                &format!("refs/heads/{}", plan.branch),
+            ],
+        ) {
+            incoming = format!("{incoming}\n{local}");
+        }
+        let mut c = Self {
+            stashed: carried
+                .iter()
+                .filter(|p| incoming.lines().any(|l| l == p.as_str()))
+                .cloned()
+                .collect(),
+        };
+        if !c.stashed.is_empty() {
+            let mut args = vec![
+                "stash",
+                "push",
+                "--quiet",
+                "-m",
+                "preflight: edits the update clashed with",
+                "--",
+            ];
+            args.extend(c.stashed.iter().map(String::as_str));
+            if !git_shown(dir, &args) {
+                c.stashed.clear();
+            }
+        }
+        c
+    }
+
+    /// A refused move: bring the stashed edits back.
+    fn restore(&self, dir: &str) {
+        if !self.stashed.is_empty() {
+            git_shown(dir, &["stash", "pop", "--quiet"]);
+        }
+    }
+
+    /// After the move: reapply what was stashed.
+    fn reapply(&self, dir: &str) -> Vec<String> {
+        if self.stashed.is_empty() {
+            return Vec::new();
+        }
+        let files = self.stashed.join(", ");
+        if git_shown(dir, &["stash", "pop", "--quiet"]) {
+            return vec![format!("reapplied your edits to {files}")];
+        }
+        let mut args = vec!["restore", "--source=HEAD", "--staged", "--worktree", "--"];
+        args.extend(self.stashed.iter().map(String::as_str));
+        git_shown(dir, &args);
+        vec![format!(
+            "your edits to {files} clash with the incoming ones and stay in `git stash` (git -C {dir} stash show -p)"
+        )]
+    }
+}
+
 /// Where the checkout is going.
 #[derive(Debug)]
 struct Plan {
@@ -311,6 +413,21 @@ impl Plan {
     }
 }
 
+/// origin's default branch (`origin/HEAD`), or `main` when that ref is unset.
+pub(crate) fn default_branch(dir: &str) -> String {
+    git(
+        dir,
+        &[
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "refs/remotes/origin/HEAD",
+        ],
+    )
+    .and_then(|r| r.strip_prefix("origin/").map(ToOwned::to_owned))
+    .unwrap_or_else(|| "main".to_owned())
+}
+
 /// Fetch, then decide the branch and the ref to move it to.
 fn plan(req: Request) -> Result<Plan, Refusal> {
     let dir = req.dir;
@@ -323,20 +440,26 @@ fn plan(req: Request) -> Result<Plan, Refusal> {
     }
 
     let current = git(dir, &["symbolic-ref", "--quiet", "--short", "HEAD"]);
-    let default = git(
-        dir,
-        &[
-            "symbolic-ref",
-            "--quiet",
-            "--short",
-            "refs/remotes/origin/HEAD",
-        ],
-    )
-    .and_then(|r| r.strip_prefix("origin/").map(ToOwned::to_owned))
-    .unwrap_or_else(|| "main".to_owned());
+    let default = default_branch(dir);
     let upstream = current.as_deref().map_or(Upstream::Unset, |c| {
         if git(dir, &["config", "--get", &format!("branch.{c}.merge")]).is_none() {
-            Upstream::Unset
+            // Nothing of its own to lose: its work is already on the default
+            // branch, so leaving it is not the surprise NO_UPSTREAM guards.
+            if git(
+                dir,
+                &[
+                    "merge-base",
+                    "--is-ancestor",
+                    "HEAD",
+                    &format!("origin/{default}"),
+                ],
+            )
+            .is_some()
+            {
+                Upstream::Merged
+            } else {
+                Upstream::Unset
+            }
         } else if exists(dir, &format!("{c}@{{upstream}}")) {
             Upstream::Live
         } else {
@@ -376,6 +499,10 @@ fn plan(req: Request) -> Result<Plan, Refusal> {
             current.as_deref().unwrap_or_default()
         ),
         Why::Detached => " (HEAD was detached)".to_owned(),
+        Why::AlreadyMerged => format!(
+            " ('{}' is already in {default})",
+            current.as_deref().unwrap_or_default()
+        ),
         Why::Requested | Why::Current => String::new(),
     };
     Ok(Plan {
@@ -721,18 +848,85 @@ mod tests {
         }
 
         #[test]
-        fn uncommitted_changes_the_incoming_commits_touch_refuse_the_run() {
-            let Some(lab) = Lab::new("dirty") else { return };
+        fn an_edit_identical_to_the_incoming_one_leaves_a_clean_tree() {
+            let Some(lab) = Lab::new("same") else { return };
+            lab.commit("seed", "flake.nix", "nix 2");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.write("work", "flake.nix", "nix 2");
+            let got = sync(lab.request());
+            assert!(got.is_ok(), "{got:?}");
+            assert_eq!(lab.git("work", &["status", "--porcelain"]), "");
+            assert_eq!(lab.git("work", &["stash", "list"]), "");
+        }
+
+        #[test]
+        fn a_refused_move_gives_the_edits_back() {
+            let Some(lab) = Lab::new("refused") else {
+                return;
+            };
+            lab.commit("seed", "flake.nix", "nix 2");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.commit("work", "other.nix", "local");
+            lab.write("work", "flake.nix", "nix 2");
+            let got = sync(lab.request());
+            assert!(got.is_err_and(|r| r.code == "NOT_FAST_FORWARD"));
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("nix 2")
+            );
+        }
+
+        #[test]
+        fn a_clashing_edit_is_stashed_and_the_run_goes_on() {
+            let Some(lab) = Lab::new("clash") else { return };
             lab.commit("seed", "flake.nix", "nix 2");
             lab.git("seed", &["push", "--quiet"]);
             lab.write("work", "flake.nix", "local edit");
             let got = sync(lab.request());
-            assert!(got.is_err_and(|r| r.code == "DIRTY_TREE" && r.exit == Exit::Conflict));
+            assert!(
+                got.as_ref()
+                    .is_ok_and(|l| l.line.contains("stay in `git stash`")),
+                "{got:?}"
+            );
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("nix 2")
+            );
+            assert!(!lab.git("work", &["stash", "list"]).is_empty());
         }
 
         #[test]
-        fn a_conflicting_change_blocks_a_branch_switch_too() {
-            let Some(lab) = Lab::new("dirtysw") else {
+        fn a_disjoint_edit_is_reapplied_after_the_move() {
+            let Some(lab) = Lab::new("disjoint") else {
+                return;
+            };
+            lab.commit("seed", "flake.nix", "a\nb\nc\nd\ne\nf\ng\nh\n");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.git("work", &["pull", "--quiet"]);
+            lab.commit("seed", "flake.nix", "A\nb\nc\nd\ne\nf\ng\nh\n");
+            lab.git("seed", &["push", "--quiet"]);
+            lab.write("work", "flake.nix", "a\nb\nc\nd\ne\nf\ng\nH\n");
+            let got = sync(lab.request());
+            assert!(
+                got.as_ref()
+                    .is_ok_and(|l| l.line.contains("reapplied your edits")),
+                "{got:?}"
+            );
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("A\nb\nc\nd\ne\nf\ng\nH\n")
+            );
+        }
+
+        #[test]
+        fn a_clashing_edit_does_not_block_a_branch_switch_either() {
+            let Some(lab) = Lab::new("clashsw") else {
                 return;
             };
             lab.git("seed", &["switch", "--quiet", "-c", "pr"]);
@@ -743,7 +937,18 @@ mod tests {
                 branch: Some("pr"),
                 ..lab.request()
             });
-            assert!(got.is_err_and(|r| r.code == "DIRTY_TREE"));
+            assert!(got.is_ok(), "{got:?}");
+            assert_eq!(lab.head(), "pr");
+        }
+
+        #[test]
+        fn a_finished_local_branch_returns_to_main() {
+            let Some(lab) = Lab::new("merged") else {
+                return;
+            };
+            lab.git("work", &["switch", "--quiet", "-c", "chore/deps"]);
+            let got = sync(lab.request());
+            assert!(got.is_ok(), "{got:?}");
             assert_eq!(lab.head(), "main");
         }
 

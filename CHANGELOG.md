@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`preflight` commits the bumps it makes.** After a successful switch on
+  `main`, the updated `flake.lock` and any vendored pins it bumped are
+  committed (signed, with your usual `git commit` setup) on a new local
+  branch, `chore/deps-bump-<date>`, and the checkout goes back to a clean
+  `main`. When `construct` moved, `.github/skills/` is re-synced into the
+  same commit. Nothing is pushed: the run prints the `git push` command.
+  On a PR branch, under `--dry`, or when the switch fails, the bumps are
+  left uncommitted as before. `--no-commit` turns it off.
+- **Plain `preflight` no longer needs any git first.** Uncommitted edits to
+  files that the update also changes (a vendored pin bumped locally and on
+  `main`, say) no longer stop the run: the edits are
+  stashed and reapplied after the move, and one that clashes stays in `git stash` while the incoming version is built. A local
+  branch already merged into `main` returns to `main` like a deleted one.
+
 - **Slack is installed as a Flatpak** (`com.slack.Slack`, from Flathub). Like
   the other Electron Flatpaks it is told it runs under GNOME inside its
   sandbox, so it keeps its sign-in in the keyring under Niri and LeftWM.

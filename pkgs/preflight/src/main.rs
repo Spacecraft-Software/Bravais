@@ -26,6 +26,7 @@
 
 mod ai_tools;
 mod appimages;
+mod deps_commit;
 mod disk;
 mod git_sync;
 mod output;
@@ -71,6 +72,7 @@ const ABOUT: &str = concat!(
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --update-ai-tools   Also run the out-of-band AI tools' updaters (claude, codex, …)\n",
         "  preflight --update-appimages  Also apply the AppImage updates Gear Lever finds\n",
+        "  preflight --no-commit         Leave the bumps uncommitted instead of committing them\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
@@ -153,6 +155,10 @@ struct Cli {
     /// Skip the AppImage update check
     #[arg(long)]
     no_appimages: bool,
+
+    /// Leave the bumped flake.lock and vendored pins uncommitted (default: commit them on a chore/deps-bump-<date> branch after a successful switch)
+    #[arg(long)]
+    no_commit: bool,
 
     /// Skip garbage collection and journal vacuum
     #[arg(long)]
@@ -294,6 +300,7 @@ fn options(cli: &Cli) -> steps::Options<'_> {
         // so it runs unasked; applying is the part that downloads.
         check_appimages: !cli.no_appimages,
         update_appimages: cli.update_appimages || (cli.update_all && !cli.no_appimages),
+        no_commit: cli.no_commit,
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
@@ -521,6 +528,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--update-appimages": "after the switch, whether or not it succeeded, apply the AppImage updates Gear Lever found (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
                     "--no-appimages": "skip the AppImage update check (a full run asks Gear Lever which AppImages have updates, report-only)",
                     "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only",
+                    "--no-commit": "leave the bumps uncommitted; by default, after a successful switch on origin's default branch, the paths this run bumped (flake.lock, the vendored pins, and .github/skills/ re-synced by pkgs/sync-skills.nu when construct moved) are committed with a plain `git commit` (the user's signing config) on a new local chore/deps-bump-<date> branch, never pushed, and the checkout switches back; on another branch, under --dry or after a failed switch they are left uncommitted",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
@@ -567,6 +575,7 @@ fn cmd_describe(out: Out) -> i32 {
         "website": output::WEBSITE,
         "capabilities": [
             "git-sync",
+            "deps-commit",
             "rebuild-orchestration",
             "flatpak-progress",
             "appimage-updates",
@@ -693,6 +702,14 @@ mod tests {
         for other in ["--no-appimages", "--skills-only"] {
             assert!(Cli::try_parse_from(["preflight", "--update-appimages", other]).is_err());
         }
+    }
+
+    #[test]
+    fn bumps_are_committed_unless_no_commit() {
+        assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| !options(&c).no_commit));
+        assert!(
+            Cli::try_parse_from(["preflight", "--no-commit"]).is_ok_and(|c| options(&c).no_commit)
+        );
     }
 
     #[test]
