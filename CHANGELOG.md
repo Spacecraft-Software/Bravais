@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bitwarden and Claude Desktop appeared nowhere, since neither session has a
   panel. The Eww bar now carries its `systray` widget (already used by the
   LeftWM bar), which is both the StatusNotifierItem host and watcher.
+- **Bar icons are clickable on all three bars.** Bluetooth opens `bluetui`,
+  network `nmtui`, CPU and RAM `bottom`, each in Alacritty. Volume and
+  microphone open `wiremix` on a left click and toggle mute on a right click.
+  Caffeine toggles and the keyboard layout cycles, like their key binds.
 - **`~/Applications` is on `PATH` and the TUI managers have short names.** AppImages
   Gear Lever places there run from a terminal (appended, once, in bash,
   Nushell and Ion). New aliases in all three: `wifi` (nmtui), `audio` and
