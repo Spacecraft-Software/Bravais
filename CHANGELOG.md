@@ -171,6 +171,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   skill, the procedure for Claude Code to plan and review while the
   OpenCode Go delegates write the code. It loads only when asked for by
   name or asked to delegate. No vendored Copilot skill changed.
+- **`construct` bumped again** for the reworked coding orchestrator: it
+  can now hand work to Codex, a Poe model or Antigravity as well as the
+  OpenCode Go delegates, and when you say "orchestrate" without naming a
+  backend it asks which one, recommending Codex. No vendored Copilot skill
+  changed.
 
 - **Fairing draws the boot splash in place of Plymouth.** Fairing,
   Spacecraft Software's Rust splash, shows real boot progress from the
