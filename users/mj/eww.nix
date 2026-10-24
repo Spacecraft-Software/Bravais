@@ -161,7 +161,7 @@ in
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
             ;; Mod+Shift+C → steelbore-caffeine.
-            (eventbox :onclick "steelbore-caffeine"
+            (eventbox :onrightclick "steelbore-caffeine"
               (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
             ;; Click opens nmtui.

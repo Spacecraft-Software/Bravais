@@ -648,8 +648,8 @@
                 (button :onrightclick "xkb-switch -n"
                   (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
                 ;; Caffeine — glyph from `caf`,
-                ;; color from caf_state (on=green, off=red). Clickable toggles.
-                (button :onclick "steelbore-caffeine"
+                ;; color from caf_state (on=green, off=red). Right click toggles.
+                (button :onrightclick "steelbore-caffeine"
                   (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
                 ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
                 ;; off=red, on=dim steel blue, connected=green). Left click
