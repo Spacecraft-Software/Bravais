@@ -140,6 +140,12 @@ in
           (label :class "title" :halign "start" :text ${titleYuck})
           (label :class "clock" :text time)
           (box :orientation "h" :spacing 8 :space-evenly false :halign "end" :class "metrics"
+            ;; System tray. eww's `systray` is its own StatusNotifierItem
+            ;; host *and* watcher (Rust, no extra daemon), so Bitwarden,
+            ;; Claude Desktop and every other SNI app lands here under Niri
+            ;; and Margo, which have no panel of their own. Leftmost so
+            ;; icons appearing or leaving never shift the indicators.
+            (systray :class "tray" :icon-size 16 :spacing 4 :space-evenly false :prepend-new true)
             ;; Keyboard language — leftmost in the metrics group. Text from
             ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
             (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang)
@@ -275,6 +281,8 @@ in
       // Separates the beacon cluster from the radio/network icons on its
       // left; the cpu label's own margin handles the right-hand side.
       .beacon-group { margin-left: 10px; }
+
+      .tray { padding: 0 4px; }
 
       .lang-en { color: $accent; }
       .lang-ar { color: $foreground; }

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The Niri and Margo bar has a system tray.** Tray icons from apps such as
+  Bitwarden and Claude Desktop appeared nowhere, since neither session has a
+  panel. The Eww bar now carries its `systray` widget (already used by the
+  LeftWM bar), which is both the StatusNotifierItem host and watcher.
 - **`~/Applications` is on `PATH` and the TUI managers have short names.** AppImages
   Gear Lever places there run from a terminal (appended, once, in bash,
   Nushell and Ion). New aliases in all three: `wifi` (nmtui), `audio` and
