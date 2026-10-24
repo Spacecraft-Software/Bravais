@@ -138,6 +138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Claude Desktop bumped** to the newest release in Anthropic's apt index,
+  the critical update the app was offering (`pkgs/claude-desktop/package.nix`).
 - **The C `jq` is no longer installed.** `jq` is Pathfinder, the
   jq-compatible shim over jaq that was already answering `jq` for you, so
   root and system services now have no `jq` and use jaq. jaq stays:
