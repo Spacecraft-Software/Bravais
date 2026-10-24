@@ -142,7 +142,7 @@ bravais/
 +-- users/mj/                      # primaryUser: default.nix (account, mjsh login shell),
 |                                  #   home.nix (identity + imports), one-concern HM modules;
 |                                  #   default-apps.nix holds the only xdg.mimeApps block;
-|                                  #   rebuild.nu (deprecated in favour of preflight)
+|                                  #   rebuild-classic.nu (deprecated in favour of preflight)
 +-- pkgs/                          # In-tree packages; default.nix is the index (also packages.*)
 |   +-- preflight/                 # Rust rebuild orchestrator (§16)
 |   +-- steelbore-*/               # First-party Rust tools (audio-led, beacon, niri-unmax, cosmic-unmax, vpn, quantize)
@@ -155,7 +155,7 @@ bravais/
 +-- assets/brand/                  # Brand marks (CC-BY-SA-4.0): steelbore-os.svg (emblem), steelbore-os-wordmark.svg (wordmark)
 +-- bravais-mcp/                   # Source of the Rust MCP server built by pkgs/bravais-mcp/
 +-- flakes/rapg/                   # Wrapper flake for rapg (upstream ships none)
-+-- scripts/rebuild.sh             # POSIX port of `rebuild` (deprecated in favour of preflight)
++-- scripts/rebuild-classic.sh             # POSIX port of `rebuild` (deprecated in favour of preflight)
 +-- docs/                          # Long form of AGENTS.md sections
 +-- AGENTS.md, CONSTRAINTS.md      # Agent context; long form of the numbered constraints
 ```
@@ -2029,7 +2029,7 @@ systemd's `import-environment` rejects control characters.
 **Commands defined in `config.nu`:**
 
 - `steelbore` — prints the Steelbore OS identity banner (STATUS: ACTIVE, LOAD: NOMINAL, INTEGRITY: VERIFIED).
-- `rebuild` — read verbatim from `users/mj/rebuild.nu`, the same text as the `rebuild` binary, so the two cannot drift (§16).
+- `rebuild` — read verbatim from `users/mj/rebuild-classic.nu`, the same text as the `rebuild` binary, so the two cannot drift (§16).
 - `skills-sync`, `skills-status`, `skills-reset`, `skills-ship` — wrappers over `construct skill …` (AGENTS.md, First-time bootstrap).
 - `theme` — list / show / set / try / now over `theme-registry`; `theme now` writes the Standard §11.6.4 per-user declaration, picked up with no rebuild.
 - `app` — list / show / candidates / set handler roles (`default-apps` skill).
@@ -2136,7 +2136,7 @@ whether they embed update information. `preflight` wraps none of the tools it dr
 PATH, so they are never frozen in its closure (same reasoning as
 CONSTRAINTS.md #23).
 
-The older `users/mj/rebuild.nu` and `scripts/rebuild.sh` sit behind a deprecation
+The older `users/mj/rebuild-classic.nu` and `scripts/rebuild-classic.sh` sit behind a deprecation
 prompt; **change one and change all three**, except the `preflight`-only flags and steps (`--update-vendored`, `--update-ai-tools`, the AppImage check), which the deprecated shells deliberately lack. Flags: `preflight --help`; the rest:
 **`docs/rebuild.md`**.
 

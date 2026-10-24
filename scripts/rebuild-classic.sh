@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — full system rebuild for steelbore-thinkpad.
 #
-# A port of the Nushell `rebuild` command defined in users/mj/shell.nix, for use
+# A port of the Nushell `rebuild-classic` command defined in users/mj/shell.nix, for use
 # from Bash (or any POSIX shell) — an agent's tool shell, a rescue TTY, a
 # recovery session where Home Manager has not been activated, or simply a Bash
 # prompt. The two are expected to stay in step; if you change one, change both.
@@ -11,8 +11,8 @@
 # also runs unmodified under dash, ash and brush. No [[ ]], no (( )), no arrays,
 # no ${var^^}, no process substitution. Verify with:
 #
-#   nix run nixpkgs#shellcheck -- -s sh scripts/rebuild.sh
-#   nix run nixpkgs#dash -- scripts/rebuild.sh --help
+#   nix run nixpkgs#shellcheck -- -s sh scripts/rebuild-classic.sh
+#   nix run nixpkgs#dash -- scripts/rebuild-classic.sh --help
 #
 # The one thing this script does NOT reproduce is the Nushell version's
 # structured return values: `antigravity-status` and `flatpak-status` are
@@ -42,7 +42,7 @@ say()  { printf '%s%s%s\n' "$1" "$2" "$C_OFF"; }
 
 # ── Live progress ───────────────────────────────────────────────────────────
 # Mirrors pkgs/preflight/src/progress.rs and `flatpak-watch` in
-# users/mj/rebuild.nu; change all three. Drawn only for a human at a terminal:
+# users/mj/rebuild-classic.nu; change all three. Drawn only for a human at a terminal:
 # never for an agent, CI or a pipe (CLI Standard §5), which keep exactly the
 # old output.
 is_live() {
@@ -150,9 +150,9 @@ dim()  { say "$C_DIM"  "$1"; }
 
 usage() {
     cat <<'USAGE'
-rebuild.sh — full system rebuild for steelbore-thinkpad
+rebuild-classic.sh — full system rebuild for steelbore-thinkpad
 
-Usage: scripts/rebuild.sh [OPTIONS]
+Usage: scripts/rebuild-classic.sh [OPTIONS]
 
 Brings the checkout up to date with origin, bumps every flake input, frees disk while keeping a week of rollback
 targets, builds and switches, then mirrors the repo into /etc/nixos. A failed
@@ -202,7 +202,7 @@ while [ $# -gt 0 ]; do
         --detach-flatpak) detach_flatpak=1 ;;
         --yes)         assume_yes=1 ;;
         -h|--help|help) usage; exit 0 ;;
-        *) say "$C_ERR" "unknown argument '$1' — try: rebuild.sh --help"; exit 2 ;;
+        *) say "$C_ERR" "unknown argument '$1' — try: rebuild-classic.sh --help"; exit 2 ;;
     esac
     shift
 done
@@ -226,7 +226,7 @@ if [ "$detach_flatpak" -eq 1 ] && [ "$no_flatpak" -eq 1 ]; then
 fi
 
 # ── Deprecation gate ────────────────────────────────────────────────────────
-# Mirrors the same gate in users/mj/rebuild.nu — change one, change the other
+# Mirrors the same gate in users/mj/rebuild-classic.nu — change one, change the other
 # (see AGENTS.md). `preflight` (pkgs/preflight/, Rust) accepts every flag this
 # script does and adds --reclaim, --gc-all, --journal-days, --mcp-deploy,
 # --update-vendored and --json, so it is a strict superset and the question is a real one.
@@ -237,14 +237,14 @@ fi
 # rebuild unasked.
 if [ "${assume_yes:-0}" != "1" ]; then
     if [ ! -t 0 ]; then
-        say "$C_ERR" "rebuild.sh: refusing to run non-interactively without --yes"
+        say "$C_ERR" "rebuild-classic.sh: refusing to run non-interactively without --yes"
         say "$C_DIM" "  prefer: preflight"
         exit 2
     fi
-    say "$C_WARN" "\`rebuild.sh\` is superseded by \`preflight\`, the Rust rebuild orchestrator."
+    say "$C_WARN" "\`rebuild-classic.sh\` is superseded by \`preflight\`, the Rust rebuild orchestrator."
     say "$C_DIM" "  preflight takes the same flags and adds --reclaim, --gc-all,"
     say "$C_DIM" "  --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help"
-    printf 'continue with rebuild.sh anyway? [y/N] '
+    printf 'continue with rebuild-classic.sh anyway? [y/N] '
     read -r reply
     case "$reply" in
         y|Y|yes|YES|Yes) ;;
@@ -311,7 +311,7 @@ refuse() {  # <exit> <code> <message> <hint>
 git_sync() {
     if [ "$(git -C "$REPO" rev-parse --is-inside-work-tree 2>/dev/null)" != true ]; then
         refuse 1 NOT_A_CHECKOUT "$REPO is not a git checkout (or git is not on PATH)" \
-            "rebuild.sh --no-sync   # build the tree as it is" || return 0
+            "rebuild-classic.sh --no-sync   # build the tree as it is" || return 0
     fi
     # Porcelain columns 1-2 are the status, so the path starts at column 4.
     porcelain=$(git -C "$REPO" status --porcelain=v1 --untracked-files=no)
@@ -322,7 +322,7 @@ git_sync() {
 
     if ! git -C "$REPO" fetch --prune origin; then
         refuse 1 FETCH_FAILED "git fetch from origin failed, so the latest code is unknown" \
-            "rebuild.sh --no-sync --no-update   # offline: build the tree as it is" || return 0
+            "rebuild-classic.sh --no-sync --no-update   # offline: build the tree as it is" || return 0
     fi
 
     current=$(git -C "$REPO" symbolic-ref --quiet --short HEAD || true)
@@ -336,7 +336,7 @@ git_sync() {
         want=$default; why=" (HEAD was detached)"
     elif ! git -C "$REPO" config --get "branch.$current.merge" >/dev/null; then
         refuse 5 NO_UPSTREAM "branch '$current' has no upstream on origin, so there is nothing to update it from" \
-            "git -C $REPO switch $default   # or build it as it is: rebuild.sh --no-sync" || return 0
+            "git -C $REPO switch $default   # or build it as it is: rebuild-classic.sh --no-sync" || return 0
     elif git -C "$REPO" rev-parse --verify --quiet "$current@{upstream}" >/dev/null; then
         want=$current
     else
@@ -408,7 +408,7 @@ git_sync() {
 
 dirty_refusal() {
     refuse 5 DIRTY_TREE "uncommitted changes conflict with the incoming commits: $carried" \
-        "git -C $REPO stash   # then re-run; or build the tree as it is: rebuild.sh --no-sync"
+        "git -C $REPO stash   # then re-run; or build the tree as it is: rebuild-classic.sh --no-sync"
 }
 
 switch_failed() {

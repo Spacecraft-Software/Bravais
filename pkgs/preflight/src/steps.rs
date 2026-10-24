@@ -3,7 +3,7 @@
 // The rebuild sequence itself.
 //
 // This is a port of the Nushell `def rebuild` in users/mj/shell.nix and of
-// scripts/rebuild.sh, and it inherits their hard-won details rather than
+// scripts/rebuild-classic.sh, and it inherits their hard-won details rather than
 // reinventing them. Where a step looks arbitrary, the comment says which
 // incident put it there -- those notes are the actual value of this file and
 // should travel with any future edit.
@@ -1041,7 +1041,7 @@ fn antigravity_probe(r: &mut Runner) {
 }
 
 /// The log the detached Flatpak update writes. The same path as the Nushell
-/// `flatpak-log` and `rebuild.sh`'s `FLATPAK_LOG`, so every watcher reads one
+/// `flatpak-log` and `rebuild-classic.sh`'s `FLATPAK_LOG`, so every watcher reads one
 /// file whichever implementation started the update.
 pub fn flatpak_log() -> PathBuf {
     home().join(".local/state/flatpak-update.log")
