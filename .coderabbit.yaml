@@ -44,16 +44,16 @@ reviews:
     - path: "pkgs/preflight/**"
       instructions: |
         The rebuild sequence has three implementations: pkgs/preflight (Rust),
-        users/mj/rebuild.nu and scripts/rebuild.sh. A behaviour change in one
+        users/mj/rebuild-classic.nu and scripts/rebuild-classic.sh. A behaviour change in one
         that is missing from the other two is a finding. Memory-safe Rust: flag
         `unsafe` without a SAFETY comment and unwrap() on user input.
-    - path: "users/mj/rebuild.nu"
+    - path: "users/mj/rebuild-classic.nu"
       instructions: |
-        Must stay in step with pkgs/preflight and scripts/rebuild.sh.
+        Must stay in step with pkgs/preflight and scripts/rebuild-classic.sh.
     - path: "scripts/**/*.sh"
       instructions: |
         POSIX sh only, no bashisms; must pass `shellcheck -s sh` with zero
-        findings. Must stay in step with pkgs/preflight and users/mj/rebuild.nu.
+        findings. Must stay in step with pkgs/preflight and users/mj/rebuild-classic.nu.
     - path: "CHANGELOG.md"
       instructions: |
         Keep a Changelog: user-visible changes go under [Unreleased] with a type

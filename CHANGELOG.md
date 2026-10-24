@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`~/Applications` is on `PATH` and the TUI managers have short names.** AppImages
+  Gear Lever places there run from a terminal (appended, once, in bash,
+  Nushell and Ion). New aliases in all three: `wifi` (nmtui), `audio` and
+  `mixer` (wiremix), `bluetooth` (bluetui). Also `rebuild` (preflight), `files` (yazi),
+  `monitor` (bottom), `ports`, `myip`, and `gs`/`gd`/`gl` for git.
 - **`preflight` commits the bumps it makes.** After a successful switch on
   `main`, the updated `flake.lock` and any vendored pins it bumped are
   committed (signed, with your usual `git commit` setup) on a new local
@@ -152,6 +157,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`rebuild` now runs `preflight`; the old Nushell/POSIX scripts are
+  `rebuild-classic`.** `users/mj/rebuild.nu` and `scripts/rebuild.sh` became
+  `rebuild-classic.nu` and `rebuild-classic.sh`, and the Nushell command and
+  binary are `rebuild-classic`. They behave as before.
 - **Claude Desktop bumped** to the newest release in Anthropic's apt index,
   the critical update the app was offering (`pkgs/claude-desktop/package.nix`).
 - **The C `jq` is no longer installed.** `jq` is Pathfinder, the

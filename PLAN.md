@@ -408,7 +408,7 @@ The original options and defaults, as drafted:
   promise. Both channels are evaluated on every rebuild (constraint #17's
   gate), which is the early warning if they move.
 - **Tools that key on `ID=nixos`.** Nothing in this repository reads
-  `/etc/os-release` (`preflight`, `rebuild.nu`, `rebuild.sh`, `bravais-mcp`
+  `/etc/os-release` (`preflight`, `rebuild-classic.nu`, `rebuild-classic.sh`, `bravais-mcp`
   all grep clean); Home Manager has no such check; `nixos-rebuild-ng`'s
   "nixos" match is a channel directory name. The out-of-band self-updating
   tools (constraint #4) may inspect `ID`; well-behaved detectors also read

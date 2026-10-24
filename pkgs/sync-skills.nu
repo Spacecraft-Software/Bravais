@@ -46,7 +46,7 @@ const SKILLS = [
     "spacecraft-document-format"       # document deliverables
     "spacecraft-missing-pkg"           # packaging a missing dependency
     "spacecraft-nix-guidelines"        # every modules/**.nix in this repo
-    "spacecraft-nu-guidelines"         # users/mj/rebuild.nu, the shell.nix defs, pkgs/*.nu
+    "spacecraft-nu-guidelines"         # users/mj/rebuild-classic.nu, the shell.nix defs, pkgs/*.nu
     "spacecraft-rust-guidelines"       # house Rust style, pairs with the MS set
     "spacecraft-steelbore-standard" # The Steelbore Standard
     "spacecraft-theme-factory"         # lib/terminal-theme.nix emitters

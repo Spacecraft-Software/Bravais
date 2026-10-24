@@ -3,8 +3,8 @@
 // preflight — Steelbore OS rebuild orchestrator.
 //
 // Preflight checks, the switch, postflight accounting. A Rust port of the
-// Nushell `rebuild` (users/mj/rebuild.nu, embedded by users/mj/shell.nix) and
-// scripts/rebuild.sh, which it is meant to replace as the single
+// Nushell `rebuild` (users/mj/rebuild-classic.nu, embedded by users/mj/shell.nix) and
+// scripts/rebuild-classic.sh, which it is meant to replace as the single
 // implementation rather than join as a third one: two copies of this sequence
 // already drifted, and AGENTS.md still has to say "change one and change all
 // three". Retiring the two shells is the remaining step; docs/rebuild.md

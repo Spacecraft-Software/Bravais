@@ -14,24 +14,24 @@
 }:
 
 let
-  # `rebuild`, as a real binary rather than a Nushell-only def.
+  # `rebuild-classic`, as a real binary rather than a Nushell-only def.
   #
   # It was previously defined ONLY inside Nushell's config.nu, so every other
-  # shell answered `bash: rebuild: command not found` — correct, and confusing.
-  # The same ./rebuild.nu text is embedded in config.nu below, so the Nu
+  # shell answered `bash: rebuild-classic: command not found` — correct, and confusing.
+  # The same ./rebuild-classic.nu text is embedded in config.nu below, so the Nu
   # command and this binary are one implementation.
   #
   # `nu` is the interpreter, not a wrapper around bash: the script is Nushell.
   # A nu script run this way does NOT load config.nu, which is exactly right —
-  # ./rebuild.nu carries its own helpers and must not depend on interactive
+  # ./rebuild-classic.nu carries its own helpers and must not depend on interactive
   # config being present.
   rebuildBin = pkgs.writeTextFile {
-    name = "rebuild";
-    destination = "/bin/rebuild";
+    name = "rebuild-classic";
+    destination = "/bin/rebuild-classic";
     executable = true;
     text = ''
       #!${pkgs.nushell}/bin/nu
-      ${builtins.readFile ./rebuild.nu}
+      ${builtins.readFile ./rebuild-classic.nu}
       # Entry point for the binary form only. The flags mirror `rebuild`'s
       # exactly; --yes skips the preflight deprecation question.
       def main [
@@ -40,7 +40,7 @@ let
       ] {
         # One line on purpose: Nushell does not treat a trailing backslash as a
         # line continuation, it reads it as an extra positional argument.
-        rebuild $topic --dry=$dry --no-sync=$no_sync --branch=$branch --no-update=$no_update --update-all=$update_all --no-gc=$no_gc --trace=$trace --skills-only=$skills_only --no-flatpak=$no_flatpak --detach-flatpak=$detach_flatpak --yes=$yes
+        rebuild-classic $topic --dry=$dry --no-sync=$no_sync --branch=$branch --no-update=$no_update --update-all=$update_all --no-gc=$no_gc --trace=$trace --skills-only=$skills_only --no-flatpak=$no_flatpak --detach-flatpak=$detach_flatpak --yes=$yes
       }
     '';
   };
@@ -64,7 +64,7 @@ let
   # binary directly as a normal user just fails.
   suGuard = pkgs.writeShellScriptBin "steelbore-su-guard" ''
     # POSIX subset under a bash shebang, per Standard §7.1 and the house
-    # pattern in scripts/rebuild.sh. Verify with:
+    # pattern in scripts/rebuild-classic.sh. Verify with:
     #   nix run nixpkgs#shellcheck -- -s sh <this script>
     set -u
 
@@ -79,7 +79,7 @@ let
     # opted out. This is a REMINDER, not a safety gate: a non-interactive `su`
     # (a script, a unit, a pipe) must behave exactly as it always did rather
     # than block on a `read` nobody can answer. That is the opposite choice
-    # from scripts/rebuild.sh, which refuses non-interactively -- there, an
+    # from scripts/rebuild-classic.sh, which refuses non-interactively -- there, an
     # unattended full rebuild is the dangerous outcome; here it is the normal
     # one.
     if [ "''${STEELBORE_SU_OK:-0}" = "1" ] || [ ! -t 0 ]; then
@@ -147,6 +147,8 @@ let
     # (their own install dirs are gone), plus gemini and friends.
     ".npm-packages/bin"
     ".opencode/bin"
+    # Gear Lever's AppImages (and the hand-installed ones) run from a terminal
+    "Applications"
   ];
   # Each shell appends a dir only when PATH lacks it. Every nested shell
   # (login mjsh, the session, each terminal's Nushell) runs its init again
@@ -236,6 +238,20 @@ in
     # spawn, see modules/desktops/{niri,leftwm}.nix.
     bash = {
       enable = true;
+      shellAliases = {
+        wifi = "nmtui";
+        audio = "wiremix";
+        mixer = "wiremix";
+        bluetooth = "bluetui";
+        rebuild = "preflight";
+        files = "yazi";
+        monitor = "bottom";
+        ports = "ss -tulpn";
+        myip = "curl -s ifconfig.me";
+        gs = "git status";
+        gd = "git diff";
+        gl = "git log --oneline -20";
+      };
       bashrcExtra = ''
         export SSH_AUTH_SOCK="${gitwaySockPosix}"
         for d in ${posixPathAppend}; do
@@ -629,6 +645,19 @@ in
         alias top-processes = bottom
         alias disk-telemetry = yazi
         alias edit = ${termEditor}
+        # TUI managers (Rust: wiremix, bluetui; nmtui ships with NetworkManager)
+        alias wifi = nmtui
+        alias audio = wiremix
+        alias mixer = wiremix
+        alias bluetooth = bluetui
+        alias rebuild = preflight
+        alias files = yazi
+        alias monitor = bottom
+        alias ports = ^ss -tulpn
+        alias myip = ^curl -s ifconfig.me
+        alias gs = git status
+        alias gd = git diff
+        alias gl = git log --oneline -20
 
         # Project Steelbore Identity
         def steelbore [] {
@@ -695,10 +724,10 @@ in
         # Discard a moved pointer — back to the flake-pinned skill tree.
         def skills-reset [] { ^construct skill reset }
 
-        # `rebuild` and its helpers live in ./rebuild.nu, read verbatim so the
+        # `rebuild` and its helpers live in ./rebuild-classic.nu, read verbatim so the
         # interactive Nu commands and the `rebuild` BINARY (rebuildBin, above)
         # come from one source and cannot drift. See the header of that file.
-        ${builtins.readFile ./rebuild.nu}
+        ${builtins.readFile ./rebuild-classic.nu}
 
         # Ship local Construct skill edits — commit (signed) + push, then sync.
         # Run from / pointed at the construct clone; rebuild afterwards to apply.
@@ -1023,6 +1052,18 @@ in
       alias top-processes = bottom
       alias disk-telemetry = yazi
       alias edit = ${termEditor}
+      alias wifi = nmtui
+      alias audio = wiremix
+      alias mixer = wiremix
+      alias bluetooth = bluetui
+      alias rebuild = preflight
+      alias files = yazi
+      alias monitor = bottom
+      alias ports = ss -tulpn
+      alias myip = curl -s ifconfig.me
+      alias gs = git status
+      alias gd = git diff
+      alias gl = git log --oneline -20
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════

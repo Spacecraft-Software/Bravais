@@ -753,8 +753,8 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [✓] Spinner beside the silent steps (disk accounting, Antigravity and
       mcpctl probes); nothing drawn for agents, CI or pipes; ASCII on the
       Linux console
-- [✓] Same watcher in `users/mj/rebuild.nu` (`flatpak-watch`) and
-      `scripts/rebuild.sh`
+- [✓] Same watcher in `users/mj/rebuild-classic.nu` (`flatpak-watch`) and
+      `scripts/rebuild-classic.sh`
 - [ ] First live run on the ThinkPad against a real Flatpak update
 
 ## Rebuild builds origin's latest code (2026-10-19)
@@ -766,7 +766,7 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       with exit 5 and a runnable hint
 - [✓] `--branch <name>` / `-b` to test a PR branch; `--no-sync` to build
       the tree as it is; `--dry` only reports
-- [✓] Same step in `users/mj/rebuild.nu` and `scripts/rebuild.sh`
+- [✓] Same step in `users/mj/rebuild-classic.nu` and `scripts/rebuild-classic.sh`
 - [✓] Scenario tests against throwaway git repos (all three implementations)
 - [✓] First live run on the ThinkPad (2026-10-19): the sync worked, then
       refused the next run over preflight's own uncommitted vendored-pin

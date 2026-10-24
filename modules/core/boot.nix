@@ -18,7 +18,7 @@
   # and systemd-boot auto-detects EFI/Microsoft/Boot/bootmgfw.efi as a
   # "Windows Boot Manager" menu entry for as long as the file exists — the
   # NixOS installer only manages EFI/nixos and loader/. Deleting the directory
-  # here runs on every switch (preflight, `rebuild` and rebuild.sh alike) and
+  # here runs on every switch (preflight, `rebuild` and rebuild-classic.sh alike) and
   # frees ESP space toward constraint #42. Remove this if Windows is ever
   # reinstalled: the hook would delete the new install's loader too. The hook
   # runs with an empty PATH, so every command is a store path.

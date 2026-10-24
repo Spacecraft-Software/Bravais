@@ -204,19 +204,19 @@ def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bo
     { ok: false, exit: $exit, code: $code, message: $message, hint: $hint }
   }
   if ((bravais-git $repo rev-parse --is-inside-work-tree).stdout | str trim) != "true" {
-    return (do $refuse 1 "NOT_A_CHECKOUT" $"($repo) is not a git checkout \(or git is not on PATH\)" "rebuild --no-sync   # build the tree as it is")
+    return (do $refuse 1 "NOT_A_CHECKOUT" $"($repo) is not a git checkout \(or git is not on PATH\)" "rebuild-classic --no-sync   # build the tree as it is")
   }
   # Porcelain columns 1-2 are the status, so the path starts at column 4.
   let paths = ((bravais-git $repo status --porcelain=v1 --untracked-files=no).stdout
     | lines | where $it != "" | each {|l| $l | str substring 3.. | split row " -> " | last })
   let carried = ($paths | where $it != "flake.lock")
-  let dirty = (do $refuse 5 "DIRTY_TREE" $"uncommitted changes conflict with the incoming commits: ($carried | str join ', ')" $"git -C ($repo) stash   # then re-run; or build the tree as it is: rebuild --no-sync")
+  let dirty = (do $refuse 5 "DIRTY_TREE" $"uncommitted changes conflict with the incoming commits: ($carried | str join ', ')" $"git -C ($repo) stash   # then re-run; or build the tree as it is: rebuild-classic --no-sync")
   let lock_dirty = ("flake.lock" in $paths)
 
   let fetch = (bravais-git $repo fetch --prune origin)
   if $fetch.exit_code != 0 {
     print -e $fetch.stderr
-    return (do $refuse 1 "FETCH_FAILED" "git fetch from origin failed, so the latest code is unknown" "rebuild --no-sync --no-update   # offline: build the tree as it is")
+    return (do $refuse 1 "FETCH_FAILED" "git fetch from origin failed, so the latest code is unknown" "rebuild-classic --no-sync --no-update   # offline: build the tree as it is")
   }
 
   let head = (bravais-git $repo symbolic-ref --quiet --short HEAD)
@@ -229,7 +229,7 @@ def bravais-git-sync [repo: string, branch: any, dry: bool, lock_regenerated: bo
   } else if $current == null {
     { want: $default, why: " (HEAD was detached)" }
   } else if (bravais-git $repo config --get $"branch.($current).merge").exit_code != 0 {
-    return (do $refuse 5 "NO_UPSTREAM" $"branch '($current)' has no upstream on origin, so there is nothing to update it from" $"git -C ($repo) switch ($default)   # or build it as it is: rebuild --no-sync")
+    return (do $refuse 5 "NO_UPSTREAM" $"branch '($current)' has no upstream on origin, so there is nothing to update it from" $"git -C ($repo) switch ($default)   # or build it as it is: rebuild-classic --no-sync")
   } else if (bravais-git $repo rev-parse --verify --quiet $"($current)@{upstream}").exit_code == 0 {
     { want: $current, why: "" }
   } else {
@@ -339,13 +339,13 @@ def antigravity-status [] {
 #   --update-all accepted for compatibility; every run bumps every input
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
-def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --detach-flatpak, --yes] {
+def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --detach-flatpak, --yes] {
   # Explicit usage rather than `help rebuild`. That resolved to nothing when
   # this file is run as the `rebuild` BINARY (where the outer command is
   # `main`), printing an empty response instead of help — so spell it out and
   # get identical behaviour from both the Nu command and the binary.
   if $topic == "help" {
-    print "Usage: rebuild [help] [--dry] [--no-sync] [--branch <name>] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--detach-flatpak] [--yes]"
+    print "Usage: rebuild-classic [help] [--dry] [--no-sync] [--branch <name>] [--no-update] [--update-all] [--no-gc] [--trace] [--skills-only] [--no-flatpak] [--detach-flatpak] [--yes]"
     print ""
     print "  --dry          nixos-rebuild dry-build only; skips GC and the /etc mirror"
     print "                 (the git sync fetches and reports, but does not move the checkout)"
@@ -365,7 +365,7 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
     print "--reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help"
     return
   }
-  if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild help(ansi reset)"; return }
+  if $topic != null { print $"(ansi red)unknown argument '($topic)' — try: rebuild-classic help(ansi reset)"; return }
   # The one user-supplied string that reaches git: refuse anything that could
   # be read as a flag or that no branch name can contain (Agentic CLI §7).
   let branch = if $branch == null { null } else {
@@ -396,14 +396,14 @@ def rebuild [topic?: string, --dry, --no-sync, --branch (-b): string, --no-updat
   if not $yes {
     let interactive = ((do -i { ^test -t 0 } | complete | get exit_code) == 0)
     if not $interactive {
-      print $"(ansi red)rebuild: refusing to run non-interactively without --yes(ansi reset)"
+      print $"(ansi red)rebuild-classic: refusing to run non-interactively without --yes(ansi reset)"
       print $"(ansi dark_gray)  prefer: preflight(ansi reset)"
       return
     }
-    print $"(ansi yellow)`rebuild` is superseded by `preflight`, the Rust rebuild orchestrator.(ansi reset)"
+    print $"(ansi yellow)`rebuild-classic` is superseded by `preflight`, the Rust rebuild orchestrator.(ansi reset)"
     print $"(ansi dark_gray)  preflight takes the same flags and adds --reclaim, --gc-all,(ansi reset)"
     print $"(ansi dark_gray)  --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help(ansi reset)"
-    let answer = (input $"(ansi yellow)continue with rebuild anyway? [y/N] (ansi reset)")
+    let answer = (input $"(ansi yellow)continue with rebuild-classic anyway? [y/N] (ansi reset)")
     if ($answer | str trim | str downcase) not-in ["y" "yes"] {
       print $"(ansi green)aborted — run `preflight` instead(ansi reset)"
       return
