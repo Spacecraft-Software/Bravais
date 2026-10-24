@@ -104,11 +104,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "chrome-remote-desktop";
-  version = "155.0.8059.19";
+  version = "157.0.8103.19";
 
   src = fetchurl {
     url = "https://dl.google.com/linux/chrome-remote-desktop/deb/pool/main/c/chrome-remote-desktop/chrome-remote-desktop_${finalAttrs.version}_amd64.deb";
-    sha256 = "39701c6951b3d9edff08143dccad919468e1866b9897c873141dc4f66baaff72";
+    sha256 = "cb3883ec7fbef455a5a1f75303f9f84face53fe8c10464fb102218833ed3db61";
   };
 
   nativeBuildInputs = [
@@ -166,20 +166,33 @@ stdenv.mkDerivation (finalAttrs: {
   # --replace-fail: they are all load-bearing, so a future .deb that moves
   # one of these strings must fail the build loudly rather than ship a
   # runtime-broken daemon with only a warning in the build log.
+  #
+  # Since 157 the X-server code (XDesktop, _launch_xvfb/_launch_xorg, the
+  # xrandr/xauth/setxkbmap calls) lives in shared_lib.py, which the
+  # chrome-remote-desktop script imports from its own directory; only the
+  # shebang and the sudo/pkexec paths stay in the script itself. Xorg is now
+  # tried as /usr/lib/xorg/Xorg first, with a bare "Xorg" fallback: both are
+  # pointed at the store. desktop-session is a second Python entry point (the
+  # .deb's chrome-remote-desktop-x11-session@ unit, which the module does not
+  # use) — its shebang is patched so it is not dead on arrival.
   patchPhase = ''
     runHook prePatch
-    script=$out${crdDir}/chrome-remote-desktop
-    substituteInPlace "$script" \
+    dir=$out${crdDir}
+    substituteInPlace "$dir/chrome-remote-desktop" \
       --replace-fail '#!/usr/bin/python3' '#!${py}/bin/python3' \
+      --replace-fail '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
+      --replace-fail '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
+    substituteInPlace "$dir/shared_lib.py" \
+      --replace-fail '"/usr/lib/xorg/Xorg"' '"${xorg-server}/bin/Xorg"' \
       --replace-fail '"Xvfb"' '"${xorg-server}/bin/Xvfb"' \
       --replace-fail '"Xorg"' '"${xorg-server}/bin/Xorg"' \
       --replace-fail '"xrandr"' '"${xrandr}/bin/xrandr"' \
       --replace-fail 'xdpyinfo' '${xdpyinfo}/bin/xdpyinfo' \
       --replace-fail 'xauth add :%d . `mcookie`' '${xauth}/bin/xauth add :%d . `${util-linux}/bin/mcookie`' \
       --replace-fail '"setxkbmap"' '"${setxkbmap}/bin/setxkbmap"' \
-      --replace-fail '/usr/lib/xorg/modules' '${xorgModules}/lib/xorg/modules' \
-      --replace-fail '/usr/bin/sudo' '/run/wrappers/bin/sudo' \
-      --replace-fail '/usr/bin/pkexec' '/run/wrappers/bin/pkexec'
+      --replace-fail '/usr/lib/xorg/modules' '${xorgModules}/lib/xorg/modules'
+    substituteInPlace "$dir/desktop-session" \
+      --replace-fail '#!/usr/bin/python3' '#!${py}/bin/python3'
     runHook postPatch
   '';
 
