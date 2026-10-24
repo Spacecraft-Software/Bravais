@@ -148,14 +148,15 @@ in
             (systray :class "tray" :icon-size 16 :spacing 4 :space-evenly false :prepend-new true)
             ;; Keyboard language — leftmost in the metrics group. Text from
             ;; `lang`, color from `lang_state` (en=steel blue, ar=molten amber).
-            ;; Click cycles the layout, like Mod+Space: niri if it is the
-            ;; compositor, otherwise Margo's dispatcher.
-            (eventbox :onclick "sh -c 'niri msg action switch-layout next 2>/dev/null || mctl dispatch cyclekblayout'"
+            ;; Right click cycles the layout, like Mod+Space: niri if it is
+            ;; the compositor, otherwise Margo's dispatcher.
+            (eventbox :onrightclick "sh -c 'niri msg action switch-layout next 2>/dev/null || mctl dispatch cyclekblayout'"
               (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
             ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
-            ;; off=red, on=dim steel blue, connected=green). Click opens
-            ;; bluetui; the XF86Bluetooth key still toggles the radio.
-            (eventbox :onclick "alacritty -e bluetui"
+            ;; off=red, on=dim steel blue, connected=green). Left click
+            ;; opens bluetui; right click toggles the radio, like the
+            ;; XF86Bluetooth key.
+            (eventbox :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
               (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
