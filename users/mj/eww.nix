@@ -273,8 +273,10 @@ in
       .bt-off       { color: $error; }
       .bt-on        { color: $accent; }
       .bt-connected { color: $success; }
-      .net-up   { color: $success; }
-      .net-down { color: $error; }
+      // Padding widens the label's own box: the wifi glyph's ink is wider than
+      // its advance, and the click area (an eventbox) clips drawing to the box.
+      .net-up   { color: $success; padding: 0 4px; }
+      .net-down { color: $error;   padding: 0 4px; }
       .caf-on  { color: $success; }
       .caf-off { color: $error; }
 
