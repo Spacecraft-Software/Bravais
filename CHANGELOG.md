@@ -330,6 +330,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Wi-Fi icon in the Niri and Margo bar was cut in half.** Making the
+  icon clickable clipped its wide glyph to the label's box; the label now has
+  padding to fit it.
 - **`preflight` no longer stops on a `flake.lock` bump that origin also
   changed.** A tool-generated lock with uncommitted changes that the incoming
   commits touch too aborted the sync (`LOCK_CONFLICT`) under `--no-update`,
