@@ -166,6 +166,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The coding orchestrator skill offers Qwen Coder.** The `construct` input
+  moved to the Construct commit that adds Qwen Coder, the Qwen Go plan's
+  cloud agent, as a hand-off backend: the user runs it, it publishes one
+  branch and PR, and Claude checks and re-applies its diff. `theme` was
+  already at its current `main`.
 - **The coding orchestrator skill offers Grok Build and Qwen Code.** The
   `construct` input moved to the Construct commit that adds both as
   backends to `spacecraft-coding-orchestrator`, alongside Codex, Poe,
