@@ -207,19 +207,21 @@ in
   # ═══════════════════════════════════════════════════════════════════════════
   # The keys every Bravais session shares (docs/keybindings.md)
   # ═══════════════════════════════════════════════════════════════════════════
-  # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+Shift+L lock (Meta+L
-  # kept), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
+  # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+L lock (Meta+Shift+L
+  # dropped), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
   # action is left with no key (Meta+Tab still cycles activities).
   # Meta+Shift+D opens Kickoff beside Meta alone and Alt+F1, the app-menu
-  # key in every session. Meta+F, Meta+Shift+D, Meta+Shift+L and
-  # Meta+Shift+N are unbound in stock Plasma.
+  # key in every session. Meta+F, Meta+Shift+D and Meta+Shift+N are unbound
+  # in stock Plasma.
   # The Krohnkite tiling script (desktop-theme.nix) ships defaults on four of
   # the shared keys: Meta+Return (set master), Meta+D (fewer master windows),
-  # Meta+F (toggle float) and Meta+Shift+L (move window right). Those four
-  # actions are left with no key, so the shared key reaches the action above;
-  # Krohnkite's other keys (Meta+H/J/K, Meta+Shift+H/J/K, Meta+I, ...) stay.
+  # Meta+F (toggle float) and Meta+L (focus right). Those four actions are
+  # left with no key, so the shared key reaches the action above;
+  # Krohnkite's other keys (Meta+H/J/K, Meta+Shift+H/J/K/L, Meta+I, ...) stay.
+  # Meta+Shift+L (move right) was pinned to none while it was the lock key;
+  # it is written back to Krohnkite's default here.
   # Its shortcuts live under [kwin], keyed by the script's action name.
   # Pinned like the keys above, with the same trade-off; read at the next
   # Plasma login. printf turns the \t separators into tabs.
@@ -236,7 +238,7 @@ in
         "$(printf 'Meta\tAlt+F1\tMeta+Shift+D,Meta\tAlt+F1,Activate Application Launcher')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group ksmserver --key "Lock Session" \
-        "$(printf 'Meta+L\tMeta+Shift+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
+        "$(printf 'Meta+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group services --group steelbore-terminal.desktop --key _launch "Meta+Return"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
@@ -246,7 +248,9 @@ in
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group kwin --key KrohnkiteToggleFloat "none,Meta+F,Krohnkite: Toggle Float"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteShiftRight "none,Meta+Shift+L,Krohnkite: Move Right"
+        --group kwin --key KrohnkiteShiftRight "Meta+Shift+L,Meta+Shift+L,Krohnkite: Move Right"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusRight "none,Meta+L,Krohnkite: Focus Right"
     ''
     + desktopKeys
   );

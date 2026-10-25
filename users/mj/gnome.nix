@@ -52,12 +52,8 @@ in
       # focused. Unbound by default (only the XF86Search key is), and nothing
       # else in GNOME 50 claims Super+D (show-desktop is unbound).
       search = [ "<Super>d" ];
-      # Lock: Super+L (stock) plus Super+Shift+L, the key Niri, LeftWM and
-      # Margo use (they need Super+L to focus right).
-      screensaver = [
-        "<Super>l"
-        "<Super><Shift>l"
-      ];
+      # Lock: Super+L (stock), the key every session shares.
+      screensaver = [ "<Super>l" ];
     };
 
     ${lib.removePrefix "/" (lib.removeSuffix "/" terminalPath)} = {
@@ -69,7 +65,8 @@ in
     # The Forge tiling extension (installed by modules/desktops/gnome.nix)
     # ships defaults on four of the shared keys: Super+Return (swap with the
     # last active window), Super+V (vertical split), Super+Shift+C (always
-    # float) and Super+Shift+L (move window right). An extension's grab wins
+    # float) and Super+Shift+L (move window right), and its focus-right key
+    # is Super+L, the lock key. An extension's grab wins
     # over gnome-settings-daemon's, so once Forge is enabled in Extension
     # Manager those four did nothing, or the wrong thing. They are left with
     # no key; Forge's other keys (Super+H/J/K/L focus, Super+Ctrl+H/J/K/L
@@ -79,6 +76,7 @@ in
       con-split-vertical = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
       window-toggle-always-float = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
       window-move-right = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
+      window-focus-right = lib.hm.gvariant.mkEmptyArray lib.hm.gvariant.type.string;
     };
 
     # O-tiling (installed by hand from extensions.gnome.org, not by this

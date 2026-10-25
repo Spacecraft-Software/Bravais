@@ -32,15 +32,15 @@ Alacritty).
 | Fullscreen | Super+F | |
 | Maximize | Super+Shift+F (Niri: column) · Super+Up (GNOME) · Meta+PgUp (Plasma) | LeftWM and Margo have none |
 | Toggle floating | Super+V | Niri, LeftWM, Margo. GNOME and Plasma do not tile; there Super+V is notifications / clipboard |
-| Focus | Super+arrows, Super+H/J/K/L | WMs. LeftWM has up/down only (lefthk limit) |
-| Move / swap window | Super+Shift+arrows | WMs; Super+Shift+H/J/K too (not L, which locks) |
+| Focus | Super+arrows, Super+Alt+H/J/K/L | WMs. LeftWM has up/down only (lefthk limit). Plain Super+H/J/K/L no longer focus: Super+L locks |
+| Move / swap window | Super+Shift+arrows, Super+Shift+H/J/K/L | WMs. LeftWM has up/down only |
 | Workspace 1–9 | Super+1…9 | GNOME and Plasma give up "open the Nth dock / task-bar app" for this |
 | Send window to 1–9 | Super+Shift+1…9 | |
 | Previous / next workspace | Super+Ctrl+←/→ | Niri's workspaces are vertical: Mod+PgUp/PgDn there |
 | Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
 | Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo |
-| Lock | Super+Shift+L | GNOME and Plasma keep Super+L; LeftWM keeps Ctrl+Alt+L |
+| Lock | Super+L | LeftWM keeps Ctrl+Alt+L too |
 | Exit session | Super+Shift+E | WMs. GNOME and Plasma: Ctrl+Alt+Del |
 | Caffeine | Super+Shift+C | |
 | Keyring unlock (rescue) | Super+Shift+U | WMs |
@@ -64,10 +64,11 @@ These are kept as they are; they do not collide with the shared keys.
   Super+PgUp/PgDn and Super+Alt+←/→ (and Ctrl+Alt+←/→) workspaces,
   Super+Home / Super+End first / last workspace, Super+Ctrl+1…9 new window of
   the Nth dock app, Alt+Tab / Super+Tab app switcher, Alt+F2 run.
-  The Forge tiling extension keeps its own keys (Super+H/J/K/L focus,
-  Super+Ctrl+H/J/K/L swap, Super+W, …) except the four it shipped on shared
+  The Forge tiling extension keeps its own keys (Super+H/J/K focus,
+  Super+Ctrl+H/J/K/L swap, Super+W, …) except the five it shipped on shared
   keys: *swap with last active* (Super+Return), *split vertical* (Super+V),
-  *always float* (Super+Shift+C) and *move right* (Super+Shift+L) have no key.
+  *always float* (Super+Shift+C), *move right* (Super+Shift+L) and *focus
+  right* (Super+L, the lock key) have no key.
   The same goes for O-tiling (installed by hand): *enter tiling mode*
   (Super+Return, Super+KP_Enter) and *toggle floating* (Super+F) have no key.
 - **Plasma:** Meta+W overview, Meta+G desktop grid, Meta+PgDown minimize,
@@ -76,10 +77,11 @@ These are kept as they are; they do not collide with the shared keys.
   Meta+Shift+S region capture, Alt+Space / Alt+F2 KRunner. *Peek at Desktop*
   gave Meta+D to KRunner and the *Activity Switcher* gave Meta+Q to Close
   Window; both have no key now (Meta+Tab still cycles activities). The
-  Krohnkite tiling script keeps its own keys (Meta+H/J/K/L focus,
-  Meta+Shift+H/J/K move, Meta+T / Meta+M layouts, …) except the four it
+  Krohnkite tiling script keeps its own keys (Meta+H/J/K focus,
+  Meta+Shift+H/J/K/L move, Meta+T / Meta+M layouts, …) except the four it
   shipped on shared keys: *Set master* (Meta+Return), *Decrease* (Meta+D),
-  *Toggle Float* (Meta+F) and *Move Right* (Meta+Shift+L) have no key.
+  *Toggle Float* (Meta+F) and *Focus Right* (Meta+L, the lock key) have no
+  key.
 - **Niri:** Mod+O overview, Mod+R / Mod+Minus / Mod+Equal column widths,
   Mod+[ / Mod+] consume / expel, Mod+Tab previous workspace, Mod+wheel
   workspaces, Mod+B / Mod+Shift+B Bluetooth, Mod+A / Mod+Shift+A audio,

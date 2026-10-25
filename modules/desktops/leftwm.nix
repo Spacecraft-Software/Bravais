@@ -246,9 +246,9 @@
                   (command: Execute, value: "loginctl kill-session $XDG_SESSION_ID", modifier: ["modkey", "Shift"], key: "e"),
                   // Lock via logind so xss-lock runs i3lock — the same path as
                   // the idle and before-sleep locks (CONSTRAINTS.md #45).
-                  // Mod+Shift+L is the lock key in every Bravais session
+                  // Mod+L is the lock key in every Bravais session
                   // (docs/keybindings.md); Ctrl+Alt+L stays as an alias.
-                  (command: Execute, value: "loginctl lock-session", modifier: ["modkey", "Shift"], key: "l"),
+                  (command: Execute, value: "loginctl lock-session", modifier: ["modkey"], key: "l"),
                   (command: Execute, value: "loginctl lock-session", modifier: ["Control", "Alt"], key: "l"),
                   // Caffeine — keep awake: clears the X idle timers (mirrors Niri).
                   (command: Execute, value: "steelbore-caffeine", modifier: ["modkey", "Shift"], key: "c"),
@@ -279,8 +279,8 @@
                   // panics lefthk's parser and disables every keybinding. With
                   // focus_behaviour: Sloppy, mouse hover already covers
                   // left/right focus; tile-drag handles left/right window moves.
-                  (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "k"),
-                  (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "j"),
+                  (command: FocusWindowUp, value: "", modifier: ["modkey", "Alt"], key: "k"),
+                  (command: FocusWindowDown, value: "", modifier: ["modkey", "Alt"], key: "j"),
                   (command: FocusWindowUp, value: "", modifier: ["modkey"], key: "Up"),
                   (command: FocusWindowDown, value: "", modifier: ["modkey"], key: "Down"),
                   (command: MoveWindowUp, value: "", modifier: ["modkey", "Shift"], key: "k"),
@@ -377,7 +377,7 @@
         "leftwm/keybinds.txt".text = ''
           <b>Session</b>
           Mod+Shift+E           Exit LeftWM
-          Mod+Shift+L           Lock screen (i3lock; Ctrl+Alt+L too)
+          Mod+L                 Lock screen (i3lock; Ctrl+Alt+L too)
           Mod+Shift+C           Toggle Caffeine (keep awake)
           Mod+Shift+U           Unlock keyring
 
@@ -390,8 +390,8 @@
           Mod+Q                 Close focused window
           Mod+F                 Toggle fullscreen
           Mod+V                 Toggle floating
-          Mod+K / Mod+Up        Focus window up
-          Mod+J / Mod+Down      Focus window down
+          Mod+Alt+K / Mod+Up   Focus window up
+          Mod+Alt+J / Mod+Down Focus window down
           Mod+Shift+K           Move window up
           Mod+Shift+J           Move window down
 

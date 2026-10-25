@@ -191,7 +191,7 @@ in
       binds {
           // Session
           Mod+Shift+E hotkey-overlay-title="Exit niri" { quit; }
-          Mod+Shift+L hotkey-overlay-title="Lock the Screen: gtklock" { spawn "gtklock"; }
+          Mod+L hotkey-overlay-title="Lock the Screen: gtklock" { spawn "gtklock"; }
           Mod+Shift+C hotkey-overlay-title="Toggle Caffeine (keep awake)" { spawn "steelbore-caffeine"; }
           // `Slash` is Niri's KDL name for the `/` key (US layout produces
           // `?` when shifted) — consistent with our use of symbolic names
@@ -248,10 +248,11 @@ in
           Mod+Right hotkey-overlay-title="Focus Column to the Right" { focus-column-right; }
           Mod+Up    hotkey-overlay-title="Focus Window Up"           { focus-window-up; }
           Mod+Down  hotkey-overlay-title="Focus Window Down"         { focus-window-down; }
-          Mod+H { focus-column-left; }
-          Mod+L { focus-column-right; }
-          Mod+K { focus-window-up; }
-          Mod+J { focus-window-down; }
+          // Vim focus keys sit on Mod+Alt: plain Mod+L locks (docs/keybindings.md).
+          Mod+Alt+H { focus-column-left; }
+          Mod+Alt+L { focus-column-right; }
+          Mod+Alt+K { focus-window-up; }
+          Mod+Alt+J { focus-window-down; }
 
           // Move windows — Mod+Ctrl+arrows primaries (matches Niri's
           // default-config idioms); Mod+Shift+arrows and vim variants
@@ -264,8 +265,8 @@ in
           Mod+Shift+Right { move-column-right; }
           Mod+Shift+Up    { move-window-up; }
           Mod+Shift+Down  { move-window-down; }
-          // Mod+Shift+L is reserved for gtklock; vim moves use H/K/J only.
           Mod+Shift+H { move-column-left; }
+          Mod+Shift+L { move-column-right; }
           Mod+Shift+K { move-window-up; }
           Mod+Shift+J { move-window-down; }
 

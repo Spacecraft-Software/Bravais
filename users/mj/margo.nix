@@ -148,10 +148,11 @@ in
       bind = super,q,killclient
       bind = super,f,togglefullscreen
       bind = super,v,togglefloating
-      bind = super,h,focusdir,left
-      bind = super,j,focusdir,down
-      bind = super,k,focusdir,up
-      bind = super,l,focusdir,right
+      # Vim focus keys sit on Super+Alt: plain Super+L locks.
+      bind = super+alt,h,focusdir,left
+      bind = super+alt,j,focusdir,down
+      bind = super+alt,k,focusdir,up
+      bind = super+alt,l,focusdir,right
       bind = super,Left,focusdir,left
       bind = super,Down,focusdir,down
       bind = super,Up,focusdir,up
@@ -159,6 +160,7 @@ in
       bind = super+shift,h,exchange_client,left
       bind = super+shift,j,exchange_client,down
       bind = super+shift,k,exchange_client,up
+      bind = super+shift,l,exchange_client,right
       bind = super+shift,Left,exchange_client,left
       bind = super+shift,Down,exchange_client,down
       bind = super+shift,Up,exchange_client,up
@@ -256,9 +258,7 @@ in
       bind = NONE,XF86RFKill,spawn,steelbore-airplane-toggle
 
       # ── System ────────────────────────────────────────────────────────────
-      # Super+Shift+L locks, as under Niri (so the vim-key swap stops at H/J/K
-      # and Super+Shift+Right swaps right instead).
-      bind = super+shift,l,spawn,gtklock
+      bind = super,l,spawn,gtklock
       bind = super+shift,c,spawn,steelbore-caffeine
       bind = super+shift,u,spawn,steelbore-keyring-unlock
       bind = super,F10,dpms,toggle
