@@ -18,7 +18,7 @@ they disagreed with each other. "Super", "Meta" and "Mod" are the same key.
 
 COSMIC is installed too but keeps its own defaults, which already share most of
 these keys; `users/mj/desktop-theme.nix` adds the few it lacks (Super+D,
-Super+Space, Super+Shift+C, Super+Shift+D, F9, and Super+Return for
+Super+Space, Super+Shift+C, Super+Shift+D, Super+L (lock), F9, and Super+Return for
 Alacritty).
 
 ## The shared keys
@@ -40,7 +40,7 @@ Alacritty).
 | Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
 | Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo |
-| Lock | Super+L | LeftWM keeps Ctrl+Alt+L too |
+| Lock | Super+L | LeftWM keeps Ctrl+Alt+L too; COSMIC keeps Super+Escape |
 | Exit session | Super+Shift+E | WMs. GNOME and Plasma: Ctrl+Alt+Del |
 | Caffeine | Super+Shift+C | |
 | Keyring unlock (rescue) | Super+Shift+U | WMs |

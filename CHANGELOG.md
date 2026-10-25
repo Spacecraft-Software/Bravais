@@ -175,7 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Lock is Super+L in every session.** Niri, LeftWM and Margo moved it from
+- **Lock is Super+L in every session.** COSMIC gained it; Niri, LeftWM and Margo moved it from
   Super+Shift+L, matching GNOME and Plasma. Their vim focus keys moved to
   Super+Alt+H/J/K/L, so Super+Shift+H/J/K/L now swap in all four directions
   on Niri and Margo. Plasma's Krohnkite and GNOME's Forge lose their Super+L
