@@ -164,6 +164,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   four. Each now has a host registration; the three Flatpaks also get the
   D-Bus permission the relay needs. Tor Browser is left out on purpose.
 
+### Fixed
+
+- **Gantry keeps its katakana font and the screen size.** When the framebuffer
+  console took over, udev re-ran `systemd-vconsole-setup`, which put plain
+  Terminus 24 over the greeter's font two seconds after Gantry loaded it
+  (no katakana, and a 160x45 grid instead of 240x67). The service now skips
+  itself while greetd is up; the other VTs still get the font from their
+  getty.
+
 ### Changed
 
 - **The coding orchestrator skill offers Qwen Coder.** The `construct` input

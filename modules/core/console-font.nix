@@ -19,6 +19,15 @@
 # loads /etc/vconsole.conf's font and keymap onto that one tty; it is the
 # very program the boot-time unit runs, so the setting stays single-sourced.
 # The leading `-` keeps a failure from ever stopping a login prompt.
+#
+# The same takeover has a second edge. When fbcon binds, udev starts
+# `systemd-vconsole-setup.service` again, and this time its `setfont`
+# succeeds: Terminus 24 lands on the greeter's VT a second or two after
+# Gantry loaded its katakana copy of the console font, wiping the katakana
+# and shrinking the grid from 240x67 to 160x45 under the running UI (seen
+# 2026-10-25: Gantry's font load at 18:15:31, the re-run at 18:15:33). The
+# service therefore skips itself while greetd is up; the VTs a user switches
+# to still get the font from the getty hook above.
 { config, pkgs, ... }:
 
 {
@@ -31,4 +40,12 @@
   systemd.services."getty@".serviceConfig.ExecStartPre = [
     "-${config.systemd.package}/lib/systemd/systemd-vconsole-setup /dev/%I"
   ];
+
+  # ExecCondition: exit 1 means "skip, not a failure". Runs at boot before
+  # greetd exists (keymap applies, font fails harmlessly), and is skipped for
+  # the takeover re-run and for `reload-systemd-vconsole-setup` on a switch.
+  systemd.services.systemd-vconsole-setup.serviceConfig.ExecCondition = pkgs.writeShellScript "vconsole-not-under-greeter" ''
+    state=$(${config.systemd.package}/bin/systemctl is-active greetd.service)
+    [ "$state" != active ] && [ "$state" != activating ]
+  '';
 }
