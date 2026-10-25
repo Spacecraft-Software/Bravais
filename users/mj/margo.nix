@@ -147,6 +147,9 @@ in
       # ── Windows ───────────────────────────────────────────────────────────
       bind = super,q,killclient
       bind = super,f,togglefullscreen
+      # margo has no maximize action; Super+Shift+F is monocle (one window
+      # fills the tag), and Super+T goes back to tile.
+      bind = super+shift,f,setlayout,monocle
       bind = super,v,togglefloating
       # Vim focus keys sit on Super+Alt: plain Super+L locks.
       bind = super+alt,h,focusdir,left

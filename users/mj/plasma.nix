@@ -207,7 +207,7 @@ in
   # ═══════════════════════════════════════════════════════════════════════════
   # The keys every Bravais session shares (docs/keybindings.md)
   # ═══════════════════════════════════════════════════════════════════════════
-  # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+L lock (Meta+Shift+L
+  # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+Shift+F maximize (Meta+PgUp kept), Meta+L lock (Meta+Shift+L
   # dropped), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
@@ -231,6 +231,9 @@ in
         --group kwin --key "Window Close" "$(printf 'Meta+Q\tAlt+F4,Alt+F4,Close Window')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group kwin --key "Window Fullscreen" "Meta+F,none,Make Window Fullscreen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window Maximize" \
+        "$(printf 'Meta+PgUp\tMeta+Shift+F,Meta+PgUp,Maximize Window')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group plasmashell --key "manage activities" "none,Meta+Q,Show Activity Switcher"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \

@@ -185,6 +185,19 @@ in
               key: "l",
           ): System(LockScreen),
           (
+              modifiers: [
+                  Super,
+              ],
+              key: "f",
+          ): Fullscreen,
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "f",
+          ): Maximize,
+          (
               modifiers: [],
               key: "XF86Tools",
           ): Spawn("cosmic-settings"),

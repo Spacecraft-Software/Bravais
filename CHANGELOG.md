@@ -180,6 +180,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Super+Alt+H/J/K/L, so Super+Shift+H/J/K/L now swap in all four directions
   on Niri and Margo. Plasma's Krohnkite and GNOME's Forge lose their Super+L
   focus-right key; `docs/keybindings.md` has the table.
+- **Maximize is Super+Shift+F in every session that can.** GNOME, Plasma and
+  COSMIC gained it beside their own key, COSMIC also got Super+F for
+  fullscreen, and Margo (no maximize action) uses its monocle layout.
 
 - **Margo scrolls the touchpad the natural way.** Margo defaults to the
   opposite of Niri and the X11 sessions; `trackpad_natural_scrolling` is now

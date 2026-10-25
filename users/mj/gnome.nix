@@ -152,6 +152,12 @@ in
           "<Alt>F4"
         ];
         toggle-fullscreen = [ "<Super>f" ];
+        # Super+Shift+F maximizes, beside the stock Super+Up and Alt+F10.
+        toggle-maximized = [
+          "<Super>Up"
+          "<Alt>F10"
+          "<Super><Shift>f"
+        ];
 
         # ── Accept the combo the side-button remap emits ───────────────────
         # modules/desktops/mouse-workspace-nav.nix turns BTN_SIDE/BTN_EXTRA
