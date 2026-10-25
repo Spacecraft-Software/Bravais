@@ -649,17 +649,17 @@
                   (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
                 ;; Caffeine — glyph from `caf`,
                 ;; color from caf_state (on=green, off=red). Right click toggles.
-                (button :onrightclick "steelbore-caffeine"
+                (button :class "bar-icon" :onrightclick "steelbore-caffeine"
                   (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
                 ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
                 ;; off=red, on=dim steel blue, connected=green). Left click
                 ;; opens bluetui; right click toggles the radio, like the
                 ;; XF86Bluetooth key.
-                (button :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+                (button :class "bar-icon" :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
                   (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
                 ;; Network — glyph from `net`, color from net_state. Clickable
                 ;; opens NetworkManager TUI for connection management.
-                (button :onclick "alacritty -e nmtui"
+                (button :class "bar-icon" :onclick "alacritty -e nmtui"
                   (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
                 ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
                 ;; box, not one interpolated string, because these glyphs disagree about
@@ -787,11 +787,12 @@
           .bt-off       { color: $error; }
           .bt-on        { color: $accent; }
           .bt-connected { color: $success; }
-          // Padding widens the label's own box: the wifi glyph's ink is wider
-          // than its advance, and the button around it (padding 0) clips
-          // drawing to that box. Same rule as the Niri bar (users/mj/eww.nix).
-          .net-up   { color: $success; padding: 0 4px; }
-          .net-down { color: $error;   padding: 0 4px; }
+          .net-up   { color: $success; }
+          .net-down { color: $error; }
+          // Fixed width for the icon glyphs: their ink is wider than their
+          // advance and the button around them clips to its box. Same rule as
+          // the Niri bar (users/mj/eww.nix).
+          .bar-icon { min-width: 22px; }
           .caf-on  { color: $success; }
           .caf-off { color: $error; }
 
