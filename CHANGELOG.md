@@ -166,6 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The boot and shutdown splash now draw the Steelbore logo.** The `fairing`
+  input moved to the Fairing commit whose built-in mark is the Steelbore
+  gear, drill and B, drawn in the theme's accent colour.
 - **Gantry is bumped to its current `main`.** The locked rev predated the
   fix that loads the katakana font after the first frame, so on the quiet
   boot the font load failed (the console had not left the dummy driver yet)
