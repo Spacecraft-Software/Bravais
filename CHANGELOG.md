@@ -166,6 +166,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The coding orchestrator skill offers Grok Build and Qwen Code.** The
+  `construct` input moved to the Construct commit that adds both as
+  backends to `spacecraft-coding-orchestrator`, alongside Codex, Poe,
+  Antigravity and OpenCode Go. `theme` was already at its current `main`.
 - **The boot and shutdown splash now draw the Steelbore logo.** The `fairing`
   input moved to the Fairing commit whose built-in mark is the Steelbore
   gear, drill and B, drawn in the theme's accent colour.
