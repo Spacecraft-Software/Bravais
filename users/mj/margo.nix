@@ -111,6 +111,9 @@ in
       repeat_delay     = 250
       tap_to_click     = 1
       tap_and_drag     = 1
+      # Natural scrolling, as under Niri and on the X11 sessions (hosts/common.nix).
+      # margo defaults to off; the mouse wheel is left alone, as in Niri.
+      trackpad_natural_scrolling = 1
 
       # ── Session environment ───────────────────────────────────────────────
       # `:mango` keeps portal rules written for mango matching.

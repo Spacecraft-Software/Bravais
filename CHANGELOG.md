@@ -175,6 +175,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Margo scrolls the touchpad the natural way.** Margo defaults to the
+  opposite of Niri and the X11 sessions; `trackpad_natural_scrolling` is now
+  on in `users/mj/margo.nix`. The mouse wheel is unchanged.
+
 - **The coding orchestrator skill offers Qwen Coder.** The `construct` input
   moved to the Construct commit that adds Qwen Coder, the Qwen Go plan's
   cloud agent, as a hand-off backend: the user runs it, it publishes one
