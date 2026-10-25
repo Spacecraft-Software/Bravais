@@ -156,16 +156,16 @@ in
             ;; off=red, on=dim steel blue, connected=green). Left click
             ;; opens bluetui; right click toggles the radio, like the
             ;; XF86Bluetooth key.
-            (eventbox :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+            (eventbox :class "bar-icon" :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
               (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
             ;; Mod+Shift+C → steelbore-caffeine.
-            (eventbox :onrightclick "steelbore-caffeine"
+            (eventbox :class "bar-icon" :onrightclick "steelbore-caffeine"
               (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
             ;; Click opens nmtui.
-            (eventbox :onclick "alacritty -e nmtui"
+            (eventbox :class "bar-icon" :onclick "alacritty -e nmtui"
               (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
             ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
             ;; box, not one interpolated string, because these glyphs disagree about
@@ -273,10 +273,14 @@ in
       .bt-off       { color: $error; }
       .bt-on        { color: $accent; }
       .bt-connected { color: $success; }
-      // Padding widens the label's own box: the wifi glyph's ink is wider than
-      // its advance, and the click area (an eventbox) clips drawing to the box.
-      .net-up   { color: $success; padding: 0 4px; }
-      .net-down { color: $error;   padding: 0 4px; }
+      .net-up   { color: $success; }
+      .net-down { color: $error; }
+      // Fixed width for the icon glyphs (bluetooth, caffeine, network). Their
+      // ink is wider than their advance and differs per glyph, and the click
+      // area (an eventbox) clips drawing to its box, so any glyph wider than
+      // its text box lost a slice. The label centres inside this box, so a
+      // glyph swap (wifi/ethernet, coffee/coffee-off) never moves its neighbours.
+      .bar-icon { min-width: 22px; }
       .caf-on  { color: $success; }
       .caf-off { color: $error; }
 

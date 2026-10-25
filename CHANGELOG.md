@@ -166,6 +166,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Bluetooth, Caffeine and network icons in the bar no longer lose a slice
+  of their glyph.** Padding the Wi-Fi label only fixed that icon; the three
+  icons now share a fixed-width box wide enough for their widest glyph, on
+  the Niri, Margo and LeftWM bars.
 - **Gantry keeps its katakana font and the screen size.** When the framebuffer
   console took over, udev re-ran `systemd-vconsole-setup`, which put plain
   Terminus 24 over the greeter's font two seconds after Gantry loaded it
