@@ -371,7 +371,9 @@ def up-artcraft [check: bool] {
   if ($stale | is-empty) {
     return {package: "artcraft" current: $current latest: $current action: "up to date"}
   }
-  let moved = ($stale | each { |p| $"($p.app) ($p.latest)" } | str join ", ")
+  # One app per line: thirteen names on one line made the summary table wide
+  # enough to squeeze the action column down to a letter per row.
+  let moved = ($stale | each { |p| $"($p.app) ($p.latest)" } | str join "\n")
   if $check {
     return {package: "artcraft" current: $current latest: $moved action: "update available"}
   }
