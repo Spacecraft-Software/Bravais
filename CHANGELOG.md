@@ -166,6 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The boot and shutdown splash now draw the Steelbore logo.** The `fairing`
+  input moved to the Fairing commit whose built-in mark is the Steelbore
+  gear, drill and B, drawn in the theme's accent colour.
 - **`rebuild` now runs `preflight`; the old Nushell/POSIX scripts are
   `rebuild-classic`.** `users/mj/rebuild.nu` and `scripts/rebuild.sh` became
   `rebuild-classic.nu` and `rebuild-classic.sh`, and the Nushell command and
