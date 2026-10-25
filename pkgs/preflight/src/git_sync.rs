@@ -25,8 +25,10 @@
 //      (`Clash`): identical to the incoming version, it is dropped; else
 //      stashed, the move made and the stash reapplied, and if that clashes
 //      the incoming version stands and the edits stay in `git stash`.
-//      The one exception is `flake.lock` when a flake update follows: that
-//      bump is about to be redone, so it is dropped instead.
+//      The one exception is `flake.lock`: it is tool-generated (a flake
+//      update, or a run of this tool, wrote that bump), so when the incoming
+//      commits change it too the local bump is dropped and origin's lock
+//      stands -- under `--no-update` as well, with a note saying so.
 //   2. `git fetch --prune origin`. Pruning is what makes a deleted upstream
 //      branch visible as gone rather than as a stale remote-tracking ref.
 //   3. Pick the branch: `--branch <name>` if given; else the current branch
@@ -92,9 +94,6 @@ pub struct Request<'a> {
     pub branch: Option<&'a str>,
     /// `--dry`: fetch and report, but do not move the checkout.
     pub dry: bool,
-    /// The run will rewrite `flake.lock` anyway (a flake update follows), so
-    /// a dirty lock that blocks the fast-forward can be discarded.
-    pub lock_regenerated: bool,
 }
 
 /// State of the current branch's upstream after a pruning fetch.
@@ -235,9 +234,9 @@ pub fn sync(req: Request) -> Result<Synced, Refusal> {
 
     // `nix flake update` leaves flake.lock modified after every full run. If
     // the incoming commits also change it, git would refuse the switch or
-    // fast-forward; when an update follows anyway, the stale bump is
-    // worthless and is dropped. Under --no-update the lock IS what gets built,
-    // so it is never thrown away silently.
+    // fast-forward. The bump is tool-generated, so origin's lock wins; the
+    // report line says it was dropped. Never a reason to make the user run
+    // `git restore`.
     let lock_conflicts = lock_dirty
         && git(
             req.dir,
@@ -252,7 +251,7 @@ pub fn sync(req: Request) -> Result<Synced, Refusal> {
         });
     }
     if lock_conflicts {
-        drop_lock_bump(req, &plan.target)?;
+        drop_lock_bump(req)?;
     }
     let clash = Clash::resolve(req.dir, &plan, &carried);
     let line = match apply(req.dir, &plan, &carried) {
@@ -266,7 +265,7 @@ pub fn sync(req: Request) -> Result<Synced, Refusal> {
     };
     let mut line = line;
     if lock_conflicts {
-        line = format!("{line}; dropped the uncommitted {LOCK} bump");
+        line = format!("{line}; dropped the uncommitted {LOCK} bump (origin's lock replaces it)");
     }
     for note in clash.reapply(req.dir) {
         line = format!("{line}; {note}");
@@ -513,17 +512,10 @@ fn plan(req: Request) -> Result<Plan, Refusal> {
     })
 }
 
-/// Discard the stale `flake.lock` bump that would block the move -- only when
-/// a flake update follows to redo it.
-fn drop_lock_bump(req: Request, target: &str) -> Result<(), Refusal> {
+/// Discard the stale `flake.lock` bump that would block the move; origin's
+/// lock replaces it.
+fn drop_lock_bump(req: Request) -> Result<(), Refusal> {
     let dir = req.dir;
-    if !req.lock_regenerated {
-        return Err(Refusal::conflict(
-            "LOCK_CONFLICT",
-            format!("{LOCK} has an uncommitted bump and {target} changes it too"),
-            format!("git -C {dir} restore {LOCK}   # drop the local bump, then re-run"),
-        ));
-    }
     if git_shown(dir, &["restore", "--staged", "--worktree", "--", LOCK]) {
         Ok(())
     } else {
@@ -728,7 +720,6 @@ mod tests {
                     dir: Box::leak(self.dir().into_boxed_str()),
                     branch: None,
                     dry: false,
-                    lock_regenerated: true,
                 }
             }
 
@@ -953,16 +944,11 @@ mod tests {
         }
 
         #[test]
-        fn a_stale_lock_bump_is_dropped_only_when_an_update_follows() {
+        fn a_stale_lock_bump_is_dropped_even_without_an_update() {
             let Some(lab) = Lab::new("lock") else { return };
             lab.commit("seed", "flake.lock", "lock 2");
             lab.git("seed", &["push", "--quiet"]);
             lab.write("work", "flake.lock", "local bump");
-            let kept = sync(Request {
-                lock_regenerated: false,
-                ..lab.request()
-            });
-            assert!(kept.is_err_and(|r| r.code == "LOCK_CONFLICT"));
             let got = sync(lab.request());
             assert!(
                 got.as_ref().is_ok_and(|l| l.line.contains("dropped")),
