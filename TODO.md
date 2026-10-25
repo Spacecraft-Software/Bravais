@@ -116,7 +116,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable Plasma 6 on Wayland, disable SDDM (use greetd)
 - [✓] Enable X server for XWayland support
 - [✓] Configure SSH askpass override (`ksshaskpass`)
-- [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+Shift+L, desktops 1–9)
+- [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+L, desktops 1–9)
 - [✓] KRunner on `Meta+D` beside its stock keys (matches `Mod+D` under Niri, COSMIC and GNOME); KWin's Peek at Desktop gives up its default `Meta+D`
 - [✓] Caffeine on `Meta+Shift+C` — default shortcut via a hidden `applications/` desktop file with `X-KDE-Shortcuts`; `steelbore-caffeine` holds the PowerManagement + ScreenSaver inhibits via `kde-inhibit` (no global action exists for the battery applet's manual-block checkbox)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)

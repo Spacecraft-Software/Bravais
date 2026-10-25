@@ -175,6 +175,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Lock is Super+L in every session.** COSMIC gained it; Niri, LeftWM and Margo moved it from
+  Super+Shift+L, matching GNOME and Plasma. Their vim focus keys moved to
+  Super+Alt+H/J/K/L, so Super+Shift+H/J/K/L now swap in all four directions
+  on Niri and Margo. Plasma's Krohnkite and GNOME's Forge lose their Super+L
+  focus-right key; `docs/keybindings.md` has the table.
+- **Maximize is Super+Shift+F in every session that can.** GNOME, Plasma and
+  COSMIC gained it beside their own key, COSMIC also got Super+F for
+  fullscreen, and Margo (no maximize action) uses its monocle layout.
+
+- **Margo scrolls the touchpad the natural way.** Margo defaults to the
+  opposite of Niri and the X11 sessions; `trackpad_natural_scrolling` is now
+  on in `users/mj/margo.nix`. The mouse wheel is unchanged.
+
 - **The coding orchestrator skill offers Qwen Coder.** The `construct` input
   moved to the Construct commit that adds Qwen Coder, the Qwen Go plan's
   cloud agent, as a hand-off backend: the user runs it, it publishes one

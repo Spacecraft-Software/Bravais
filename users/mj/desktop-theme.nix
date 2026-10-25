@@ -108,6 +108,8 @@ in
     # Super alone opens the App Library, and Super+Shift+D does too: the
     # app-menu key in every session (Kickoff on Plasma, the app grid on
     # GNOME, rofi drun on LeftWM). COSMIC binds nothing to Super+Shift+D.
+    # Super+L locks, as in every session; COSMIC's own lock key is
+    # Super+Escape (kept) and Super+L is its vim focus-right.
     # XF86Tools is the ThinkPad's F9 gear key (thinkpad_acpi KEY_CONFIG). It
     # opens COSMIC Settings, as it opens System Settings on Plasma and GNOME
     # Settings on GNOME by their own defaults; COSMIC binds nothing to it.
@@ -176,6 +178,25 @@ in
               ],
               key: "c",
           ): Spawn("steelbore-caffeine"),
+          (
+              modifiers: [
+                  Super,
+              ],
+              key: "l",
+          ): System(LockScreen),
+          (
+              modifiers: [
+                  Super,
+              ],
+              key: "f",
+          ): Fullscreen,
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "f",
+          ): Maximize,
           (
               modifiers: [],
               key: "XF86Tools",
