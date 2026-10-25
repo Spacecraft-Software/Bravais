@@ -325,6 +325,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`preflight` no longer stops on a `flake.lock` bump that origin also
+  changed.** A tool-generated lock with uncommitted changes that the incoming
+  commits touch too aborted the sync (`LOCK_CONFLICT`) under `--no-update`,
+  asking for a manual `git restore flake.lock`. The local bump is now dropped
+  and origin's lock stands, with a note in the sync line, on every run.
+
 - **Chrome Remote Desktop builds again on Google's newest release.** The
   new .deb moved the X-server code out of the `chrome-remote-desktop`
   script into a `shared_lib.py` beside it, so the store-path substitutions

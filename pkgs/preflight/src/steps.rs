@@ -398,7 +398,6 @@ fn sync_checkout(r: &mut Runner, opts: Options) -> Result<(), git_sync::Refusal>
         dir: FLAKE_DIR,
         branch: opts.branch,
         dry: opts.dry,
-        lock_regenerated: !opts.no_update,
     };
     match git_sync::sync(req) {
         Ok(synced) => {
