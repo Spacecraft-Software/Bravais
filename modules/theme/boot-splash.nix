@@ -61,7 +61,11 @@ in
         boot.initrd.verbose = false;
         boot.kernelParams = [
           "udev.log_level=3"
-          "systemd.show_status=auto"
+          # `auto` flips to "yes" on a slow job, which is exactly the
+          # "Stopping ..." / "A stop job is running" text that covered the
+          # shutdown splash. The journal keeps every status line.
+          "systemd.show_status=false"
+          "rd.systemd.show_status=false"
         ];
 
         # Keep the shutdown splash on screen until the power goes (constraint

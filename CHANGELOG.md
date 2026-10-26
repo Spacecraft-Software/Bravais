@@ -166,6 +166,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Status lines no longer cover the shutdown splash.** `systemd.show_status`
+  was `auto`, which turns the "Stopping ..." lines on as soon as a stop job runs
+  slow, and they drew over Fairing's shutdown screen. It is now `false` (also
+  in the initrd); the journal still records every line. Not yet tested on the
+  machine.
+
 - **Clicking a bar icon opened its TUI and closed it again at once.** Eww kills
   a click command that is still running after 200 ms, and the terminal is that
   command. The Bluetooth, network, volume, microphone, CPU and RAM clicks now
