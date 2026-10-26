@@ -170,6 +170,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Status lines no longer cover the shutdown splash.** `systemd.show_status`
+  was `auto`, which turns the "Stopping ..." lines on as soon as a stop job runs
+  slow, and they drew over Fairing's shutdown screen. It is now `false` (also
+  in the initrd); the journal still records every line. Not yet tested on the
+  machine.
 - **Toggling Bluetooth from the bar showed no message.** The toggle waits
   0.3 s before reading the new state, so eww's 200 ms click-command kill ended
   it before the notification. The bar now starts both radio toggles detached.
