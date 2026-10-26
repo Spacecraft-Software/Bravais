@@ -158,7 +158,7 @@ in
             ;; click command still running after 200 ms, which is the whole
             ;; life of a terminal); right click toggles the radio, like the
             ;; XF86Bluetooth key.
-            (eventbox :onclick "setsid -f alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+            (eventbox :onclick "setsid -f alacritty -e bluetui" :onrightclick "setsid -f steelbore-bt-toggle"
               (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
@@ -166,8 +166,10 @@ in
             (eventbox :onrightclick "steelbore-caffeine"
               (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
-            ;; Click opens nmtui.
-            (eventbox :onclick "setsid -f alacritty -e nmtui"
+            ;; Left click opens nmtui; right click toggles the Wi-Fi radio.
+            ;; Both radio toggles run under `setsid -f` so their dunst
+            ;; message survives eww's 200 ms click-command kill.
+            (eventbox :onclick "setsid -f alacritty -e nmtui" :onrightclick "setsid -f steelbore-wifi-toggle"
               (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
             ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
             ;; box, not one interpolated string, because these glyphs disagree about
