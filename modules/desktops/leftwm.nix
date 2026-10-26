@@ -655,11 +655,11 @@
                 ;; off=red, on=dim steel blue, connected=green). Left click
                 ;; opens bluetui; right click toggles the radio, like the
                 ;; XF86Bluetooth key.
-                (button :onclick "setsid -f alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+                (button :onclick "setsid -f alacritty -e bluetui" :onrightclick "setsid -f steelbore-bt-toggle"
                   (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
-                ;; Network — glyph from `net`, color from net_state. Clickable
-                ;; opens NetworkManager TUI for connection management.
-                (button :onclick "setsid -f alacritty -e nmtui"
+                ;; Network — glyph from `net`, color from net_state. Left click
+                ;; opens the NetworkManager TUI; right click toggles Wi-Fi.
+                (button :onclick "setsid -f alacritty -e nmtui" :onrightclick "setsid -f steelbore-wifi-toggle"
                   (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
                 ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
                 ;; box, not one interpolated string, because these glyphs disagree about

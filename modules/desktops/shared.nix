@@ -78,6 +78,21 @@ let
       ${pkgs.dunst}/bin/dunstify -a Bluetooth -r 9911 -u normal -i bluetooth "Bluetooth On"
     fi
   '';
+  # Wi-Fi radio on/off for the bar's network indicator (right click). Goes
+  # through NetworkManager rather than rfkill so NM's own state stays the
+  # source of truth. Same fixed-id dunst feedback as the toggles above. A bar
+  # click must start it with `setsid -f`: eww kills a click command still
+  # running after 200 ms, which would swallow the notification.
+  wifiToggle = pkgs.writeShellScriptBin "steelbore-wifi-toggle" ''
+    nmcli=${pkgs.networkmanager}/bin/nmcli
+    if [ "$($nmcli radio wifi)" = enabled ]; then
+      $nmcli radio wifi off
+      ${pkgs.dunst}/bin/dunstify -a Wi-Fi -r 9914 -u critical -i network-wireless-disabled "Wi-Fi Off"
+    else
+      $nmcli radio wifi on
+      ${pkgs.dunst}/bin/dunstify -a Wi-Fi -r 9914 -u normal -i network-wireless "Wi-Fi On"
+    fi
+  '';
   airplaneToggle = pkgs.writeShellScriptBin "steelbore-airplane-toggle" ''
     ${pkgs.util-linux}/bin/rfkill toggle all
     if ${pkgs.util-linux}/bin/rfkill list wlan | grep -q "Soft blocked: yes"; then
@@ -616,6 +631,7 @@ in
       environment.systemPackages = [
         btState
         btToggle
+        wifiToggle
         airplaneToggle
         caffeineToggle
         xIdle

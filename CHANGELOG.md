@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Right-clicking the network icon toggles Wi-Fi.** On all three bars it runs
+  the new `steelbore-wifi-toggle` (NetworkManager radio on/off with a dunst
+  message, like the Bluetooth and airplane toggles).
+
 - **The Niri and Margo bar has a system tray.** Tray icons from apps such as
   Bitwarden and Claude Desktop appeared nowhere, since neither session has a
   panel. The Eww bar now carries its `systray` widget (already used by the
@@ -166,6 +170,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Toggling Bluetooth from the bar showed no message.** The toggle waits
+  0.3 s before reading the new state, so eww's 200 ms click-command kill ended
+  it before the notification. The bar now starts both radio toggles detached.
 - **Clicking a bar icon opened its TUI and closed it again at once.** Eww kills
   a click command that is still running after 200 ms, and the terminal is that
   command. The Bluetooth, network, volume, microphone, CPU and RAM clicks now

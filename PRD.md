@@ -1240,7 +1240,7 @@ Config and wrappers used by **both** bare window managers live here — active w
 **Wrappers on PATH:**
 
 - `steelbore-bt-state` — `off` / `on` / `connected`, one truth source for the bar and the toggle
-- `steelbore-bt-toggle`, `steelbore-airplane-toggle` — rfkill toggles with dunstify feedback that replaces rather than stacks
+- `steelbore-bt-toggle`, `steelbore-airplane-toggle` — rfkill toggles (plus `steelbore-wifi-toggle`, NetworkManager radio, for the bar's network icon) with dunstify feedback that replaces rather than stacks
 - `steelbore-caffeine` — pauses swayidle under Niri; under LeftWM it clears the X idle timers through `steelbore-x-idle`, which also arms them at session start (CONSTRAINTS.md #45); under Plasma and COSMIC it holds a `kde-inhibit` inhibit (PowerManagement + ScreenSaver on Plasma, ScreenSaver on COSMIC). The only helper also installed for those two desktops
 - `steelbore-kbd-light-cycle`, `steelbore-output-scale`, `steelbore-layout-state`, `steelbore-osd` (LeftWM's X11 OSD)
 - `steelbore-keyring-check` — read-only keyring diagnosis, safe unattended, with distinct exit codes for a wrong `default` alias, a locked keyring, and dangling items
