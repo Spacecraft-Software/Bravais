@@ -154,9 +154,11 @@ in
               (label :class {lang_state == "ar" ? "lang-ar" : "lang-en"} :text lang))
             ;; Bluetooth — glyph from `bt`, color from bt_state (3-state:
             ;; off=red, on=dim steel blue, connected=green). Left click
-            ;; opens bluetui; right click toggles the radio, like the
+            ;; opens bluetui (every TUI launch is `setsid -f`: eww kills a
+            ;; click command still running after 200 ms, which is the whole
+            ;; life of a terminal); right click toggles the radio, like the
             ;; XF86Bluetooth key.
-            (eventbox :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+            (eventbox :onclick "setsid -f alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
               (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
@@ -165,7 +167,7 @@ in
               (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
             ;; Click opens nmtui.
-            (eventbox :onclick "alacritty -e nmtui"
+            (eventbox :onclick "setsid -f alacritty -e nmtui"
               (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
             ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
             ;; box, not one interpolated string, because these glyphs disagree about
@@ -189,12 +191,12 @@ in
               ;; reads correctly without relying on color alone.
               ;; Left click opens wiremix; right click toggles mute (the
               ;; XF86Audio keys' action), and the glyph flips with it.
-              (eventbox :onclick "alacritty -e wiremix" :onrightclick "swayosd-client --output-volume mute-toggle"
+              (eventbox :onclick "setsid -f alacritty -e wiremix" :onrightclick "swayosd-client --output-volume mute-toggle"
                 (box :orientation "h" :spacing 3 :space-evenly false
                   (label :class {beacon.muted ? "ind-muted" : "ind-live"}
                          :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
                   (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%")))
-              (eventbox :onclick "alacritty -e wiremix" :onrightclick "sh -c 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && swayosd-client --input-volume mute-toggle'"
+              (eventbox :onclick "setsid -f alacritty -e wiremix" :onrightclick "sh -c 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && swayosd-client --input-volume mute-toggle'"
                 (box :orientation "h" :spacing 3 :space-evenly false
                   (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
                          :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
@@ -216,9 +218,9 @@ in
             ;; cpu/ram/battery trio, setting it visually apart from the
             ;; radio/caffeine cluster (lang/bt/caf/net) to its left.
             ;; CPU and RAM open bottom on click.
-            (eventbox :class "metric-group-start" :onclick "alacritty -e btm"
+            (eventbox :class "metric-group-start" :onclick "setsid -f alacritty -e btm"
               (label :class {cpu >= 90 ? "metric-crit" : cpu >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%"))
-            (eventbox :onclick "alacritty -e btm"
+            (eventbox :onclick "setsid -f alacritty -e btm"
               (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%"))
             (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%"))))
 

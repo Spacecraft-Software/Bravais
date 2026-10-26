@@ -655,11 +655,11 @@
                 ;; off=red, on=dim steel blue, connected=green). Left click
                 ;; opens bluetui; right click toggles the radio, like the
                 ;; XF86Bluetooth key.
-                (button :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+                (button :onclick "setsid -f alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
                   (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
                 ;; Network — glyph from `net`, color from net_state. Clickable
                 ;; opens NetworkManager TUI for connection management.
-                (button :onclick "alacritty -e nmtui"
+                (button :onclick "setsid -f alacritty -e nmtui"
                   (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
                 ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
                 ;; box, not one interpolated string, because these glyphs disagree about
@@ -682,12 +682,12 @@
                   ;; changes with the state too (volume_off / microphone_off), so muted
                   ;; reads correctly without relying on color alone.
                   ;; Left click opens wiremix; right click toggles mute.
-                  (button :onclick "alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+                  (button :onclick "setsid -f alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
                     (box :orientation "h" :spacing 3 :space-evenly false
                       (label :class {beacon.muted ? "ind-muted" : "ind-live"}
                              :text {beacon.muted ? ico-vol-mute : beacon.volume >= 66 ? ico-vol-high : beacon.volume >= 33 ? ico-vol-med : ico-vol-low})
                       (label :class {beacon.muted ? "ind-muted" : "ind-live"} :text "''${beacon.volume}%")))
-                  (button :onclick "alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+                  (button :onclick "setsid -f alacritty -e wiremix" :onrightclick "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
                     (box :orientation "h" :spacing 3 :space-evenly false
                       (label :class {beacon.mic_muted ? "ind-muted" : "ind-live"}
                              :text {beacon.mic_muted ? ico-mic-off : ico-mic-on})
@@ -704,9 +704,9 @@
                 ;; md-battery's ink sits inside its 600-unit advance (RSB +50),
                 ;; while oct-cpu/fa-memory overflow theirs (RSB -400/-438) into
                 ;; the following space — matches the Niri bar (users/mj/eww.nix).
-                (button :onclick "alacritty -e btm"
+                (button :onclick "setsid -f alacritty -e btm"
                   (label :class {cpu    >= 90 ? "metric-crit" : cpu    >= 75 ? "metric-warn" : "metric"} :text "''${cpu-icon} ''${cpu}%"))
-                (button :onclick "alacritty -e btm"
+                (button :onclick "setsid -f alacritty -e btm"
                   (label :class {memory >= 90 ? "metric-crit" : memory >= 75 ? "metric-warn" : "metric"} :text "''${ram-icon} ''${memory}%"))
                 (label :class {battery == "--" ? "metric" : battery <= 15 ? "metric-crit" : battery <= 30 ? "metric-warn" : "metric"} :text "''${bat-icon}''${battery}%")
                 ;; System tray — SNI/D-Bus protocol. Works natively on X11

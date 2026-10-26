@@ -166,6 +166,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Clicking a bar icon opened its TUI and closed it again at once.** Eww kills
+  a click command that is still running after 200 ms, and the terminal is that
+  command. The Bluetooth, network, volume, microphone, CPU and RAM clicks now
+  start the terminal detached with `setsid -f`, on the Niri, Margo and LeftWM
+  bars.
 - **The bar icons' fixed width now sits on the icon labels.** The previous
   width rule sat on the click-area widget, which GTK gives no minimum width,
   so the Wi-Fi and Caffeine glyphs stayed clipped on the Niri, Margo and
