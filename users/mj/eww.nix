@@ -156,16 +156,16 @@ in
             ;; off=red, on=dim steel blue, connected=green). Left click
             ;; opens bluetui; right click toggles the radio, like the
             ;; XF86Bluetooth key.
-            (eventbox :class "bar-icon" :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
+            (eventbox :onclick "alacritty -e bluetui" :onrightclick "steelbore-bt-toggle"
               (label :class {bt_state == "off" ? "bt-off" : bt_state == "connected" ? "bt-connected" : "bt-on"} :text bt))
             ;; Caffeine — glyph from `caf`,
             ;; color from caf_state (on=green, off=red). Toggled by
             ;; Mod+Shift+C → steelbore-caffeine.
-            (eventbox :class "bar-icon" :onrightclick "steelbore-caffeine"
+            (eventbox :onrightclick "steelbore-caffeine"
               (label :class {caf_state == "on" ? "caf-on" : "caf-off"} :text caf))
             ;; Network — glyph from `net`, color from net_state.
             ;; Click opens nmtui.
-            (eventbox :class "bar-icon" :onclick "alacritty -e nmtui"
+            (eventbox :onclick "alacritty -e nmtui"
               (label :class {net_state == "down" ? "net-down" : "net-up"} :text net))
             ;; Hardware indicators. Icon and value are SEPARATE labels inside a small
             ;; box, not one interpolated string, because these glyphs disagree about
@@ -275,12 +275,15 @@ in
       .bt-connected { color: $success; }
       .net-up   { color: $success; }
       .net-down { color: $error; }
-      // Fixed width for the icon glyphs (bluetooth, caffeine, network). Their
-      // ink is wider than their advance and differs per glyph, and the click
-      // area (an eventbox) clips drawing to its box, so any glyph wider than
-      // its text box lost a slice. The label centres inside this box, so a
-      // glyph swap (wifi/ethernet, coffee/coffee-off) never moves its neighbours.
-      .bar-icon { min-width: 22px; }
+      // Fixed width for the icon glyphs (bluetooth, caffeine, network). Their ink
+      // is wider than their advance and differs per glyph, and the click area
+      // around the label clips drawing to its box, so a glyph wider than its box
+      // lost a slice. The width goes on the labels themselves: GTK ignores
+      // min-width on an eventbox. The glyph centres in the box, so a swap (wifi/
+      // ethernet, coffee/coffee-off) never moves its neighbours.
+      .bt-off, .bt-on, .bt-connected,
+      .caf-on, .caf-off,
+      .net-up, .net-down { min-width: 22px; }
       .caf-on  { color: $success; }
       .caf-off { color: $error; }
 
