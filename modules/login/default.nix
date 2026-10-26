@@ -203,6 +203,12 @@ let
     # accumulate one process per theme load. polkit-gnome is GTK3, which is
     # correct for LeftWM's X11 session.
     ${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1 &
+    # NetworkManager tray icon, here for the polkit agent's reason. Nothing
+    # runs XDG autostart under LeftWM (Niri gets it that way), and
+    # --indicator is required: eww's systray speaks StatusNotifierItem
+    # only, and without it nm-applet on X11 docks as an XEmbed icon that
+    # no tray here would show.
+    ${pkgs.networkmanagerapplet}/bin/nm-applet --indicator &
     # Diagnose the keyring before any browser can mint a fresh Safe Storage
     # key off a broken one. Read-only; exits non-zero and notifies on trouble.
     # The delay lets pam_gnome_keyring's daemon settle first.

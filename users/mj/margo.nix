@@ -129,6 +129,10 @@ in
       exec-once = sh -c "sleep 1 && ${wallpaperPkg}/bin/${wallpaperBin} img ${config.home.homeDirectory}/Pictures/Wallpapers/Steelbore/ChatGPT_Image_2026-09-30_16-46-13.png || ${wallpaperPkg}/bin/${wallpaperBin} clear ${steelborePalette.convert.bareHex steelborePalette.background}"
       exec-once = eww open bar
       exec-once = dunst
+      # NetworkManager tray icon. Margo starts no XDG autostart, which is
+      # how Niri gets it; --indicator makes it a StatusNotifierItem for
+      # eww's systray (modules/desktops/shared.nix).
+      exec-once = ${pkgs.networkmanagerapplet}/bin/nm-applet --indicator
       exec-once = swayosd-server
       exec-once = swayidle -w timeout 300 'gtklock -d' timeout 360 'mctl dispatch dpms off' resume 'mctl dispatch dpms on' before-sleep 'gtklock -d'
       exec-once = ${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1

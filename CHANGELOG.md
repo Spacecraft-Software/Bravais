@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The NetworkManager tray icon (nm-applet) runs under Margo and LeftWM.** It
+  already appeared in Niri's tray, by way of its autostart entry; the other two
+  sessions run no autostart, so they now start it themselves. The package is now
+  installed for every bare-WM session rather than only by COSMIC.
+
 - **Right-clicking the network icon toggles Wi-Fi.** On all three bars it runs
   the new `steelbore-wifi-toggle` (NetworkManager radio on/off with a dunst
   message, like the Bluetooth and airplane toggles).
