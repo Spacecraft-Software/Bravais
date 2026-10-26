@@ -645,6 +645,15 @@ in
         # audio, but listed here for clarity — LeftWM binds need them).
         pkgs.brightnessctl # C — display + keyboard backlight
         pkgs.playerctl # MPRIS media control
+        # nm-applet (C, GTK3) — the NetworkManager tray icon. Its XDG
+        # autostart entry hides itself under GNOME, KDE and COSMIC, which
+        # have their own, so in a bare WM it is the network menu. Niri
+        # runs XDG autostart (niri.service wants xdg-desktop-autostart
+        # .target) and gets it from that entry; Margo and LeftWM start no
+        # autostart, so their session scripts spawn it with --indicator.
+        # Listed here so none of this depends on COSMIC's module, which
+        # happens to install the same package.
+        pkgs.networkmanagerapplet
       ];
 
       # brightnessctl udev rules make /sys/class/backlight (group
