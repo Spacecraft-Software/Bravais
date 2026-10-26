@@ -166,6 +166,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The bar icons' fixed width now sits on the icon labels.** The previous
+  width rule sat on the click-area widget, which GTK gives no minimum width,
+  so the Wi-Fi and Caffeine glyphs stayed clipped on the Niri, Margo and
+  LeftWM bars.
 - **The Bluetooth, Caffeine and network icons in the bar no longer lose a slice
   of their glyph.** Padding the Wi-Fi label only fixed that icon; the three
   icons now share a fixed-width box wide enough for their widest glyph, on
