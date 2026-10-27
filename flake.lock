@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792936983,
-        "narHash": "sha256-pJ1OmT/PQuYvvKcc7s9SJZ/zvRQz2TCg5Y6bfDRNRZs=",
+        "lastModified": 1793111094,
+        "narHash": "sha256-isFBSvUXP3DIsJD9lCiv2t65Dh8+5E1rZ2Dze7VNFII=",
         "owner": "Spacecraft-Software",
         "repo": "Construct",
-        "rev": "1154efb132ee0ef8e810474053ecb82ddafd9914",
+        "rev": "3fbfdb9fe7c6cc8c22caf2ec07581ee366c96451",
         "type": "github"
       },
       "original": {

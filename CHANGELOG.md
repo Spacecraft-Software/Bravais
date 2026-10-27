@@ -220,6 +220,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The coding orchestrator skill asks every decision as a choice.** The
+  `construct` input moved to the Construct commit where
+  `spacecraft-coding-orchestrator` puts each decision it needs from the user
+  as one multiple-choice question, the recommended option first, rather than
+  an open-ended one.
 - **The greeter's shell sessions (Brush, Ion, mjsh, Nushell) open in
   Alacritty instead of Rio, under cosmic-comp instead of cage.** Alacritty is
   the default terminal everywhere else, and Rio hangs when its compositor
