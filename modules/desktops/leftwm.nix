@@ -181,12 +181,20 @@
             ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" open bar
 
             # LeftWM has no workspace overview. The top-left corner mirrors
-            # GNOME, Plasma, Niri and Margo; see docs/keybindings.md.
+            # GNOME, Plasma, Niri and Margo; see docs/keybindings.md. `up`
+            # re-runs on every LoadTheme, so stop a previous pair first rather
+            # than stacking a second daemon and corner watcher.
+            hotcorner_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+            if [ -r "$hotcorner_pidfile" ]; then
+              while IFS= read -r pid; do
+                kill "$pid" 2>/dev/null || true
+              done < "$hotcorner_pidfile"
+            fi
             ${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --start-daemon &
             skippy_pid=$!
-            ${pkgs.xdotool}/bin/xdotool behave_screen_edge --delay 150 --quiesce 750 top-left exec ${pkgs.skippy-xd}/bin/skippy-xd --paging &
+            ${pkgs.xdotool}/bin/xdotool behave_screen_edge --delay 150 --quiesce 750 top-left exec ${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --paging &
             corner_pid=$!
-            printf '%s\n%s\n' "$skippy_pid" "$corner_pid" > "''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+            printf '%s\n%s\n' "$skippy_pid" "$corner_pid" > "$hotcorner_pidfile"
 
             # Side-button workspace nav. LeftWM is started by startx and has no
             # systemd graphical session at all, so the user unit in
@@ -204,6 +212,10 @@
         {
           name = "down";
           path = pkgs.writeShellScript "leftwm-steelbore-down" ''
+            # Ask the daemon to stop before killing it, under a timeout: the
+            # client opens the daemon's FIFO with a blocking write, which never
+            # returns if a stale FIFO outlived a dead daemon.
+            ${pkgs.coreutils}/bin/timeout 2 ${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --stop-daemon 2>/dev/null || true
             hotcorner_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
             if [ -r "$hotcorner_pidfile" ]; then
               while IFS= read -r pid; do
@@ -211,7 +223,6 @@
               done < "$hotcorner_pidfile"
               rm -f "$hotcorner_pidfile"
             fi
-            ${pkgs.skippy-xd}/bin/skippy-xd --stop-daemon 2>/dev/null || true
             pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
             if [ -r "$pidfile" ]; then
               kill "$(cat "$pidfile")" 2>/dev/null || true
