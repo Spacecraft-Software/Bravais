@@ -33,11 +33,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "github-copilot-app";
-  version = "1.1.29";
+  version = "1.1.33";
 
   src = fetchurl {
     url = "https://github.com/github/app/releases/download/v${finalAttrs.version}/GitHub-Copilot-linux-x64.deb";
-    hash = "sha256-IqvaFeGY2BDPGlgvQYTbQ2INxFqTczV01PAvAI3To3A=";
+    hash = "sha256-VtUcbroU4oW/8L2Yrj99ZTje5UT0tnzyE63l08FYBeQ=";
   };
 
   nativeBuildInputs = [
@@ -107,11 +107,6 @@ stdenv.mkDerivation (finalAttrs: {
   # above. Stripping this binary at any point before autoPatchelfHook breaks
   # it; there is no ordering that gives both a small binary and a working one.
   dontStrip = true;
-
-  # EXPERIMENT: strip before autoPatchelfHook instead of leaving it unstripped.
-  preFixup = ''
-    strip -S $out/bin/github
-  '';
 
   unpackPhase = ''
     runHook preUnpack

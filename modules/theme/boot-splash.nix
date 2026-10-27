@@ -58,7 +58,9 @@ in
         # Keep kernel and udev chatter off the splash; errors still reach the
         # journal. `quiet` also silences the initrd's own stage messages.
         boot.consoleLogLevel = 3;
-        boot.initrd.verbose = false;
+        # A scripted-initrd option; NixOS 26.11 removed it with the scripted
+        # stage 1 and asserts on any definition.
+        boot.initrd.verbose = lib.mkIf (lib.versionOlder lib.trivial.release "26.11") false;
         boot.kernelParams = [
           "udev.log_level=3"
           # `auto` flips to "yes" on a slow job, which is exactly the
@@ -86,7 +88,9 @@ in
         # handoff paints greetd's VT (services.greetd.settings.terminal.vt,
         # set by Gantry's module) with the theme canvas before letting go.
         steelbore.fairing.enable = true;
-        boot.initrd.systemd.enable = true;
+        # The systemd initrd is the only one from NixOS 26.11, which removes
+        # the option along with the scripted initrd; setting it fails there.
+        boot.initrd.systemd.enable = lib.mkIf (lib.versionOlder lib.trivial.release "26.11") true;
       })
 
       (lib.mkIf (cfg.provider == "plymouth") {
