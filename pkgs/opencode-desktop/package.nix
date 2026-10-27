@@ -171,8 +171,8 @@ stdenv.mkDerivation (finalAttrs: {
     # re-exec'd GPU process. Expose only GLVND/Vulkan *dispatch* libs here; the
     # vendor driver itself must keep coming from /run/opengl-driver.
     # The launcher's name is read from the .deb's own Exec= line rather than
-    # restated here: 2.2.0 renamed it from ai.opencode.desktop to ai.opencode
-    # (constraint #16).
+    # restated here: a release renamed it from ai.opencode.desktop to
+    # ai.opencode (constraint #16).
     launcher=$(sed -n 's|^Exec=/opt/OpenCode/\([^ ]*\).*|\1|p' \
       $out/share/applications/opencode-desktop.desktop | head -n 1)
     if [ -z "$launcher" ] || [ ! -x "$out/lib/OpenCode/$launcher" ]; then

@@ -108,11 +108,6 @@ stdenv.mkDerivation (finalAttrs: {
   # it; there is no ordering that gives both a small binary and a working one.
   dontStrip = true;
 
-  # EXPERIMENT: strip before autoPatchelfHook instead of leaving it unstripped.
-  preFixup = ''
-    strip -S $out/bin/github
-  '';
-
   unpackPhase = ''
     runHook preUnpack
     dpkg-deb --fsys-tarfile $src | tar -x --no-same-permissions --no-same-owner
