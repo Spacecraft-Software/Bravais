@@ -12,13 +12,19 @@
 }:
 
 let
-  # Wrap each shell-as-session in cage (single-app Wayland kiosk) plus
-  # Alacritty (the default terminal, as under Niri and LeftWM; Rio hangs when
-  # its compositor closes it, constraint #11). Without this wrapper greetd
-  # execs the bare shell binary in a no-TTY no-compositor context: brush
-  # blocks on stdin, ion fails fast, nushell silently swallows its own startup
-  # error. cage gives the missing compositor; Alacritty gives the missing PTY;
-  # the shell gets a real interactive terminal as it expects.
+  # Wrap each shell-as-session in cosmic-comp's kiosk mode plus Alacritty (the
+  # default terminal, as under Niri and LeftWM; Rio hangs when its compositor
+  # closes it, constraint #11). Without this wrapper greetd execs the bare
+  # shell binary in a no-TTY no-compositor context: brush blocks on stdin, ion
+  # fails fast, nushell silently swallows its own startup error. The
+  # compositor gives the missing display; Alacritty gives the missing PTY; the
+  # shell gets a real interactive terminal as it expects.
+  #
+  # `cosmic-comp <cmd> <args>` runs one program and exits with its status, as
+  # cage did, but in Rust (Smithay) and reusing the COSMIC compositor already
+  # installed. Every argument after the binary is the child's, so a
+  # cosmic-comp flag must never be put first: it would be run as the program.
+  # It reads the user's COSMIC config, so COSMIC's own shortcuts stay live.
   mkShellSession =
     {
       name,
@@ -36,7 +42,7 @@ let
         [Desktop Entry]
         Name=${name}
         Comment=${comment}
-        Exec=${pkgs.cage}/bin/cage -- ${pkgs.alacritty}/bin/alacritty -e ${exec}
+        Exec=${pkgs.cosmic-comp}/bin/cosmic-comp ${pkgs.alacritty}/bin/alacritty -e ${exec}
         Type=Application
         DesktopNames=${sessionName}
         EOF
@@ -391,7 +397,7 @@ in
       greeting = steelboreIdentity.banner;
       # No synthetic "Shell" entry: a bare shell under greetd has no TTY or
       # compositor (see mkShellSession above), so shells are offered only
-      # through their cage + Alacritty session files.
+      # through their cosmic-comp + Alacritty session files.
       default_session = [ ];
       # Every X session's Exec already runs startx (start-leftwm,
       # start-plasma-x11); a wrapper would start a second X server. Same
