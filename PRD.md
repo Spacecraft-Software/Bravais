@@ -1075,6 +1075,8 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 **Keybindings:** one scheme across GNOME, Plasma, Niri, LeftWM and Margo (Super+D launcher, Super+Return terminal, Super+Q close, Super+F fullscreen, Super+V float, Super+1…9 workspaces, Super+Space keyboard layout, Super+L lock, Super+Shift+E exit, Super+Shift+C Caffeine), added to GNOME and Plasma next to their stock keys. The full table, where each session writes its keys and the per-session extras are in **[`docs/keybindings.md`](docs/keybindings.md)**; change one session, change all five.
 
+Margo's top-left hot corner opens the overview (`hot_corner_top_left = toggle_overview`).
+
 **Portal routing:** each full DE adds an explicit `xdg.portal.config.<de>` block so that, with several DEs installed, interfaces resolve deterministically for the active session instead of spilling over from another DE's `configPackages`. Niri keeps the upstream module default (`gnome;gtk`); LeftWM gets `gtk` plus Secret → `gnome-keyring` in `modules/theme/dark-mode.nix`.
 
 ### 9.1 GNOME (Wayland)
@@ -1201,7 +1203,7 @@ Audio, mic, backlight and Caps/Num Lock come from one event-driven `deflisten` o
 **Services:** `services.xserver.enable = true`, `services.xserver.displayManager.startx.enable = true`. LeftWM is intentionally **not** registered via `services.xserver.windowManager.leftwm.enable`: that xsession runs `leftwm` directly, and since greetd does not start Xorg, leftwm panics in a respawn loop. `modules/login/default.nix` registers its own xsession that wraps LeftWM in `startx`.
 
 **Companion packages:**
-leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, xss-lock + i3lock (`programs.i3lock`), feh, xclip, xsel, maim, xdotool, numlockx, xkb-switch (layout for the eww language indicator)
+leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, xss-lock + i3lock (`programs.i3lock`), feh, xclip, xsel, maim, xdotool, skippy-xd (workspace overview for the hot corner), numlockx, xkb-switch (layout for the eww language indicator)
 
 **LeftWM Configuration** (`~/.config/leftwm/config.ron`, written by Home Manager from `modules/desktops/leftwm.nix`):
 
@@ -1223,7 +1225,7 @@ Key bindings:
 **Theme** (`~/.config/leftwm/themes/current` — one symlink to a store derivation, because leftwm intermittently fails to find `current/up` when `current` is a real directory):
 
 - `theme.ron`: border width 2, margin 8; borders from the `accent` (default), `info` (floating) and `foreground` (focused) roles
-- `up`: starts picom, dunst and the eww bar (here, so the GTK dock registers with an active WM), plus the xremap command when `mouseWorkspaceNav` is on; `down` kills that xremap so it cannot keep holding the mouse after the session ends
+- `up`: starts picom, dunst and the eww bar (here, so the GTK dock registers with an active WM), plus the xremap command when `mouseWorkspaceNav` is on, the skippy-xd daemon and the xdotool top-left corner watcher; `down` stops them
 
 **Session bring-up** (`leftwm-session-inner`): numlockx, `gitway-add`, the polkit agent (not in `up`, which re-runs on every `LoadTheme` and would accumulate agents), a delayed keyring check, then an explicit `LoadTheme` (leftwm does not auto-load it and falls back to red) and a `background`-role root fill (leftwm clobbers the root to grey).
 
@@ -2270,7 +2272,7 @@ A `--version` call proves only that a binary is on PATH, not that a session star
 | GNOME | `systemctl --user is-active gnome-session-initialized.target` | `active` |
 | Plasma | `systemctl --user is-active plasma-core.target` | `active` |
 | COSMIC / GNOME / Plasma | `systemctl --user is-active steelbore-mouse-workspace-nav` | `active` |
-| LeftWM | `pgrep -x eww`; `pgrep -x dunst`; `pgrep -x picom` | a PID each (started by the theme's `up` script) |
+| LeftWM | `pgrep -x eww`; `pgrep -x dunst`; `pgrep -x picom`; `pgrep -x skippy-xd` | a PID each (started by the theme's `up` script) |
 | LeftWM | `systemctl --user is-active graphical-session.target` | `inactive` — startx has no systemd graphical session, so no session-bound unit starts |
 | LeftWM | `pgrep -x xremap` | a PID — side-button nav is started by `up` by hand, since its unit cannot fire |
 

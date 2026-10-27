@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The top-left hot corner opens the workspace overview under Margo and
+  LeftWM**, as it already did under GNOME, Plasma and Niri. Margo uses its own
+  overview; LeftWM, which has none, gets skippy-xd's paging view, started with
+  the session.
+
 - **The NetworkManager tray icon (nm-applet) runs under Margo and LeftWM.** It
   already appeared in Niri's tray, by way of its autostart entry; the other two
   sessions run no autostart, so they now start it themselves. The package is now
