@@ -631,7 +631,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 - **passwd PAM:** `security.pam.services.passwd.enableGnomeKeyring = true` — `passwd(1)` is the only place the login keyring is re-keyed; without it the Unix password changes while the keyring stays encrypted under the old one, and greetd's auto-unlock then fails silently at every login. Pairs with `passwd` being in `fprintDeny` (`modules/hardware/fingerprint.nix`), since a fingerprint never populates `PAM_OLDAUTHTOK`
 - **SSH agent:** **`programs.ssh.startAgent = false`** — `services.gitway-agent.enable = true` owns `$SSH_AUTH_SOCK` at `${XDG_RUNTIME_DIR}/gitway-agent.sock`, and the system `ssh-agent.service` would race it (CONSTRAINTS.md #8). `services.gnome.gcr-ssh-agent.enable = false` and a `Hidden=true` `gnome-keyring-ssh.desktop` shadow (`users/mj/desktop-theme.nix`) keep gnome-keyring off the socket too. The agent's user unit is overridden to append `-t 86400` (a 24 h key lifetime, which the gitway NixOS module does not expose), and `environment.sessionVariables.SSH_AUTH_SOCK` makes the socket visible to shells greetd execs directly, which never read `environment.d`. The OpenSSH CLI tools remain available for non-Git SSH
 - **Fingerprint-gated passphrase:** `gitway biometric` releases the key passphrase from the login keyring behind an fprintd check — a convenience layer, not a security boundary: the passphrase is protected by the login keyring, which the greetd password opens (`modules/hardware/fingerprint.nix`)
-- **seatd:** enabled for the `cage`-wrapped shell session entries, whose libseat tries the seatd backend first
+- **seatd:** enabled for the shell session entries wrapped in cosmic-comp's kiosk mode, whose libseat tries the seatd backend first
 - **Tmpfiles rules:** `/tmp 1777`, `/var/tmp 1777`
 
 ### 5.6 Keyring (`modules/core/keyring.nix`)
@@ -935,7 +935,7 @@ The primary user is stated once in `flake.nix` as `primaryUser = "mj"` and passe
 | `wheel`          | Privilege escalation via sudo-rs (`execWheelOnly`)                                               |
 | `input`          | Read access to real input devices                                                                |
 | `video`, `audio` | Device access                                                                                    |
-| `seat`           | Access to `/run/seatd.sock`, which cage needs for the shell sessions in §8.2 (`services.seatd.enable` in `modules/core/security.nix`) |
+| `seat`           | Access to `/run/seatd.sock`, which the cosmic-comp kiosk needs for the shell sessions in §8.2 (`services.seatd.enable` in `modules/core/security.nix`) |
 | `uinput`         | Write access to `/dev/uinput`, so xremap can create its virtual output device under GNOME. The group is created by `hardware.uinput.enable` in `modules/desktops/mouse-workspace-nav.nix`. `input` covers only *reading* devices |
 
 `chrome-remote-desktop` is added to the configured CRD user's groups by `modules/services/chrome-remote-desktop.nix`, not here. There is no `adbusers` group: that option was removed from nixpkgs (CONSTRAINTS.md #33).
@@ -994,7 +994,7 @@ The greeter runs as user `greeter`. Keys: F1 settings, F2 session picker, F5 lin
 
 ### 8.2 Shell Sessions
 
-Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cage -- rio -e <shell>`**. Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cage supplies the compositor and rio supplies the PTY. cage relies on `seatd` (§7.2 `seat` group).
+Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cosmic-comp alacritty -e <shell>`**, cosmic-comp's kiosk mode (run one program, exit with its status). Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cosmic-comp supplies the compositor (Rust, replacing the C `cage`) and Alacritty supplies the PTY (Alacritty rather than Rio, which hangs when closed by its compositor, constraint #11). cosmic-comp reads the user's COSMIC config, so COSMIC's shortcuts stay live inside these sessions.
 
 | Session Name | Session id  | Binary  | Comment              |
 |--------------|-------------|---------|----------------------|

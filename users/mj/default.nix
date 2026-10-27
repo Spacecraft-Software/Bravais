@@ -23,7 +23,7 @@ in
       "input"
       "video"
       "audio"
-      "seat" # Access to /run/seatd.sock (cage/Wayland kiosk)
+      "seat" # Access to /run/seatd.sock (cosmic-comp kiosk for the shell sessions)
       # /dev/uinput, for xremap's virtual output device under GNOME
       # (modules/desktops/mouse-workspace-nav.nix enables hardware.uinput, which
       # creates this group). `input` above covers only READING the real

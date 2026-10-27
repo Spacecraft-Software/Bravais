@@ -73,11 +73,11 @@
 
   services.gitway-agent.enable = true;
 
-  # seatd: required by cage (Wayland kiosk) wrapping the brush/ion/nushell
-  # session entries. cage's libseat tries the seatd backend first; without
-  # /run/seatd.sock it logs "Backend 'seatd' failed to open seat, skipping"
-  # and may fall through to logind unreliably. Running seatd is cheap and
-  # silences the noise.
+  # seatd: for cosmic-comp's kiosk mode wrapping the brush/ion/nushell/mjsh
+  # session entries (cage before it). libseat tries the seatd backend first;
+  # without /run/seatd.sock it logs "Backend 'seatd' failed to open seat,
+  # skipping" and may fall through to logind unreliably. Running seatd is
+  # cheap and silences the noise.
   services.seatd.enable = true;
 
   # nixosModules.default doesn't expose defaultLifetime; restore the 24 h TTL
