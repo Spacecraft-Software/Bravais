@@ -210,6 +210,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The greeter's shell sessions (Brush, Ion, mjsh, Nushell) open in
+  Alacritty instead of Rio**, the default terminal everywhere else. Rio hangs
+  when its compositor closes it; the session still runs under cage.
+
 - **The vendored-pin summary lists Artcraft apps one per line.** Thirteen
   names in one cell made the table wider than the terminal and squeezed the
   action column to a letter per row.

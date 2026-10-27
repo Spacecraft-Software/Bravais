@@ -12,12 +12,13 @@
 }:
 
 let
-  # Wrap each shell-as-session in cage (single-app Wayland kiosk) plus rio
-  # (the project's default terminal). Without this wrapper greetd execs the
-  # bare shell binary in a no-TTY no-compositor context: brush blocks on
-  # stdin, ion fails fast, nushell silently swallows its own startup error.
-  # cage gives the missing compositor; rio gives the missing PTY; the shell
-  # gets a real interactive terminal as it expects.
+  # Wrap each shell-as-session in cage (single-app Wayland kiosk) plus
+  # Alacritty (the default terminal, as under Niri and LeftWM; Rio hangs when
+  # its compositor closes it, constraint #11). Without this wrapper greetd
+  # execs the bare shell binary in a no-TTY no-compositor context: brush
+  # blocks on stdin, ion fails fast, nushell silently swallows its own startup
+  # error. cage gives the missing compositor; Alacritty gives the missing PTY;
+  # the shell gets a real interactive terminal as it expects.
   mkShellSession =
     {
       name,
@@ -35,7 +36,7 @@ let
         [Desktop Entry]
         Name=${name}
         Comment=${comment}
-        Exec=${pkgs.cage}/bin/cage -- ${pkgs.rio}/bin/rio -e ${exec}
+        Exec=${pkgs.cage}/bin/cage -- ${pkgs.alacritty}/bin/alacritty -e ${exec}
         Type=Application
         DesktopNames=${sessionName}
         EOF
@@ -390,7 +391,7 @@ in
       greeting = steelboreIdentity.banner;
       # No synthetic "Shell" entry: a bare shell under greetd has no TTY or
       # compositor (see mkShellSession above), so shells are offered only
-      # through their cage + rio session files.
+      # through their cage + Alacritty session files.
       default_session = [ ];
       # Every X session's Exec already runs startx (start-leftwm,
       # start-plasma-x11); a wrapper would start a second X server. Same

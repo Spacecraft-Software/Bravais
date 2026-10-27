@@ -994,7 +994,7 @@ The greeter runs as user `greeter`. Keys: F1 settings, F2 session picker, F5 lin
 
 ### 8.2 Shell Sessions
 
-Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cage -- rio -e <shell>`**. Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cage supplies the compositor and rio supplies the PTY. cage relies on `seatd` (§7.2 `seat` group).
+Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cage -- alacritty -e <shell>`**. Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cage supplies the compositor and Alacritty supplies the PTY (Alacritty rather than Rio, which hangs when closed by its compositor, constraint #11). cage relies on `seatd` (§7.2 `seat` group).
 
 | Session Name | Session id  | Binary  | Comment              |
 |--------------|-------------|---------|----------------------|
