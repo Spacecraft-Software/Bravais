@@ -102,6 +102,12 @@ in
       scroller_focus_center       = 1
       scroller_proportion_preset  = 1.000, 0.800, 0.618, 0.500
 
+      # ── Hot corner ────────────────────────────────────────────────────────
+      # Top-left opens the overview of every tag, as the corner does under
+      # GNOME, Plasma and Niri. Margo arms the 1x1 corner pixel after a
+      # 100 ms dwell and ignores it over a fullscreen window (its defaults).
+      hot_corner_top_left = toggle_overview
+
       # ── Input ─────────────────────────────────────────────────────────────
       # us,ara like every other session: Super+Space cycles (bound below),
       # Ctrl+Space too where the option reaches xkb.

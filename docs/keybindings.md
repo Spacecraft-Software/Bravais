@@ -37,6 +37,7 @@ Alacritty).
 | Workspace 1–9 | Super+1…9 | GNOME and Plasma give up "open the Nth dock / task-bar app" for this |
 | Send window to 1–9 | Super+Shift+1…9 | |
 | Previous / next workspace | Super+Ctrl+←/→ | Niri's workspaces are vertical: Mod+PgUp/PgDn there |
+| Workspace overview | Top-left hot corner | GNOME: Activities. Plasma: Overview. Niri: overview (Mod+O too). Margo: `toggle_overview`. LeftWM: skippy-xd paging |
 | Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
 | Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo |
