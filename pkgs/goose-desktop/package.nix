@@ -65,11 +65,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "goose-desktop";
-  version = "1.54.0";
+  version = "1.56.0";
 
   src = fetchurl {
     url = "https://github.com/block/goose/releases/download/v${finalAttrs.version}/goose_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-Oumbrrg7VURXHkpEOVKoGhGyfel5ZK1cTc4QM0z4Pwo=";
+    hash = "sha256-XnpEMXeemDbEW+IDvQ4BqIiXGtl/3pgvy08kXSqTuyE=";
   };
 
   nativeBuildInputs = [

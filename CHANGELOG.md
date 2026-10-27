@@ -180,6 +180,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **OpenCode Desktop builds again.** Its new release renamed the launcher
+  inside the package; the build now reads the launcher's name from the
+  package's own desktop entry instead of restating it, and fails with a clear
+  message if that name stops matching a program.
+
+- **The unstable channel evaluates on NixOS 26.11**, which removed the
+  scripted initrd: the boot splash no longer sets `boot.initrd.verbose` or
+  `boot.initrd.systemd.enable` there (the systemd initrd is the only one),
+  and Fairing's module stops reading the removed option.
+
 - **Status lines no longer cover the shutdown splash.** `systemd.show_status`
   was `auto`, which turns the "Stopping ..." lines on as soon as a stop job runs
   slow, and they drew over Fairing's shutdown screen. It is now `false` (also
@@ -215,6 +225,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the default terminal everywhere else, and Rio hangs when its compositor
   closes it. cosmic-comp's kiosk mode replaces the C `cage` with the Rust
   COSMIC compositor already installed; COSMIC's shortcuts stay live there.
+
+- **Dependencies bumped:** nixpkgs (both channels), Home Manager (both),
+  antigravity-nix, engram, Fairing and Pathfinder; and the vendored
+  adguardvpn-cli, Artcraft bundles, Codex Desktop, GitHub Copilot app, Goose
+  Desktop, Obscura, Ollama and OpenCode Desktop.
 
 - **The vendored-pin summary lists Artcraft apps one per line.** Thirteen
   names in one cell made the table wider than the terminal and squeezed the

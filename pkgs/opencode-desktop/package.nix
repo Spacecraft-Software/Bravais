@@ -63,11 +63,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "opencode-desktop";
-  version = "1.19.0";
+  version = "2.2.0";
 
   src = fetchurl {
     url = "https://github.com/anomalyco/opencode/releases/download/v${finalAttrs.version}/opencode-desktop-linux-amd64.deb";
-    hash = "sha256-nT0GQguZXvvG5IYUEXtjzKK7UdsOxhIaLkEm0kocvEU=";
+    hash = "sha256-CCW65x+HpatuLB/jYsF0Qf4zgePGXIzNPm/TU4bXS2I=";
   };
 
   nativeBuildInputs = [
@@ -170,7 +170,17 @@ stdenv.mkDerivation (finalAttrs: {
     # regardless of which object issues the dlopen, and is inherited by the
     # re-exec'd GPU process. Expose only GLVND/Vulkan *dispatch* libs here; the
     # vendor driver itself must keep coming from /run/opengl-driver.
-    makeWrapper $out/lib/OpenCode/ai.opencode.desktop $out/bin/opencode-desktop \
+    # The launcher's name is read from the .deb's own Exec= line rather than
+    # restated here: 2.2.0 renamed it from ai.opencode.desktop to ai.opencode
+    # (constraint #16).
+    launcher=$(sed -n 's|^Exec=/opt/OpenCode/\([^ ]*\).*|\1|p' \
+      $out/share/applications/opencode-desktop.desktop | head -n 1)
+    if [ -z "$launcher" ] || [ ! -x "$out/lib/OpenCode/$launcher" ]; then
+      echo "opencode-desktop: no executable launcher named by Exec= (got '$launcher')" >&2
+      exit 1
+    fi
+
+    makeWrapper "$out/lib/OpenCode/$launcher" $out/bin/opencode-desktop \
       "''${gappsWrapperArgs[@]}" \
       --prefix LD_LIBRARY_PATH : "${
         lib.makeLibraryPath [
@@ -186,9 +196,9 @@ stdenv.mkDerivation (finalAttrs: {
 
     # Fix Exec path in desktop files
     substituteInPlace $out/share/applications/opencode-desktop.desktop \
-      --replace-fail "/opt/OpenCode/ai.opencode.desktop" "$out/bin/opencode-desktop"
+      --replace-fail "/opt/OpenCode/$launcher" "$out/bin/opencode-desktop"
     substituteInPlace $out/share/applications/ai.opencode.desktop.desktop \
-      --replace-fail "/opt/OpenCode/ai.opencode.desktop" "$out/bin/opencode-desktop"
+      --replace-fail "/opt/OpenCode/$launcher" "$out/bin/opencode-desktop"
   '';
 
   meta = {

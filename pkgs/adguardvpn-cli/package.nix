@@ -18,12 +18,12 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "adguardvpn-cli";
-  version = "1.7.12";
+  version = "1.8.2";
 
   # Upstream tags carry a "-release" suffix that the version string does not.
   src = fetchurl {
     url = "https://github.com/AdguardTeam/AdGuardVPNCLI/releases/download/v${finalAttrs.version}-release/adguardvpn-cli-${finalAttrs.version}-linux-x86_64.tar.gz";
-    hash = "sha256-pwaTPIfsiO7IV4zOltK5HDheCDz3OKgG5ps7zYd/uIw=";
+    hash = "sha256-fniv9uiQQ17I9nOQoigoLKv6FtOaj++/kIpaAXa8Ycs=";
   };
 
   dontConfigure = true;
