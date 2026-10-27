@@ -29,6 +29,110 @@
       # Niri bar's binding in users/mj/eww.nix (constraint #26: both bars in step).
       titleYuck = builtins.toJSON steelboreIdentity.banner;
 
+      # Keep skippy-xd's upstream configuration and tune only its colors and
+      # the paging view used by the LeftWM hot corner.
+      skippyConfig = pkgs.writeText "leftwm-steelbore-skippy-xd.rc" ''
+        [system]
+        daemonPath = /tmp/skippy-xd-fifo
+        clientPath = /tmp/skippy-xd-fofi
+        clientList = _NET_CLIENT_LIST
+        pseudoTrans = true
+
+        [multimonitor]
+        showOnlyCurrentMonitor = false
+        showOnlyCurrentScreen = true
+
+        [layout]
+        switchLayout = xd
+        exposeLayout = cosmos
+        switchWaitDuration = 100
+        switchCycleDuringWait = false
+        switchCycleDesktops = false
+        exposeCycleDesktops = false
+        distance = 50
+        allowUpscale = false
+
+        [display]
+        animationDuration = 200
+        animationRefresh = 60
+        background = ${steelborePalette.background}
+        preservePages = true
+        includeFrame = true
+        cornerRadius = 0
+        icon = true
+        iconPlace = left left
+        iconSize = 48
+
+        [filler]
+        tint = ${steelborePalette.structure}
+        iconPlace = mid mid
+        iconSize = 48
+
+        [normal]
+        tint = ${steelborePalette.background}
+        tintOpacity = 0
+        opacity = 255
+
+        [highlight]
+        tint = ${steelborePalette.accent}
+        tintOpacity = 50
+        opacity = 255
+
+        [shadow]
+        tint = ${steelborePalette.structure}
+        tintOpacity = 0
+        opacity = 160
+
+        [multiselect]
+        tint = ${steelborePalette.focus}
+        tintOpacity = 50
+        opacity = 255
+
+        [panel]
+        show = true
+        backgroundTinting = true
+        reserveSpace = true
+
+        [desktop]
+        show = true
+        backgroundTinting = true
+
+        [label]
+        show = true
+        option = windowClass
+        offsetX = 0
+        offsetY = -5
+        width = 0.8
+        border = ${steelborePalette.border}
+        background = ${steelborePalette.surface}
+        backgroundHighlight = ${steelborePalette.surfaceAlt}
+        opacity = 128
+        text = ${steelborePalette.foreground}
+        textOutline = ${steelborePalette.background}
+        font = Hack Nerd Font-11:weight=bold
+
+        [bindings]
+        enforceFocus = true
+        pivotLockingTime = 0
+        moveMouse = false
+        keysUp = Up
+        keysDown = Down
+        keysLeft = Left
+        keysRight = Right
+        keysSelect = Return space
+        keysCancel = Escape
+        keysNext = n
+        keysPrev = p
+        keysIconify = 1
+        keysShade = 2
+        keysClose = 3
+        miwMouse1 = focus
+        miwMouse2 = close-ewmh
+        miwMouse3 = iconify
+        miwMouse4 = keysNext
+        miwMouse5 = keysPrev
+      '';
+
       # The LeftWM Themes wiki strongly recommends that
       # `~/.config/leftwm/themes/current` be a symlink rather than a real
       # directory — leftwm 0.5.x's path resolution intermittently fails to
@@ -76,6 +180,14 @@
             ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" daemon
             ${pkgs.eww}/bin/eww --config "$HOME/.config/eww-leftwm" open bar
 
+            # LeftWM has no workspace overview. The top-left corner mirrors
+            # GNOME, Plasma, Niri and Margo; see docs/keybindings.md.
+            ${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --start-daemon &
+            skippy_pid=$!
+            ${pkgs.xdotool}/bin/xdotool behave_screen_edge --delay 150 --quiesce 750 top-left exec ${pkgs.skippy-xd}/bin/skippy-xd --paging &
+            corner_pid=$!
+            printf '%s\n%s\n' "$skippy_pid" "$corner_pid" > "''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+
             # Side-button workspace nav. LeftWM is started by startx and has no
             # systemd graphical session at all, so the user unit in
             # modules/desktops/mouse-workspace-nav.nix — which is wanted by the
@@ -92,6 +204,14 @@
         {
           name = "down";
           path = pkgs.writeShellScript "leftwm-steelbore-down" ''
+            hotcorner_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+            if [ -r "$hotcorner_pidfile" ]; then
+              while IFS= read -r pid; do
+                kill "$pid" 2>/dev/null || true
+              done < "$hotcorner_pidfile"
+              rm -f "$hotcorner_pidfile"
+            fi
+            ${pkgs.skippy-xd}/bin/skippy-xd --stop-daemon 2>/dev/null || true
             pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
             if [ -r "$pidfile" ]; then
               kill "$(cat "$pidfile")" 2>/dev/null || true
@@ -197,6 +317,7 @@
         xsel # Clipboard
         maim # Screenshot
         xdotool # X11 automation
+        skippy-xd # Exposé / desktop paging overview for the hot corner (C)
         numlockx # NumLock control
         xkb-switch # Query/cycle live XKB layout group (eww lang indicator)
       ];
@@ -401,6 +522,7 @@
           Mod+Ctrl+Shift+Space  Previous layout
 
           <b>Workspaces</b>
+          Top-left corner       Overview of all workspaces (skippy-xd)
           Mod+1..9              Switch to workspace 1-9
           Mod+Shift+1..9        Move window to workspace 1-9
           Mod+Ctrl+Left/Right   Previous / next workspace
