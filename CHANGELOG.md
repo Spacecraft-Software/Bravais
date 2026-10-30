@@ -220,6 +220,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The coding orchestrator skill has an off switch and works under any
+  orchestrator.** The `construct` input moved to the Construct commit where
+  `spacecraft-coding-orchestrator` takes "orchestrator off" (or "Claude
+  only", "GPT only", …) to keep the rest of the session to the orchestrating
+  model's own family, and "orchestrator on" to resume delegating. The skill
+  no longer assumes Claude orchestrates: a GPT, Kimi or other model running
+  the session follows the same procedure.
 - **The coding orchestrator skill asks every decision as a choice.** The
   `construct` input moved to the Construct commit where
   `spacecraft-coding-orchestrator` puts each decision it needs from the user
