@@ -135,12 +135,10 @@
     engram.url = "github:Spacecraft-Software/Engram";
     engram.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
-    # pathfinder — a jq-compatible shim over jaq, first-party, developed at
+    # pathfinder — a jq 1.8.1-compatible jq in safe Rust with its own engine
+    # (since 0.2.0; no jaq at run time), first-party, developed at
     # /spacecraft-software/pathfinder. Same `github:` rule as engram and vacuum.
-    #
-    # Follows the STABLE nixpkgs on purpose: the jaq it pins at build time is the
-    # engine every `jq` call runs on, and nixos-26.05's jaq 3.1.0 is the version
-    # Pathfinder's CI pins and its 108-case differential suite was run against.
+    # Follows the stable nixpkgs: it only builds with it.
     pathfinder.url = "github:Spacecraft-Software/Pathfinder";
     pathfinder.inputs.nixpkgs.follows = "nixpkgs";
 

@@ -250,12 +250,12 @@
       # Remove the imperative copy:  cargo uninstall engram
       engram.packages.${pkgs.stdenv.hostPlatform.system}.default
 
-      # `pathfinder-jq` — Pathfinder, a jq-compatible shim over jaq, installed
-      # with its `bin/jq -> pathfinder` symlink so that for this user `jq` IS
-      # Pathfinder. jaq alone is not a safe `jq` alias: it rejects nine jq flags,
-      # lacks 21 jq builtins, and does not auto-vivify (`null | .a.b = 1` errors).
-      # Pathfinder translates, polyfills, and exec()s jaq — one execve, no
-      # wrapper — with jaq pinned by store path at build time.
+      # `pathfinder-jq` — Pathfinder 0.2.0, a jq 1.8.1-compatible jq in safe
+      # Rust with its own engine, run in process (one binary, no wrapper),
+      # installed with `bin/jq -> pathfinder` so that for this user `jq` IS
+      # Pathfinder, and `bin/mjq`, its own short name. jaq alone is not a safe
+      # `jq` alias: it rejects nine jq flags, lacks 21 jq builtins, and does
+      # not auto-vivify (`null | .a.b = 1` errors).
       #
       # The only `jq` on the system: the C reference jq was dropped from
       # modules/packages/system.nix, so root and system services have no `jq`
