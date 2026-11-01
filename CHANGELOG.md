@@ -220,6 +220,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A `recover-disk-space` skill frees disk space on request.** The
+  `construct` input moved to the Construct commit that adds it. Called with
+  `/recover-disk-space`, it surveys usage and asks one multiple-choice
+  question per cleanup, running only what you pick. It uses Vacuum, covers the
+  Nix cleanup Vacuum leaves out (old generations, stray GC roots, stale ESP
+  entries), and hands every `sudo` command to you instead of running it. On a
+  "No space left on device" error the model only suggests it.
 - **The coding orchestrator skill has an off switch and works under any
   orchestrator.** The `construct` input moved to the Construct commit where
   `spacecraft-coding-orchestrator` takes "orchestrator off" (or "Claude
