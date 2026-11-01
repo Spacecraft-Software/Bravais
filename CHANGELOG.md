@@ -220,6 +220,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Engram no longer fails with "database is locked" behind another
+  writer.** The `engram` input moved to the Engram commit where opening the
+  database writes nothing, and a read on a busy database skips its read count
+  instead of failing. The running system was already built from that commit;
+  this pins it, so the next rebuild does not roll engram back.
+
 - **A `recover-disk-space` skill frees disk space on request.** The
   `construct` input moved to the Construct commit that adds it. Called with
   `/recover-disk-space`, it surveys usage and asks one multiple-choice
