@@ -49,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793376247,
-        "narHash": "sha256-bbng3/Au66xAEvOCM5qFFVlxqJJBK85D+00McwgO5og=",
+        "lastModified": 1793508182,
+        "narHash": "sha256-Y6XoxbCm9fF4Vnam/dzgBfCdggJsa0Bz4vPROXXgvxE=",
         "owner": "Spacecraft-Software",
         "repo": "Engram",
-        "rev": "54efbf827b4129e32fb0df85775326a8ddb2a810",
+        "rev": "f7db45f3edafb876176149ac5dd41dc6df0818e2",
         "type": "github"
       },
       "original": {
