@@ -32,7 +32,6 @@
       # Extensions
       gnomeExtensions.caffeine
       gnomeExtensions.just-perfection
-      gnomeExtensions.window-gestures
       gnomeExtensions.wayland-or-x11
       gnomeExtensions.toggler
       gnomeExtensions.vim-alt-tab
@@ -53,7 +52,11 @@
       gnomeExtensions.resource-monitor
       # Super alone opens the app grid; enabled from users/mj/gnome.nix.
       gnomeExtensions.start-overlay-in-application-view
-    ];
+    ]
+    # window-gestures only ever shipped for GNOME 45-48; nixpkgs-unstable now
+    # carries 49-51 extensions only, so the attribute is gone there. Include it
+    # wherever it still exists (stable) and skip it where it does not.
+    ++ lib.optional (pkgs.gnomeExtensions ? window-gestures) pkgs.gnomeExtensions.window-gestures;
 
     # Portal routing — NixOS's services.desktopManager.gnome.enable already
     # registers xdg-desktop-portal-gnome + -gtk in xdg.portal.extraPortals.

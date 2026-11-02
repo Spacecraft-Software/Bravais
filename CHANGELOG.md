@@ -180,6 +180,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The unstable configuration evaluates again.** The `window-gestures` GNOME
+  extension only ever shipped for GNOME 45-48, so nixpkgs-unstable (which now
+  carries 49-51 extensions only) no longer has the attribute. It is now
+  installed only where it exists; stable keeps it.
+
 - **OpenCode Desktop builds again.** Its new release renamed the launcher
   inside the package; the build now reads the launcher's name from the
   package's own desktop entry instead of restating it, and fails with a clear
