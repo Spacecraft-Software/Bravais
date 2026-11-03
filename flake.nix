@@ -32,6 +32,10 @@
     gantry.url = "github:Spacecraft-Software/Gantry";
     gantry.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
+    # Escape Pod — side-button shortcuts below the compositor, replacing xremap.
+    escapepod.url = "github:Spacecraft-Software/Escapepod";
+    escapepod.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
     # Adit — Spacecraft Software's universal SSH_ASKPASS helper (GUI/TUI/keyring).
     # Replaces ksshaskpass as the askpass backend for gitway-add under Niri and
     # other non-KDE sessions. Currently in PRD stage (no flake.nix yet).
@@ -170,6 +174,7 @@
       nix-flatpak,
       gitway,
       gantry,
+      escapepod,
       construct,
       theme,
       rapg,
@@ -517,6 +522,7 @@
               primaryUser
               steelboreIdentity
               gitway
+              escapepod
               construct
               rapg
               unstablePkgs
@@ -564,6 +570,7 @@
                   primaryUser
                   steelboreIdentity
                   gitway
+                  escapepod
                   construct
                   constructSkills
                   rapg
@@ -729,6 +736,33 @@
           in
           checkPkgs.runCommand "niri-config-validate" { } ''
             ${checkPkgs.niri}/bin/niri validate -c ${rendered}
+            touch $out
+          '';
+
+        # Validate the generated mouse configuration with its actual parser,
+        # and keep the remapper outside native-button sessions and keyboards.
+        mouse-workspace-nav =
+          let
+            checkPkgs = nixpkgs.legacyPackages.${system};
+            machine = self.nixosConfigurations.steelbore-thinkpad.config;
+            service = machine.systemd.user.services.escapepod-mouse-workspace-nav;
+            rendered = machine.environment.etc."escapepod/mouse-workspace-nav.toml".source;
+            theme = machine.home-manager.users.${primaryUser}.xdg.configFile."leftwm/themes/current".source;
+          in
+          assert
+            service.wantedBy == [
+              "gnome-session-initialized.target"
+              "cosmic-session.target"
+              "plasma-core.target"
+            ];
+          assert service.serviceConfig.RestartPreventExitStatus == "6";
+          assert !(machine.systemd.user.services ? steelbore-mouse-workspace-nav);
+          assert !(builtins.any (p: (p.pname or "") == "xremap") machine.environment.systemPackages);
+          checkPkgs.runCommand "mouse-workspace-nav-validate" { } ''
+            ${
+              escapepod.packages.${system}.default
+            }/bin/escapepod config check --config ${rendered} --json > /dev/null
+            ${checkPkgs.runtimeShell} ${./tests/mouse-workspace-nav.sh} ${theme} ${checkPkgs.runtimeShell}
             touch $out
           '';
 

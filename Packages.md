@@ -39,7 +39,7 @@
     * **rlaunch** 🦀 `[GUI 🖱️]` *(Lightweight application launcher for X11)*
     * **onagre** 🦀 `[GUI 🖱️]` *(Application launcher based on iced GUI library)*
 * **Input Tools**
-    * **xremap** 🦀 `[CLI ⌨️]` *(Dynamic key remapper for Linux)*
+    * **Escape Pod** 🦀 `[CLI ⌨️]` *(evdev mouse-button shortcuts; pinned first-party flake)*
 
 ### **3. System Monitoring & Panels**
 * **Bars & Widgets**

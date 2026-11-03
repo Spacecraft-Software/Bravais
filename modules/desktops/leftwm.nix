@@ -201,11 +201,22 @@
             # modules/desktops/mouse-workspace-nav.nix — which is wanted by the
             # GNOME/COSMIC/Plasma session targets — can never fire here. Start
             # the same command by hand and record the pid so `down` can stop it;
-            # without that, a leftwm session that ends leaves xremap holding an
+            # without that, a leftwm session that ends leaves Escape Pod holding an
             # EVIOCGRAB on the mouse.
             ${lib.optionalString config.steelbore.desktops.mouseWorkspaceNav.enable ''
-              ${config.steelbore.desktops.mouseWorkspaceNav.command} &
-              echo $! > "''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
+              mouse_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-escapepod.pid"
+              # LoadTheme re-runs `up`. Keep the original PID: a second
+              # Escape Pod exits on its instance lock and must not replace it.
+              if [ -r "$mouse_pidfile" ] &&
+                IFS= read -r mouse_pid < "$mouse_pidfile" &&
+                IFS= read -r mouse_process < "/proc/$mouse_pid/comm" &&
+                [ "$mouse_process" = escapepod ] &&
+                kill -0 "$mouse_pid" 2>/dev/null; then
+                :
+              else
+                ${config.steelbore.desktops.mouseWorkspaceNav.command} &
+                echo $! > "$mouse_pidfile"
+              fi
             ''}
           '';
         }
@@ -223,11 +234,15 @@
               done < "$hotcorner_pidfile"
               rm -f "$hotcorner_pidfile"
             fi
-            pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-xremap.pid"
-            if [ -r "$pidfile" ]; then
-              kill "$(cat "$pidfile")" 2>/dev/null || true
-              rm -f "$pidfile"
+            pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-escapepod.pid"
+            # A stale PID can have been reused since the last session.
+            if [ -r "$pidfile" ] &&
+              IFS= read -r mouse_pid < "$pidfile" &&
+              IFS= read -r mouse_process < "/proc/$mouse_pid/comm" &&
+              [ "$mouse_process" = escapepod ]; then
+              kill "$mouse_pid" 2>/dev/null || true
             fi
+            rm -f "$pidfile"
             exit 0
           '';
         }

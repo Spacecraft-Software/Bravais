@@ -9,8 +9,8 @@
 # palette in console.colors) is untouched.
 #
 # Input comes from every pointing device through evdev, never grabbed. A
-# mouse that xremap (modules/desktops/mouse-workspace-nav.nix) grabs is
-# still followed, because the daemon also reads xremap's re-emitting uinput
+# mouse that Escape Pod (modules/desktops/mouse-workspace-nav.nix) grabs is
+# still followed, because the daemon also reads Escape Pod's virtual pointer
 # device, which it finds through inotify on /dev/input like any hotplug.
 {
   config,

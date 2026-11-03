@@ -123,7 +123,47 @@ the Antigravity version is a `version` + `hash` pair inside *that input's* `arti
 
 `/nix`, `/var`, `/home`, `/spacecraft-software` and `/mnt` are all bind-mounted subtrees of `/dev/nvme0n1p5` (203 GiB), while `/` is memory. Any free-space check aimed at `/` reports ~16 GiB free forever, no matter how full the real partition is. This silently defeated two checks at once: `rebuild`'s "disk before/after" banners and `flatpak-status`'s `free` field, whose whole purpose is answering "is there room for a 4.4 GB Flatpak update". Both now target `/nix` and `/var/lib/flatpak`. **Aim any new disk check at a real path, never `/`** -- and when accounting for a full partition, measure every subtree (`du -xsh /nix /var /home ...`) rather than subtracting one from `df`: the bind-mount layout makes "everything I did not measure must be X" a very easy and very wrong inference. Measured 2026-08-19: `/home` 84 GiB, `/nix` 38 GiB, `/var` 28 GiB -- ordinary usage, not a leak. Separately and genuinely: `/mnt/nix-tmp` is meant to be a loop image on the removable Expansion drive, and with that drive unplugged `modules/core/nix-tmp.nix` falls back to the system disk "transparently" -- but a build killed part-way leaves its scratch tree behind and **`nix-collect-garbage` does not touch the builder TMPDIR**, so the rebuild's own GC reports success without clearing it. Thirteen such orphans dating to 2026-06-01 were found and removed; they were small, so this is a slow leak to bound rather than a disk-filling emergency. The tmpfiles rule now carries a `10d` age instead of `-` for exactly that reason.
 
-### 29. Only niri can bind a mouse button, so side-button workspace nav is an evdev remap everywhere else -- and it MUST NOT be scoped to `graphical-session.target`
+### 29. Side-button workspace navigation must stay outside native-button sessions and grab only the configured mice
+
+**Updated 2026-11-03:** Escape Pod replaces xremap in
+`modules/desktops/mouse-workspace-nav.nix`. Back (`BTN_SIDE`) still goes right
+and forward (`BTN_EXTRA`) goes left through Super+Ctrl+Right/Left. GNOME,
+Plasma and COSMIC keep their session targets; never use
+`graphical-session.target`, because Niri binds the physical buttons natively.
+Margo also keeps its native bindings. LeftWM's startx theme hooks use the same
+read-only `mouseWorkspaceNav.command` and a PID file; a theme reload retains
+the running PID rather than replacing it with a duplicate process that exits
+on Escape Pod's instance lock.
+
+`mouseWorkspaceNav.deviceNames` is an explicit list of relative-mouse interface
+names. The generated TOML uses `grab = "listed"`, with button shortcuts only
+under those devices. The ThinkPad names its UGREEN receiver mouse and BLE
+mouse interfaces. A vendor/product pair alone would also match the receiver's
+keyboard interfaces. Unlisted keyboards and the TrackPoint remain ungrabbed,
+preserving lock LEDs and middle-button scrolling. Unsupported pointers stay
+ungrabbed; hotplug is handled by Escape Pod itself. The user service retains
+the exit-6 restart exclusion; the mouse-only recovery path is below.
+
+**Recovery in mouse-only mode:** unlisted keyboards are not observed by the
+daemon, so its keyboard emergency chord cannot fire here. Keyboard input
+remains available. In GNOME, Plasma or COSMIC run
+`systemctl --user stop escapepod-mouse-workspace-nav.service`; an explicit
+stop does not trigger `Restart=on-failure`. In LeftWM, run
+`~/.config/leftwm/themes/current/down`, which sends SIGTERM to the recorded
+Escape Pod process and also stops the theme's overview helpers. SIGTERM
+releases held output keys and pointer grabs. To resume, start the user
+service again, or reload the LeftWM theme.
+
+The live GNOME session migration was checked on 2026-11-03: the maintainer
+confirmed both directions, clicking, movement and scrolling. The daemon
+reported only the two UGREEN mice grabbed, no held keys and no restarts.
+Bravais now supplies the package and config declaratively. A local user-unit
+override from that trial must be moved into its backup directory after a
+successful system activation to expose the generated unit; keep the old
+`steelbore-mouse-workspace-nav` unit masked until the old generation is retired.
+
+The following xremap diagnosis is historical; its ignore-list and variant
+instructions describe the replaced implementation:
 
 Mutter's keybinding schemas, KWin's shortcuts and cosmic's RON bindings all take keyboard accelerators only; no nixpkgs GNOME extension binds side buttons (`gnomeExtensions.panel-scroll` is scroll-on-the-panel only), and under Wayland an extension cannot reliably grab pointer buttons over an application window. `modules/desktops/mouse-workspace-nav.nix` therefore remaps `BTN_SIDE`/`BTN_EXTRA` **below the compositor** with `xremap` (Rust) into **Super+Ctrl+Left/Right**. That combo is not arbitrary: it is already the shipped default for this exact action in **Plasma** (`Switch One Desktop to the Left = Meta+Ctrl+Left`) and **COSMIC** (`(modifiers: [Super, Ctrl], key: "Left"): PreviousWorkspace`, in cosmic-comp's own `Shortcuts/v1/defaults`), so only GNOME needed a binding added (`users/mj/gnome.nix`, appended to the stock list rather than replacing it). Emitting GNOME's `Ctrl+Alt+Left/Right` instead would have meant editing Plasma *and* COSMIC -- do not "simplify" it back without re-checking those two defaults. **Niri is deliberately excluded**: it binds `MouseBack`/`MouseForward` natively, and since xremap `EVIOCGRAB`s the device and re-emits, a unit on `graphical-session.target` would consume the buttons before niri saw them and silently kill those binds. The unit is therefore `wantedBy` exactly `gnome-session-initialized.target`, `cosmic-session.target` and `plasma-core.target` -- **never `graphical-session.target`**. **LeftWM is the other exception**: it is startx-based with no systemd graphical session at all, so no unit can fire there; its theme `up` hook starts the same command (exposed as the read-only `steelbore.desktops.mouseWorkspaceNav.command` option so the two cannot drift) and `down` kills it by pidfile, without which a finished leftwm session leaves xremap holding a grab on the mouse. Three further non-obvious points: while the remapper runs, **all** keyboard and mouse input is proxied through it (the kernel releases grabs on process death, `Restart=on-failure` covers a crash); `--watch=device` is required or a Bluetooth mouse that reconnects after suspend is never picked up; and plain `pkgs.xremap` is the *wlroots* variant, which is correct for all four desktops because the variant selects only the lazily-constructed window-detection client, which a keymap without `application:` conditions never consults. The `uinput` group in `users/mj/default.nix` is what lets it create its virtual device -- `input` covers only *reading* the real ones -- and a group change needs a re-login, not just a rebuild. Finally, **xremap must never be allowed to grab a pointing stick**: libinput enables middle-button scrolling by default *only* for devices carrying `INPUT_PROP_POINTING_STICK`, and that default is the whole mechanism behind hold-middle-button-and-push-the-nub scrolling on a ThinkPad. xremap `EVIOCGRAB`s each device it listens to and replays everything through one virtual device whose `PROP=0`, so a grabbed TrackPoint arrives at the compositor as a plain mouse and loses the default silently -- the pointer and all three buttons keep working, which makes it read as a compositor bug rather than as this unit. It presents as "TrackPoint scrolling works in niri but not in COSMIC/GNOME/Plasma", and that split is the tell: niri is the one session with no xremap. `steelbore.desktops.mouseWorkspaceNav.ignoredDevices` is the fix (`--ignore`, set to `[ "Elan TrackPoint" ]` in `hosts/thinkpad/default.nix` because the *name* is per-machine), and it costs nothing because a TrackPoint reports only BTN_LEFT/BTN_RIGHT/BTN_MIDDLE and so could never have driven this module's BTN_SIDE/BTN_EXTRA remap. Use `--ignore` and not `--device` for this: an allowlist re-breaks the moment a different mouse is plugged in, whereas ignoring an absent name is harmless. Diagnose by reading the unit's own startup log, which prints the devices it selected -- do not infer the grab from `/proc/bus/input/devices`, which shows the real device present and healthy either way. **The built-in keyboard belongs on the same list** (`"AT Translated Set 2 keyboard"`). The keymap touches mouse buttons only, yet xremap selects every keyboard by default, and its virtual output device advertises keys and relative axes but no `EV_LED`. With CONFIG_LEDS_TRIGGERS the console drives the lock LEDs only through the `kbd-capslock`/`kbd-numlock` triggers, which `input-leds` turns into `input_inject_event()` on the physical keyboard -- and the input core discards any injected event that does not come from the handle holding the grab. The compositor's own LED writes through evdev are dropped the same way. So while the unit runs, Caps Lock and Num Lock still toggle but their LEDs never change, in the session and on any TTY switched to from it; it was reported as "the Caps Lock indicator does not work in TTY". Niri, again, is unaffected because no xremap runs there. Checked against xremap 0.15.7's `output_device()` in `src/device.rs`.
 

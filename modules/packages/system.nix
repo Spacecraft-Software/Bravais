@@ -113,7 +113,6 @@
         os-prober
         kbd
         numlockx
-        xremap # Rust — Key remapper
         input-leap
 
         # Archiving

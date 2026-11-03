@@ -14,7 +14,7 @@ A flake-based NixOS configuration implementing **The Spacecraft Software Standar
 # not a usable gate. Use the toplevel build + unstable eval (constraint #17).
 nix build --no-link '.#nixosConfigurations.steelbore-thinkpad.config.system.build.toplevel'
 nix eval --raw '.#nixosConfigurations.steelbore-thinkpad-unstable.config.system.build.toplevel.drvPath'
-nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config'  # SPDX + niri KDL; seconds
+nix build --no-link '.#checks.x86_64-linux.reuse-lint' '.#checks.x86_64-linux.niri-config' '.#checks.x86_64-linux.mouse-workspace-nav'  # SPDX, KDL, mouse config + LeftWM lifecycle; first run builds Escape Pod
 nix build .#<name>                                      # One in-tree pkg (after `git add -A`)
 nix flake show                                          # List outputs
 nixos-rebuild dry-build --flake .#steelbore-thinkpad      # Dry run
@@ -184,7 +184,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 26. **Only `//` comments in `eww.scss`** — a non-ASCII byte in `/* */` silently unstyles the bar; write `{beacon.caps}`; icon and value in separate labels; keep both bars in step.
 27. **`nix flake update antigravity-nix` cannot make Antigravity newer** — the pin lives in `UnbreakableMJ/antigravity-nix`; trust antigravity.google/download, not its `/releases` endpoint.
 28. **`/` is a 16 GiB tmpfs** — aim every disk check at a real path (`/nix`, `/var/lib/flatpak`), never `/`.
-29. **The xremap side-button unit must never be wanted by `graphical-session.target`** (it would eat niri's mouse binds) and must `--ignore` the TrackPoint and the built-in keyboard (a grabbed keyboard's lock LEDs go dark, TTY included).
+29. **Escape Pod's side-button unit must never be wanted by `graphical-session.target`** (it would eat Niri's native mouse binds). Use `grab = "listed"` with exact pointer names in `mouseWorkspaceNav.deviceNames`, leaving keyboards and the TrackPoint ungrabbed; keep emergency exit 6 out of the restart policy. LeftWM uses the same command and retains its PID across theme reloads.
 30. **A failed `home-manager-mj.service` strands every HM change while `nixos-rebuild` reports success** — check it first; a dotfile an app rewrites at runtime needs `force = true`.
 31. **Qt reads CLDR, not glibc locales** — stay on `en_US`; any new locale must keep a colon time separator under CLDR; verify with `LC_ALL=<locale> date`.
 32. **gcr-prompter exists only in gcr 3** — keep `pkgs.gcr_3 or pkgs.gcr` in that order; a Secret Service `Prompt` dies with its D-Bus connection, so unlocking needs one long-lived client.
