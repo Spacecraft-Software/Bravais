@@ -249,6 +249,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Escape Pod replaces xremap for mouse side-button workspace navigation.**
+  The pinned first-party package uses explicit mouse interface names, leaving
+  keyboards and the TrackPoint ungrabbed. Back still goes right and forward
+  goes left. GNOME, Plasma and COSMIC retain their session-scoped service;
+  Niri and Margo retain native bindings. LeftWM shares the same command and
+  keeps its daemon PID across theme reloads. Emergency exit 6 does not restart.
+
 - **Refresh the flake inputs and vendored applications.** Bump nixpkgs on both
   channels, Engram and Pathfinder, plus the Artcraft bundles, Claude Desktop,
   Codex Desktop, GitHub Copilot, Goose Desktop, Obscura, Ollama and OpenCode Desktop.

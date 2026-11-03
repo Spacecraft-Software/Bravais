@@ -132,7 +132,7 @@ bravais/
 |   +-- desktops/                  # gnome, cosmic, cosmic-unmax, plasma, niri (eww bar + dunst),
 |   |                              #   niri-unmax, margo (mango port), leftwm (eww bar, X11),
 |   |                              #   shared (bare-WM services),
-|   |                              #   mouse-workspace-nav (xremap), assertions
+|   |                              #   mouse-workspace-nav (Escape Pod), assertions
 |   +-- login/default.nix          # greetd + Gantry + shell sessions
 |   +-- services/                  # adguardvpn, chrome-remote-desktop, ollama, podman, waydroid
 |   +-- compat/appimage.nix        # AppImage auto-run via binfmt
@@ -252,7 +252,7 @@ steelbore = {
 
 Only what is genuinely per-machine goes in `hosts/<machine>/default.nix` — for
 the ThinkPad: `networking.hostName`, `steelbore.hardware.*` (android, audioLed,
-bluetooth, fingerprint, intel), the TrackPoint exclusion for mouse workspace
+bluetooth, fingerprint, intel), the explicit mouse interfaces for workspace
 navigation, Waydroid, Chrome Remote Desktop, and
 `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }`.
 
@@ -351,6 +351,7 @@ Every active input declared in `flake.nix` (commented-out inputs — `adit`, `ki
 | `home-manager-unstable`  | `github:nix-community/home-manager`                    | `nixpkgs-unstable` | Unstable Home Manager |
 | `nix-flatpak`            | `github:gmodena/nix-flatpak`                           | --                 | Declarative Flatpak management |
 | `gitway`                 | `github:Spacecraft-Software/Gitway` (tracks `main`)    | `nixpkgs-unstable` | SSH transport for Git; its NixOS module is imported |
+| `escapepod`              | `github:Spacecraft-Software/Escapepod`                 | `nixpkgs-unstable` | Mouse-only workspace shortcuts; package and config owned by the session module |
 | `construct`              | `github:Spacecraft-Software/Construct` (tracks `main`) | `nixpkgs-unstable` | Agent skill catalogue **and** the canonical `steelbore.toml` the palette is read from |
 | `theme`                  | `github:Spacecraft-Software/Theme` (`flake = false`)   | --                 | Generated per-platform theme files, consumed by path through `lib/theme-assets.nix`; bump together with `construct` |
 | `rapg`                   | `path:./flakes/rapg` (wrapper flake)                   | `nixpkgs-unstable` | Local-first secret manager (upstream has no flake) |
@@ -612,7 +613,7 @@ nixpkgs blanks the five URLs and `ANSI_COLOR` once `ID ≠ nixos` and hardcodes 
 - **All LC_* variables:** `en_US.UTF-8` (ADDRESS, IDENTIFICATION, MEASUREMENT, MONETARY, NAME, NUMERIC, PAPER, TELEPHONE, TIME)
 - **Why `LC_TIME` is not an ISO locale:** `en_DK.UTF-8` was tried for system-wide ISO 8601 and reverted. Qt reads CLDR, not glibc, and CLDR's `en_DK` short time format uses a dot separator, which broke the Plasma panel clock; glibc also never generated the locale, so `date` fell back to C. ISO 8601 in the Plasma clock is pinned in `users/mj/plasma.nix` instead. Any new locale must keep a colon time separator under CLDR and be verified with `LC_ALL=<locale> date` (CONSTRAINTS.md #31)
 - **Console keymap:** `console.keyMap = "us"`, set in the shared host config (`hosts/common.nix`)
-- **Console mouse:** `steelbore-reticle` (Rust, `pkgs/steelbore-reticle`), enabled as `steelbore.console.mouse` in `hosts/common.nix` (module `modules/core/reticle.nix`). It replaced gpm. It drives the kernel's own selection ioctls (`TIOCLINUX`: `TIOCL_SETSEL`, `TIOCL_PASTESEL`, `TIOCL_GETMOUSEREPORTING`), so the console that greetd and the themed getty run on is untouched: left-drag selects (double click a word, triple click a line), right-click extends, middle-click pastes, and a program that enables xterm mouse reporting gets the clicks. Input is read from every evdev pointing device without grabbing (mice, the TrackPoint, xremap's re-emitting uinput device, touchpads with tap-to-click, absolute tablets), with hotplug through inotify on `/dev/input`. The service runs as root bounded to `CAP_SYS_ADMIN` (required by `TIOCL_SETSEL` since Linux 6.7) and sandboxed; `steelbore-reticle device list` / `console get` / `schema` / `describe` follow the CLI Standard. No `/dev/gpmctl` protocol and no wheel (the console has no scrollback since Linux 5.9)
+- **Console mouse:** `steelbore-reticle` (Rust, `pkgs/steelbore-reticle`), enabled as `steelbore.console.mouse` in `hosts/common.nix` (module `modules/core/reticle.nix`). It replaced gpm. It drives the kernel's own selection ioctls (`TIOCLINUX`: `TIOCL_SETSEL`, `TIOCL_PASTESEL`, `TIOCL_GETMOUSEREPORTING`), so the console that greetd and the themed getty run on is untouched: left-drag selects (double click a word, triple click a line), right-click extends, middle-click pastes, and a program that enables xterm mouse reporting gets the clicks. Input is read from every evdev pointing device without grabbing (mice, the TrackPoint, Escape Pod's virtual pointer, touchpads with tap-to-click, absolute tablets), with hotplug through inotify on `/dev/input`. The service runs as root bounded to `CAP_SYS_ADMIN` (required by `TIOCL_SETSEL` since Linux 6.7) and sandboxed; `steelbore-reticle device list` / `console get` / `schema` / `describe` follow the CLI Standard. No `/dev/gpmctl` protocol and no wheel (the console has no scrollback since Linux 5.9)
 - **Input method:** iBus enabled with an empty engine list — the daemon idles on US-only input but provides the D-Bus surface that the iBus Wayland panel autostart expects, which otherwise surfaces an error popup (notably under COSMIC)
 
 ### 5.4 Audio (`modules/core/audio.nix`)
@@ -915,7 +916,7 @@ The machine is an Intel i7-8665U (Whiskey Lake). A T490s-specific comment in thi
 
 - **Hostname:** `steelbore-thinkpad`
 - **Hardware toggles:** `steelbore.hardware.{android,audioLed,bluetooth,fingerprint,intel}.enable`
-- **Mouse-nav exclusion:** `steelbore.desktops.mouseWorkspaceNav.ignoredDevices = [ "Elan TrackPoint" "AT Translated Set 2 keyboard" ]`. This is per-machine because the device names are. Keeping xremap off the TrackPoint preserves libinput's middle-button scrolling for the pointing stick, and keeping it off the keyboard keeps the Caps/Num Lock LEDs working in the session and on the console (CONSTRAINTS.md #29)
+- **Mouse-nav interfaces:** `steelbore.desktops.mouseWorkspaceNav.deviceNames = [ "UGREEN Receiver  Mouse" "UGREEN BLE Mouse" ]`. Exact pointer names keep the receiver's keyboard interfaces and the TrackPoint ungrabbed, preserving lock LEDs and middle-button scrolling (CONSTRAINTS.md #29).
 - **Services:** `steelbore.services.waydroid.enable` (Wayland-only: works under Niri, GNOME, COSMIC and Plasma Wayland, not under LeftWM) and `steelbore.services.chromeRemoteDesktop = { enable = false; user = primaryUser; }` (disabled since 2026-10-02; when enabled, a headless X11 virtual session running LeftWM; the one-time Google authorization is manual)
 - **March level:** `steelbore.platform.x86_64 = { enable = true; marchLevel = "v3"; }`. The i7-8665U supports x86-64-v3 (AVX2/BMI2/FMA) but has **no AVX-512**, so v4 would emit illegal instructions on this CPU
 
@@ -936,7 +937,7 @@ The primary user is stated once in `flake.nix` as `primaryUser = "mj"` and passe
 | `input`          | Read access to real input devices                                                                |
 | `video`, `audio` | Device access                                                                                    |
 | `seat`           | Access to `/run/seatd.sock`, which the cosmic-comp kiosk needs for the shell sessions in §8.2 (`services.seatd.enable` in `modules/core/security.nix`) |
-| `uinput`         | Write access to `/dev/uinput`, so xremap can create its virtual output device under GNOME. The group is created by `hardware.uinput.enable` in `modules/desktops/mouse-workspace-nav.nix`. `input` covers only *reading* devices |
+| `uinput`         | Write access to `/dev/uinput`, so the Escape Pod session daemon can create its virtual output devices. The group is created by `hardware.uinput.enable` in `modules/desktops/mouse-workspace-nav.nix`. `input` covers only *reading* devices |
 
 `chrome-remote-desktop` is added to the configured CRD user's groups by `modules/services/chrome-remote-desktop.nix`, not here. There is no `adbusers` group: that option was removed from nixpkgs (CONSTRAINTS.md #33).
 
@@ -1109,17 +1110,25 @@ sessions while avoiding a competing daemon in GNOME.
 
 ### 9.1a Mouse side-button workspace nav (`modules/desktops/mouse-workspace-nav.nix`)
 
-**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…ignoredDevices` and the read-only `…command`)
+**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…deviceNames` and the read-only `…command`)
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces under **GNOME, Plasma, COSMIC and LeftWM**. Direction is deliberate: **back goes right, forward goes left** — do not "fix" it; `users/mj/niri.nix` is swapped to match and the two must move together.
 
-Only Niri can bind a mouse button natively; Mutter, KWin and cosmic accept keyboard accelerators only, and no nixpkgs GNOME extension binds side buttons. The remap therefore happens **below the compositor** via `xremap` (Rust, `--watch=device` so a Bluetooth mouse reconnecting after suspend is picked up), emitting **Super+Ctrl+Left/Right** — already the shipped default in Plasma and COSMIC, so only GNOME needed a binding, appended to its stock list in `users/mj/gnome.nix` rather than replacing it. LeftWM binds it to `FocusPreviousTag`/`FocusNextTag`.
+Niri and Margo bind the mouse buttons natively. Mutter, KWin and cosmic accept keyboard accelerators only, so the other sessions use **Escape Pod** (Rust) below the compositor, emitting **Super+Ctrl+Right/Left**. These shortcuts already exist in Plasma and COSMIC; GNOME adds them beside its stock list in `users/mj/gnome.nix`. LeftWM binds them to `FocusPreviousTag`/`FocusNextTag`. Escape Pod handles device hotplug and Bluetooth reconnection itself.
 
-**Niri is deliberately excluded:** it handles the buttons natively, and xremap grabs and re-emits the device, so a unit on `graphical-session.target` would consume them first. The unit is wanted only by the GNOME, COSMIC and Plasma session targets (CONSTRAINTS.md #29).
+**Native-button sessions are excluded:** the remapper consumes mapped buttons before they reach the compositor. `escapepod-mouse-workspace-nav.service` is wanted only by the GNOME, COSMIC and Plasma session targets, never `graphical-session.target` (CONSTRAINTS.md #29).
 
-**Blast radius:** xremap grabs every device it listens to, so all input is proxied through it; `Restart=on-failure` makes a crash cost a keystroke rather than the session. **Pointing sticks must be ignored** (a grabbed TrackPoint loses libinput's middle-button scrolling); `ignoredDevices` feeds `xremap --ignore`, and the ThinkPad sets its TrackPoint in `hosts/thinkpad/default.nix`.
+**Device scope:** the store-generated `/etc/escapepod/mouse-workspace-nav.toml` uses `grab = "listed"` and exact names from `…deviceNames`. The ThinkPad selects its UGREEN receiver mouse and BLE mouse; no keyboards or pointing sticks are grabbed. Exact names matter because the receiver's keyboard interfaces share the mouse's vendor/product ID. Unmapped pointer events pass through and unsupported devices remain ungrabbed. `Restart=on-failure` excludes emergency exit 6.
 
-**LeftWM is the other exception** (startx, no systemd graphical session): its theme `up` hook starts the same command — exposed as the read-only `…command` option so the two cannot drift — and `down` kills it by pidfile.
+**Recovery:** the keyboard emergency chord is unavailable with no grabbed
+keyboard. Keyboard input remains usable: in GNOME, Plasma or COSMIC run
+`systemctl --user stop escapepod-mouse-workspace-nav.service`; it releases
+the mice and does not restart. In LeftWM, run
+`~/.config/leftwm/themes/current/down` to signal the recorded daemon and stop
+the theme's overview helpers. Start the user service again or reload the
+LeftWM theme to resume navigation.
+
+**LeftWM is the other exception** (startx, no systemd graphical session): its theme `up` hook starts the same command — exposed as the read-only `…command` option so the two cannot drift — and `down` kills it by pidfile. Theme reloads retain the running PID rather than recording a duplicate process that exits on the instance lock.
 
 Requires `hardware.uinput.enable` plus `uinput` group membership (`input` alone covers only reading real devices).
 
@@ -1232,7 +1241,7 @@ Key bindings:
 **Theme** (`~/.config/leftwm/themes/current` — one symlink to a store derivation, because leftwm intermittently fails to find `current/up` when `current` is a real directory):
 
 - `theme.ron`: border width 2, margin 8; borders from the `accent` (default), `info` (floating) and `foreground` (focused) roles
-- `up`: starts picom, dunst and the eww bar (here, so the GTK dock registers with an active WM), plus the xremap command when `mouseWorkspaceNav` is on, the skippy-xd daemon and the xdotool top-left corner watcher; `down` stops them
+- `up`: starts picom, dunst and the eww bar (here, so the GTK dock registers with an active WM), plus the Escape Pod command when `mouseWorkspaceNav` is on, the skippy-xd daemon and the xdotool top-left corner watcher; `down` stops them
 
 **Session bring-up** (`leftwm-session-inner`): numlockx, `gitway-add`, the polkit agent (not in `up`, which re-runs on every `LoadTheme` and would accumulate agents), a delayed keyring check, then an explicit `LoadTheme` (leftwm does not auto-load it and falls back to red) and a `background`-role root fill (leftwm clobbers the root to grey).
 
@@ -1672,7 +1681,7 @@ their own modules.
   host-spawn, podman, runc, youki (Rust), oxker (Rust), qemu, flatpak, bubblewrap. BoxBuddy
   is the Flatpak `io.github.dvlv.boxbuddyrs`.
 - **System Management:** topgrade (Rust), paru (Rust), doas, os-prober, kbd,
-  numlockx, xremap (Rust), input-leap
+  numlockx, input-leap; Escape Pod (Rust) via the mouse-navigation module
 - **Rebuild orchestrator:** `preflight` (Rust, `pkgs/preflight/`) — system-wide because it
   drives `sudo nixos-rebuild` and mirrors into `/etc/nixos`: machine maintenance, not a user
   tool (§16, `docs/rebuild.md`).
@@ -2276,14 +2285,14 @@ A `--version` call proves only that a binary is on PATH, not that a session star
 | All | `systemctl is-active home-manager-mj.service` | `active` — a system unit, not `--user` (CONSTRAINTS.md #30) |
 | Niri | `systemctl --user is-active graphical-session.target steelbore-niri-unmax` | `active` twice |
 | Niri | `pgrep -x eww`; `pgrep -x dunst` | a PID each (both `spawn-at-startup`) |
-| Niri | `systemctl --user is-active steelbore-mouse-workspace-nav` | `inactive` — niri binds the side buttons natively (CONSTRAINTS.md #29) |
+| Niri / Margo | `systemctl --user is-active escapepod-mouse-workspace-nav` | `inactive` — these sessions bind the side buttons natively (CONSTRAINTS.md #29) |
 | COSMIC | `systemctl --user is-active cosmic-session.target steelbore-cosmic-unmax` | `active` twice |
 | GNOME | `systemctl --user is-active gnome-session-initialized.target` | `active` |
 | Plasma | `systemctl --user is-active plasma-core.target` | `active` |
-| COSMIC / GNOME / Plasma | `systemctl --user is-active steelbore-mouse-workspace-nav` | `active` |
+| COSMIC / GNOME / Plasma | `systemctl --user is-active escapepod-mouse-workspace-nav` | `active` |
 | LeftWM | `pgrep -x eww`; `pgrep -x dunst`; `pgrep -x picom`; `pgrep -x skippy-xd` | a PID each (started by the theme's `up` script) |
 | LeftWM | `systemctl --user is-active graphical-session.target` | `inactive` — startx has no systemd graphical session, so no session-bound unit starts |
-| LeftWM | `pgrep -x xremap` | a PID — side-button nav is started by `up` by hand, since its unit cannot fire |
+| LeftWM | `pgrep -x escapepod` | a PID — side-button nav is started by `up` by hand, since its unit cannot fire |
 
 **(c) Manual — seat required.** Not scriptable; check by eye at the machine:
 

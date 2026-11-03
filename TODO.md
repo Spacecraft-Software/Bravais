@@ -131,13 +131,15 @@ This document tracks the implementation status of the Bravais NixOS distribution
 ### Mouse side-button nav (`mouse-workspace-nav.nix`)
 
 - [✓] Define `steelbore.desktops.mouseWorkspaceNav` option
-- [✓] Remap `BTN_SIDE`/`BTN_EXTRA` to Super+Ctrl+Left/Right via xremap (Rust)
+- [✓] Remap `BTN_SIDE`/`BTN_EXTRA` to Super+Ctrl+Right/Left via Escape Pod (Rust), replacing xremap
 - [✓] Scope the unit to the GNOME/COSMIC/Plasma session targets, never `graphical-session`
 - [✓] Add the combo to GNOME's dconf (Plasma + COSMIC already default to it)
 - [✓] Bind it in LeftWM (`FocusPreviousTag`/`FocusNextTag`) + start/stop from the theme hooks
 - [✓] Leave Niri on its native `MouseBack`/`MouseForward` binds
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
-- [✓] Keep xremap off the built-in keyboard (`ignoredDevices`), or its grab darkens the Caps/Num Lock LEDs on every TTY (CONSTRAINTS.md #29)
+- [✓] Use exact pointer names in `deviceNames` with `grab = "listed"`; leave keyboards and the TrackPoint ungrabbed (CONSTRAINTS.md #29)
+- [✓] Prevent restart on emergency exit 6; keep LeftWM's daemon PID across theme reloads
+- [ ] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
@@ -326,7 +328,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install multiplexers (zellij, screen)
 - [✓] Install t-rec (terminal recorder)
 - [✓] Install containers (steam-run, distrobox, boxbuddy, host-spawn, podman, runc, youki, oxker, qemu, flatpak, bubblewrap)
-- [✓] Install system management (topgrade, paru, doas, os-prober, kbd, numlockx, xremap, input-leap)
+- [✓] Install system management (topgrade, paru, doas, os-prober, kbd, numlockx, input-leap); Escape Pod comes from the mouse-navigation module
 - [✓] Install archiving (p7zip, zip, unzip)
 - [✓] Install ZFS tools
 - [✓] Install benchmarking (phoronix-test-suite, perf)
@@ -418,7 +420,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`default.nix`**: Enable NetworkManager
 - [✓] **`default.nix`**: Configure X11 keyboard layout (`us,ara`, `grp:ctrl_space_toggle`)
 - [✓] **`default.nix`**: Console keymap `us`
-- [✓] **`common.nix`**: Mouse on the TTYs via `steelbore-reticle` (Rust, in-tree; replaced gpm): select, paste, extend, xterm mouse reporting; reads evdev directly, xremap's re-emitted pointer included
+- [✓] **`common.nix`**: Mouse on the TTYs via `steelbore-reticle` (Rust, in-tree; replaced gpm): select, paste, extend, xterm mouse reporting; reads evdev directly, Escape Pod's virtual pointer included
 - [✓] **`default.nix`**: Enable printing
 - [✓] **`default.nix`**: Create user `mj` with groups (networkmanager, wheel, input, video, audio)
 - [✓] **`default.nix`**: Set user shell to Nushell (Rust), root shell to Brush (Rust)
@@ -852,17 +854,17 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 | Phase | Status | Progress |
 |-------|--------|----------|
 | 1. Foundation | Complete | 14/14 |
-| 2. Core Modules | Complete | 31/31 |
-| 3. Theme Engine | Complete | 9/9 |
-| 4. Login Management | Complete | 5/5 |
-| 5. Desktop Environments | Complete | 52/52 |
-| 6. Package Modules | In Progress | 135/142 |
+| 2. Core Modules | Complete | 32/32 |
+| 3. Theme Engine | Complete | 11/11 |
+| 4. Login Management | Complete | 6/6 |
+| 5. Desktop Environments | In Progress | 63/69 |
+| 6. Package Modules | In Progress | 139/146 |
 | 7. Hardware Modules | Complete | 12/12 |
-| 8. Host & User Config | Complete | 35/35 |
+| 8. Host & User Config | Complete | 37/37 |
 | 9. Overlays | Complete | 4/4 |
-| 10. Testing | In Progress | 13/22 |
+| 10. Testing | In Progress | 13/21 |
 | 11. Documentation | Complete | 5/5 |
-| **Total** | **95%** | **315/331** |
+| **Total** | **94%** | **336/357** |
 
 Counts are top-level `- [✓]` items per phase (sub-items and `[~]` partials
 excluded); the dated sections after Phase 11 track their own follow-ups and
