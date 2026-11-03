@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`preflight` shows a persistent progress bar, a full-screen TUI mode, and
+  authorization notifications.** At a terminal, `preflight` now pins a live
+  bottom status bar with overall step completion, elapsed time and sub-step
+  activity (`pkgs/update-vendored.nu` now prints `[idx/total] checking …` and
+  `[OK] built .#<attr> -> <ver> (<took>)` completion lines). Passing `--tui` /
+  `-E` (`--format explore`) opens a full-screen `ratatui` TUI with a task
+  checklist, overall progress gauge and scrollable live output pane (`--accessible`
+  / `SPACECRAFT_A11Y` switches to monotonic 10%-step linear announcements).
+  Whenever `preflight` waits on `sudo` (password or fingerprint) or `gitway-add`,
+  it alerts you via a critical D-Bus desktop notification (dismissed automatically
+  once authenticated), terminal bell and OSC 9/777/2 sequences (bell-only on bare
+  Linux VTs), and Zellij pane/tab title badges (`--no-notify` disables).
+
 - **GSConnect is installed for GNOME**, with the KDE Connect protocol's TCP/UDP
   ports open for phone pairing. Enable it in Extension Manager. Plasma's native
   KDE Connect daemon is excluded from GNOME autostart so it does not compete

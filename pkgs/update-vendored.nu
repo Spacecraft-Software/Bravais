@@ -118,10 +118,14 @@ def update-one [
     # the *packaging* is what needs fixing, so the modified file is the
     # starting point for that fix. `build failed` in the table means "file
     # modified, needs work" — check `git diff`.
+    let t0 = (date now)
     let built = (try { nix build --no-link $".#($attr)"; true } catch { false })
+    let took = ((date now) - $t0 | format duration sec)
     if not $built {
+      print $"[WARN] failed .#($attr) \(($took)\)"
       return {package: $pkg, current: $current, latest: $latest, action: "build failed"}
     }
+    print $"[OK] built .#($attr) -> ($latest) \(($took)\)"
   }
   {package: $pkg, current: $current, latest: $latest, action: "updated"}
 }
@@ -288,10 +292,14 @@ def up-obscura [check: bool] {
   # leaves the rewrite in place because the bump is nearly always right and
   # the packaging is what needs work.
   print "building .#obscura …"
+  let t0 = (date now)
   let built = (try { nix build --no-link ".#obscura"; true } catch { false })
+  let took = ((date now) - $t0 | format duration sec)
   if not $built {
+    print $"[WARN] failed .#obscura \(($took)\)"
     return {package: "obscura", current: $cur, latest: $latest, action: "build failed"}
   }
+  print $"[OK] built .#obscura -> ($latest) \(($took)\)"
   {package: "obscura", current: $cur, latest: $latest, action: "updated"}
 }
 
@@ -411,7 +419,11 @@ def main [package?: string, --check] {
   # Each package is isolated in its own try/catch so ANY failure — an upstream
   # API 404, a moved release asset, a prefetch timeout, a broken build — costs
   # you that one package instead of every package after it in the list.
-  let results = ($targets | each {|t|
+  let total = ($targets | length)
+  let results = ($targets | enumerate | each {|item|
+    let idx = ($item.index + 1)
+    let t = $item.item
+    print $"[($idx)/($total)] checking ($t) …"
     try {
     match $t {
       "claude-desktop" => (up-claude $check)

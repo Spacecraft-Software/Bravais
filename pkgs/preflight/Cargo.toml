@@ -11,8 +11,10 @@ authors = ["Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"]
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+crossterm = "0.29"
 jiff = "0.2"
-rustix = { version = "1", features = ["fs", "termios"] }
+ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
+rustix = { version = "1", features = ["fs", "process", "termios"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

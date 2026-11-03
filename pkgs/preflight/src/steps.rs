@@ -130,10 +130,14 @@ pub struct Options<'a> {
     /// Deploy MCP host configs after the switch instead of only reporting
     /// drift. Opt-in; see `mcpctl` for why this is not the default.
     pub mcp_deploy: bool,
+    /// Start notifications when an authorization command waits on the user.
+    /// Off under `--no-notify`.
+    pub notify: bool,
 }
 
 struct Runner {
     out: Out,
+    notify: bool,
     steps: Vec<StepReport>,
     /// The detached Flatpak update, once started, and its log.
     flatpak: Option<(Child, PathBuf)>,
@@ -143,6 +147,7 @@ struct Runner {
 
 impl Runner {
     fn record(&mut self, name: &'static str, outcome: Outcome, detail: Option<String>) {
+        crate::ui::finish_step(name, outcome, detail.as_deref());
         let level = match outcome {
             Outcome::Ok => Level::Ok,
             Outcome::Skipped => Level::Info,
@@ -160,15 +165,19 @@ impl Runner {
         });
     }
 
-    /// Run a command, streaming its output straight through.
+    /// Run a command, streaming its output straight through (or routing it
+    /// through the persistent status bar / TUI when active).
     ///
     /// Passthrough is deliberate: `nixos-rebuild` is the step a human watches,
     /// and capturing it to re-emit later would turn a live progress display
-    /// into a wall of text at the end. stdout of the child is inherited, which
-    /// is safe here because this tool's own payload goes out in one write at
-    /// the very end.
+    /// into a wall of text at the end. stdout of the child is inherited when
+    /// not in live/TUI mode, which is safe here because this tool's own
+    /// payload goes out in one write at the very end.
     fn run(&mut self, name: &'static str, cmd: &mut Command) -> bool {
-        match cmd.status() {
+        crate::ui::begin_step(self.out, name, None);
+        let auth = auth_label_for(name, cmd);
+        let auth_ref = auth.as_ref().map(|(s, d)| (*s, d.as_str()));
+        match crate::ui::run_logged(cmd, auth_ref, self.notify, None) {
             Ok(s) if s.success() => {
                 self.record(name, Outcome::Ok, None);
                 true
@@ -187,6 +196,32 @@ impl Runner {
     /// [`Runner::run`] with a time limit: past `limit` the child is killed
     /// and the step recorded as failed.
     fn run_timed(&mut self, name: &'static str, cmd: &mut Command, limit: Duration) -> bool {
+        crate::ui::begin_step(self.out, name, None);
+        if crate::ui::active() {
+            let start = Instant::now();
+            match crate::ui::run_logged(cmd, None, self.notify, Some(limit)) {
+                Ok(s) if s.success() => {
+                    self.record(name, Outcome::Ok, None);
+                    return true;
+                }
+                Ok(_) if start.elapsed() >= limit => {
+                    self.record(
+                        name,
+                        Outcome::Failed,
+                        Some(format!("timed out after {} s; killed", limit.as_secs())),
+                    );
+                    return false;
+                }
+                Ok(s) => {
+                    self.record(name, Outcome::Failed, Some(s.to_string()));
+                    return false;
+                }
+                Err(e) => {
+                    self.record(name, Outcome::Failed, Some(e.to_string()));
+                    return false;
+                }
+            }
+        }
         let mut child = match cmd.spawn() {
             Ok(c) => c,
             Err(e) => {
@@ -225,6 +260,19 @@ impl Runner {
     }
 }
 
+/// Identify commands that may block on a user's password or fingerprint scan
+/// (`sudo` and `gitway-add`) so `notify::AuthWatch` can alert the user if the
+/// terminal is unattended.
+fn auth_label_for(step: &'static str, cmd: &Command) -> Option<(&'static str, String)> {
+    let prog = cmd.get_program().to_str()?;
+    let base = prog.rsplit('/').next().unwrap_or(prog);
+    match base {
+        "sudo" => Some(("sudo", format!("sudo ({step})"))),
+        "gitway-add" => Some(("gitway-add", "gitway-add (SSH signing key)".to_owned())),
+        _ => None,
+    }
+}
+
 const fn fmt_outcome(o: Outcome) -> &'static str {
     match o {
         Outcome::Ok => "ok",
@@ -239,8 +287,10 @@ const fn fmt_outcome(o: Outcome) -> &'static str {
 /// built: building a tree other than the one asked for is the failure the
 /// sync step exists to prevent, so it stops the run rather than warning.
 pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refusal> {
+    let _ui_session = crate::ui::start(out, opts);
     let mut r = Runner {
         out,
+        notify: opts.notify && (out.attended || std::env::var_os("DBUS_SESSION_BUS_ADDRESS").is_some()),
         steps: Vec::new(),
         flatpak: None,
         bumps: deps_commit::Bumps::default(),
@@ -315,7 +365,7 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
     // --- preflight disk --------------------------------------------------
     let before = progress::spin(out, "measuring disk", measure_disk);
     if out.format == crate::output::Format::Human {
-        eprint!("{}", disk::render(&before, "preflight"));
+        out.block(&disk::render(&before, "preflight"));
     }
 
     // Reclaim on request, or unasked when the disk is low enough that the
@@ -346,7 +396,7 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
     } else {
         let a = progress::spin(out, "measuring disk", measure_disk);
         if out.format == crate::output::Format::Human {
-            eprint!("{}", disk::render(&a, "postflight"));
+            out.block(&disk::render(&a, "postflight"));
         }
         Some(a)
     };
@@ -394,6 +444,7 @@ fn sync_checkout(r: &mut Runner, opts: Options) -> Result<(), git_sync::Refusal>
         r.record("git-sync", Outcome::Skipped, Some("--no-sync".into()));
         return Ok(());
     }
+    crate::ui::begin_step(r.out, "git-sync", opts.branch);
     let req = git_sync::Request {
         dir: FLAKE_DIR,
         branch: opts.branch,
@@ -522,6 +573,7 @@ fn commit_bumps(r: &mut Runner, opts: Options, switched: bool) {
     }
 
     let date = jiff::Zoned::now().strftime("%Y-%m-%d").to_string();
+    crate::ui::begin_step(r.out, "deps-commit", None);
     match deps_commit::commit(FLAKE_DIR, &base, &r.bumps, &date) {
         Ok(c) => r.record(
             "deps-commit",
@@ -555,6 +607,7 @@ fn maybe_reclaim(r: &mut Runner, before: &disk::Report, opts: Options) -> Option
             ),
         );
     }
+    crate::ui::begin_step(r.out, "disk-reclaim", None);
     match disk::reclaim() {
         Ok(got) => {
             r.record(
@@ -748,6 +801,7 @@ fn appimages(r: &mut Runner, opts: Options) {
         );
         return;
     }
+    crate::ui::begin_step(r.out, "appimage-check", Some("checking AppImages"));
     let report = match progress::spin(r.out, "checking AppImages for updates", appimages::check) {
         Ok(rep) => rep,
         Err(e) => {
@@ -895,6 +949,7 @@ fn mcpctl(r: &mut Runner, deploy: bool) {
     } else {
         "checking MCP host configs"
     };
+    crate::ui::begin_step(r.out, "mcpctl", Some(label));
     let Ok(out) = progress::spin(r.out, label, || cmd.output()) else {
         r.record("mcpctl", Outcome::Skipped, Some("mcpctl absent".into()));
         return;
@@ -1009,6 +1064,7 @@ fn github_token(r: &mut Runner, cmd: &mut Command) {
 ///
 /// Never fatal: a brief Cloud Run outage must not abort a rebuild.
 fn antigravity_probe(r: &mut Runner) {
+    crate::ui::begin_step(r.out, "antigravity", Some("probing antigravity-nix"));
     let pinned = progress::spin(r.out, "probing antigravity-nix", || {
         Command::new("nix").args([
             "eval",
@@ -1083,7 +1139,7 @@ fn flatpak_start(r: &mut Runner) {
 
 /// Follow the Flatpak update to its end, or leave it running.
 ///
-/// Followed only when the run is live (a human at a terminal) and
+/// Followed only when the run is attended (a human at a terminal) and
 /// `--detach-flatpak` is not given: an agent, CI or a pipe gets the old
 /// behaviour, a step that records the log path and returns, because none of
 /// them should block for hours on a download nobody asked them to wait for.
@@ -1092,7 +1148,7 @@ fn flatpak_finish(r: &mut Runner, opts: Options) {
         return;
     };
     let shown = log.display().to_string();
-    if !r.out.live || opts.detach_flatpak {
+    if !r.out.attended || opts.detach_flatpak {
         r.record(
             "flatpak-update",
             Outcome::Ok,
@@ -1103,6 +1159,7 @@ fn flatpak_finish(r: &mut Runner, opts: Options) {
         return;
     }
 
+    crate::ui::begin_step(r.out, "flatpak-update", Some("following update"));
     progress::note(
         r.out,
         "following the Flatpak update — Ctrl-C stops following; the update keeps running (resume: preflight flatpak watch)",

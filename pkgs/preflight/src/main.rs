@@ -29,15 +29,17 @@ mod appimages;
 mod deps_commit;
 mod disk;
 mod git_sync;
+mod notify;
 mod output;
 mod progress;
 mod steps;
+mod ui;
 
 use std::fmt::Write as _;
 
 use clap::{Parser, Subcommand};
 
-use output::{AppError, ColorWhen, Exit, Format, Level, Out};
+use output::{AppError, ColorWhen, Exit, Format, Level, Out, UiRequest};
 
 /// One-line summary for `--help` and `describe`. The OS name (and the URL in
 /// the help text below) come from lib/identity.nix via build.rs, so this
@@ -76,6 +78,7 @@ const ABOUT: &str = concat!(
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
+        "  preflight --tui               Full-screen TUI with task checklist, progress gauge and live output\n",
         "  preflight --detach-flatpak    Start the Flatpak update and return instead of following it\n",
         "  preflight flatpak watch       Follow a running Flatpak update with a progress bar\n",
         "  preflight appimage status     Which AppImages have updates (asks Gear Lever)\n",
@@ -195,6 +198,22 @@ struct Cli {
     /// Deploy MCP host configs after the switch (default: report drift only)
     #[arg(long)]
     mcp_deploy: bool,
+
+    /// Full-screen TUI mode with task checklist, completion ticks, progress bar and live output
+    #[arg(long, short = 'E', conflicts_with_all = ["json", "accessible"])]
+    tui: bool,
+
+    /// Accessible mode (Standard §18): linear append-only output, no spinners, no TUI redraws
+    #[arg(long, global = true, conflicts_with = "no_accessible")]
+    accessible: bool,
+
+    /// Explicitly disable accessible mode, overriding `SPACECRAFT_A11Y` and environment hints
+    #[arg(long, global = true, conflicts_with = "accessible")]
+    no_accessible: bool,
+
+    /// Skip desktop/terminal/Zellij notifications when waiting on sudo or SSH authorization
+    #[arg(long)]
+    no_notify: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -259,7 +278,23 @@ fn main() -> std::process::ExitCode {
     } else {
         cli.format
     };
-    let out = Out::resolve(format, color, cli.verbose, cli.quiet);
+    let accessible = if cli.accessible {
+        Some(true)
+    } else if cli.no_accessible {
+        Some(false)
+    } else {
+        None
+    };
+    let out = Out::resolve(
+        format,
+        color,
+        cli.verbose,
+        cli.quiet,
+        UiRequest {
+            tui: cli.tui,
+            accessible,
+        },
+    );
 
     let code = match &cli.command {
         Some(Cmd::Schema) => cmd_schema(out),
@@ -310,6 +345,7 @@ fn options(cli: &Cli) -> steps::Options<'_> {
         gc_all: cli.gc_all,
         journal_days: cli.journal_days,
         mcp_deploy: cli.mcp_deploy,
+        notify: !cli.no_notify,
     }
 }
 
@@ -537,7 +573,11 @@ fn cmd_schema(out: Out) -> i32 {
                     "--reclaim": "reclaim safe caches before the switch",
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
-                    "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually"
+                    "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually",
+                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends cleanly for interactive sudo/SSH prompts",
+                    "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
+                    "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
+                    "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization"
                 }
             },
             "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },
@@ -581,6 +621,9 @@ fn cmd_describe(out: Out) -> i32 {
             "appimage-updates",
             "disk-report",
             "disk-reclaim",
+            "tui-mode",
+            "auth-notifications",
+            "accessible-mode",
         ],
         "external_tools": external_tools(),
         "ai_tools": ai_tools::TOOLS.iter().map(ai_tools::Tool::command_line).collect::<Vec<_>>(),
@@ -721,5 +764,43 @@ mod tests {
                 "--full-update must conflict with {other}"
             );
         }
+    }
+
+    #[test]
+    fn tui_and_accessible_and_no_notify_flags_parse() {
+        let tui = Cli::try_parse_from(["preflight", "--tui"]);
+        assert!(tui.is_ok_and(|c| c.tui));
+        let short = Cli::try_parse_from(["preflight", "-E"]);
+        assert!(short.is_ok_and(|c| c.tui));
+        assert!(Cli::try_parse_from(["preflight", "--tui", "--json"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--tui", "--accessible"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--accessible", "--no-accessible"]).is_err());
+        let nn = Cli::try_parse_from(["preflight", "--no-notify"]);
+        assert!(nn.is_ok_and(|c| !options(&c).notify));
+    }
+
+    #[test]
+    fn a11y_precedence_honours_flag_over_env_over_hint() {
+        use output::{resolve_a11y, A11ySource};
+        assert_eq!(
+            resolve_a11y(Some(false), Some(true), true),
+            (false, A11ySource::Flag)
+        );
+        assert_eq!(
+            resolve_a11y(Some(true), Some(false), false),
+            (true, A11ySource::Flag)
+        );
+        assert_eq!(
+            resolve_a11y(None, Some(false), true),
+            (false, A11ySource::Env)
+        );
+        assert_eq!(
+            resolve_a11y(None, None, true),
+            (true, A11ySource::Hint)
+        );
+        assert_eq!(
+            resolve_a11y(None, None, false),
+            (false, A11ySource::Default)
+        );
     }
 }

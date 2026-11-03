@@ -2148,7 +2148,7 @@ PATH, so they are never frozen in its closure (same reasoning as
 CONSTRAINTS.md #23).
 
 The older `users/mj/rebuild-classic.nu` and `scripts/rebuild-classic.sh` sit behind a deprecation
-prompt; **change one and change all three**, except the `preflight`-only flags and steps (`--update-vendored`, `--update-ai-tools`, the AppImage check), which the deprecated shells deliberately lack. Flags: `preflight --help`; the rest:
+prompt; **change one and change all three**, except the `preflight`-only flags and steps (`--update-vendored`, `--update-ai-tools`, the AppImage check, `--tui` / `-E`, `--accessible` / `--no-accessible`, `--no-notify`), which the deprecated shells deliberately lack. Flags: `preflight --help`; the rest:
 **`docs/rebuild.md`**.
 
 ### 16.2 Skills Delivery
