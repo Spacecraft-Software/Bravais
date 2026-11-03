@@ -96,7 +96,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable GNOME on Wayland, disable GDM (use greetd)
 - [✓] Install GNOME Tweaks, dconf-editor
 - [✓] Install extension manager and browser connector
-- [✓] Install curated extensions (15: Caffeine, Just Perfection, Forge, etc.)
+- [✓] Install curated extensions (Caffeine, Just Perfection, Forge, etc.)
+- [✓] Install GSConnect, use `programs.kdeconnect` for the protocol's TCP/UDP ports and exclude Plasma's native daemon from GNOME autostart
+- [ ] Enable GSConnect in Extension Manager and pair a phone in GNOME
 - [✓] Configure XDG portals (gnome, gtk)
 - [✓] Shared keys from `docs/keybindings.md` beside GNOME's own (terminal, close, fullscreen, workspaces 1–9, lock, Caffeine, window capture)
 - [✓] Super alone opens the app grid (start-overlay-in-application-view, enabled by appending to `enabled-extensions`); `Super+D` opens search (`users/mj/gnome.nix`)
@@ -364,7 +366,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Add grok-bot (Grok Bot desktop agent) — `pkgs/grok-bot/`, installed via `modules/packages/ai.nix`; not in nixpkgs so repackaged from the official `.deb`. Its two self-registered URL schemes (`grokbot`, `sand`) are declared in `users/mj/default-apps.nix` per constraint #30
 - [✓] Add the Artcraft suite (13 storytold apps, `ai.storyteller.*`) as Flatpak bundles — not on Flathub and no signed remote, so each GitHub-release `.flatpak` is fetched at a pin in `pkgs/artcraft/sources.nix` and installed with nix-flatpak's `bundle`; bumped by `nu pkgs/update-vendored.nu artcraft`. The Artcraft Launcher is left out (it installs apps itself)
 - [ ] Wire grok-bot into `pkgs/update-vendored.nu` once upstream publishes a discoverable release feed — today the URL carries an opaque build hash and must be refreshed by hand
-- [ ] Open KDE Connect ports 1714-1764/tcp+udp — neither phone-connectivity app can pair until then; `programs.kdeconnect.enable` (which carries the firewall rules) is not set anywhere, only the bare package is in systemPackages
+- [✓] Open KDE Connect ports 1714-1764/tcp+udp through the GNOME module's `programs.kdeconnect` configuration
 - [ ] Decide which KDE Connect daemon to keep — the nixpkgs one or the COSMIC Flatpak. Two daemons cannot both hold 1714-1764, and a sandboxed one writes its cache under `~/.var/app/` where Connected cannot read it
 
 ### homebrew.nix

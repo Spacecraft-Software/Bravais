@@ -89,7 +89,7 @@ This PRD states requirements and the design decisions behind them, with enough "
 | Boot splash and startup sound (§5.2) | Implemented | Fairing by default since 2026-10-21, Plymouth selectable (`steelbore.boot.splash.provider`); not yet seen on a real boot (TODO Phase 10) |
 | Secure Boot (§11.4) | Planned | `sbctl` installed (`modules/packages/security.nix`); key enrollment open in TODO.md Phase 6 |
 | Waydroid (§12.7) | Planned | `waydroid init`, Niri start and APK install open (TODO.md) |
-| KDE Connect pairing | Planned | firewall ports 1714–1764 and daemon choice open (TODO.md) |
+| KDE Connect pairing | Configured | GSConnect in GNOME; shared firewall ports open; phone pairing remains manual (TODO.md) |
 | `gitway biometric` enrollment | Planned | open in TODO.md, after a healthy login keyring |
 | Obscura MCP entry for Claude Code (§11.9) | Planned | the one host `mcpctl deploy` could not write (TODO.md) |
 | Bitwarden browser-extension bridge (§11.4) | Planned | host browser vs `--filesystem=/nix/store:ro` vs desktop-only biometrics — open in TODO.md |
@@ -1085,10 +1085,17 @@ Margo's top-left hot corner opens the overview (`hot_corner_top_left = toggle_ov
 
 **Services:** `services.xserver.enable = true`; `services.desktopManager.gnome.enable = true`; `services.displayManager.gdm.enable = lib.mkDefault false` (greetd used instead). GNOME 50 is always Wayland, so `gdm.wayland` is no longer set.
 
-**Extensions (15 installed):**
-  caffeine, just-perfection, window-gestures, wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor, start-overlay-in-application-view
+**Extensions:**
+  caffeine, just-perfection, window-gestures (where available), wayland-or-x11, toggler, vim-alt-tab, open-bar, tweaks-in-system-menu, launcher, window-title-is-back, yakuake, forge, warp-toggle, resource-monitor, start-overlay-in-application-view, gsconnect
 
 Installed is not enabled: GNOME loads only the UUIDs in `org.gnome.shell enabled-extensions`, which Extension Manager edits. Bravais enables exactly one itself, start-overlay-in-application-view, by appending its UUID to that list on activation (`users/mj/gnome.nix`), so the rest of the list stays the user's.
+
+**Phone integration:** GSConnect is installed with the GNOME extensions, and
+`programs.kdeconnect` opens TCP/UDP 1714–1764. Enable GSConnect in Extension
+Manager and pair through its preferences.
+When Plasma is also installed, an XDG autostart override adds `NotShowIn=GNOME`
+to the native KDE Connect daemon's entry, preserving its behavior in other
+sessions while avoiding a competing daemon in GNOME.
 
 **Keybindings (`users/mj/gnome.nix`):** Super alone opens the **app grid** rather than the window overview. GNOME has no setting for this (mutter's `overlay-key` only names the key; the shell always calls `Overview.toggle()`), so the start-overlay-in-application-view extension replaces `toggle()` with `showApps()`; the Activities button and hot corner follow. `Super+D` is media-keys `search` (Settings › Keyboard › Shortcuts › Launchers › Search), which opens the overview with search focused, matching `Mod+D` under Niri, LeftWM and Margo. `Super+A` (app grid) and `Super+S` (quick settings, GNOME 50) are left at their defaults. The shared keys ([`docs/keybindings.md`](docs/keybindings.md)) are added beside the stock ones: Super+Return terminal (a custom shortcut, appended to `custom-keybindings` the same way as the extension), Super+Q close, Super+F fullscreen, Super+1…9 / Super+Shift+1…9 workspaces (the "open the Nth dock app" keys give way), Super+L lock (stock), Super+Shift+C Caffeine, Super+Print window capture. The side-button workspace keys (§9.1a) are restated there with every GNOME 50 stock accelerator.
 
@@ -1771,7 +1778,7 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
 | COSMIC applets      | io.github.cosmic_utils.cosmic-ext-applet-clipboard-manager, io.github.cosmic_utils.minimon-applet (`cosmic` remote; system-wide to avoid a second, per-user installation that made unqualified `flatpak` commands ambiguous) |
 | Browsers            | com.google.Chrome, com.microsoft.Edge, com.opera.Opera, com.brave.Browser (Zen and LibreWolf parked; Firefox is nixpkgs) |
 | Communication       | com.discordapp.Discord, im.riot.Riot (Element), io.wavebox.Wavebox, com.slack.Slack |
-| Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (a second daemon overlapping `kdePackages.kdeconnect-kde` — if they fight, drop this, never the host daemon). Both `cosmic` remote; neither pairs until 1714-1764/tcp+udp are opened, which nothing here does yet |
+| Phone connectivity  | io.github.nwxnw.cosmic-ext-connected (front-end for the host KDE Connect daemon), io.github.hepp3n.kdeconnect (a second daemon overlapping `kdePackages.kdeconnect-kde` — if they fight, drop this, never the host daemon). Both `cosmic` remote; the GNOME module opens the shared 1714–1764/tcp+udp ports through `programs.kdeconnect` |
 | Networking / Internet | de.haeckerfelix.Fragments (Rust BitTorrent client) |
 | Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — nixpkgs, §11.4) |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, com.vscodium.codium (also nixpkgs — §11.2), io.github.shiftey.Desktop (GitHub Desktop). dev.zed.Zed DISABLED — nixpkgs `zed-editor` |
