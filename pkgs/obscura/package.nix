@@ -35,13 +35,13 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "obscura";
-  version = "0.2.5";
+  version = "0.2.6";
 
   src = fetchFromGitHub {
     owner = "h4ckf0r0day";
     repo = "obscura";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-92Y4sjlH9K8PBjpLaCq84y9tu8fcEDzIDFRBDjEU2a0=";
+    hash = "sha256-5zJ6if1DtNW9josrcA2G2o5x3w7BtJCz59TRJOqBGv4=";
   };
 
   # The tree ships a Cargo.lock, but it also carries a [patch.crates-io] section
@@ -49,7 +49,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # dir is not reproducible from the lock alone — a vendor hash is the only
   # option. Regenerate on every version bump: set to lib.fakeHash, build, paste
   # the reported `got:` value. update-vendored.nu does this automatically.
-  cargoHash = "sha256-kQ4RmRigvaHZ5D+QRlj/lNi9V2NXwjF6zezwlHSdB14=";
+  cargoHash = "sha256-FPCcSvECFeHRXzOUg1+Ou75W42IZ2C3osKcdINb7MwA=";
 
   # All three are for btls-sys — the BoringSSL FFI that the `stealth` feature
   # pulls in through wreq. It compiles the BoringSSL copy vendored inside its own

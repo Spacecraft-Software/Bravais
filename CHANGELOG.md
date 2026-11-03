@@ -236,6 +236,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Refresh the flake inputs and vendored applications.** Bump nixpkgs on both
+  channels, Engram and Pathfinder, plus the Artcraft bundles, Claude Desktop,
+  Codex Desktop, GitHub Copilot, Goose Desktop, Obscura, Ollama and OpenCode Desktop.
+
 - **Engram no longer fails with "database is locked" behind another
   writer.** The `engram` input moved to the Engram commit where opening the
   database writes nothing, and a read on a busy database skips its read count
