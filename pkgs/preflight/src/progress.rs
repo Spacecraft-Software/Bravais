@@ -50,11 +50,13 @@ const BAR_WIDTH: usize = 24;
 const UNICODE_FRAMES: &[&str] = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const ASCII_FRAMES: &[&str] = &["|", "/", "-", "\\"];
 
-/// Whether this run may draw live progress, and with which glyphs.
+/// Whether a human is at the terminal (and so may be shown progress), and
+/// whether the glyphs must be ASCII.
 ///
 /// Called once from `Out::resolve`. Both streams must be terminals: stderr
 /// is where the drawing goes, and a redirected stdout means a script is
-/// collecting the result.
+/// collecting the result. Accessible mode (Standard §18) is applied by the
+/// caller on top: it keeps this "attended" answer but draws nothing.
 pub fn detect(human: bool, agent: bool) -> (bool, bool) {
     let live = human
         && !agent
@@ -75,16 +77,17 @@ pub fn detect(human: bool, agent: bool) -> (bool, bool) {
     (live, ascii)
 }
 
-fn frame(out: Out, i: usize) -> &'static str {
-    let frames = if out.ascii {
-        ASCII_FRAMES
-    } else {
-        UNICODE_FRAMES
-    };
+/// One spinner glyph; `ascii` for the Linux console and non-UTF-8 locales.
+pub fn spinner(ascii: bool, i: usize) -> &'static str {
+    let frames = if ascii { ASCII_FRAMES } else { UNICODE_FRAMES };
     frames[i % frames.len()]
 }
 
-fn columns() -> usize {
+fn frame(out: Out, i: usize) -> &'static str {
+    spinner(out.ascii, i)
+}
+
+pub fn columns() -> usize {
     rustix::termios::tcgetwinsize(std::io::stderr())
         .ok()
         .map(|w| usize::from(w.ws_col))
@@ -95,7 +98,7 @@ fn columns() -> usize {
 /// Replace the current stderr line with `text`, cut to the terminal width.
 /// Cutting matters: a line that wraps can no longer be erased with `\r`, and
 /// the spinner then scrolls the screen instead of turning in place.
-fn draw(text: &str) {
+pub fn draw(text: &str) {
     let width = columns().saturating_sub(1);
     let cut: String = text.chars().take(width).collect();
     let mut err = std::io::stderr().lock();
@@ -103,7 +106,7 @@ fn draw(text: &str) {
     let _ = err.flush();
 }
 
-fn clear() {
+pub fn clear() {
     let mut err = std::io::stderr().lock();
     let _ = write!(err, "\r\x1b[2K");
     let _ = err.flush();
@@ -113,7 +116,7 @@ fn clear() {
 /// `Out::say`: these are instructions about the display, not step results,
 /// and they must not reach an agent's diagnostic stream.
 pub fn note(out: Out, msg: &str) {
-    if out.live {
+    if out.attended && !out.tui {
         let mut err = std::io::stderr().lock();
         let _ = writeln!(err, "{msg}");
     }
@@ -141,6 +144,11 @@ pub fn elapsed(d: Duration) -> String {
 /// `f` runs on the calling thread; only the drawing is on a scoped thread,
 /// so `f` needs no `Send` bound and nothing outlives the call.
 pub fn spin<T>(out: Out, label: &str, f: impl FnOnce() -> T) -> T {
+    // A running display already owns the line; it only needs to be told what
+    // the silent step is doing.
+    if crate::ui::active() {
+        return crate::ui::with_label(label, f);
+    }
     if !out.live {
         return f();
     }
@@ -307,17 +315,18 @@ pub fn read_tail(path: &Path) -> Option<String> {
     Some(String::from_utf8_lossy(&buf).into_owned())
 }
 
-fn bar(out: Out, pct: u8) -> String {
-    let (full, empty) = if out.ascii {
-        ('#', '-')
-    } else {
-        ('█', '░')
-    };
-    let n = usize::from(pct.min(100)) * BAR_WIDTH / 100;
-    let mut s = String::with_capacity(BAR_WIDTH * 3);
+/// A bar `width` cells wide, `pct` full.
+pub fn bar_with(ascii: bool, pct: u8, width: usize) -> String {
+    let (full, empty) = if ascii { ('#', '-') } else { ('█', '░') };
+    let n = usize::from(pct.min(100)) * width / 100;
+    let mut s = String::with_capacity(width * 3);
     s.extend(std::iter::repeat_n(full, n));
-    s.extend(std::iter::repeat_n(empty, BAR_WIDTH - n));
+    s.extend(std::iter::repeat_n(empty, width - n));
     s
+}
+
+fn bar(out: Out, pct: u8) -> String {
+    bar_with(out.ascii, pct, BAR_WIDTH)
 }
 
 /// One frame of the Flatpak display.
@@ -353,6 +362,10 @@ pub fn watch_flatpak(out: Out, log: &Path, running: &mut dyn FnMut() -> bool) ->
     let mut last = FlatpakProgress::default();
     let mut next_read = Instant::now();
     let mut i = 0;
+    // Accessible mode: a new line each time the overall percentage passes
+    // another multiple of ten, so the figure only ever rises and a screen
+    // reader is never asked to re-read a redrawn line (Standard §18.2).
+    let mut announced: Option<u8> = None;
     while running() {
         if Instant::now() >= next_read {
             if let Some(tail) = read_tail(log) {
@@ -360,20 +373,42 @@ pub fn watch_flatpak(out: Out, log: &Path, running: &mut dyn FnMut() -> bool) ->
             }
             next_read = Instant::now() + LOG_POLL;
         }
-        if out.live {
+        if crate::ui::active() {
+            // The display draws; it is only told the numbers.
+            crate::ui::set_progress(last.percent, flatpak_label(&last));
+            std::thread::sleep(TICK);
+        } else if out.live {
             draw(&render(out, i, &last, start.elapsed()));
             i += 1;
             std::thread::sleep(TICK);
         } else {
-            std::thread::sleep(QUIET_POLL);
+            if out.accessible && out.attended {
+                if let Some(p) = last.percent {
+                    let step = p / 10 * 10;
+                    if announced.is_none_or(|a| step > a) {
+                        announced = Some(step);
+                        out.announce(&format!("flatpak update: {p}% ({})", elapsed(start.elapsed())));
+                    }
+                }
+            }
+            std::thread::sleep(if out.accessible { LOG_POLL } else { QUIET_POLL });
         }
     }
-    if out.live {
+    if out.live && !crate::ui::active() {
         clear();
     }
     // One last read: the closing lines (`Changes complete.`, or an error)
     // are written in the moment before the process exits.
     read_tail(log).map_or(last, |t| parse(&t))
+}
+
+/// `2/5 1.2 MB/s 00:30`, for the display's activity line.
+fn flatpak_label(p: &FlatpakProgress) -> Option<String> {
+    let ops = match (p.op, p.ops) {
+        (Some(op), Some(of)) => format!("operation {op}/{of}"),
+        _ => p.line.clone()?,
+    };
+    Some(p.rate.as_deref().map_or_else(|| ops.clone(), |r| format!("{ops}  {r}")))
 }
 
 /// PID of a running `flatpak update`, found by scanning `/proc`.

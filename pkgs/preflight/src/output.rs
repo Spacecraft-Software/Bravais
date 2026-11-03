@@ -142,6 +142,8 @@ impl AppError {
 pub enum Format {
     Human,
     Json,
+    /// Interactive full-screen TUI mode (CLI Standard §5)
+    Explore,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
@@ -184,6 +186,10 @@ impl Level {
 }
 
 /// Resolved output policy for one run.
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "each boolean captures an orthogonal output policy resolved once at startup"
+)]
 #[derive(Debug, Clone, Copy)]
 pub struct Out {
     pub format: Format,
@@ -195,6 +201,74 @@ pub struct Out {
     pub live: bool,
     /// Draw them in ASCII: the Linux console, or a non-UTF-8 locale.
     pub ascii: bool,
+    /// A human is at the terminal and no agent, CI or pipe is involved. True
+    /// even in accessible mode, where nothing animates but the run is still
+    /// followed to its end (the Flatpak update) and announced step by step.
+    pub attended: bool,
+    /// Full-screen task view (`--tui`). Implies `live`.
+    pub tui: bool,
+    /// Standard §18 accessible mode: append-only output, no spinner, no
+    /// redraw, no alternate screen.
+    pub accessible: bool,
+}
+
+/// How accessible mode was decided (Standard §18.1). Reported under
+/// `--verbose` so the user can tell *why* the mode is on or off.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum A11ySource {
+    Flag,
+    Env,
+    Hint,
+    Default,
+}
+
+impl A11ySource {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Flag => "--accessible / --no-accessible",
+            Self::Env => "SPACECRAFT_A11Y",
+            Self::Hint => "environment hint (NO_COLOR or TERM=dumb)",
+            Self::Default => "default (off)",
+        }
+    }
+}
+
+/// Standard §18.1 precedence: flag > environment > hints > default-off. An
+/// explicit `false` at any level wins over every lower one. There is no
+/// configuration file in preflight, so that source of the contract is absent.
+pub fn resolve_a11y(flag: Option<bool>, env: Option<bool>, hint: bool) -> (bool, A11ySource) {
+    match (flag, env) {
+        (Some(v), _) => (v, A11ySource::Flag),
+        (_, Some(v)) => (v, A11ySource::Env),
+        _ if hint => (true, A11ySource::Hint),
+        // Silence is never consent to change the default presentation.
+        _ => (false, A11ySource::Default),
+    }
+}
+
+/// `SPACECRAFT_A11Y=1|0` (also `true`/`false`); anything else is unset.
+pub fn a11y_env() -> Option<bool> {
+    match std::env::var("SPACECRAFT_A11Y").ok()?.trim() {
+        "1" | "true" => Some(true),
+        "0" | "false" => Some(false),
+        _ => None,
+    }
+}
+
+/// Only unambiguous signals. Never inferred from `$LANG`, terminal size or
+/// the mere absence of a TTY.
+pub fn a11y_hint() -> bool {
+    std::env::var_os("NO_COLOR").is_some()
+        || std::env::var("TERM").as_deref() == Ok("dumb")
+}
+
+/// What the caller asked of the display, beyond the output format.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct UiRequest {
+    /// `--tui`: the full-screen task view.
+    pub tui: bool,
+    /// `--accessible` (`Some(true)`) / `--no-accessible` (`Some(false)`).
+    pub accessible: Option<bool>,
 }
 
 impl Out {
@@ -204,17 +278,27 @@ impl Out {
     /// exports `AI_AGENT=claude-code_2-1-218_agent`, so a detector comparing
     /// against `"1"` fails to recognise the very harness it is running under --
     /// the exact regression §10.1 calls out.
-    pub fn resolve(format: Option<Format>, color: ColorWhen, verbose: bool, quiet: bool) -> Self {
+    pub fn resolve(
+        format: Option<Format>,
+        color: ColorWhen,
+        verbose: bool,
+        quiet: bool,
+        ui: UiRequest,
+    ) -> Self {
         let agent = is_agent_env();
         let tty = std::io::stdout().is_terminal();
+        let want_tui = ui.tui || format == Some(Format::Explore);
 
-        let format = format.unwrap_or({
-            if agent || !tty {
-                Format::Json
-            } else {
-                Format::Human
+        let format = match format {
+            Some(Format::Explore) | None => {
+                if agent || !tty {
+                    Format::Json
+                } else {
+                    Format::Human
+                }
             }
-        });
+            Some(f) => f,
+        };
 
         let color = match color {
             ColorWhen::Never => false,
@@ -236,15 +320,42 @@ impl Out {
             Level::Ok
         };
 
-        let (live, ascii) = crate::progress::detect(format == Format::Human, agent);
+        let (attended, ascii) = crate::progress::detect(format == Format::Human, agent);
+        let (accessible, a11y_source) =
+            resolve_a11y(ui.accessible, a11y_env(), a11y_hint());
+        // The full-screen view also needs a keyboard to read, and is never
+        // offered to accessible mode: a screen reader reads the character
+        // grid, so a redrawn grid is a speech loop (Standard §18.2.3).
+        let tui = want_tui && attended && !accessible && std::io::stdin().is_terminal();
+        let live = attended && !accessible;
 
-        Self {
+        let out = Self {
             format,
             color,
             floor,
             live,
             ascii,
+            attended,
+            tui,
+            accessible,
+        };
+        if want_tui && !tui {
+            out.say(
+                Level::Warn,
+                "interactive TUI mode unavailable in this environment; falling back to standard output (try: preflight --json)",
+            );
         }
+        if verbose {
+            out.say(
+                Level::Info,
+                &format!(
+                    "accessibility: {} ({})",
+                    if accessible { "enabled" } else { "disabled" },
+                    a11y_source.name()
+                ),
+            );
+        }
+        out
     }
 
     /// A non-live human policy for unit tests.
@@ -256,6 +367,9 @@ impl Out {
             floor: Level::Ok,
             live: false,
             ascii,
+            attended: false,
+            tui: false,
+            accessible: false,
         }
     }
 
@@ -265,7 +379,6 @@ impl Out {
         if level < self.floor {
             return;
         }
-        let mut err = std::io::stderr().lock();
         if self.format == Format::Json {
             let obj = serde_json::json!({
                 "diagnostic": {
@@ -274,11 +387,40 @@ impl Out {
                     "timestamp": now_utc(),
                 }
             });
-            let _ = writeln!(err, "{obj}");
-        } else if self.color {
-            let _ = writeln!(err, "{}{}\x1b[0m {msg}", level.ansi(), level.tag());
+            let _ = writeln!(std::io::stderr().lock(), "{obj}");
+            return;
+        }
+        let line = if self.color {
+            format!("{}{}\x1b[0m {msg}", level.ansi(), level.tag())
         } else {
-            let _ = writeln!(err, "{} {msg}", level.tag());
+            format!("{} {msg}", level.tag())
+        };
+        // A live display owns the bottom of the screen (or all of it), so
+        // the line goes through it rather than around it.
+        if crate::ui::emit(level, &line, &format!("{} {msg}", level.tag())) {
+            return;
+        }
+        let _ = writeln!(std::io::stderr().lock(), "{line}");
+    }
+
+    /// A multi-line block (the disk report) for the human at the terminal,
+    /// routed like [`Out::say`] so a live display is not written over.
+    pub fn block(self, text: &str) {
+        if self.format == Format::Json {
+            return;
+        }
+        if crate::ui::emit_block(text) {
+            return;
+        }
+        eprint!("{text}");
+    }
+
+    /// Progress in accessible mode: a plain `[INFO]` line, always shown (the
+    /// severity floor would hide it), and only for a human at a terminal --
+    /// every other caller gets exactly the output it got before.
+    pub fn announce(self, msg: &str) {
+        if self.accessible && self.attended && self.format == Format::Human {
+            let _ = writeln!(std::io::stderr().lock(), "{} {msg}", Level::Info.tag());
         }
     }
 
@@ -301,7 +443,7 @@ impl Out {
                     }
                 }
             }
-            Format::Human => {
+            Format::Human | Format::Explore => {
                 let _ = write!(sink, "{human}");
             }
         }

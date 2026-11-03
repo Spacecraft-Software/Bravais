@@ -760,6 +760,13 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       Linux console
 - [✓] Same watcher in `users/mj/rebuild-classic.nu` (`flatpak-watch`) and
       `scripts/rebuild-classic.sh`
+- [✓] Persistent bottom status bar across the run (`pkgs/preflight/src/ui.rs`),
+      full-screen `ratatui` TUI (`--tui` / `-E` / `--format explore`), Standard
+      §18 linear accessible mode (`--accessible` / `SPACECRAFT_A11Y`), per-package
+      `[idx/total]` and `[OK] built .#<attr> -> <ver> (<took>)` lines in
+      `pkgs/update-vendored.nu`, and authorization notifications (`pkgs/preflight/src/notify.rs`:
+      D-Bus `org.freedesktop.Notifications` with auto-dismiss, terminal bell and
+      OSC 9/777/2, Zellij pane and tab badges; `--no-notify`)
 - [ ] First live run on the ThinkPad against a real Flatpak update
 
 ## Rebuild builds origin's latest code (2026-10-19)
