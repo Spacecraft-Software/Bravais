@@ -185,6 +185,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   carries 49-51 extensions only) no longer has the attribute. It is now
   installed only where it exists; stable keeps it.
 
+- **OpenCode Desktop's local server starts again.** Preserve the bundled Bun
+  executable's application trailer by disabling stripping, and check its version
+  and `serve` command after packaging. This fixes `Desktop IPC handler failed`
+  caused by `Script not found "serve"`. An existing cached CLI from a broken
+  build also needs replacement (CONSTRAINTS.md #54).
+
 - **OpenCode Desktop builds again.** Its new release renamed the launcher
   inside the package; the build now reads the launcher's name from the
   package's own desktop entry instead of restating it, and fails with a clear

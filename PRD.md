@@ -1726,7 +1726,9 @@ committed **and pushed** before `nix flake update <input>` sees it (§3.1).
 - `github-copilot-app` — official GitHub Tauri app (unfree); must keep `dontStrip = true`
   (CONSTRAINTS.md #40).
 - `opencode-desktop` — official OpenCode app (MIT); deletes the musl binaries
-  (CONSTRAINTS.md #15) and puts native EGL on `LD_LIBRARY_PATH` for Chromium's ANGLE.
+  (CONSTRAINTS.md #15) and puts native EGL on `LD_LIBRARY_PATH` for Chromium's ANGLE;
+  preserves the Bun CLI's application trailer with `dontStrip` and checks its
+  version and `serve --help` after fixup (CONSTRAINTS.md #54).
 - `goose-desktop` — Block's AI agent app (Apache-2.0; no Flathub listing); same ANGLE/EGL
   fix; the updater queries upstream's new `aaif-goose/goose` org.
 - `codex-desktop` — OpenAI's Codex app (unfree); unversioned `latest` URL, ETag-keyed

@@ -131,6 +131,24 @@ stdenv.mkDerivation (finalAttrs: {
   dontConfigure = true;
   dontBuild = true;
 
+  # The Bun-compiled server carries its application payload beyond the ELF
+  # sections. Stripping removes its trailer, leaving bare Bun: `serve` fails with
+  # "Script not found" even though autoPatchelf succeeds (constraint #54).
+  dontStrip = true;
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    opencodeCheckRoot=$(mktemp -d)
+    export XDG_DATA_HOME="$opencodeCheckRoot/data"
+    export XDG_STATE_HOME="$opencodeCheckRoot/state"
+    export XDG_CACHE_HOME="$opencodeCheckRoot/cache"
+    export XDG_CONFIG_HOME="$opencodeCheckRoot/config"
+    test "$("$out/lib/OpenCode/resources/opencode-cli" --version)" = "opencode v${finalAttrs.version}"
+    "$out/lib/OpenCode/resources/opencode-cli" serve --help > /dev/null
+    runHook postInstallCheck
+  '';
+
   # We wrap the launcher manually in postFixup; let wrapGAppsHook3 only collect
   # gappsWrapperArgs (GTK schemas / GDK_PIXBUF / XDG_DATA_DIRS).
   dontWrapGApps = true;
