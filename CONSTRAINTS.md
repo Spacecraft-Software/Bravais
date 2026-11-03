@@ -265,10 +265,10 @@ The sync that precedes the commit never refuses over uncommitted edits either (`
 
 ### 54. Stripping OpenCode Desktop's Bun CLI breaks its embedded application
 
-OpenCode Desktop 2.2.0 started with `Desktop IPC handler failed`, caused by
+OpenCode Desktop started with `Desktop IPC handler failed`, caused by
 `Server process exited with code 1` and `Script not found "serve"`. Its installed
-`resources/opencode-cli --version` reported Bun's `1.4.4` instead of
-`opencode v2.2.0`. The default strip phase removes the trailer Bun needs to locate
+`resources/opencode-cli --version` reported Bun's version instead of OpenCode's
+version from `pkgs/opencode-desktop/package.nix`. The default strip phase removes the trailer Bun needs to locate
 its embedded application; autoPatchelf still succeeds. Keep `dontStrip = true` in
 `pkgs/opencode-desktop/package.nix`. With stripping disabled, the repackaged CLI
 reports the expected OpenCode version and `serve --help` succeeds. The package's
