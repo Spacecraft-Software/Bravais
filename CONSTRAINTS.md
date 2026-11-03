@@ -262,3 +262,21 @@ Second edge, seen 2026-10-25: when fbcon binds, udev starts `systemd-vconsole-se
 Until 2026-10-24 the flake update and `--update-vendored` left `flake.lock` and the pinned files modified in `/spacecraft-software/bravais`, and nothing recorded them; the next sync had to carry, drop or refuse over them, and the deps commit AGENTS.md asks for was a chore to remember. `pkgs/preflight/src/deps_commit.rs` now commits them in the run that made them, and each part of its order is load-bearing. **After the switch**, because the switch is the gate: a pin that does not build stays uncommitted for the next run to fix, never recorded as good. **After the `/etc/nixos` mirror**, because the commit ends by switching the checkout back to a tree without the bumps, and the mirror must copy the tree that was built. **Only when HEAD is origin's default branch**, because a deps branch cut from a PR branch would carry the PR's commits into the deps PR (AGENTS.md keeps bumps in their own `chore(deps)` PR); on any other branch, or a detached HEAD, the bumps stay uncommitted with a warning. **Never on `main` itself and never pushed**: a new local `chore/deps-bump-<YYYY-MM-DD>` branch (suffixed `-2`, `-3`, … when the name exists locally or on origin) takes a plain `git commit -- <paths>`, so the user's `commit.gpgsign` / `gpg.format=ssh` setup signs it (the key was loaded by `gitway-add` at the start of the run), only the bumped paths go in (anything else staged stays staged), and other uncommitted changes ride to the branch and back untouched. A path that was already modified before the run is not a bump and is never committed. When the lock moves `construct`, `nu pkgs/sync-skills.nu` runs first and `.github/skills/` joins the commit, or CI's Skills Drift check would fail the PR. The cost of switching back: until the deps branch is merged, the checkout's `flake.lock` is older than the running system, so a `--no-update` run in between builds the older lock. A failed commit (no signing key in the agent, a hook) switches back, deletes the empty branch and leaves the bumps in the tree, exactly as before. Under `--dry` and `--no-commit` nothing is committed. `rebuild-classic.nu` and `rebuild-classic.sh` do not carry this; both are deprecated.
 
 The sync that precedes the commit never refuses over uncommitted edits either (`git_sync::Clash`, 2026-10-24). A pin bump left in the tree that also arrived on `main` aborted the run with `DIRTY_TREE`, and the cure was `git checkout` plus `--branch`. Edits to such files are stashed, the checkout moved, and the stash reapplied (an edit identical to the incoming file reapplies as a no-op; a refused move pops the stash back); a clashing reapply leaves the incoming version built and the edits in `git stash`, named in the report. A local branch with no upstream whose commits are all in the default branch returns to it; one with commits of its own is still refused (`NO_UPSTREAM`).
+
+### 54. Stripping OpenCode Desktop's Bun CLI breaks its embedded application
+
+OpenCode Desktop started with `Desktop IPC handler failed`, caused by
+`Server process exited with code 1` and `Script not found "serve"`. Its installed
+`resources/opencode-cli --version` reported Bun's version instead of OpenCode's
+version from `pkgs/opencode-desktop/package.nix`. The default strip phase removes the trailer Bun needs to locate
+its embedded application; autoPatchelf still succeeds. Keep `dontStrip = true` in
+`pkgs/opencode-desktop/package.nix`. With stripping disabled, the repackaged CLI
+reports the expected OpenCode version and `serve --help` succeeds. The package's
+install check runs both commands after fixup with temporary XDG directories.
+
+Desktop copies the CLI into its user-data directory at
+`cli/<version>-<arch>/opencode-cli` and reuses any existing executable without
+comparing it with the bundled binary. A rebuild of the same version therefore
+does not repair an already cached stripped copy. With Desktop closed, back up
+that executable and replace it with the rebuilt `resources/opencode-cli`, then
+restart Desktop. Leave settings, sessions, credentials and databases in place.

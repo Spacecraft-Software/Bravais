@@ -807,8 +807,9 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 - [✓] `cursor-agent update` failed `[unauthenticated]`; fixed by `cursor-agent login`
 - [✓] OpenCode CLI moved to 2.x (`opencode upgrade --major`, 2026-10-13; npm
       `@opencode/cli`, not `opencode-ai`); `opencode upgrade` tracks 2.x from here
-- [ ] OpenCode Desktop has no 2.x build yet (no npm package, the update API
-      has no desktop artifact); `pkgs/opencode-desktop` stays on 1.x until one ships
+- [✓] OpenCode Desktop 2.x is packaged; preserve its Bun CLI with `dontStrip`
+      and verify its version and `serve --help` after fixup (constraint #54).
+      A previously cached stripped CLI needs replacement even after a same-version rebuild
 - [✓] Removed the broken `kimi-cli` uv tool (superseded by Kimi Code from npm)
 
 ## Known Issues & Notes
