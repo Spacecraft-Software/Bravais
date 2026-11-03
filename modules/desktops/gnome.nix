@@ -19,44 +19,68 @@
     # services.displayManager.gdm.wayland removed in GNOME 50 (always Wayland)
     services.desktopManager.gnome.enable = true;
 
+    # Install GSConnect below. Use the shared module for its TCP/UDP ports
+    # (1714-1764), leaving Plasma's explicit native package choice intact.
+    # On GNOME-only hosts the module adds no competing daemon package.
+    programs.kdeconnect = {
+      enable = true;
+      package = lib.mkDefault null;
+    };
+
+    # Plasma's daemon normally autostarts in every desktop. Keep its upstream
+    # entry for the other sessions, but let GSConnect own phone connections in
+    # GNOME; the two implementations must not run there together.
+    environment.etc = lib.mkIf config.steelbore.desktops.plasma.enable {
+      "xdg/autostart/org.kde.kdeconnect.daemon.desktop".source =
+        pkgs.runCommand "kdeconnect-autostart.desktop" { nativeBuildInputs = [ pkgs.desktop-file-utils ]; }
+          ''
+            cp ${pkgs.kdePackages.kdeconnect-kde}/etc/xdg/autostart/org.kde.kdeconnect.daemon.desktop "$out"
+            chmod u+w "$out"
+            desktop-file-edit --add-not-show-in=GNOME "$out"
+          '';
+    };
+
     # GNOME packages
-    environment.systemPackages = with pkgs; [
-      # Core GNOME utilities
-      gnome-tweaks
-      dconf-editor
+    environment.systemPackages =
+      with pkgs;
+      [
+        # Core GNOME utilities
+        gnome-tweaks
+        dconf-editor
 
-      # Extension management
-      gnome-extension-manager
-      gnome-browser-connector
+        # Extension management
+        gnome-extension-manager
+        gnome-browser-connector
 
-      # Extensions
-      gnomeExtensions.caffeine
-      gnomeExtensions.just-perfection
-      gnomeExtensions.wayland-or-x11
-      gnomeExtensions.toggler
-      gnomeExtensions.vim-alt-tab
-      gnomeExtensions.open-bar
-      gnomeExtensions.tweaks-in-system-menu
-      gnomeExtensions.launcher
-      gnomeExtensions.window-title-is-back
-      gnomeExtensions.yakuake
-      gnomeExtensions.forge
-      # Tiling: forge is THE tiling extension — the three below overlap and
-      # conflict when enabled together (elegance plan 4.3). Re-enable one by
-      # uncommenting, but disable forge first.
-      # gnomeExtensions.tiling-shell   # DISABLED — overlaps forge
-      # gnomeExtensions.smart-tiling   # DISABLED — overlaps forge
-      # gnomeExtensions.ollama-indicator   # DISABLED — re-enable by uncommenting (Ollama status indicator)
-      # gnomeExtensions.simple-tiling   # DISABLED — overlaps forge
-      gnomeExtensions.warp-toggle
-      gnomeExtensions.resource-monitor
-      # Super alone opens the app grid; enabled from users/mj/gnome.nix.
-      gnomeExtensions.start-overlay-in-application-view
-    ]
-    # window-gestures only ever shipped for GNOME 45-48; nixpkgs-unstable now
-    # carries 49-51 extensions only, so the attribute is gone there. Include it
-    # wherever it still exists (stable) and skip it where it does not.
-    ++ lib.optional (pkgs.gnomeExtensions ? window-gestures) pkgs.gnomeExtensions.window-gestures;
+        # Extensions
+        gnomeExtensions.gsconnect
+        gnomeExtensions.caffeine
+        gnomeExtensions.just-perfection
+        gnomeExtensions.wayland-or-x11
+        gnomeExtensions.toggler
+        gnomeExtensions.vim-alt-tab
+        gnomeExtensions.open-bar
+        gnomeExtensions.tweaks-in-system-menu
+        gnomeExtensions.launcher
+        gnomeExtensions.window-title-is-back
+        gnomeExtensions.yakuake
+        gnomeExtensions.forge
+        # Tiling: forge is THE tiling extension — the three below overlap and
+        # conflict when enabled together (elegance plan 4.3). Re-enable one by
+        # uncommenting, but disable forge first.
+        # gnomeExtensions.tiling-shell   # DISABLED — overlaps forge
+        # gnomeExtensions.smart-tiling   # DISABLED — overlaps forge
+        # gnomeExtensions.ollama-indicator   # DISABLED — re-enable by uncommenting (Ollama status indicator)
+        # gnomeExtensions.simple-tiling   # DISABLED — overlaps forge
+        gnomeExtensions.warp-toggle
+        gnomeExtensions.resource-monitor
+        # Super alone opens the app grid; enabled from users/mj/gnome.nix.
+        gnomeExtensions.start-overlay-in-application-view
+      ]
+      # window-gestures only ever shipped for GNOME 45-48; nixpkgs-unstable now
+      # carries 49-51 extensions only, so the attribute is gone there. Include it
+      # wherever it still exists (stable) and skip it where it does not.
+      ++ lib.optional (pkgs.gnomeExtensions ? window-gestures) pkgs.gnomeExtensions.window-gestures;
 
     # Portal routing — NixOS's services.desktopManager.gnome.enable already
     # registers xdg-desktop-portal-gnome + -gtk in xdg.portal.extraPortals.

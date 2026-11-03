@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **GSConnect is installed for GNOME**, with the KDE Connect protocol's TCP/UDP
+  ports open for phone pairing. Enable it in Extension Manager. Plasma's native
+  KDE Connect daemon is excluded from GNOME autostart so it does not compete
+  with GSConnect; its behavior in the other sessions is preserved.
+
 - **The top-left hot corner opens the workspace overview under Margo and
   LeftWM**, as it already did under GNOME, Plasma and Niri. Margo uses its own
   overview; LeftWM, which has none, gets skippy-xd's paging view, started with

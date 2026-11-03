@@ -179,10 +179,9 @@ in
       # ~/.var/app/ where Connected cannot read it. Keep the host daemon and
       # drop this entry -- never the reverse.
       #
-      # Neither pairs with a phone until 1714-1764/tcp+udp are open, and
-      # nothing in this tree opens them today: kdeconnect-kde is in
-      # systemPackages as a bare package, and `programs.kdeconnect.enable`
-      # (which is what carries the firewall rules) is not set anywhere.
+      # The GNOME module installs GSConnect and enables `programs.kdeconnect`, opening
+      # 1714-1764/tcp+udp for the protocol across sessions. Without that module,
+      # this bare package pair still needs those ports opened separately.
       {
         appId = "io.github.nwxnw.cosmic-ext-connected";
         origin = "cosmic";
