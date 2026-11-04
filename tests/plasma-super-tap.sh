@@ -1,6 +1,6 @@
 #!/bin/sh
-# SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 # Exercise the actual mapping only on a private Xvfb display, never host input.
 set -eu
 daemon=$1
@@ -68,12 +68,14 @@ xdotool key Super_R+d
 sleep 0.2
 test "$(f19_count)" = 4
 # Neither a mouse chord nor an abandoned hold is a tap.
-xdotool keydown Super_L
-xdotool click 1
-xdotool keyup Super_L
-xdotool keydown Super_L
-sleep 0.6
-xdotool keyup Super_L
-sleep 0.2
-test "$(f19_count)" = 4
+for super in Super_L Super_R; do
+    xdotool keydown "$super"
+    xdotool click 1
+    xdotool keyup "$super"
+    xdotool keydown "$super"
+    sleep 0.6
+    xdotool keyup "$super"
+    sleep 0.2
+    test "$(f19_count)" = 4
+done
 printf '%s\n' 'Lone Super taps, modifier chords, mouse chords and hold timeout passed'
