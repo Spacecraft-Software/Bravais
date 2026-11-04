@@ -146,24 +146,12 @@ let
   # Pre-create the per-PID xauth file so xauth doesn't print
   # "file ... does not exist" before startx generates it. bash's $$ is
   # preserved across exec, so the touched file matches startx's PID.
-  #
-  # A lone Meta tap opening the launcher is a KWin modifier-only shortcut,
-  # and kwin_x11 6.6 has no modifier-only support at all (libkwin-x11 carries
-  # no ModifierOnlyShortcuts code; only kwin_wayland does), so on X11 the tap
-  # did nothing. xcape restores it: a Super tap with no other key emits
-  # Alt+F1, which Plasma binds to "Activate Application Launcher" alongside
-  # Meta. Super held as a modifier is untouched. X11-only by construction —
-  # it runs inside this X server's client and exits with it — so the Wayland
-  # session, where KWin already handles the tap, never gets a second toggle.
-  plasma-x11-client = pkgs.writeShellScript "plasma-x11-client" ''
-    ${pkgs.xcape}/bin/xcape -e 'Super_L=Alt_L|F1;Super_R=Alt_L|F1'
-    exec ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-x11 "$@"
-  '';
-
+  # Escape Pod's Plasma-only user unit handles a lone Super tap; the session
+  # client no longer starts xcape beside it (modules/desktops/plasma.nix).
   start-plasma-x11 = pkgs.writeShellScriptBin "start-plasma-x11" ''
     export PATH="${startxPath}:$PATH"
     touch "$HOME/.serverauth.$$"
-    exec ${xinitPkg}/bin/startx ${plasma-x11-client} "$@"
+    exec ${xinitPkg}/bin/startx ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-x11 "$@"
   '';
 
   # LeftWM session — split into two scripts to avoid shell-quoting hell.

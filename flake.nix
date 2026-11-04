@@ -766,6 +766,38 @@
             touch $out
           '';
 
+        # X11 menu taps run against a private display; never grab host keyboards.
+        plasma-super-tap =
+          let
+            checkPkgs = nixpkgs.legacyPackages.${system};
+            machine = self.nixosConfigurations.steelbore-thinkpad.config;
+            service = machine.systemd.user.services.escapepod-plasma-super-tap;
+            rendered = machine.environment.etc."escapepod/plasma-super-tap.toml".source;
+          in
+          assert service.wantedBy == [ "plasma-core.target" ];
+          assert service.partOf == [ "plasma-core.target" ];
+          assert service.unitConfig.ConditionEnvironment == "XDG_SESSION_TYPE=x11";
+          assert service.serviceConfig.RestartPreventExitStatus == "6";
+          checkPkgs.runCommand "plasma-super-tap-validate"
+            {
+              nativeBuildInputs = [
+                checkPkgs.coreutils
+                checkPkgs.ripgrep
+                checkPkgs.xdotool
+                (checkPkgs.xev or checkPkgs.xorg.xev)
+                (checkPkgs.xorg-server or checkPkgs.xorg.xorgserver)
+              ];
+            }
+            ''
+              ${
+                escapepod.packages.${system}.default
+              }/bin/escapepod config check --config ${rendered} --json > /dev/null
+              ${checkPkgs.runtimeShell} ${./tests/plasma-super-tap.sh} ${
+                escapepod.packages.${system}.default
+              }/bin/escapepod ${rendered}
+              touch $out
+            '';
+
         # REUSE / SPDX compliance (elegance plan 4.6, Standard §4.3). The
         # flake source copy contains exactly the tracked files, so linting it
         # matches linting the checkout.

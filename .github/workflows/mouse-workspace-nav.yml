@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
-name: Mouse workspace navigation
+name: Desktop input configuration
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   mouse-workspace-nav:
-    name: Mouse configuration and session scope
+    name: Mouse and Super-tap configuration and session scope
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,4 +27,7 @@ jobs:
             accept-flake-config = true
 
       - name: Validate generated configuration and session scope
-        run: nix build --no-link -L '.#checks.x86_64-linux.mouse-workspace-nav'
+        run: >-
+          nix build --no-link -L
+          '.#checks.x86_64-linux.mouse-workspace-nav'
+          '.#checks.x86_64-linux.plasma-super-tap'
