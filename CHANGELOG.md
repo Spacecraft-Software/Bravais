@@ -259,6 +259,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refresh the Fairing input to use the current Steelbore emblem and full
+  wordmark in the splash, retaining palette-role colouring and compact-logo
+  support. The input also replaces its yanked transitive executor release.
+
 - **Escape Pod replaces xremap for mouse side-button workspace navigation.**
   The pinned first-party package uses explicit mouse interface names, leaving
   keyboards and the TrackPoint ungrabbed. Back still goes right and forward

@@ -89,11 +89,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793107671,
-        "narHash": "sha256-i7mQbOm+jD3m2B5NK2z5IEEu2Xvo1rHmebuI7IlzcW4=",
+        "lastModified": 1793789236,
+        "narHash": "sha256-Hsqf9IzFXXCD/edAWo57dLP6rTVo89Qor8ApRndYiuw=",
         "ref": "main",
-        "rev": "7794585e0602ed260aecdee9a6ee09780b400926",
-        "revCount": 15,
+        "rev": "c5352e61a61c2799a1d89e9fb17c862fda6aeab7",
+        "revCount": 16,
         "type": "git",
         "url": "https://github.com/Spacecraft-Software/Fairing"
       },
