@@ -198,6 +198,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Plasma X11 opens Kickoff on a lone Super tap through Escape Pod, replacing
+  xcape. Left/right Super combinations and long holds stay ordinary input;
+  the Wayland session keeps KWin's native handling.
+
 - **Preflight asks for privilege authorization at startup**, before SSH, git sync
   or updates can leave it waiting for an unattended password or fingerprint
   prompt. All three rebuild implementations select sudo, doas or run0 through
