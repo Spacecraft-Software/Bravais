@@ -43,6 +43,8 @@ Dry builds and read-only Preflight commands do not authenticate. Refusal stops
 Preflight with exit 4 before maintenance starts. Credential caching and expiry
 remain the helper's system policy; there is no background refresh. A later step
 can prompt again after expiry, or when the helper's policy does not cache access.
+The doas/polkit policy must permit the startup `true` probe. doas/run0 suspend
+the TUI for each entire privileged command, including a cached rebuild.
 
 ## Architecture
 

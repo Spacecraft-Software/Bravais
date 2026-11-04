@@ -42,6 +42,8 @@ impl Privilege {
         }
         // doas has no portable validate-only flag; older run0 releases do
         // not have one either. A privileged no-op uses their normal policy.
+        // Their policy must allow `true` as well as the maintenance commands;
+        // permission for nixos-rebuild alone cannot authorize this probe.
         cmd.arg(if self == Self::Sudo { "-v" } else { "true" });
         cmd
     }

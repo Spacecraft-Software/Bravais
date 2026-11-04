@@ -205,6 +205,8 @@ struct Cli {
     mcp_deploy: bool,
 
     /// Full-screen TUI mode with task checklist, completion ticks, progress bar and live output
+    ///
+    /// doas/run0 suspend the TUI for each entire privileged command, including the rebuild.
     #[arg(long, short = 'E', conflicts_with_all = ["json", "accessible"])]
     tui: bool,
 
@@ -579,7 +581,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
                     "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually",
-                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends cleanly for interactive sudo/SSH prompts",
+                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends for interactive sudo/SSH prompts and for the full duration of doas/run0 privileged commands, including the rebuild",
                     "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
                     "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
                     "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization"

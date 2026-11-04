@@ -172,6 +172,19 @@ impl Runner {
             .map_or_else(|| Command::new(program), |helper| helper.command(program))
     }
 
+    fn rebuild_command(&self, dry: bool, trace: bool) -> Command {
+        let mut cmd = self.privileged("nixos-rebuild");
+        cmd.arg(if dry { "dry-build" } else { "switch" })
+            .args(["--flake", &format!(".#{HOST}")])
+            // nixos-rebuild-ng rejects nix's --no-warn-dirty passthrough.
+            .args(["--option", "warn-dirty", "false"])
+            .current_dir(FLAKE_DIR);
+        if trace {
+            cmd.args(["--show-trace", "--verbose"]);
+        }
+        cmd
+    }
+
     fn record(&mut self, name: &'static str, outcome: Outcome, detail: Option<String>) {
         crate::ui::finish_step(name, outcome, detail.as_deref());
         let level = match outcome {
@@ -412,18 +425,10 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
     let reclaimed = maybe_reclaim(&mut r, &before, opts);
 
     // --- the switch ------------------------------------------------------
-    let mut cmd = r.privileged("nixos-rebuild");
-    cmd.arg(if opts.dry { "dry-build" } else { "switch" })
-        .args(["--flake", &format!(".#{HOST}")])
-        // Silences "Git tree is dirty" on the local flake eval. The forwarded
-        // `--option` form is used because nixos-rebuild-ng rejects nix's
-        // `--no-warn-dirty` passthrough.
-        .args(["--option", "warn-dirty", "false"])
-        .current_dir(FLAKE_DIR);
-    if opts.trace {
-        cmd.args(["--show-trace", "--verbose"]);
-    }
-    let switched = r.run("nixos-rebuild", &mut cmd);
+    let switched = r.run(
+        "nixos-rebuild",
+        &mut r.rebuild_command(opts.dry, opts.trace),
+    );
 
     postflight(&mut r, opts, switched);
 
@@ -1227,5 +1232,74 @@ fn flatpak_finish(r: &mut Runner, opts: Options) {
             Outcome::Failed,
             Some(format!("lost track of the update — see {shown}")),
         ),
+    }
+}
+
+#[cfg(test)]
+mod auth_tests {
+    use super::*;
+    use crate::output::Format;
+
+    fn runner(privilege: Option<Privilege>) -> Runner {
+        Runner {
+            out: Out {
+                format: Format::Json,
+                color: false,
+                floor: Level::Error,
+                live: false,
+                ascii: true,
+                attended: false,
+                tui: false,
+                accessible: false,
+            },
+            privilege,
+            notify: false,
+            steps: Vec::new(),
+            flatpak: None,
+            bumps: deps_commit::Bumps::default(),
+        }
+    }
+
+    #[test]
+    fn privileged_steps_use_the_selected_helper() {
+        for helper in [Privilege::Sudo, Privilege::Doas, Privilege::Run0] {
+            let r = runner(Some(helper));
+            for program in [
+                "nix-collect-garbage",
+                "journalctl",
+                "nixos-rebuild",
+                "rsync",
+            ] {
+                let cmd = r.privileged(program);
+                assert_eq!(cmd.get_program(), helper.name());
+                assert_eq!(cmd.get_args().collect::<Vec<_>>(), [program]);
+            }
+            let rebuild = r.rebuild_command(false, false);
+            assert_eq!(rebuild.get_program(), helper.name());
+            assert_eq!(
+                rebuild.get_args().take(2).collect::<Vec<_>>(),
+                ["nixos-rebuild", "switch"]
+            );
+        }
+    }
+
+    #[test]
+    fn dry_build_arguments_are_unprivileged_without_requiring_a_checkout() {
+        let cmd = runner(None).rebuild_command(true, true);
+        assert_eq!(cmd.get_program(), "nixos-rebuild");
+        assert_eq!(
+            cmd.get_args().collect::<Vec<_>>(),
+            [
+                "dry-build",
+                "--flake",
+                &format!(".#{HOST}"),
+                "--option",
+                "warn-dirty",
+                "false",
+                "--show-trace",
+                "--verbose"
+            ]
+        );
+        assert_eq!(cmd.get_current_dir(), Some(Path::new(FLAKE_DIR)));
     }
 }
