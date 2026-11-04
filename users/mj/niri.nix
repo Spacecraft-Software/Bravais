@@ -212,20 +212,20 @@ in
           Mod+Shift+U hotkey-overlay-title="Unlock Keyring" { spawn "steelbore-keyring-unlock"; }
 
           // Applications
-          Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+          Mod+Return hotkey-overlay-title="Open a Terminal: WezTerm" { spawn "wezterm" "start"; }
           Mod+D hotkey-overlay-title="Run an Application: anyrun" { spawn "anyrun"; }
           Mod+Shift+D hotkey-overlay-title="Application Menu: rofi" { spawn "rofi" "-show" "drun"; }
 
           // Bluetooth managers (BlueZ clients; stack enabled in
           // modules/hardware/bluetooth.nix). The XF86Bluetooth key below
           // only toggles the radio (rfkill) — these connect/pair devices.
-          Mod+B hotkey-overlay-title="Bluetooth Manager (TUI): bluetui" { spawn "alacritty" "-e" "bluetui"; }
+          Mod+B hotkey-overlay-title="Bluetooth Manager (TUI): bluetui" { spawn "wezterm" "start" "--" "bluetui"; }
           Mod+Shift+B hotkey-overlay-title="Bluetooth Manager (GUI): overskride" { spawn "overskride"; }
 
           // Audio mixers / output switchers (PipeWire; Niri has no audio
           // applet). The XF86Audio* keys above only adjust volume/mute via
           // swayosd — these switch the output device and per-app routing.
-          Mod+A hotkey-overlay-title="Audio Mixer (TUI): wiremix" { spawn "alacritty" "-e" "wiremix"; }
+          Mod+A hotkey-overlay-title="Audio Mixer (TUI): wiremix" { spawn "wezterm" "start" "--" "wiremix"; }
           Mod+Shift+A hotkey-overlay-title="Audio Mixer (GUI): pavucontrol" { spawn "pavucontrol"; }
 
           // Window management

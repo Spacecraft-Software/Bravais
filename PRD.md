@@ -995,7 +995,7 @@ The greeter runs as user `greeter`. Keys: F1 settings, F2 session picker, F5 lin
 
 ### 8.2 Shell Sessions
 
-Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cosmic-comp alacritty -e <shell>`**, cosmic-comp's kiosk mode (run one program, exit with its status). Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cosmic-comp supplies the compositor (Rust, replacing the C `cage`) and Alacritty supplies the PTY (Alacritty rather than Rio, which hangs when closed by its compositor, constraint #11). cosmic-comp reads the user's COSMIC config, so COSMIC's shortcuts stay live inside these sessions.
+Shell sessions are built by a `mkShellSession` helper: a `pkgs.runCommand` that writes a `share/wayland-sessions/<name>.desktop` and sets `passthru.providedSessions`. Each entry's `Exec` wraps the shell as **`cosmic-comp wezterm start -- <shell>`**, cosmic-comp's kiosk mode (run one program, exit with its status). Without that wrapper, greetd execs a bare shell with no TTY and no compositor: brush blocks on stdin, ion fails immediately, and nushell silently swallows its own startup error. cosmic-comp supplies the compositor (Rust, replacing the C `cage`) and WezTerm supplies the PTY; Rio remains unsuitable because it hangs when closed by its compositor (constraint #11). cosmic-comp reads the user's COSMIC config, so COSMIC's shortcuts stay live inside these sessions.
 
 | Session Name | Session id  | Binary  | Comment              |
 |--------------|-------------|---------|----------------------|
@@ -1197,7 +1197,7 @@ Key bindings (Mod = Super; primary binds carry `hotkey-overlay-title`, aliases a
 
 - **Session:** `Mod+Shift+E` quit, `Mod+L` lock (gtklock), `Mod+Shift+C` Caffeine (pauses swayidle), `Mod+Shift+Slash` hotkey overlay, `Mod+Shift+U` keyring unlock (rescue — `pam_gnome_keyring` normally unlocks at login)
 - **Idle:** swayidle locks at 5 min, powers off monitors at 6 min, locks before suspend
-- **Applications:** `Mod+Return` alacritty, `Mod+D` anyrun; `Mod+B`/`Mod+Shift+B` bluetui/overskride, `Mod+A`/`Mod+Shift+A` wiremix/pavucontrol
+- **Applications:** `Mod+Return` WezTerm, `Mod+D` anyrun; `Mod+B`/`Mod+Shift+B` bluetui/overskride, `Mod+A`/`Mod+Shift+A` wiremix/pavucontrol
 - **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+Shift+F` maximize column, `Mod+V` / `Mod+Shift+V` floating, `Mod+O` overview
 - **Focus / move:** `Mod+Arrows` or `Mod+Alt+H/J/K/L` focus; `Mod+Ctrl+Arrows` and `Mod+Shift+H/J/K/L` move (plain `Mod+L` is gtklock); `Mod+BracketLeft/Right` consume/expel
 - **Workspaces:** `Mod+1-9` focus, `Mod+Shift+1-9` move column, `Mod+Page_Down/Up` (+`Ctrl` to move), `Mod+Tab` previous
@@ -1223,14 +1223,14 @@ leftwm, leftwm-theme, leftwm-config, rlaunch, rofi, dmenu, eww, picom, dunst, xs
 
 **LeftWM Configuration** (`~/.config/leftwm/config.ron`, written by Home Manager from `modules/desktops/leftwm.nix`):
 
-- Modkey and mousekey Mod4 (Super); tags 1-9; layout mode Tag, insert Bottom; sloppy focus; scratchpad "Terminal" (alacritty)
+- Modkey and mousekey Mod4 (Super); tags 1-9; layout mode Tag, insert Bottom; sloppy focus; scratchpad "Terminal" (WezTerm)
 - `layouts` is **intentionally omitted**: lefthk-core and leftwm-core expect incompatible schemas, and a lefthk parse failure silently falls back to a default keymap that turns every Mod-only bind into a no-op.
 
 Key bindings:
 
 - **Session:** `Mod+Shift+E` kill session, `Mod+L` or `Ctrl+Alt+L` lock (`loginctl lock-session` → xss-lock → i3lock), `Mod+Shift+C` Caffeine, `Mod+Shift+U` keyring unlock (rescue)
 - **Idle:** xss-lock (started by `leftwm-session-inner`) runs i3lock when the X screensaver fires at 300 s and before sleep; DPMS powers the panel off at 360 s — the same timings as Niri's swayidle. gtklock cannot run under X (CONSTRAINTS.md #45).
-- **Applications:** `Mod+Return` alacritty (rio renders blank under startx-spawned Xorg), `Mod+D` rlaunch, `Mod+Shift+D` rofi
+- **Applications:** `Mod+Return` WezTerm, `Mod+D` rlaunch, `Mod+Shift+D` rofi. Rio remains unsuitable because it renders blank under startx-spawned Xorg.
 - **Windows:** `Mod+Q` close, `Mod+F` fullscreen, `Mod+V` float
 - **Focus / move:** `Mod+K/J` or `Mod+Up/Down`; `Mod+Shift+K/J`. Up/down only: lefthk-core lacks the Left/Right commands and one panics its parser, disabling every bind; sloppy focus and tile-drag cover left/right.
 - **Layouts / workspaces:** `Mod+Space` keyboard layout (`xkb-switch -n`; Ctrl+Space too), `Mod+Ctrl+Space` / `Mod+Ctrl+Shift+Space` cycle tiling layouts; `Mod+1-9` goto, `Mod+Shift+1-9` move; `Mod+Ctrl+Left/Right` previous/next tag (the side-button combo, §9.1a)
@@ -1275,7 +1275,7 @@ Enabled by `steelbore.packages.terminals.enable` (set in `hosts/common.nix`). Ev
 
 **Single source:** the terminal theme exists once, in `lib/terminal-theme.nix` — one data record (`theme`: the 16-colour ANSI table from `lib/palette.nix`, background/foreground, cursor and selection roles, font, opacity, scrollback) plus one small emitter per config format (`tt.foot`, `tt.ghostty`, `tt.weztermLua`, `tt.rioToml`, `tt.alacrittyToml`, `tt.alacrittyColors`, `tt.konsoleColorscheme`/`tt.konsoleColorschemePlain`, `tt.konsoleProfile`, `tt.xfce`, `tt.xresources`/`tt.xresourcesProps`, `tt.warpYaml`, `tt.cosmicTermScheme`, and `tt.ansi16`, the flat 16-entry list Ptyxis uses). Both `modules/packages/terminals.nix` and `users/mj/terminals.nix` import it, so a palette change is a one-file edit that reaches every terminal in lockstep. Font and opacity changes are too, except for literals in `users/mj/terminals.nix` that bypass the `theme` record and must be edited by hand: the Home Manager Alacritty font family and opacity, the Ptyxis font and opacity (dconf), and the GNOME Console font. All per-format colour conversion (bare hex, decimal R,G,B) happens inside the emitters. The emitters were migrated to reproduce the earlier hand-written configs byte-for-byte, so their formatting quirks are deliberate.
 
-**Default terminal:** Alacritty (`Mod+Return`) under both Niri and LeftWM. LeftWM requires it: Rio's wgpu backend renders blank under LeftWM's startx-spawned Xorg (rationale in `modules/desktops/leftwm.nix`). Rio stays installed and themed.
+**Default terminal:** WezTerm (`Mod+Return`) across GNOME, COSMIC, Plasma, Niri, LeftWM and Margo. LeftWM uses WezTerm's X11 backend; Rio stays installed and themed but renders blank under LeftWM's startx-spawned Xorg.
 
 ### 10.1 Terminal Package List
 
@@ -1283,8 +1283,8 @@ Taken from `environment.systemPackages` in `modules/packages/terminals.nix`, plu
 
 | Terminal       | Package                     | Language | Category   |
 |----------------|-----------------------------|----------|------------|
-| Alacritty      | `alacritty`                 | Rust     | Primary (default) |
-| WezTerm        | `wezterm`                   | Rust     | Primary    |
+| Alacritty      | `alacritty`                 | Rust     | Primary |
+| WezTerm        | `wezterm`                   | Rust     | Primary (default) |
 | Rio            | `rio`                       | Rust     | Primary    |
 | Ghostty        | `ghostty`                   | Zig      | Primary    |
 | Ptyxis         | `ptyxis`                    | C (VTE)  | GNOME — host install so distrobox/container integration works out of the box |
@@ -1574,7 +1574,7 @@ Enabled by `steelbore.packages.multimedia.enable`.
 - **Audio Players (Rust):** amberol, termusic, ncspot, psst, shortwave
 - **Image Viewers (Rust):** oculante (the active `imageViewer` role — §2.6), loupe, emulsion, viu (CLI)
 - **Audio Recognition:** mousai (Rust)
-- **Audio Mixers / Output Switchers:** wiremix (Rust TUI; Niri `Mod+A`, launched in Alacritty), pavucontrol (GTK GUI; Niri `Mod+Shift+A`) — PipeWire sink/stream routing, since Niri has no audio applet. CLI equivalents `wpctl`/`pactl` ship with the PipeWire stack.
+- **Audio Mixers / Output Switchers:** wiremix (Rust TUI; Niri `Mod+A`, launched in WezTerm), pavucontrol (GTK GUI; Niri `Mod+Shift+A`) — PipeWire sink/stream routing, since Niri has no audio applet. CLI equivalents `wpctl`/`pactl` ship with the PipeWire stack.
 - **Processing:** rav1e (Rust), gifski (Rust), oxipng (Rust), video-trimmer (Rust), ffmpeg, imagemagick (C), exiftool (Perl)
 - **Downloaders:** yt-dlp
 
@@ -2118,7 +2118,7 @@ Notes:
 
 - **Niri and LeftWM share a stack where it is cross-platform** — eww and dunst — and use Wayland-only tools (anyrun, gtklock, swayidle, swayosd, xwayland-satellite) where the X11 alternatives do not apply (`modules/desktops/niri.nix`). Niri starts the bar and notifier from `spawn-at-startup` in `users/mj/niri.nix` (`eww open bar`, `dunst`); LeftWM starts picom, dunst, the eww daemon and the bar (from `~/.config/eww-leftwm`) in its theme's `up` script (`modules/desktops/leftwm.nix`), which runs once LeftWM is managing the display. The session wrapper that launches LeftWM is `leftwm-session-inner` in `modules/login/default.nix`.
 - **Two eww configs, kept in step:** Niri's lives in `users/mj/eww.nix` (`~/.config/eww`), LeftWM's under `~/.config/eww-leftwm` in `modules/desktops/leftwm.nix` so the two never collide. Both draw their hardware indicators from `steelbore-beacon` (CONSTRAINTS.md #25) and obey the `eww.scss` comment rule (CONSTRAINTS.md #26).
-- **Alacritty is the default terminal** (`Mod+Return`) under both Niri and LeftWM; LeftWM requires it because rio renders blank under startx-spawned Xorg (rationale in `modules/desktops/leftwm.nix`).
+- **WezTerm is the default terminal** (`Mod+Return`) across every Bravais desktop; LeftWM uses its X11 backend, while Rio renders blank under startx-spawned Xorg.
 - COSMIC, Plasma and GNOME keep their upstream shell components (panel, launcher, notifications, lock). Bravais adds explicit per-DE portal routing plus a package set per module: GNOME's extension set (incl. forge tiling) in `modules/desktops/gnome.nix`, and Plasma's krohnkite tiling, KWallet tools and ksshaskpass in `modules/desktops/plasma.nix`.
 
 ---

@@ -57,8 +57,8 @@ in
     };
 
     ${lib.removePrefix "/" (lib.removeSuffix "/" terminalPath)} = {
-      name = "Terminal (Alacritty)";
-      command = "alacritty";
+      name = "Terminal (WezTerm)";
+      command = "wezterm start";
       binding = "<Super>Return";
     };
 
@@ -82,7 +82,7 @@ in
     # O-tiling (installed by hand from extensions.gnome.org, not by this
     # flake) ships "enter tiling mode" on Super+Return and Super+KP_Enter and
     # "toggle floating" on Super+F. Its grab wins over gnome-settings-daemon's,
-    # so Super+Return never reached Alacritty and Super+F never went
+    # so Super+Return never reached WezTerm and Super+F never went
     # fullscreen. Both are left with no key; its other keys stay. Writing the
     # dconf path is harmless while the extension is absent.
     "org/gnome/shell/extensions/o-tiling" = {
