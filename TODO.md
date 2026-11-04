@@ -754,6 +754,7 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
 
 ## Rebuild progress display (2026-10-19)
 
+- [✓] Authenticate at startup before SSH/sync/updates, consistently select sudo/doas/run0 in all three rebuild implementations, and retain system credential-expiry policy without a keep-alive
 - [✓] `preflight` follows the detached Flatpak update with a live bar parsed
       from its log (`pkgs/preflight/src/progress.rs`); `--detach-flatpak`
       returns at once; `preflight flatpak status|watch`

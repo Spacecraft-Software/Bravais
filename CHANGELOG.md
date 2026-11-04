@@ -198,6 +198,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Preflight asks for privilege authorization at startup**, before SSH, git sync
+  or updates can leave it waiting for an unattended password or fingerprint
+  prompt. All three rebuild implementations select sudo, doas or run0 through
+  `PREFLIGHT_PRIVILEGE_TOOL`, use that helper for privileged steps, and leave
+  credential lifetime to system policy. Dry builds run without escalation.
+
 - **The unstable configuration evaluates again.** The `window-gestures` GNOME
   extension only ever shipped for GNOME 45-48, so nixpkgs-unstable (which now
   carries 49-51 extensions only) no longer has the attribute. It is now

@@ -361,6 +361,10 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
     print "                 its progress bar (always the case off a terminal)"
     print "  --yes          skip the question about using `preflight` instead"
     print ""
+    print "Environment: PREFLIGHT_PRIVILEGE_TOOL=auto|sudo|doas|run0 (default: auto)"
+    print "Authenticate at startup; credential expiry follows system policy."
+    print "Dry builds skip authentication and escalation."
+    print ""
     print "Superseded by `preflight` (Rust), which takes all of the above and adds"
     print "--reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and --json. See: preflight --help"
     return
@@ -410,6 +414,30 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
     }
   }
   cd /spacecraft-software/bravais
+  # Use one helper throughout the run. Its cache and expiry remain governed
+  # by system policy; authentication happens before SSH, sync or updates.
+  let privilege_tool = if $dry { "" } else {
+    let requested = ($env.PREFLIGHT_PRIVILEGE_TOOL? | default "auto")
+    let candidates = match $requested {
+      "auto" => ["sudo" "doas" "run0"]
+      "sudo" | "doas" | "run0" => [$requested]
+      _ => { error make --unspanned { msg: "PREFLIGHT_PRIVILEGE_TOOL must be auto, sudo, doas, or run0" } }
+    }
+    let available = ($candidates | where {|tool| which $tool | where type == external | is-not-empty })
+    if ($available | is-empty) {
+      error make --unspanned { msg: "no available privilege helper; configure sudo, doas, or run0" }
+    }
+    $available | first
+  }
+  if not $dry {
+    let args = if $privilege_tool == "sudo" { ["-v"] } else { ["true"] }
+    let args = if (is-terminal --stdin) { $args } else {
+      $args | prepend (if $privilege_tool == "run0" { "--no-ask-password" } else { "-n" })
+    }
+    try { ^$privilege_tool ...$args } catch {
+      error make --unspanned { msg: $"($privilege_tool) startup authentication failed" }
+    }
+  }
   # The signing key goes in first: both the git fetch and the flake update
   # can need it.
   if (not $no_sync) or (not $no_update) { gitway-add ~/.ssh/id_ed25519 }
@@ -488,8 +516,8 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
     }
   }
   if (not $no_gc) and (not $dry) and (not $skills_only) {
-    try { sudo nix-collect-garbage --delete-older-than 7d }
-    try { sudo journalctl --vacuum-time=7d }
+    try { ^$privilege_tool nix-collect-garbage --delete-older-than 7d }
+    try { ^$privilege_tool journalctl --vacuum-time=7d }
   }
   if not $skills_only {
     # /nix, not / — on this host / is a 16 GiB tmpfs that is always
@@ -504,9 +532,9 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
   # forwarded --option form it does accept.
   let extra = (["--option" "warn-dirty" "false"] | append (if $trace { ["--show-trace" "--verbose"] } else { [] }))
   if $dry {
-    sudo nixos-rebuild dry-build --flake .#steelbore-thinkpad ...$extra
+    nixos-rebuild dry-build --flake .#steelbore-thinkpad ...$extra
   } else {
-    sudo nixos-rebuild switch --flake .#steelbore-thinkpad ...$extra
+    ^$privilege_tool nixos-rebuild switch --flake .#steelbore-thinkpad ...$extra
   }
   if (not $dry) and (not $skills_only) {
     # Lean true mirror: prune stale files, but skip VCS internals,
@@ -514,7 +542,7 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
     # Measured no-op cost on this tree (333 files, 8.2 MB) is ~0.05 s, so
     # this is deliberately NOT gated on a diff — the gate would cost more
     # to maintain than the copy it skips.
-    sudo rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
+    ^$privilege_tool rsync -av --delete --delete-excluded --exclude='.git/' --exclude='result' --exclude='.claude/' /spacecraft-software/bravais/ /etc/nixos/
     print $"(ansi green)── disk after ──(ansi reset)"; df -h /nix
 
     # MCP host configs are NOT part of this flake. They live in

@@ -87,10 +87,6 @@ fn detect_tool_agent() -> Option<String> {
 /// Canonical exit codes (CLI Standard §4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(i32)]
-#[expect(
-    dead_code,
-    reason = "Usage and Permission are part of the exit-code contract that `preflight schema` publishes; clap emits 2 itself, and 4 is reserved for a sudo refusal this tool does not yet distinguish"
-)]
 pub enum Exit {
     Success = 0,
     Failure = 1,

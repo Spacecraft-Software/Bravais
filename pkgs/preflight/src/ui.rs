@@ -532,9 +532,9 @@ pub fn run_logged(
                 }
             }
         } else {
-            // `gitway-add` is fast when the key is loaded and prompts on the
-            // terminal when it is not; run it with the display suspended so a
-            // passphrase or biometric prompt is never hidden behind the alt screen.
+            // Other privilege helpers and `gitway-add` use their own prompt
+            // mechanisms. Run the actual command with the display suspended;
+            // do not insert an extra authentication or timestamp refresh.
             return suspend_for(|| {
                 let _watch = crate::notify::AuthWatch::start(step, detail, notify_enabled);
                 match limit {

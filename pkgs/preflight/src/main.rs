@@ -26,6 +26,7 @@
 
 mod ai_tools;
 mod appimages;
+mod auth;
 mod deps_commit;
 mod disk;
 mod git_sync;
@@ -83,6 +84,10 @@ const ABOUT: &str = concat!(
         "  preflight flatpak watch       Follow a running Flatpak update with a progress bar\n",
         "  preflight appimage status     Which AppImages have updates (asks Gear Lever)\n",
         "  preflight disk report --json  Machine-readable free space and reclaimable bytes\n",
+        "\n",
+        "ENVIRONMENT:\n",
+        "  PREFLIGHT_PRIVILEGE_TOOL=auto|sudo|doas|run0 (default: auto)\n",
+        "  Authenticate at startup; credential expiry follows system policy.\n",
         "\n",
         "Maintained by Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>\n",
         env!("STEELBORE_OS_URL")
@@ -200,6 +205,8 @@ struct Cli {
     mcp_deploy: bool,
 
     /// Full-screen TUI mode with task checklist, completion ticks, progress bar and live output
+    ///
+    /// doas/run0 suspend the TUI for each entire privileged command, including the rebuild.
     #[arg(long, short = 'E', conflicts_with_all = ["json", "accessible"])]
     tui: bool,
 
@@ -574,7 +581,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
                     "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually",
-                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends cleanly for interactive sudo/SSH prompts",
+                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends for interactive sudo/SSH prompts and for the full duration of doas/run0 privileged commands, including the rebuild",
                     "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
                     "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
                     "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization"
@@ -592,11 +599,19 @@ fn cmd_schema(out: Out) -> i32 {
             "0": "success",
             "1": "general failure (the switch did not complete; or the git sync could not run: FETCH_FAILED, SWITCH_FAILED, NOT_A_CHECKOUT)",
             "2": "usage error",
-            "3": "resource not found (no watched mount exists; NO_SUCH_BRANCH for --branch)",
-            "4": "permission denied",
+            "3": "resource not found (no watched mount exists; NO_SUCH_BRANCH for --branch; NO_PRIVILEGE_TOOL when no selected helper is installed)",
+            "4": "permission denied (AUTHENTICATION_FAILED at startup)",
             "5": "conflict: the git sync refused to move the checkout (DIRTY_TREE, NO_UPSTREAM, LOCK_CONFLICT, NOT_FAST_FORWARD); nothing was built"
         },
         "safe_categories": disk::SAFE_CATEGORIES,
+        "privilege_authentication": {
+            "environment": auth::TOOL_ENV,
+            "values": ["auto", "sudo", "doas", "run0"],
+            "default": "auto",
+            "automatic_order": ["sudo", "doas", "run0"],
+            "timing": "before git sync, updates, and the TUI; skipped for dry builds and subcommands",
+            "expiry": "system policy; no background refresh"
+        },
         "low_water_bytes": disk::LOW_WATER_BYTES
     });
     let human = format!("{schema:#}\n");
@@ -623,9 +638,12 @@ fn cmd_describe(out: Out) -> i32 {
             "disk-reclaim",
             "tui-mode",
             "auth-notifications",
+            "startup-authentication",
             "accessible-mode",
         ],
         "external_tools": external_tools(),
+        "privilege_tools": ["sudo", "doas", "run0"],
+        "privilege_tool_environment": auth::TOOL_ENV,
         "ai_tools": ai_tools::TOOLS.iter().map(ai_tools::Tool::command_line).collect::<Vec<_>>(),
     });
     let human = format!("{manifest:#}\n");
@@ -639,6 +657,8 @@ fn external_tools() -> Vec<&'static str> {
         "nixos-rebuild",
         "nix",
         "sudo",
+        "doas",
+        "run0",
         "rsync",
         "vacuum",
         "gitway-add",
