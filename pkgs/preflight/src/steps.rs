@@ -28,6 +28,7 @@ use serde::Serialize;
 
 use crate::ai_tools;
 use crate::appimages;
+use crate::auth::Privilege;
 use crate::deps_commit;
 use crate::disk;
 use crate::git_sync;
@@ -137,6 +138,8 @@ pub struct Options<'a> {
 
 struct Runner {
     out: Out,
+    /// Selected once, before any updates. Dry builds run without escalation.
+    privilege: Option<Privilege>,
     notify: bool,
     steps: Vec<StepReport>,
     /// The detached Flatpak update, once started, and its log.
@@ -146,6 +149,29 @@ struct Runner {
 }
 
 impl Runner {
+    /// Authenticate while the real terminal is available, before costly work.
+    fn authenticate(&mut self) -> Result<(), git_sync::Refusal> {
+        use std::io::IsTerminal as _;
+        if let Some(helper) = self.privilege {
+            let mut cmd = helper.authenticate(std::io::stdin().is_terminal());
+            cmd.stdout(std::io::stderr());
+            if !self.run("authenticate", &mut cmd) {
+                return Err(git_sync::Refusal {
+                    code: "AUTHENTICATION_FAILED",
+                    exit: crate::output::Exit::Permission,
+                    message: format!("{} startup authentication failed", helper.name()),
+                    hint: format!("env {}={} preflight", crate::auth::TOOL_ENV, helper.name()),
+                });
+            }
+        }
+        Ok(())
+    }
+
+    fn privileged(&self, program: &str) -> Command {
+        self.privilege
+            .map_or_else(|| Command::new(program), |helper| helper.command(program))
+    }
+
     fn record(&mut self, name: &'static str, outcome: Outcome, detail: Option<String>) {
         crate::ui::finish_step(name, outcome, detail.as_deref());
         let level = match outcome {
@@ -261,13 +287,15 @@ impl Runner {
 }
 
 /// Identify commands that may block on a user's password or fingerprint scan
-/// (`sudo` and `gitway-add`) so `notify::AuthWatch` can alert the user if the
+/// (privilege helpers and `gitway-add`) so `notify::AuthWatch` can alert the user if the
 /// terminal is unattended.
 fn auth_label_for(step: &'static str, cmd: &Command) -> Option<(&'static str, String)> {
     let prog = cmd.get_program().to_str()?;
     let base = prog.rsplit('/').next().unwrap_or(prog);
     match base {
         "sudo" => Some(("sudo", format!("sudo ({step})"))),
+        "doas" => Some(("doas", format!("doas ({step})"))),
+        "run0" => Some(("run0", format!("run0 ({step})"))),
         "gitway-add" => Some(("gitway-add", "gitway-add (SSH signing key)".to_owned())),
         _ => None,
     }
@@ -283,19 +311,30 @@ const fn fmt_outcome(o: Outcome) -> &'static str {
 
 /// Execute the sequence. Returns the report and whether the switch itself
 /// succeeded -- a failed probe is worth reporting but is not a failed rebuild.
-/// `Err` means the checkout could not be brought up to date and nothing was
+/// `Err` means authorization failed or the checkout could not be updated; nothing was
 /// built: building a tree other than the one asked for is the failure the
 /// sync step exists to prevent, so it stops the run rather than warning.
 pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refusal> {
-    let _ui_session = crate::ui::start(out, opts);
+    let privilege = if opts.dry {
+        None
+    } else {
+        Some(crate::auth::resolve()?)
+    };
     let mut r = Runner {
         out,
-        notify: opts.notify && (out.attended || std::env::var_os("DBUS_SESSION_BUS_ADDRESS").is_some()),
+        privilege,
+        notify: opts.notify
+            && (out.attended || std::env::var_os("DBUS_SESSION_BUS_ADDRESS").is_some()),
         steps: Vec::new(),
         flatpak: None,
         bumps: deps_commit::Bumps::default(),
     };
 
+    // Authenticate before the TUI takes over the terminal, and before git,
+    // network requests, lock updates, or cleanup can make the user wait.
+    // The helper owns its cache; do not keep it alive beyond system policy.
+    r.authenticate()?;
+    let _ui_session = crate::ui::start(out, opts);
     sync_checkout(&mut r, opts)?;
 
     // Asking for the bump is the check the nag exists to prompt, so the nag
@@ -336,8 +375,8 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
         // every old generation: much more space, no rollback. The default is
         // the cautious one because losing rollback is not visible until the
         // day you need it.
-        let mut gc = Command::new("sudo");
-        gc.arg("nix-collect-garbage").arg("--verbose");
+        let mut gc = r.privileged("nix-collect-garbage");
+        gc.arg("--verbose");
         if opts.gc_all {
             gc.arg("-d");
         } else {
@@ -346,10 +385,8 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
         r.run("garbage-collect", &mut gc);
         r.run(
             "journal-vacuum",
-            Command::new("sudo").args([
-                "journalctl",
-                &format!("--vacuum-time={}d", opts.journal_days),
-            ]),
+            r.privileged("journalctl")
+                .arg(format!("--vacuum-time={}d", opts.journal_days)),
         );
     }
 
@@ -375,9 +412,8 @@ pub fn run(out: Out, opts: Options) -> Result<(RunReport, bool), git_sync::Refus
     let reclaimed = maybe_reclaim(&mut r, &before, opts);
 
     // --- the switch ------------------------------------------------------
-    let mut cmd = Command::new("sudo");
-    cmd.arg("nixos-rebuild")
-        .arg(if opts.dry { "dry-build" } else { "switch" })
+    let mut cmd = r.privileged("nixos-rebuild");
+    cmd.arg(if opts.dry { "dry-build" } else { "switch" })
         .args(["--flake", &format!(".#{HOST}")])
         // Silences "Git tree is dirty" on the local flake eval. The forwarded
         // `--option` form is used because nixos-rebuild-ng rejects nix's
@@ -899,8 +935,7 @@ fn appimages(r: &mut Runner, opts: Options) {
 fn mirror_etc(r: &mut Runner) {
     r.run(
         "mirror-etc-nixos",
-        Command::new("sudo").args([
-            "rsync",
+        r.privileged("rsync").args([
             "-a",
             "--delete",
             "--delete-excluded",

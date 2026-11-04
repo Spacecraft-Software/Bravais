@@ -176,6 +176,11 @@ Options:
   --yes           skip the question about using `preflight` instead
   -h, --help      show this help
 
+Environment:
+  PREFLIGHT_PRIVILEGE_TOOL=auto|sudo|doas|run0 (default: auto)
+  Authenticate at startup; credential expiry follows system policy.
+  Dry builds skip authentication and escalation.
+
 Superseded by `preflight` (Rust), which takes all of the above and adds
 --reclaim, --gc-all, --journal-days, --mcp-deploy, --update-vendored and --json.
 See: preflight --help
@@ -253,6 +258,44 @@ if [ "${assume_yes:-0}" != "1" ]; then
 fi
 
 cd "$REPO"
+
+# Authenticate before the signing key, sync, updates or cleanup. The helper
+# owns credential persistence; never run a keep-alive or change its policy.
+privilege_tool=""
+elevate() { command "$privilege_tool" "$@"; }
+if [ "$dry" -eq 0 ]; then
+    privilege_tool=${PREFLIGHT_PRIVILEGE_TOOL-auto}
+    case "$privilege_tool" in
+        auto)
+            privilege_tool=""
+            for candidate in sudo doas run0; do
+                if command -v "$candidate" >/dev/null 2>&1; then
+                    privilege_tool=$candidate
+                    break
+                fi
+            done
+            ;;
+        sudo|doas|run0) ;;
+        *) say "$C_ERR" "[ERROR] PREFLIGHT_PRIVILEGE_TOOL must be auto, sudo, doas, or run0" >&2; exit 2 ;;
+    esac
+    if [ -z "$privilege_tool" ] || ! command -v "$privilege_tool" >/dev/null 2>&1; then
+        say "$C_ERR" "[ERROR] no available privilege helper; configure sudo, doas, or run0" >&2
+        exit 3
+    fi
+    case "$privilege_tool" in
+        sudo) set -- -v ;;
+        doas|run0) set -- true ;;
+    esac
+    if [ ! -t 0 ]; then
+        if [ "$privilege_tool" = run0 ]; then set -- --no-ask-password "$@"
+        else set -- -n "$@"
+        fi
+    fi
+    if ! elevate "$@"; then
+        say "$C_ERR" "[ERROR] $privilege_tool startup authentication failed" >&2
+        exit 4
+    fi
+fi
 
 # ── JSON, without assuming which parser is installed ────────────────────────
 # jaq is the repo's preferred jq (spacecraft-cli-preference) and is what this
@@ -495,8 +538,8 @@ fi
 # Keeps a week of generations so a bad switch stays rollback-able. Both are
 # best-effort: a GC failure must not stop the switch that follows.
 if [ "$no_gc" -eq 0 ] && [ "$dry" -eq 0 ] && [ "$skills_only" -eq 0 ]; then
-    sudo nix-collect-garbage --delete-older-than 7d || true
-    sudo journalctl --vacuum-time=7d || true
+    elevate nix-collect-garbage --delete-older-than 7d || true
+    elevate journalctl --vacuum-time=7d || true
 fi
 
 # /nix, not / — on this host / is a 16 GiB tmpfs that is always near-empty, so
@@ -512,9 +555,9 @@ set -- --option warn-dirty false
 [ "$trace" -eq 1 ] && set -- "$@" --show-trace --verbose
 
 if [ "$dry" -eq 1 ]; then
-    sudo nixos-rebuild dry-build --flake ".#$HOST" "$@"
+    nixos-rebuild dry-build --flake ".#$HOST" "$@"
 else
-    sudo nixos-rebuild switch --flake ".#$HOST" "$@"
+    elevate nixos-rebuild switch --flake ".#$HOST" "$@"
 fi
 
 [ "$dry" -eq 1 ] && exit 0
@@ -524,7 +567,7 @@ fi
 # Lean true mirror: prunes stale files, but skips VCS internals, the build
 # symlink, and agent-local context (.claude is gitignored). Runs only after a
 # successful switch — `set -e` above guarantees that.
-sudo rsync -av --delete --delete-excluded \
+elevate rsync -av --delete --delete-excluded \
     --exclude='.git/' --exclude='result' --exclude='.claude/' \
     "$REPO/" /etc/nixos/
 say "$C_OK" "── disk after ──"; df -h /nix

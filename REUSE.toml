@@ -105,6 +105,7 @@ SPDX-License-Identifier = "HPND-sell-variant"
 path = [
     "**/*.nix",
     "pkgs/*/src/**",
+    "pkgs/*/tests/**",
     "pkgs/*/Cargo.toml",
     "pkgs/*/clippy.toml",
     "pkgs/*/build.rs",

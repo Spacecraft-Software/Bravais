@@ -2132,7 +2132,12 @@ form. It deliberately does not copy them: `AGENTS.md`, `docs/*.md` and
 ### 16.1 Rebuild
 
 **`preflight` (Rust, `pkgs/preflight/`) is the supported entry point**, run as the
-user, never as root. In order: bring the checkout up to date with `origin`
+user, never as root. Authenticate for privilege escalation before SSH, sync or
+updates, using `PREFLIGHT_PRIVILEGE_TOOL=auto|sudo|doas|run0` (auto tries that order).
+The selected helper handles all privileged steps, retaining credentials only
+according to system policy; there is no background refresh. A refusal stops
+before maintenance with exit 4; dry builds and read-only commands skip
+authentication. Then bring the checkout up to date with `origin`
 (fetch, then fast-forward, carrying uncommitted changes along with a
 warning; refuses uncommitted changes the incoming commits also touch, a
 local-only branch or diverged history; a branch deleted
