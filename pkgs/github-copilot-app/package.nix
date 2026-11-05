@@ -33,11 +33,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "github-copilot-app";
-  version = "1.1.34";
+  version = "1.1.35";
 
   src = fetchurl {
     url = "https://github.com/github/app/releases/download/v${finalAttrs.version}/GitHub-Copilot-linux-x64.deb";
-    hash = "sha256-EV08Mshgxsm3k19p0oJLJmPtwCr9CDuPuyVxwb75rk4=";
+    hash = "sha256-wsxvA4l0ezQsZL5WE7P/w/VuPb4dEdyC9JbmZaYTQE8=";
   };
 
   nativeBuildInputs = [
@@ -127,6 +127,12 @@ stdenv.mkDerivation (finalAttrs: {
     # `cp -r src dest/` where dest already exists copies src *inside* dest, so
     # the result is $out/lib/GitHub Copilot/ (preserving the upstream layout).
     cp -r "usr/lib/GitHub Copilot" $out/lib/
+
+    # Copilot 1.1.35 ships the ONNX Runtime ELF as libonnxruntime.so even
+    # though its SONAME (and libfoundry_local.so's DT_NEEDED entry) is
+    # libonnxruntime.so.1.  Keep the upstream binary and expose its declared
+    # ABI filename so autoPatchelfHook can resolve the dependency.
+    ln -s libonnxruntime.so "$out/lib/GitHub Copilot/libonnxruntime.so.1"
 
     # Icons
     cp -r usr/share/icons $out/share/

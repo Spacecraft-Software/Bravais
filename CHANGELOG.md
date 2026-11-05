@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The GNOME Shell browser extension works in Chrome, Brave, Edge, Opera and
+  BrowserOS.** Upstream `gnome-browser-connector` only writes `/etc/opt/chrome`
+  and `/etc/chromium` on the host, which the Flatpak browsers and BrowserOS do
+  not read and cannot run across the sandbox boundary. Home Manager now writes
+  their native-messaging manifests (`org.gnome.browser_connector` and
+  `org.gnome.chrome_gnome_shell`) and a Flatpak relay that hands stdio to the
+  new D-Bus-activated `org.gnome.BrowserConnector.FlatpakIntegrator` service on
+  the host, matching the KDE Plasma Browser Integration path.
+
+### Fixed
+
+- **GitHub Copilot App 1.1.35 builds again.** Its bundled ONNX Runtime exposes
+  ABI name `libonnxruntime.so.1` while shipping only `libonnxruntime.so`; the
+  package now installs the matching SONAME symlink so `autoPatchelfHook` can
+  resolve the local dependency without weakening dependency checks.
+- **Preflight clears authorization alerts when a credential is accepted.** A
+  fingerprint or password no longer leaves the progress bar and desktop
+  notification waiting for the long-running privileged rebuild to finish.
+
 - **`preflight` shows a persistent progress bar, a full-screen TUI mode, and
   authorization notifications.** At a terminal, `preflight` now pins a live
   bottom status bar with overall step completion, elapsed time and sub-step

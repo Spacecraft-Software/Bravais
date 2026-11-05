@@ -11,55 +11,55 @@
 # app on its own cadence, so the entries do not move together.
 {
   wordcraft = {
-    version = "0.15.0";
-    hash = "sha256-0j1piqHbC2lNRPqtkYX6mjJ4ihiy3exleiYK566R7mU=";
+    version = "0.15.2";
+    hash = "sha256-QnbwEy1+uYOtKdgTKhlmUP8MAC8b4Jc8JwAx9i+p1Pw=";
   };
   photocraft = {
-    version = "0.20.1";
-    hash = "sha256-oXh0i595z2GbA1jWX1vDeKZ917eC6czZCwMtfF+FiRI=";
+    version = "0.20.2";
+    hash = "sha256-e70gs+OUUXSmIUrOuWmFzvvS7j3WQ54BN4q1UKS6jxY=";
   };
   vectorcraft = {
-    version = "0.21.0";
-    hash = "sha256-q0jUDrWYgTGPRC8Fc77sgvn5SZVoPhVvKlaSfDu9Pk8=";
+    version = "0.21.1";
+    hash = "sha256-FihvIL0Wh+mvOhfxBkRr2sgPOUcInl0QK7Ggj0HSKfI=";
   };
   filmcraft = {
-    version = "0.17.0";
-    hash = "sha256-eI129lzA5Eprrx4utQl6jhy5MB+N1ITifU+v7r/NNS8=";
+    version = "0.17.1";
+    hash = "sha256-ljl39yREXeLFd7eTZJQ3gMAUfIiDP05+d91Kz11x2Gs=";
   };
   lightcraft = {
-    version = "0.18.0";
-    hash = "sha256-ntb0tHqA/x9isQui/0LuFHegS3E9qH/4xM4j/ZouLKo=";
+    version = "0.18.1";
+    hash = "sha256-MRzFGrysq5CL1wptL8BHQtFcq2ylY8zIdJVpZOocUZU=";
   };
   pdfcraft = {
-    version = "0.18.0";
-    hash = "sha256-oIhFZFn95QzFmHjb/aPnLjDEK3V77ERdB/g/8CWv7Ec=";
+    version = "0.18.2";
+    hash = "sha256-ywbIJTPvZ2Qd9o/8XZuGDbbHarn+aa6tG0omrWo4vcg=";
   };
   effectcraft = {
-    version = "0.21.0";
-    hash = "sha256-MBvci2aBq6ydqiKWxU2OnRaNdgL+NfCDrHPKJmcWUfQ=";
+    version = "0.21.1";
+    hash = "sha256-4PwnbS5Zo8DeqMHPYssRtIC0/A6ZKoO6LSsEHd0PnG0=";
   };
   designcraft = {
-    version = "0.17.0";
-    hash = "sha256-Q9Zvh5fiQjFOBc94+83Jy7NlqMZhkANCGsbvqBKUINo=";
+    version = "0.17.2";
+    hash = "sha256-ZmggfkXtKzOCTQgeuV0gRR84gM3AvoibRGjalDVp5bo=";
   };
   figcraft = {
-    version = "0.15.0";
-    hash = "sha256-FGO3WHAoQtqKCqbc8VyE97PmhhWIGTmMj7wkoO0hSqA=";
+    version = "0.15.1";
+    hash = "sha256-C8j7P/Zj4O6l5MFxGmjXonvlGXxAH88L7iIPMPEAC7g=";
   };
   soundcraft = {
-    version = "0.17.0";
-    hash = "sha256-zrQtU56a7AzEgYh06S5kBXFjNbBX2eJAqKWVmP7zS64=";
+    version = "0.17.1";
+    hash = "sha256-7EgtCTlFZ8VjaeqJ7wLo7dAadzsu6csqtJYw7okOsPY=";
   };
   deckcraft = {
-    version = "0.15.0";
-    hash = "sha256-SXtk3BSsbNICYKLPspssg7ed8zNucChoH9nxEu0i/as=";
+    version = "0.15.1";
+    hash = "sha256-4i9rGw6BdvjkdrAK9oH+IRO57BwrI0ZD1BAcqM/hLvQ=";
   };
   cadcraft = {
-    version = "0.17.0";
-    hash = "sha256-ljfKCMuRFB/GeXENYS9VHhck0p9uqmG2O0s8qSlVO38=";
+    version = "0.17.1";
+    hash = "sha256-M9WMsdXC4Qz8sgns/KhvL7OCX99IpiJEjemnfhR4mrs=";
   };
   gridcraft = {
-    version = "0.16.0";
-    hash = "sha256-D+LI42uAgJJVnpX7clASC5sCLll6f7FUDjZq7ppNH7E=";
+    version = "0.16.1";
+    hash = "sha256-zZqjrla+aEINji1xo/9ubTCW6/UeeEFD5rx0zpLsLyY=";
   };
 }

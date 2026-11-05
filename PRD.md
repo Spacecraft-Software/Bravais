@@ -1102,7 +1102,7 @@ sessions while avoiding a competing daemon in GNOME.
 
 **Tiling:** `forge` is *the* tiling extension. `tiling-shell`, `smart-tiling` and `simple-tiling` stay commented out because they conflict with forge; re-enabling one means disabling forge first. `ollama-indicator` is also commented out.
 
-**Utilities:** gnome-tweaks, dconf-editor, gnome-extension-manager, gnome-browser-connector
+**Utilities:** gnome-tweaks, dconf-editor, gnome-extension-manager, gnome-browser-connector. Firefox gets the system Mozilla manifest from the GNOME module; `users/mj/browser-integration.nix` registers Chrome, Brave, Edge and Opera (Flatpak) through a relay calling the D-Bus-activated `org.gnome.BrowserConnector.FlatpakIntegrator.Link` host service (`talk` permission in `modules/packages/flatpak.nix`), and BrowserOS directly.
 
 **Portals:** the NixOS GNOME module registers the gnome + gtk portals; routing is `gnome`, `gtk`.
 
@@ -1780,7 +1780,7 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
 > `users/mj/apps.nix`) that keeps `/app/bin:/usr/bin` first on PATH so each entrypoint
 > resolves inside the sandbox.
 
-**Packages (50 declared — 37 by app ID, 13 Artcraft bundles; parked entries are commented out and not installed):**
+**Packages (51 declared — 38 by app ID, 13 Artcraft bundles; parked entries are commented out and not installed):**
 
 | Category            | App IDs                                              |
 |---------------------|------------------------------------------------------|
@@ -1792,7 +1792,7 @@ Managed declaratively through nix-flatpak (`services.flatpak.packages`).
 | Security & Remote   | com.rustdesk.RustDesk (com.bitwarden.desktop DISABLED — nixpkgs, §11.4) |
 | Development         | com.jetbrains.RustRover, com.visualstudio.code, com.vscodium.codium (also nixpkgs — §11.2), io.github.shiftey.Desktop (GitHub Desktop). dev.zed.Zed DISABLED — nixpkgs `zed-editor` |
 | System & Utilities  | com.daidouji.oneko, com.github.tchx84.Flatseal, io.github.dvlv.boxbuddyrs, io.github.prateekmedia.appimagepool, it.mijorus.gearlever, org.adishatz.Screenshot, org.flameshot.Flameshot, org.gnome.baobab |
-| Multimedia          | org.gimp.GIMP, org.videolan.VLC                      |
+| Multimedia          | org.gimp.GIMP, org.inkscape.Inkscape, org.videolan.VLC |
 | Office              | org.libreoffice.LibreOffice, org.onlyoffice.desktopeditors |
 | Knowledge & Communication | io.appflowy.AppFlowy, com.tutanota.Tutanota (AFFiNE not on Flathub) |
 | Terminals           | app.devsuite.Ptyxis (alongside the nixpkgs host install, §10.1; themed via shared host dconf) |

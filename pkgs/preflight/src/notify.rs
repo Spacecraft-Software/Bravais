@@ -51,7 +51,7 @@ const AUTH_GRACE: Duration = Duration::from_millis(400);
 const DUNST_REPLACE_ID: &str = "9919";
 
 /// Guard that watches an in-flight authorization step and tears down any
-/// active alert as soon as the step finishes.
+/// active alert as soon as authorization succeeds or the step finishes.
 #[derive(Debug)]
 pub struct AuthWatch {
     done: std::sync::Arc<AtomicBool>,
@@ -115,7 +115,59 @@ fn watch_loop(done: &AtomicBool, step: &str, detail: &str) -> AlertState {
     if done.load(Ordering::Acquire) {
         return AlertState::default();
     }
-    fire_alert(step, detail)
+    let state = fire_alert(step, detail);
+
+    // `sudo nixos-rebuild …` remains alive for the whole rebuild.  Its
+    // successful fingerprint scan, though, fills the helper's credential
+    // cache as soon as PAM accepts it.  Waiting for the long-running command
+    // to exit left the status bar and notification saying "waiting" for the
+    // duration of the build.  Poll only the helper's non-interactive cache
+    // probe: it never asks a second question and lets us clear the alert at
+    // the actual authorization boundary.  `gitway-add` has no comparable
+    // safe probe, so it retains the command-lifetime behaviour.
+    if !is_privilege_helper(step) {
+        return state;
+    }
+
+    if privilege_cached(step) {
+        clear_alert(&state);
+        return AlertState::default();
+    }
+
+    loop {
+        std::thread::park_timeout(Duration::from_millis(150));
+        if done.load(Ordering::Acquire) {
+            return state;
+        }
+        if privilege_cached(step) {
+            clear_alert(&state);
+            return AlertState::default();
+        }
+    }
+}
+
+/// Return whether a privilege helper can currently run a harmless command
+/// without asking a question.  Every probe is deliberately non-interactive:
+/// the watcher must observe a credential acceptance, never create another
+/// password or fingerprint request of its own.
+fn is_privilege_helper(step: &str) -> bool {
+    matches!(step, "sudo" | "doas" | "run0")
+}
+
+fn privilege_cached(step: &str) -> bool {
+    let args: &[&str] = match step {
+        "sudo" => &["-n", "true"],
+        "doas" => &["-n", "true"],
+        "run0" => &["--no-ask-password", "true"],
+        _ => return false,
+    };
+    Command::new(step)
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success())
 }
 
 fn fire_alert(step: &str, detail: &str) -> AlertState {
@@ -436,5 +488,13 @@ mod tests {
         // watcher before `AUTH_GRACE` elapses, so no alert is fired.
         let w = AuthWatch::start("sudo", "sudo true", true);
         drop(w);
+    }
+
+    #[test]
+    fn only_privilege_helpers_have_a_safe_cache_probe() {
+        assert!(is_privilege_helper("sudo"));
+        assert!(is_privilege_helper("doas"));
+        assert!(is_privilege_helper("run0"));
+        assert!(!is_privilege_helper("gitway-add"));
     }
 }
