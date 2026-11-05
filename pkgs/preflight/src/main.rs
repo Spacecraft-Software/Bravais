@@ -71,10 +71,11 @@ const ABOUT: &str = concat!(
         "  preflight --no-sync           Skip the fetch; build the checkout exactly as it is\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
-        "  preflight --update-all        Also bump the vendored pins and AI tools (alias: --full-update)\n",
+        "  preflight --update-all        Also update vendored pins, AI tools, AppImages and Flatpaks (alias: --full-update)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --update-ai-tools   Also run the out-of-band AI tools' updaters (claude, codex, …)\n",
         "  preflight --update-appimages  Also apply the AppImage updates Gear Lever finds\n",
+        "  preflight --update-flatpaks   Also update Flatpaks after the system switch\n",
         "  preflight --no-commit         Leave the bumps uncommitted instead of committing them\n",
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
@@ -141,7 +142,7 @@ struct Cli {
     #[arg(long)]
     no_update: bool,
 
-    /// Update everything: every flake input (as always), the vendored pins, the out-of-band AI tools and the AppImages; implies --update-vendored, --update-ai-tools and --update-appimages
+    /// Update everything: every flake input (as always), vendored pins, out-of-band AI tools, AppImages and Flatpaks; implies --update-vendored, --update-ai-tools, --update-appimages and --update-flatpaks
     // `--full-update` is the spelling people reach for. Without the alias,
     // clap's did-you-mean answered it with `--no-update` -- the opposite
     // request, which a user following the tip would have run.
@@ -156,11 +157,11 @@ struct Cli {
     #[arg(long, conflicts_with = "skills_only")]
     update_ai_tools: bool,
 
-    /// Also apply the AppImage updates Gear Lever finds (the report-only check runs on every run)
+    /// Check for and apply the AppImage updates Gear Lever finds
     #[arg(long, conflicts_with_all = ["skills_only", "no_appimages"])]
     update_appimages: bool,
 
-    /// Skip the AppImage update check
+    /// Skip AppImage updates requested by --full-update
     #[arg(long)]
     no_appimages: bool,
 
@@ -184,7 +185,11 @@ struct Cli {
     #[arg(long)]
     no_flatpak: bool,
 
-    /// Start the Flatpak update and return instead of following its progress (always the case off a terminal)
+    /// Also update Flatpaks after a successful system switch
+    #[arg(long, conflicts_with_all = ["skills_only", "no_flatpak"])]
+    update_flatpaks: bool,
+
+    /// Start a requested Flatpak update and return instead of following its progress (always the case off a terminal)
     #[arg(long, conflicts_with = "no_flatpak")]
     detach_flatpak: bool,
 
@@ -338,15 +343,18 @@ fn options(cli: &Cli) -> steps::Options<'_> {
         update_vendored: cli.update_vendored || cli.update_all,
         // The same for the AI tools outside Nix, which no rebuild reaches.
         update_ai_tools: cli.update_ai_tools || cli.update_all,
-        // The check is cheap (one small request per source) and report-only,
-        // so it runs unasked; applying is the part that downloads.
-        check_appimages: !cli.no_appimages,
+        // Both the metadata query and the actual AppImage update make network
+        // requests, so a routine rebuild leaves them alone.  The dedicated
+        // flag and --full-update retain the complete Gear Lever workflow.
+        check_appimages: (cli.update_appimages || cli.update_all) && !cli.no_appimages,
         update_appimages: cli.update_appimages || (cli.update_all && !cli.no_appimages),
         no_commit: cli.no_commit,
         no_gc: cli.no_gc,
         trace: cli.trace,
         skills_only: cli.skills_only,
         no_flatpak: cli.no_flatpak,
+        update_flatpaks: (cli.update_flatpaks || cli.update_all || cli.detach_flatpak)
+            && !cli.no_flatpak,
         detach_flatpak: cli.detach_flatpak,
         reclaim: cli.reclaim,
         gc_all: cli.gc_all,
@@ -566,17 +574,18 @@ fn cmd_schema(out: Out) -> i32 {
                     "--no-sync": "build the checkout as it is; skip git fetch and the fast-forward",
                     "--branch": "switch to origin's <NAME> before building (testing a PR); conflicts with --no-sync",
                     "--no-update": "skip nix flake update",
-                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored, --update-ai-tools and --update-appimages (unless --no-appimages); conflicts with --no-update and --skills-only; alias --full-update",
+                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored, --update-ai-tools, --update-appimages and --update-flatpaks (the last two unless explicitly skipped); conflicts with --no-update and --skills-only; alias --full-update",
                     "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
-                    "--update-appimages": "after the switch, whether or not it succeeded, apply the AppImage updates Gear Lever found (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
-                    "--no-appimages": "skip the AppImage update check (a full run asks Gear Lever which AppImages have updates, report-only)",
+                    "--update-appimages": "after the switch, whether or not it succeeded, query Gear Lever and apply AppImage updates (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
+                    "--no-appimages": "skip AppImage work implied by --update-all",
                     "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only",
                     "--no-commit": "leave the bumps uncommitted; by default, after a successful switch on origin's default branch, the paths this run bumped (flake.lock, the vendored pins, and .github/skills/ re-synced by pkgs/sync-skills.nu when construct moved) are committed with a plain `git commit` (the user's signing config) on a new local chore/deps-bump-<date> branch, never pushed, and the checkout switches back; on another branch, under --dry or after a failed switch they are left uncommitted",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
-                    "--no-flatpak": "skip the detached Flatpak update",
-                    "--detach-flatpak": "start the Flatpak update and return; without it a live (terminal, non-agent) run follows the update to its end with a progress bar, and Ctrl-C stops following without stopping the update; conflicts with --no-flatpak",
+                    "--update-flatpaks": "after a successful switch, start the detached Flatpak update; implied by --update-all; without --detach-flatpak a live (terminal, non-agent) run follows it with a progress bar",
+                    "--no-flatpak": "skip Flatpak work implied by --update-all",
+                    "--detach-flatpak": "start a requested Flatpak update and return; it implies --update-flatpaks; without it a live (terminal, non-agent) run follows the update to its end with a progress bar, and Ctrl-C stops following without stopping the update; conflicts with --no-flatpak",
                     "--reclaim": "reclaim safe caches before the switch",
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
@@ -694,11 +703,11 @@ mod tests {
     }
 
     #[test]
-    fn full_update_implies_both_extra_update_steps() {
+    fn full_update_implies_every_extra_update_step() {
         let cli = Cli::try_parse_from(["preflight", "--full-update"]);
         assert!(cli.is_ok_and(|c| {
             let o = options(&c);
-            o.update_vendored && o.update_ai_tools
+            o.update_vendored && o.update_ai_tools && o.update_appimages && o.update_flatpaks
         }));
     }
 
@@ -739,21 +748,35 @@ mod tests {
     }
 
     #[test]
-    fn detach_flatpak_is_off_by_default_and_refuses_no_flatpak() {
-        assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| !options(&c).detach_flatpak));
-        assert!(Cli::try_parse_from(["preflight", "--detach-flatpak"])
-            .is_ok_and(|c| options(&c).detach_flatpak));
+    fn flatpaks_are_opt_in_and_detach_requests_an_update() {
+        assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| {
+            let o = options(&c);
+            !o.update_flatpaks && !o.detach_flatpak
+        }));
+        assert!(Cli::try_parse_from(["preflight", "--update-flatpaks"])
+            .is_ok_and(|c| options(&c).update_flatpaks));
+        assert!(
+            Cli::try_parse_from(["preflight", "--detach-flatpak"]).is_ok_and(|c| {
+                let o = options(&c);
+                o.update_flatpaks && o.detach_flatpak
+            })
+        );
         assert!(Cli::try_parse_from(["preflight", "--detach-flatpak", "--no-flatpak"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--update-flatpaks", "--no-flatpak"]).is_err());
     }
 
     #[test]
-    fn appimages_are_checked_by_default_and_updated_on_request() {
+    fn appimages_are_opt_in_and_updated_on_request() {
         assert!(Cli::try_parse_from(["preflight"]).is_ok_and(|c| {
             let o = options(&c);
-            o.check_appimages && !o.update_appimages
+            !o.check_appimages && !o.update_appimages
         }));
-        assert!(Cli::try_parse_from(["preflight", "--update-appimages"])
-            .is_ok_and(|c| options(&c).update_appimages));
+        assert!(
+            Cli::try_parse_from(["preflight", "--update-appimages"]).is_ok_and(|c| {
+                let o = options(&c);
+                o.check_appimages && o.update_appimages
+            })
+        );
         assert!(Cli::try_parse_from(["preflight", "--full-update"])
             .is_ok_and(|c| options(&c).update_appimages));
         assert!(

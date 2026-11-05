@@ -170,13 +170,15 @@ fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
         names.push("mcpctl");
     }
     names.push("deps-commit");
-    if !opts.skills_only {
+    if opts.check_appimages && !opts.skills_only {
         names.push("appimage-check");
         if opts.update_appimages && !opts.dry {
             names.push("appimage-update");
         }
     }
-    names.push("flatpak-update");
+    if opts.update_flatpaks {
+        names.push("flatpak-update");
+    }
     names
         .into_iter()
         .map(|name| TaskEntry {
