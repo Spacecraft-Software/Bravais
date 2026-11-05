@@ -82,9 +82,9 @@ let
   terminalShortcut = ''
     [Desktop Entry]
     Type=Application
-    Name=Open a Terminal (Alacritty)
-    Exec=alacritty
-    Icon=Alacritty
+    Name=Open a Terminal (WezTerm)
+    Exec=wezterm start
+    Icon=org.wezfurlong.wezterm
     NoDisplay=true
     X-KDE-Shortcuts=Meta+Return
   '';

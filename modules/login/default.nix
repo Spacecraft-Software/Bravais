@@ -12,12 +12,12 @@
 }:
 
 let
-  # Wrap each shell-as-session in cosmic-comp's kiosk mode plus Alacritty (the
-  # default terminal, as under Niri and LeftWM; Rio hangs when its compositor
+  # Wrap each shell-as-session in cosmic-comp's kiosk mode plus WezTerm (the
+  # default terminal, as under every Bravais desktop; Rio hangs when its compositor
   # closes it, constraint #11). Without this wrapper greetd execs the bare
   # shell binary in a no-TTY no-compositor context: brush blocks on stdin, ion
   # fails fast, nushell silently swallows its own startup error. The
-  # compositor gives the missing display; Alacritty gives the missing PTY; the
+  # compositor gives the missing display; WezTerm gives the missing PTY; the
   # shell gets a real interactive terminal as it expects.
   #
   # `cosmic-comp <cmd> <args>` runs one program and exits with its status, as
@@ -42,7 +42,7 @@ let
         [Desktop Entry]
         Name=${name}
         Comment=${comment}
-        Exec=${pkgs.cosmic-comp}/bin/cosmic-comp ${pkgs.alacritty}/bin/alacritty -e ${exec}
+        Exec=${pkgs.cosmic-comp}/bin/cosmic-comp ${pkgs.wezterm}/bin/wezterm start --always-new-process -- ${exec}
         Type=Application
         DesktopNames=${sessionName}
         EOF
@@ -385,7 +385,7 @@ in
       greeting = steelboreIdentity.banner;
       # No synthetic "Shell" entry: a bare shell under greetd has no TTY or
       # compositor (see mkShellSession above), so shells are offered only
-      # through their cosmic-comp + Alacritty session files.
+      # through their cosmic-comp + WezTerm session files.
       default_session = [ ];
       # Every X session's Exec already runs startx (start-leftwm,
       # start-plasma-x11); a wrapper would start a second X server. Same

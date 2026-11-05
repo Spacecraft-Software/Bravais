@@ -97,7 +97,7 @@ in
     # in this RON file at ~/.config/cosmic/com.system76.CosmicSettings.Shortcuts/v1/custom.
     # The COSMIC 1.0-alpha schema supports multiple bindings mapped to the
     # same action, so we ship pairs (Ctrl+Space + Super+Space → input-source
-    # switch) here. Super+Return spawns Alacritty, the terminal it opens in
+    # switch) here. Super+Return spawns WezTerm, the terminal it opens in
     # every other session; System(Terminal) would open COSMIC's own default,
     # cosmic-term, which Super+T keeps. Super+Shift+C runs
     # steelbore-caffeine, matching Niri, LeftWM and Plasma: on COSMIC it holds
@@ -164,7 +164,7 @@ in
                   Super,
               ],
               key: "Return",
-          ): Spawn("alacritty"),
+          ): Spawn("wezterm start"),
           (
               modifiers: [
                   Super,

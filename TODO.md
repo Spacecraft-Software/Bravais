@@ -150,7 +150,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Install companion packages (xwayland-satellite, eww, anyrun, dunst, gtklock, swayidle, wl-clipboard, grim, slurp, swayosd, etc. — list in `modules/desktops/niri.nix`)
 - [✓] Write Niri config with Steelbore palette (single source: `~/.config/niri/config.kdl` via `users/mj/home.nix`; niri prefers the user config over `/etc/niri`)
 - [✓] eww bar (`users/mj/eww.nix`, shared with LeftWM) — replaced Ironbar; dunst replaced wired
-- [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → alacritty (default terminal)
+- [✓] Configure keybindings (Vim-style + CUA arrows); `Mod+Return` → WezTerm (default terminal)
 - [✓] Configure workspaces 1-5
 - [✓] Global `window-rule { open-maximized false; open-maximized-to-edges false; }` — Chrome/Cursor/Electron clients persist their own "was maximized" state and re-request it every launch, overriding `default-column-width`. Since niri 25.11 that request maps to "maximized to edges", refused only by `open-maximized-to-edges false` (`open-maximized false` alone is a no-op for it). `open-fullscreen` left unset so media players can still launch fullscreen.
 - [✓] `steelbore-niri-unmax` daemon (`pkgs/steelbore-niri-unmax/`, `modules/desktops/niri-unmax.nix`) — the `open-*` rules above are **map-time only**: Chrome maps at tile size, then requests maximize ~0.5–1 s later (measured 2026-07-25: 756x816 → 1536x832), which niri honours; `max-width` doesn't cap it either (tested live). The Rust daemon watches the niri event stream and toggles maximized-to-edges back off for windows inside a 3 s post-open grace window (settle 200 ms + re-confirm, since the action is a toggle). Manual maximizes are never touched (verified live). Geometric detection needs `gaps > 0`; fullscreen stays exempt.
@@ -174,7 +174,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Define `steelbore.desktops.leftwm` option
 - [✓] Enable X11 and LeftWM, configure XKB layout (`us,ar`)
 - [✓] Install companion packages (rlaunch, rofi, dmenu, picom, eww, etc. — polybar removed in Phase E: configured but never launched; eww is the bar)
-- [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → alacritty (default terminal)
+- [✓] Write `/etc/leftwm/config.ron` with keybindings; `Mod+Return` → WezTerm (default terminal)
 - [✓] Write theme files (`theme.ron`, `up`, `down`, `picom.conf` — polybar.ini/template.liquid removed with polybar in Phase E)
 - [✓] Write `/etc/dunst/dunstrc` with Steelbore theme (moved to `modules/desktops/shared.nix` in Phase B — shared with Niri)
 - [✓] Idle and sleep lock: xss-lock + i3lock (gtklock is Wayland-only, CONSTRAINTS.md #45); `steelbore-x-idle` arms the X timers (lock 300 s, panel off 360 s); Caffeine `Mod+Shift+C` clears them

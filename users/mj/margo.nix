@@ -147,10 +147,10 @@ in
       # ── Launch ────────────────────────────────────────────────────────────
       # Keys follow the scheme every Bravais session shares
       # (docs/keybindings.md).
-      bind = super,Return,spawn,alacritty
+      bind = super,Return,spawn,wezterm start
       bind = super,d,spawn,anyrun
       bind = super+shift,d,spawn,rofi -show drun
-      bind = super,b,spawn,alacritty -e bluetui
+      bind = super,b,spawn,wezterm start -- bluetui
       bind = super+shift,b,spawn,overskride
       bind = super+shift,a,spawn,pavucontrol
 
@@ -248,7 +248,7 @@ in
       bind = super+ctrl,e,changegroupactive,prev
 
       # ── Scratchpad ────────────────────────────────────────────────────────
-      bind = super+ctrl,Return,toggle_named_scratchpad,^dropdown-terminal$,none,alacritty --class dropdown-terminal
+      bind = super+ctrl,Return,toggle_named_scratchpad,^dropdown-terminal$,none,wezterm start --class dropdown-terminal
       bind = super+ctrl,Escape,unscratchpad
 
       # ── Screenshots ───────────────────────────────────────────────────────
@@ -278,7 +278,7 @@ in
       bind = super+ctrl,r,reload_config
       bind = super+shift,e,quit
       # The bind lines of this file, as Niri's Mod+Shift+/ hotkey overlay.
-      bind = super+shift,slash,spawn,alacritty --class steelbore-keys -e sh -c "grep -E '^ *(bind|mousebind|gesturebind) =' ~/.config/margo/config.conf | sed 's/^ *//' | less"
+      bind = super+shift,slash,spawn,wezterm start --class steelbore-keys -- sh -c "grep -E '^ *(bind|mousebind|gesturebind) =' ~/.config/margo/config.conf | sed 's/^ *//' | less"
     '';
   };
 }
