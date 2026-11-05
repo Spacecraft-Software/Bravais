@@ -349,6 +349,22 @@ def artcraft-entry [app: string, version: string, hash: string]: nothing -> stri
   $"  ($app) = {\n    version = \"($version)\";\n    hash = \"($hash)\";\n  };"
 }
 
+def artcraft-pins [file: path] {
+  # Parse the three-line Nix stanzas structurally. `collect | parse` started
+  # failing in Nushell 0.109 with `eval_block_with_input`, which made the last
+  # update-vendored target look like a broken pipe to Preflight.
+  open --raw $file
+  | lines
+  | window 3
+  | where { |row| $row.0 =~ '^  [a-z]+ = \{' }
+  | each { |row|
+    let app = ($row.0 | str replace -r '^  ([a-z]+) = \{' '$1')
+    let version = ($row.1 | str replace -r '^    version = "([^"]+)";' '$1')
+    let hash = ($row.2 | str replace -r '^    hash = "([^"]+)";' '$1')
+    { app: $app version: $version hash: $hash }
+  }
+}
+
 # The Artcraft suite (storytold): thirteen apps, one GitHub repo each, each
 # versioned on its own cadence, all pinned in one file. up-github cannot drive
 # it — `extract` reads only the first `version =` — so every entry is parsed
@@ -360,13 +376,7 @@ def artcraft-entry [app: string, version: string, hash: string]: nothing -> stri
 # (nix-flatpak reinstalls an app whose bundle hash changed).
 def up-artcraft [check: bool] {
   let file = "pkgs/artcraft/sources.nix"
-  let pins = (
-    # `collect` first: a raw open is a stream, and `parse` would match each
-    # chunk alone — the pattern spans lines, so it would find nothing.
-    open --raw $file
-    | collect
-    | parse -r '(?m)^  (?<app>[a-z]+) = \{\n    version = "(?<version>[^"]+)";\n    hash = "(?<hash>sha256-[^"]+)";'
-  )
+  let pins = (artcraft-pins $file | collect)
   if ($pins | is-empty) {
     error make {msg: $"no pins parsed from ($file) — layout changed?"}
   }
