@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Routine Preflight runs do not start external application updates.** AI-tool
+  updaters run only with `--update-ai-tools` (or `--full-update`); Flatpaks
+  update only with `--update-flatpaks` (or `--full-update`); and AppImages are
+  queried and updated only with `--update-appimages` (or `--full-update`).
 - **GitHub Copilot App 1.1.35 builds again.** Its bundled ONNX Runtime exposes
   ABI name `libonnxruntime.so.1` while shipping only `libonnxruntime.so`; the
   package now installs the matching SONAME symlink so `autoPatchelfHook` can

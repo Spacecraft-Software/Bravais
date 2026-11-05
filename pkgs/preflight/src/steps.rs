@@ -108,7 +108,7 @@ pub struct Options<'a> {
     /// (`ai_tools::TOOLS`); nothing else in a rebuild reaches them.
     pub update_ai_tools: bool,
     /// Ask Gear Lever which AppImages have updates, after the switch.
-    /// Report-only; off under `--no-appimages`.
+    /// Enabled by `--update-appimages` or `--full-update`.
     pub check_appimages: bool,
     /// Apply those updates too (`--update-appimages`).
     pub update_appimages: bool,
@@ -118,6 +118,10 @@ pub struct Options<'a> {
     pub no_gc: bool,
     pub trace: bool,
     pub skills_only: bool,
+    /// Start a Flatpak update after a successful switch.  Routine rebuilds do
+    /// not query or update Flatpaks; this is selected by
+    /// `--update-flatpaks`, `--detach-flatpak`, or `--full-update`.
+    pub update_flatpaks: bool,
     pub no_flatpak: bool,
     /// Start the Flatpak update and return, instead of following it to the
     /// end at a terminal. Implied whenever the run is not live.
@@ -530,14 +534,14 @@ fn postflight(r: &mut Runner, opts: Options, switched: bool) {
     // commit switches the checkout back to a tree without the bumps.
     commit_bumps(r, opts, switched);
 
-    // Before the Flatpak update starts, so an AppImage download does not
-    // share the link with it. Not gated on `switched`, for the reason given
-    // for the AI tools below.
-    if !opts.skills_only {
+    // Not gated on `switched`: AppImages live outside the system closure, so
+    // an explicitly requested update may still be useful after a failed
+    // switch.  Routine rebuilds do not contact Gear Lever at all.
+    if opts.check_appimages && !opts.skills_only {
         appimages(r, opts);
     }
 
-    if !opts.no_flatpak && switched && !opts.dry && !opts.skills_only {
+    if opts.update_flatpaks && switched && !opts.dry && !opts.skills_only {
         flatpak_start(r);
     } else if opts.no_flatpak {
         r.record(
@@ -827,7 +831,7 @@ fn appimages(r: &mut Runner, opts: Options) {
         r.record(
             "appimage-check",
             Outcome::Skipped,
-            Some("--no-appimages".into()),
+            Some("AppImage updates not requested".into()),
         );
         return;
     }
