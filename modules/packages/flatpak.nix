@@ -280,6 +280,10 @@ in
         origin = "flathub";
       }
       {
+        appId = "org.inkscape.Inkscape";
+        origin = "flathub";
+      }
+      {
         appId = "org.videolan.VLC";
         origin = "flathub";
       }
@@ -450,15 +454,30 @@ in
             Environment.XDG_CURRENT_DESKTOP = "GNOME";
           })
         )
-        # ── Plasma Browser Integration ─────────────────────────────────────────
-        # Plasma's FlatpakIntegrator grants this to the browsers it knows
-        # (Chrome among them) and writes their host relay; for these three it
-        # does neither. users/mj/browser-integration.nix writes the relay, which
-        # calls FlatpakIntegrator.Link over this bus name.
+        # ── Desktop Browser Integration (Plasma & GNOME) ───────────────────────
+        # Plasma's FlatpakIntegrator grants org.kde.plasma.browser.integration to
+        # the browsers it knows (Chrome among them) and writes their host relay;
+        # for Brave, Edge and Opera it does neither. GNOME's
+        # gnome-browser-connector has no FlatpakIntegrator at all, so none of the
+        # four Flatpak browsers get org.gnome.BrowserConnector.FlatpakIntegrator.
+        # users/mj/browser-integration.nix writes the relays and D-Bus integrator.
         (
-          lib.genAttrs [ "com.brave.Browser" "com.microsoft.Edge" "com.opera.Opera" ] (_: {
-            "Session Bus Policy"."org.kde.plasma.browser.integration" = "talk";
-          })
+          lib.recursiveUpdate
+            (lib.genAttrs [ "com.brave.Browser" "com.microsoft.Edge" "com.opera.Opera" ] (_: {
+              "Session Bus Policy"."org.kde.plasma.browser.integration" = "talk";
+            }))
+            (
+              lib.genAttrs
+                [
+                  "com.google.Chrome"
+                  "com.brave.Browser"
+                  "com.microsoft.Edge"
+                  "com.opera.Opera"
+                ]
+                (_: {
+                  "Session Bus Policy"."org.gnome.BrowserConnector.FlatpakIntegrator" = "talk";
+                })
+            )
         );
   };
 }

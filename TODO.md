@@ -98,6 +98,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable GNOME on Wayland, disable GDM (use greetd)
 - [✓] Install GNOME Tweaks, dconf-editor
 - [✓] Install extension manager and browser connector
+- [✓] Register GNOME Browser Connector hosts (`org.gnome.browser_connector` and `org.gnome.chrome_gnome_shell`) for Chrome, Brave, Edge and Opera (Flatpak relay + `org.gnome.BrowserConnector.FlatpakIntegrator` D-Bus host service + `talk` permission) and BrowserOS (`users/mj/browser-integration.nix`)
 - [✓] Install curated extensions (Caffeine, Just Perfection, Forge, etc.)
 - [✓] Install GSConnect, use `programs.kdeconnect` for the protocol's TCP/UDP ports and exclude Plasma's native daemon from GNOME autostart
 - [ ] Enable GSConnect in Extension Manager and pair a phone in GNOME
@@ -369,6 +370,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Add io.github.nwxnw.cosmic-ext-connected (Connected) and io.github.hepp3n.kdeconnect (KDE Connect for COSMIC), both from the `cosmic` remote — Connected has no network permission and front-ends a host daemon; the KDE Connect entry carries `shared=network` and so overlaps nixpkgs `kdePackages.kdeconnect-kde` (modules/desktops/plasma.nix)
 - [✓] Add grok-bot (Grok Bot desktop agent) — `pkgs/grok-bot/`, installed via `modules/packages/ai.nix`; not in nixpkgs so repackaged from the official `.deb`. Its two self-registered URL schemes (`grokbot`, `sand`) are declared in `users/mj/default-apps.nix` per constraint #30
 - [✓] Add the Artcraft suite (13 storytold apps, `ai.storyteller.*`) as Flatpak bundles — not on Flathub and no signed remote, so each GitHub-release `.flatpak` is fetched at a pin in `pkgs/artcraft/sources.nix` and installed with nix-flatpak's `bundle`; bumped by `nu pkgs/update-vendored.nu artcraft`. The Artcraft Launcher is left out (it installs apps itself)
+- [✓] Add Inkscape (`org.inkscape.Inkscape`) from Flathub
 - [ ] Wire grok-bot into `pkgs/update-vendored.nu` once upstream publishes a discoverable release feed — today the URL carries an opaque build hash and must be refreshed by hand
 - [✓] Open KDE Connect ports 1714-1764/tcp+udp through the GNOME module's `programs.kdeconnect` configuration
 - [ ] Decide which KDE Connect daemon to keep — the nixpkgs one or the COSMIC Flatpak. Two daemons cannot both hold 1714-1764, and a sandboxed one writes its cache under `~/.var/app/` where Connected cannot read it

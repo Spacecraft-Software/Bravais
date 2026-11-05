@@ -205,6 +205,8 @@
     * **VSCodium** ⚠️ `[GUI 🖱️]` *(VS Code without Microsoft telemetry — `vscodium-fhs` from nixpkgs **and** the `com.vscodium.codium` Flatpak)*
 
 ### **13. Multimedia & Processing**
+* **Graphics**
+    * **Inkscape** ⚠️ `[GUI 🖱️]` *(Vector graphics editor — Flatpak, C++)*
 * **Video/Audio Players**
     * **mpv** ⚠️ `[TUI 🎛️]` *(Versatile, high-quality command-line media player - C)*
     * **Amberol** 🦀 `[GUI 🖱️]` *(Small, simple local music player)*
