@@ -307,6 +307,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of failing. The running system was already built from that commit;
   this pins it, so the next rebuild does not roll engram back.
 
+- **Engram stops reporting Claude Code's `session-owner` records as
+  unrecognised.** The `engram` input moved to the Engram commit that adds the
+  new record type to the ingest reader's known types (Engram #36). Every Claude
+  Code session now writes these, so each capture's `unknown_record` count kept
+  climbing, although no conversation was lost.
+
 - **A `recover-disk-space` skill frees disk space on request.** The
   `construct` input moved to the Construct commit that adds it. Called with
   `/recover-disk-space`, it surveys usage and asks one multiple-choice
