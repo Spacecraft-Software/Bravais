@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Rust guideline compliant 2026-05-18
 
+mod term;
+
 use clap::{Parser, Subcommand};
 use libbravais_mcp::{detect_shell, MappingTable, RewriteEngine, OS_FULL_NAME, OS_URL};
 use owo_colors::OwoColorize;
 use serde::Serialize;
+use std::io::IsTerminal as _;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -32,6 +35,18 @@ struct Cli {
     #[arg(long, global = true, help = "Filename hint for shell detection")]
     file_hint: Option<String>,
 
+    #[arg(long, global = true, help = "Disable ANSI colour in human output")]
+    no_color: bool,
+
+    #[arg(
+        long,
+        global = true,
+        value_name = "LIST",
+        allow_hyphen_values = true,
+        help = "Force terminal protocols on (+name) or off (-name), comma-separated; beats SPACECRAFT_TERM_PROTOCOLS. bravais-cli uses only `clipboard` (--copy)"
+    )]
+    term_protocols: Option<String>,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -45,6 +60,9 @@ enum Commands {
     Suggest {
         #[arg(help = "The legacy tool name to replace")]
         tool: String,
+
+        #[arg(long, help = "Copy the preferred tool name to the clipboard (OSC 52)")]
+        copy: bool,
     },
 
     #[command(about = "List all configured command mappings")]
@@ -57,6 +75,12 @@ enum Commands {
     Rewrite {
         #[arg(help = "The command line string to rewrite")]
         command_line: String,
+
+        #[arg(
+            long,
+            help = "Copy the rewritten command line to the clipboard (OSC 52)"
+        )]
+        copy: bool,
     },
 
     #[command(about = "Get full Purpose, Key flags, Examples, and Gotchas manual for a tool")]
@@ -88,9 +112,66 @@ struct Metadata {
     timestamp: String,
 }
 
+/// `println!` for human output: colour only when the gate allows it
+/// (`term::color_stdout`); otherwise every escape sequence is removed, so a
+/// pipe, an agent or `NO_COLOR` gets plain text (tui-protocols §6 audit item 1).
+macro_rules! say {
+    ($color:expr, $($arg:tt)*) => {{
+        let line = format!($($arg)*);
+        if $color {
+            println!("{line}");
+        } else {
+            println!("{}", term::strip_escapes(&line));
+        }
+    }};
+}
+
 fn main() {
     let args = Cli::parse();
-    let is_json = args.json || args.format == "json" || std::env::var("AI_AGENT").is_ok();
+    // Presence-based (CLI Standard §5): AI_AGENT / AGENT set to anything, or
+    // CI truthy. `is_ok()` alone also matched an empty AI_AGENT.
+    let is_json = args.json || args.format == "json" || term::agent_env();
+    let color = !is_json && term::color_for(std::io::stdout().is_terminal(), args.no_color);
+    let ecolor = !is_json && term::color_for(std::io::stderr().is_terminal(), args.no_color);
+
+    // Agentic CLI §7: a control character in an argument is either a mistake
+    // or an injection attempt; echoing it back would put it on the terminal.
+    for arg in [
+        match &args.command {
+            Commands::Suggest { tool, .. } | Commands::Reference { tool } => Some(tool.as_str()),
+            Commands::Rewrite { command_line, .. } => Some(command_line.as_str()),
+            _ => None,
+        },
+        args.shell.as_deref(),
+        args.file_hint.as_deref(),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if let Some(c) = term::forbidden_control(arg) {
+            fail(
+                is_json,
+                "INVALID_ARGUMENT",
+                &format!("argument contains control character U+{:04X}", u32::from(c)),
+                "bravais-cli schema  # arguments are plain text; remove escape and control characters",
+                2,
+            );
+        }
+    }
+
+    // Resolved only where used: `mcp` must start whatever the variable says.
+    let caps = || {
+        match term::Caps::resolve(args.term_protocols.as_deref()) {
+        Ok(c) => c,
+        Err(e) => fail(
+            is_json,
+            "INVALID_ARGUMENT",
+            &e,
+            "bravais-cli env --json  # data.terminal_protocols lists the names; e.g. --term-protocols=-all",
+            2,
+        ),
+    }
+    };
 
     let table = MappingTable::load_embedded();
     let engine = RewriteEngine::new(table.clone());
@@ -99,60 +180,90 @@ fn main() {
 
     match args.command {
         Commands::Env => {
+            let caps = caps();
             let res = serde_json::json!({
                 "os": OS_FULL_NAME,
                 "detected_shell": shell.to_string(),
                 "documentation_anchor": OS_URL,
-                "reference_manual": "https://Loran.SpacecraftSoftware.org/"
+                "reference_manual": "https://Loran.SpacecraftSoftware.org/",
+                "terminal_protocols": caps.protocols,
             });
 
             if is_json {
                 print_json(res);
             } else {
-                println!(
+                say!(
+                    color,
                     "{}",
                     "Operating System:"
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  {OS_FULL_NAME}");
-                println!(
+                say!(color, "  {OS_FULL_NAME}");
+                say!(
+                    color,
                     "{}",
                     "Detected Shell:"
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  {}", shell);
-                println!(
+                say!(color, "  {}", shell);
+                say!(
+                    color,
                     "{}",
                     "Documentation Anchor:"
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  {OS_URL}");
-                println!(
+                say!(color, "  {OS_URL}");
+                say!(
+                    color,
                     "{}",
                     "Detailed Syntax & Translation:"
                         .bold()
                         .color(owo_colors::Rgb(75, 126, 176))
                 );
-                println!("  Query Loran at https://Loran.SpacecraftSoftware.org/");
+                say!(
+                    color,
+                    "  Query Loran at https://Loran.SpacecraftSoftware.org/"
+                );
+                say!(
+                    color,
+                    "{}",
+                    "Terminal Protocols:"
+                        .bold()
+                        .color(owo_colors::Rgb(75, 126, 176))
+                );
+                for e in &caps.protocols {
+                    say!(
+                        color,
+                        "  {:<15} {:<4} {}",
+                        e.protocol,
+                        if e.enabled { "on" } else { "off" },
+                        e.reason
+                    );
+                }
             }
         }
-        Commands::Suggest { tool } => {
+        Commands::Suggest { tool, copy } => {
             if let Some(entry) = table.lookup_legacy(&tool) {
+                if copy {
+                    copy_and_confirm(&caps(), &entry.preferred, is_json);
+                }
                 if is_json {
                     print_json(entry);
                 } else {
-                    println!(
+                    say!(
+                        color,
                         "{} is replaced by {} ({})",
                         tool.red().bold(),
                         entry.preferred.green().bold(),
                         entry.category.blue()
                     );
-                    println!("Notes: {}", entry.notes);
-                    println!("Gotchas: {}", entry.gotchas.yellow());
-                    println!(
+                    say!(color, "Notes: {}", entry.notes);
+                    say!(color, "Gotchas: {}", entry.gotchas.yellow());
+                    say!(
+                        color,
                         "For more details, check Loran (https://Loran.SpacecraftSoftware.org/)."
                     );
                 }
@@ -161,7 +272,10 @@ fn main() {
                 if is_json {
                     print_json_error("NOT_FOUND", &err_msg, 3);
                 } else {
-                    eprintln!("{}: {}", "error".red().bold(), err_msg);
+                    eprintln!(
+                        "{}",
+                        paint(ecolor, &format!("{}: {err_msg}", "error".red().bold()))
+                    );
                     std::process::exit(3);
                 }
             }
@@ -176,16 +290,18 @@ fn main() {
             if is_json {
                 print_json(entries);
             } else {
-                println!(
+                say!(
+                    color,
                     "{:<12} {:<12} {:<15} {}",
                     "Legacy".bold(),
                     "Preferred".bold(),
                     "Category".bold(),
                     "Notes".bold()
                 );
-                println!("{}", "-".repeat(60));
+                say!(color, "{}", "-".repeat(60));
                 for entry in entries {
-                    println!(
+                    say!(
+                        color,
                         "{:<12} {:<12} {:<15} {}",
                         entry.legacy.red(),
                         entry.preferred.green(),
@@ -195,20 +311,23 @@ fn main() {
                 }
             }
         }
-        Commands::Rewrite { command_line } => {
+        Commands::Rewrite { command_line, copy } => {
             let res = engine.rewrite(&command_line, shell);
+            if copy {
+                copy_and_confirm(&caps(), &res.rewritten, is_json);
+            }
 
             if is_json {
                 print_json(res);
             } else {
-                println!("{}:", "Original".bold());
-                println!("  {}", res.original);
-                println!("{}:", "Rewritten".bold().green());
-                println!("  {}", res.rewritten.green());
+                say!(color, "{}:", "Original".bold());
+                say!(color, "  {}", res.original);
+                say!(color, "{}:", "Rewritten".bold().green());
+                say!(color, "  {}", res.rewritten.green());
                 if !res.warnings.is_empty() {
-                    println!("\n{}:", "Warnings & Gotchas".bold().yellow());
+                    say!(color, "\n{}:", "Warnings & Gotchas".bold().yellow());
                     for warning in &res.warnings {
-                        println!("  - {}", warning.yellow());
+                        say!(color, "  - {}", warning.yellow());
                     }
                 }
             }
@@ -222,18 +341,25 @@ fn main() {
                 if is_json {
                     print_json(e);
                 } else {
-                    println!("{}", format!("Manual: {}", e.preferred).bold().green());
-                    println!("Category: {}", e.category);
-                    println!("Notes: {}", e.notes);
-                    println!("Gotchas: {}", e.gotchas.yellow());
-                    println!("For more syntax details, check Loran (https://Loran.SpacecraftSoftware.org/).");
+                    say!(
+                        color,
+                        "{}",
+                        format!("Manual: {}", e.preferred).bold().green()
+                    );
+                    say!(color, "Category: {}", e.category);
+                    say!(color, "Notes: {}", e.notes);
+                    say!(color, "Gotchas: {}", e.gotchas.yellow());
+                    say!(color, "For more syntax details, check Loran (https://Loran.SpacecraftSoftware.org/).");
                 }
             } else {
                 let err_msg = format!("No reference manual found for '{}'", tool);
                 if is_json {
                     print_json_error("NOT_FOUND", &err_msg, 3);
                 } else {
-                    eprintln!("{}: {}", "error".red().bold(), err_msg);
+                    eprintln!(
+                        "{}",
+                        paint(ecolor, &format!("{}: {err_msg}", "error".red().bold()))
+                    );
                     std::process::exit(3);
                 }
             }
@@ -263,17 +389,29 @@ fn main() {
                     "suggest": {
                         "type": "object",
                         "properties": {
-                            "tool": { "type": "string" }
+                            "tool": { "type": "string" },
+                            "copy": { "type": "boolean", "description": "Copy the preferred tool name to the clipboard with OSC 52 (human terminal only)" }
                         },
                         "required": ["tool"]
                     },
                     "rewrite": {
                         "type": "object",
                         "properties": {
-                            "command_line": { "type": "string" }
+                            "command_line": { "type": "string" },
+                            "copy": { "type": "boolean", "description": "Copy the rewritten command line to the clipboard with OSC 52 (human terminal only)" }
                         },
                         "required": ["command_line"]
                     }
+                },
+                "global_flags": {
+                    "--no-color": "disable ANSI colour in human output (also NO_COLOR)",
+                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe; bravais-cli uses only clipboard"
+                },
+                "exit_codes": {
+                    "0": "success",
+                    "1": "general failure",
+                    "2": "usage error (INVALID_ARGUMENT: unknown terminal protocol, or a control character in an argument)",
+                    "3": "not found (NOT_FOUND: no mapping for the tool)"
                 }
             });
             println!("{}", serde_json::to_string_pretty(&schema).unwrap());
@@ -281,8 +419,85 @@ fn main() {
     }
 }
 
+/// ISO 8601 UTC to the second with the `Z` suffix (CLI Standard
+/// non-negotiable #1); `Timestamp`'s own `Display` adds nanoseconds.
+fn now_utc() -> String {
+    jiff::Timestamp::now()
+        .strftime("%Y-%m-%dT%H:%M:%SZ")
+        .to_string()
+}
+
+/// `text` as is when `color`, else with every escape sequence removed.
+fn paint(color: bool, text: &str) -> String {
+    if color {
+        text.to_owned()
+    } else {
+        term::strip_escapes(text)
+    }
+}
+
+/// Exit with a structured error (JSON on stderr in machine mode, a tagged
+/// line otherwise). `hint` is a command to run next (agentic-cli §3).
+fn fail(is_json: bool, code: &str, message: &str, hint: &str, exit_code: i32) -> ! {
+    if is_json {
+        let err = serde_json::json!({
+            "error": {
+                "code": code,
+                "exit_code": exit_code,
+                "message": message,
+                "hint": hint,
+                "timestamp": now_utc(),
+                "command": "bravais-cli",
+            }
+        });
+        eprintln!("{err}");
+    } else {
+        eprintln!("[ERROR] {}", term::strip_escapes(message));
+        eprintln!("        try: {hint}");
+    }
+    std::process::exit(exit_code);
+}
+
+/// Copy with OSC 52 and say what happened on stderr. Terminals never
+/// acknowledge OSC 52, so success is reported as "sent" with a way to check;
+/// a copy that could not be sent is a warning, not a failure -- the result is
+/// still printed on stdout.
+fn copy_and_confirm(caps: &term::Caps, text: &str, is_json: bool) {
+    let (severity, code, message) = match term::copy(caps, text) {
+        term::Copied::Sent { bytes } => (
+            "ok",
+            "COPIED",
+            format!("sent {bytes} bytes to the clipboard (OSC 52); a terminal without OSC 52 ignores it, so paste to check"),
+        ),
+        term::Copied::TooLarge { bytes } => (
+            "warn",
+            "CLIPBOARD_TOO_LARGE",
+            format!("{bytes} bytes is over the {} byte OSC 52 limit; not copied", term::CLIPBOARD_MAX),
+        ),
+        term::Copied::Unavailable => (
+            "warn",
+            "CLIPBOARD_UNAVAILABLE",
+            format!("clipboard not used: {}", caps.clipboard_reason()),
+        ),
+    };
+    if is_json {
+        let d = serde_json::json!({
+            "diagnostic": {
+                "severity": severity,
+                "code": code,
+                "message": message,
+                "timestamp": now_utc(),
+            }
+        });
+        eprintln!("{d}");
+    } else {
+        let tag = if severity == "ok" { "[OK]" } else { "[WARN]" };
+        eprintln!("{tag} {message}");
+    }
+}
+
 fn print_json<T: Serialize>(data: T) {
-    let now = jiff::Timestamp::now().to_string();
+    let now = now_utc();
     let envelope = JsonEnvelope {
         metadata: Metadata {
             tool: "bravais-cli",
@@ -295,7 +510,7 @@ fn print_json<T: Serialize>(data: T) {
 }
 
 fn print_json_error(code: &str, message: &str, exit_code: i32) {
-    let now = jiff::Timestamp::now().to_string();
+    let now = now_utc();
     let err = serde_json::json!({
         "error": {
             "code": code,
