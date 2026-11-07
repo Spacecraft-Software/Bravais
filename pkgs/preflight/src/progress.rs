@@ -377,7 +377,15 @@ pub fn watch_flatpak(out: Out, log: &Path, running: &mut dyn FnMut() -> bool) ->
             // The display draws; it is only told the numbers.
             crate::ui::set_progress(last.percent, flatpak_label(&last));
             std::thread::sleep(TICK);
-        } else if out.live {
+            continue;
+        }
+        // Standalone `preflight flatpak watch` (or the follow after the run's
+        // display has ended): the tab shows the percentage too. A supplement
+        // in accessible mode, never the only report (Standard §18).
+        if let Some(p) = last.percent {
+            crate::term::taskbar(crate::term::Taskbar::Normal(p));
+        }
+        if out.live {
             draw(&render(out, i, &last, start.elapsed()));
             i += 1;
             std::thread::sleep(TICK);
@@ -387,15 +395,21 @@ pub fn watch_flatpak(out: Out, log: &Path, running: &mut dyn FnMut() -> bool) ->
                     let step = p / 10 * 10;
                     if announced.is_none_or(|a| step > a) {
                         announced = Some(step);
-                        out.announce(&format!("flatpak update: {p}% ({})", elapsed(start.elapsed())));
+                        out.announce(&format!(
+                            "flatpak update: {p}% ({})",
+                            elapsed(start.elapsed())
+                        ));
                     }
                 }
             }
             std::thread::sleep(if out.accessible { LOG_POLL } else { QUIET_POLL });
         }
     }
-    if out.live && !crate::ui::active() {
-        clear();
+    if !crate::ui::active() {
+        crate::term::taskbar_clear();
+        if out.live {
+            clear();
+        }
     }
     // One last read: the closing lines (`Changes complete.`, or an error)
     // are written in the moment before the process exits.
@@ -408,7 +422,11 @@ fn flatpak_label(p: &FlatpakProgress) -> Option<String> {
         (Some(op), Some(of)) => format!("operation {op}/{of}"),
         _ => p.line.clone()?,
     };
-    Some(p.rate.as_deref().map_or_else(|| ops.clone(), |r| format!("{ops}  {r}")))
+    Some(
+        p.rate
+            .as_deref()
+            .map_or_else(|| ops.clone(), |r| format!("{ops}  {r}")),
+    )
 }
 
 /// PID of a running `flatpak update`, found by scanning `/proc`.

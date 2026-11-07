@@ -34,6 +34,7 @@ mod notify;
 mod output;
 mod progress;
 mod steps;
+mod term;
 mod ui;
 
 use std::fmt::Write as _;
@@ -226,6 +227,14 @@ struct Cli {
     /// Skip desktop/terminal/Zellij notifications when waiting on sudo or SSH authorization
     #[arg(long)]
     no_notify: bool,
+
+    /// Force terminal protocols on (+name) or off (-name), comma-separated; beats `SPACECRAFT_TERM_PROTOCOLS`
+    ///
+    /// Names: keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all.
+    /// preflight uses keyboard (--tui), clipboard (`y` in --tui) and progress (OSC 9;4).
+    /// Never sends anything to an agent, CI or a pipe, whatever this says.
+    #[arg(long, global = true, value_name = "LIST", allow_hyphen_values = true)]
+    term_protocols: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -307,6 +316,27 @@ fn main() -> std::process::ExitCode {
             accessible,
         },
     );
+
+    let overrides = match term::overrides(cli.term_protocols.as_deref()) {
+        Ok(o) => o,
+        Err(e) => {
+            let code = out.fail(
+                &AppError::new("INVALID_ARGUMENT", Exit::Usage, e, "preflight").with_hint(
+                    "preflight describe --json  # terminal_protocols lists the names; e.g. --term-protocols=-all,+progress",
+                ),
+            );
+            return std::process::ExitCode::from(u8::try_from(code).unwrap_or(2));
+        }
+    };
+    // Only the rebuild run draws the TUI, so only it probes for the keyboard
+    // protocol. `schema` is static and never probes.
+    if !matches!(cli.command, Some(Cmd::Schema)) {
+        let caps = term::init(out.attended, out.tui && cli.command.is_none(), overrides);
+        if cli.verbose {
+            out.say(Level::Info, &caps.summary());
+        }
+        term::install_signal_handlers(ui::quiesce_for_signal, ui::restore_after_signal);
+    }
 
     let code = match &cli.command {
         Some(Cmd::Schema) => cmd_schema(out),
@@ -593,7 +623,8 @@ fn cmd_schema(out: Out) -> i32 {
                     "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends for interactive sudo/SSH prompts and for the full duration of doas/run0 privileged commands, including the rebuild",
                     "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
                     "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
-                    "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization"
+                    "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization",
+                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe. In --tui, `y` copies the selected task (Tasks focus) or the log (Output focus) with OSC 52"
                 }
             },
             "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },
@@ -621,7 +652,14 @@ fn cmd_schema(out: Out) -> i32 {
             "timing": "before git sync, updates, and the TUI; skipped for dry builds and subcommands",
             "expiry": "system policy; no background refresh"
         },
-        "low_water_bytes": disk::LOW_WATER_BYTES
+        "low_water_bytes": disk::LOW_WATER_BYTES,
+        "terminal_protocols": {
+            "environment": term::ENV,
+            "flag": "--term-protocols",
+            "names": term::Protocol::ALL.iter().map(|p| p.name()).collect::<Vec<_>>(),
+            "used": ["keyboard", "clipboard", "progress"],
+            "precedence": "flag over environment over detection; the agent/CI/non-TTY gate always wins"
+        }
     });
     let human = format!("{schema:#}\n");
     out.emit("preflight schema", &schema, false, &human);
@@ -649,7 +687,9 @@ fn cmd_describe(out: Out) -> i32 {
             "auth-notifications",
             "startup-authentication",
             "accessible-mode",
+            "terminal-protocols",
         ],
+        "terminal_protocols": term::caps(),
         "external_tools": external_tools(),
         "privilege_tools": ["sudo", "doas", "run0"],
         "privilege_tool_environment": auth::TOOL_ENV,
@@ -837,10 +877,7 @@ mod tests {
             resolve_a11y(None, Some(false), true),
             (false, A11ySource::Env)
         );
-        assert_eq!(
-            resolve_a11y(None, None, true),
-            (true, A11ySource::Hint)
-        );
+        assert_eq!(resolve_a11y(None, None, true), (true, A11ySource::Hint));
         assert_eq!(
             resolve_a11y(None, None, false),
             (false, A11ySource::Default)
