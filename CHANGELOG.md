@@ -20,13 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with OSC 52. Nothing is sent to an agent, CI, a pipe or the Linux console,
   and every mode is undone on exit, panic and SIGINT/SIGTERM/SIGHUP.
   `--term-protocols` / `SPACECRAFT_TERM_PROTOCOLS` force each one on or off.
-<<<<<<< Updated upstream
 - **WezTerm has the kitty keyboard protocol on** (`enable_kitty_keyboard`, off
   by default upstream), in both the system and the user config, so Preflight's
   `--tui` and Construct's explore view get exact `Esc` and modifier keys.
   Programs that do not ask for it still receive ordinary keys.
-=======
->>>>>>> Stashed changes
 - **`bravais-cli rewrite --copy` and `suggest --copy`** put the result on the
   clipboard with OSC 52, which works over SSH and through tmux.
 
