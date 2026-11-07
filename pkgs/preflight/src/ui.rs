@@ -57,6 +57,7 @@ use ratatui::Terminal;
 use crate::output::{Level, Out};
 use crate::progress;
 use crate::steps::{Options, Outcome};
+use crate::term;
 
 /// Redraw cadence for the persistent status bar and TUI event loop.
 const UI_TICK: Duration = Duration::from_millis(100);
@@ -107,6 +108,8 @@ struct State {
 }
 
 static ACTIVE: AtomicBool = AtomicBool::new(false);
+/// The alternate screen and raw mode are on (the `--tui` view, not suspended).
+static TUI_ON: AtomicBool = AtomicBool::new(false);
 static STOP_DRAWER: AtomicBool = AtomicBool::new(false);
 static STATE: OnceLock<Mutex<Option<State>>> = OnceLock::new();
 
@@ -129,6 +132,22 @@ impl Drop for Session {
             let _ = h.join();
         }
         ACTIVE.store(false, Ordering::Release);
+        let failed = state_lock().lock().ok().and_then(|g| {
+            g.as_ref().map(|st| {
+                let (_, _, pct) = overall_counts(st);
+                st.tasks
+                    .iter()
+                    .any(|t| t.status == TaskStatus::Done(Outcome::Failed))
+                    .then_some(pct)
+            })
+        });
+        if let Some(Some(pct)) = failed {
+            // Show red for a moment before clearing: the indicator must not
+            // outlive the run (skill §2.3), but a failure should be seen.
+            term::taskbar(term::Taskbar::Error(pct));
+            std::thread::sleep(Duration::from_millis(800));
+        }
+        term::taskbar_clear();
         if self.tui {
             restore_terminal();
         } else {
@@ -224,10 +243,9 @@ pub fn start(out: Out, opts: Options<'_>) -> Option<Session> {
     ACTIVE.store(true, Ordering::Release);
 
     let tui = out.tui;
+    install_panic_hook();
     if tui {
-        install_panic_hook();
-        let _ = enable_raw_mode();
-        let _ = std::io::stderr().execute(EnterAlternateScreen);
+        enter_terminal();
     }
 
     let drawer = std::thread::Builder::new()
@@ -244,20 +262,62 @@ pub fn start(out: Out, opts: Options<'_>) -> Option<Session> {
     Some(Session { drawer, tui })
 }
 
+/// Restore before the panic message prints, so it lands on a sane terminal:
+/// keyboard flags popped, progress cleared, and -- in the TUI -- the
+/// alternate screen left.
 fn install_panic_hook() {
     static HOOK_ONCE: OnceLock<()> = OnceLock::new();
     HOOK_ONCE.get_or_init(|| {
         let prev = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |info| {
-            restore_terminal();
+            term::restore();
+            if TUI_ON.load(Ordering::Acquire) {
+                restore_terminal();
+            }
             prev(info);
         }));
     });
 }
 
+/// Raw mode, then the alternate screen, then the kitty keyboard flags -- the
+/// flags last because each screen keeps its own stack (keyboard rule 1).
+fn enter_terminal() {
+    let _ = enable_raw_mode();
+    let _ = std::io::stderr().execute(EnterAlternateScreen);
+    term::keyboard_push();
+    TUI_ON.store(true, Ordering::Release);
+}
+
+/// The reverse of [`enter_terminal`]: pop the flags while still on the
+/// alternate screen, then leave it, then leave raw mode.
 fn restore_terminal() {
-    let _ = disable_raw_mode();
+    TUI_ON.store(false, Ordering::Release);
+    term::keyboard_pop();
     let _ = std::io::stderr().execute(LeaveAlternateScreen);
+    let _ = disable_raw_mode();
+}
+
+/// First half of the SIGINT / SIGTERM / SIGHUP teardown: stop the drawer and
+/// give it one tick to leave its loop, so it cannot draw a frame (or re-send
+/// the progress indicator) after the terminal has been restored.
+pub fn quiesce_for_signal() {
+    if active() {
+        STOP_DRAWER.store(true, Ordering::Release);
+        std::thread::sleep(UI_TICK + Duration::from_millis(50));
+    }
+}
+
+/// Second half, run by `term`'s signal thread after it has popped the
+/// keyboard flags and cleared the progress indicator.
+pub fn restore_after_signal() {
+    if TUI_ON.load(Ordering::Acquire) {
+        restore_terminal();
+        // The drawer's `Terminal` may not have been dropped (and so not have
+        // shown the cursor) before the process dies of the signal.
+        let _ = std::io::stderr().execute(crossterm::cursor::Show);
+    } else if active() {
+        progress::clear();
+    }
 }
 
 /// Mark `name` as the currently running step. Inserts it into the task list if
@@ -480,8 +540,7 @@ pub fn suspend_for<T>(f: impl FnOnce() -> T) -> T {
     let out = f();
 
     if is_tui {
-        let _ = enable_raw_mode();
-        let _ = std::io::stderr().execute(EnterAlternateScreen);
+        enter_terminal();
     }
     if let Ok(mut g) = state_lock().lock() {
         if let Some(st) = g.as_mut() {
@@ -739,7 +798,12 @@ fn overall_counts(st: &State) -> (usize, usize, u8) {
         .filter(|t| matches!(t.status, TaskStatus::Done(_)))
         .count();
     let sub_share = usize::from(st.sub_progress.unwrap_or(0).min(100));
-    let num = done * 100 + if st.current_step.is_some() { sub_share } else { 0 };
+    let num = done * 100
+        + if st.current_step.is_some() {
+            sub_share
+        } else {
+            0
+        };
     let pct = u8::try_from((num / total).min(100)).unwrap_or(100);
     (done, total, pct)
 }
@@ -761,10 +825,23 @@ fn render_bar_line(st: &State) -> String {
         .map_or_else(|| took.clone(), |s| progress::elapsed(s.elapsed()));
     match st.activity.as_deref() {
         Some(act) if !act.is_empty() && act != step => {
-            format!("{spin} {bar} {pct:>3}% [{done}/{total}] {step} ({step_elapsed}): {act}  [{took}]")
+            format!(
+                "{spin} {bar} {pct:>3}% [{done}/{total}] {step} ({step_elapsed}): {act}  [{took}]"
+            )
         }
         _ => format!("{spin} {bar} {pct:>3}% [{done}/{total}] {step} ({step_elapsed})  [{took}]"),
     }
+}
+
+/// Mirror the overall gauge into the terminal's tab (OSC 9;4), shown as
+/// paused while a password or fingerprint prompt waits on the user.
+fn report_taskbar(st: &State) {
+    let (_, _, pct) = overall_counts(st);
+    term::taskbar(if st.auth_waiting.is_some() {
+        term::Taskbar::Paused(pct)
+    } else {
+        term::Taskbar::Normal(pct)
+    });
 }
 
 fn bar_loop() {
@@ -775,6 +852,7 @@ fn bar_loop() {
                 return None;
             }
             st.tick = st.tick.wrapping_add(1);
+            report_taskbar(st);
             Some(render_bar_line(st))
         });
         if let Some(l) = line {
@@ -852,6 +930,7 @@ fn tui_loop() {
         if let Ok(mut guard) = state_lock().lock() {
             if let Some(st) = guard.as_mut() {
                 st.tick = st.tick.wrapping_add(1);
+                report_taskbar(st);
                 let _ = terminal.draw(|f| draw_tui(f, st));
             }
         }
@@ -875,6 +954,7 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) {
         KeyCode::Tab => {
             st.focus_tasks = !st.focus_tasks;
         }
+        KeyCode::Char('y') if !mods.contains(KeyModifiers::CONTROL) => copy_selection(st),
         KeyCode::Up | KeyCode::Char('k') => {
             if st.focus_tasks {
                 st.selected_task = st.selected_task.saturating_sub(1);
@@ -934,6 +1014,62 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) {
     }
 }
 
+/// `y`: copy the selected task (Tasks focus) or the retained log (Output
+/// focus) with OSC 52, and say in the log what happened -- the terminal never
+/// acknowledges, so a user on one without OSC 52 must be told how to copy
+/// by hand (references/clipboard.md rule 2).
+fn copy_selection(st: &mut State) {
+    let (what, text) = if st.focus_tasks {
+        let Some(t) = st.tasks.get(st.selected_task) else {
+            return;
+        };
+        let status = match t.status {
+            TaskStatus::Pending => "pending",
+            TaskStatus::Running => "running",
+            TaskStatus::Done(Outcome::Ok) => "ok",
+            TaskStatus::Done(Outcome::Skipped) => "skipped",
+            TaskStatus::Done(Outcome::Failed) => "failed",
+        };
+        let line = match &t.detail {
+            Some(d) => format!("{}: {status} ({d})", t.name),
+            None => format!("{}: {status}", t.name),
+        };
+        (format!("task {}", t.name), line)
+    } else {
+        // Newest lines first into the budget, so an over-long log keeps the
+        // end -- the part with the failure in it.
+        let mut budget = term::CLIPBOARD_MAX;
+        let mut kept: Vec<&str> = Vec::new();
+        for l in st.logs.iter().rev() {
+            let cost = l.len() + 1;
+            if cost > budget {
+                break;
+            }
+            budget -= cost;
+            kept.push(l);
+        }
+        kept.reverse();
+        let note = if kept.len() < st.logs.len() {
+            format!("the last {} of {} log lines", kept.len(), st.logs.len())
+        } else {
+            format!("{} log lines", kept.len())
+        };
+        (note, kept.join("\n"))
+    };
+    let msg = match term::copy(&text) {
+        term::Copied::Sent { bytes } => format!(
+            "[INFO] copied {what} ({bytes} bytes) via OSC 52; if the clipboard is empty, this terminal lacks OSC 52 -- Shift+drag selects text by hand"
+        ),
+        term::Copied::TooLarge { bytes } => {
+            format!("[WARN] {what} is {bytes} bytes, over the {} byte OSC 52 limit; not copied", term::CLIPBOARD_MAX)
+        }
+        term::Copied::Unavailable => {
+            "[WARN] clipboard is off (--term-protocols / SPACECRAFT_TERM_PROTOCOLS); not copied".to_owned()
+        }
+    };
+    push_log(st, &msg);
+}
+
 fn draw_tui(f: &mut ratatui::Frame<'_>, st: &State) {
     let pal = Palette::for_out(st.out);
     let area = f.area();
@@ -984,9 +1120,7 @@ fn draw_header(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette
             crate::steps::HOST
         )
     } else {
-        format!(
-            " {spin} preflight — [{done}/{total}] {step}: {act} ({took}) "
-        )
+        format!(" {spin} preflight — [{done}/{total}] {step}: {act} ({took}) ")
     };
 
     let border_color = if st.auth_waiting.is_some() {
@@ -1137,7 +1271,7 @@ fn draw_logs(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) 
 fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) {
     let focus = if st.focus_tasks { "Tasks" } else { "Output" };
     let text = format!(
-        " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Abort: q / Esc / Ctrl+C"
+        " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Abort: q / Esc / Ctrl+C"
     );
     let p = Paragraph::new(Span::styled(text, Style::default().fg(pal.structure)));
     f.render_widget(p, area);

@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Preflight shows its progress in the terminal tab and copies with `y`.**
+  On terminals known to handle it (Windows Terminal, Ghostty, foot, Rio,
+  VS Code, iTerm2 3.6+, kitty 0.39+, WezTerm builds from 2025-02-10), the
+  overall gauge appears in the tab or taskbar via OSC 9;4, paused while a
+  password or fingerprint prompt waits. In `--tui`, the kitty keyboard
+  protocol makes `Esc` exact, and `y` copies the selected task or the log
+  with OSC 52. Nothing is sent to an agent, CI, a pipe or the Linux console,
+  and every mode is undone on exit, panic and SIGINT/SIGTERM/SIGHUP.
+  `--term-protocols` / `SPACECRAFT_TERM_PROTOCOLS` force each one on or off.
+- **WezTerm has the kitty keyboard protocol on** (`enable_kitty_keyboard`, off
+  by default upstream), in both the system and the user config, so Preflight's
+  `--tui` and Construct's explore view get exact `Esc` and modifier keys.
+  Programs that do not ask for it still receive ordinary keys.
+- **`bravais-cli rewrite --copy` and `suggest --copy`** put the result on the
+  clipboard with OSC 52, which works over SSH and through tmux.
+
 - **The GNOME Shell browser extension works in Chrome, Brave, Edge, Opera and
   BrowserOS.** Upstream `gnome-browser-connector` only writes `/etc/opt/chrome`
   and `/etc/chromium` on the host, which the Flatpak browsers and BrowserOS do
@@ -21,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the host, matching the KDE Plasma Browser Integration path.
 
 ### Fixed
+
+- **`bravais-cli` no longer writes colour codes into pipes or agent output.**
+  Human output is plain unless stdout is a terminal with no agent variable,
+  `NO_COLOR` or `--no-color`; agent detection is now presence-based and also
+  honours `AGENT` and `CI`; arguments carrying control characters are refused
+  (exit 2), and JSON timestamps are whole-second UTC.
 
 - **Routine Preflight runs do not start external application updates.** AI-tool
   updaters run only with `--update-ai-tools` (or `--full-update`); Flatpaks
