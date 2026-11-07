@@ -357,6 +357,16 @@ in
       config.hide_tab_bar_if_only_one_tab = true
       config.default_prog = { "${shell}" }
 
+      -- Terminal protocols (spacecraft-tui-protocols, references/wezterm.md).
+      -- The kitty keyboard protocol is off by default in WezTerm; with it on,
+      -- a program that asks (CSI > flags u) can tell Esc from Alt chords and
+      -- Tab from Ctrl+I, as Preflight's --tui and Construct's explore view do.
+      -- Programs that never push flags still get legacy keys, so shells and
+      -- older TUIs are unaffected.
+      config.enable_kitty_keyboard = true
+      -- Already the default; stated so the image path is not lost by accident.
+      config.enable_kitty_graphics = true
+
       -- Steelbore color scheme
       config.colors = {
         foreground = "${theme.foreground}",
