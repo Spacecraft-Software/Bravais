@@ -410,7 +410,7 @@ fn main() {
                 "exit_codes": {
                     "0": "success",
                     "1": "general failure",
-                    "2": "usage error (INVALID_ARGUMENT: unknown terminal protocol, or a control character in an argument)",
+                    "2": "usage error (INVALID_ARGUMENT: unknown terminal protocol, a control character in an argument, or an unsupported mcp --transport)",
                     "3": "not found (NOT_FOUND: no mapping for the tool)"
                 }
             });

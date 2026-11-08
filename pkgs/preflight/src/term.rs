@@ -463,10 +463,27 @@ const DRAIN_MAX: Duration = Duration::from_millis(100);
 /// the line is not answering a probe, and reading stops.
 const PROBE_MAX_BYTES: usize = 4096;
 
-/// The termios the probe saved, held while the probe has the terminal raw.
-/// SIGTERM or SIGHUP mid-probe kills the process before `RawGuard` drops, so
-/// the signal thread puts this back first ([`install_signal_handlers`]).
-static PROBE_SAVED: Mutex<Option<rustix::termios::Termios>> = Mutex::new(None);
+/// Set once the signal thread is running: SIGINT then ends the process
+/// through it, never by the default action.
+static SIGNAL_THREAD: AtomicBool = AtomicBool::new(false);
+
+/// Who owns the terminal's modes during the probe, shared with the signal
+/// thread. SIGTERM or SIGHUP mid-probe kills the process before `RawGuard`
+/// drops, so the signal thread puts the saved termios back first
+/// ([`install_signal_handlers`]).
+enum ProbeTty {
+    /// No probe has the terminal raw.
+    Idle,
+    /// The probe switched to raw; this is the termios to put back.
+    Raw(rustix::termios::Termios),
+    /// The signal thread has restored and the process is exiting: a probe
+    /// must not switch to raw now, or nothing would put the modes back.
+    Exiting,
+}
+
+/// The switch to raw and the signal thread's restore both run under this
+/// lock, so the restore cannot fall between the probe's publish and switch.
+static PROBE_TTY: Mutex<ProbeTty> = Mutex::new(ProbeTty::Idle);
 
 /// What the user typed while the probe owned the terminal: every byte read
 /// that was not a reply (skill §2.2 hands these to the input path).
@@ -491,22 +508,32 @@ struct RawGuard<'a> {
 
 impl Drop for RawGuard<'_> {
     fn drop(&mut self) {
+        // A poisoned lock still guards the state; restore regardless.
+        let mut slot = PROBE_TTY
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let _ = rustix::termios::tcsetattr(
             self.tty,
             rustix::termios::OptionalActions::Now,
             &self.saved,
         );
-        if let Ok(mut slot) = PROBE_SAVED.lock() {
-            *slot = None;
+        if matches!(*slot, ProbeTty::Raw(_)) {
+            *slot = ProbeTty::Idle;
         }
     }
 }
 
-/// Put back the termios a probe in flight saved. Run by the signal thread.
+/// Put back the termios a probe in flight saved, and stop any later probe
+/// from switching to raw. Run by the signal thread just before the process
+/// exits.
 fn restore_probe_termios() {
-    let saved = PROBE_SAVED.lock().ok().and_then(|mut s| s.take());
-    if let (Some(saved), Ok(tty)) = (saved, OpenOptions::new().write(true).open("/dev/tty")) {
-        let _ = rustix::termios::tcsetattr(&tty, rustix::termios::OptionalActions::Now, &saved);
+    let mut slot = PROBE_TTY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let ProbeTty::Raw(saved) = std::mem::replace(&mut *slot, ProbeTty::Exiting) {
+        if let Ok(tty) = OpenOptions::new().write(true).open("/dev/tty") {
+            let _ = rustix::termios::tcsetattr(&tty, rustix::termios::OptionalActions::Now, &saved);
+        }
     }
 }
 
@@ -529,15 +556,19 @@ fn probe(want_keyboard: bool, deadline: Duration) -> Option<Reply> {
     let saved = tcgetattr(&tty).ok()?;
     let mut raw = saved.clone();
     raw.make_raw();
-    if let Ok(mut slot) = PROBE_SAVED.lock() {
-        *slot = Some(saved.clone());
+    let mut slot = PROBE_TTY.lock().ok()?;
+    if matches!(*slot, ProbeTty::Exiting) {
+        return None;
     }
-    // The guard first, so a failed switch still clears `PROBE_SAVED`.
+    // Switch and publish under the lock: the signal thread either runs
+    // before (and the check above stops us) or after (and restores).
+    tcsetattr(&tty, OptionalActions::Now, &raw).ok()?;
+    *slot = ProbeTty::Raw(saved.clone());
+    drop(slot);
     let guard = RawGuard {
         tty: &tty,
         saved: saved.clone(),
     };
-    tcsetattr(&tty, OptionalActions::Now, &raw).ok()?;
 
     let mut query: Vec<u8> = Vec::with_capacity(24);
     if want_keyboard {
@@ -557,7 +588,8 @@ fn probe(want_keyboard: bool, deadline: Duration) -> Option<Reply> {
         if buf.len() >= PROBE_MAX_BYTES || !readable(guard.tty, wait) {
             return false;
         }
-        match io.read(&mut chunk) {
+        let room = (PROBE_MAX_BYTES - buf.len()).min(chunk.len());
+        match io.read(&mut chunk[..room]) {
             Ok(0) | Err(_) => false,
             Ok(n) => {
                 buf.extend_from_slice(&chunk[..n]);
@@ -604,6 +636,15 @@ fn deliver_typeahead(typed: &[u8], saved: &rustix::termios::Termios) {
         match signals.iter().find(|(c, _)| isig && *c == Some(b)) {
             Some(&(_, sig)) => {
                 let _ = signal_hook::low_level::raise(sig);
+                // Our signal thread handles SIGINT on its own schedule and
+                // ends the process. Going on meanwhile would let this thread
+                // switch the TUI to raw after that thread's restore, leaving
+                // the terminal raw at exit, so wait here for it.
+                if sig == SIGINT && SIGNAL_THREAD.load(Ordering::Acquire) {
+                    loop {
+                        std::thread::park();
+                    }
+                }
             }
             None => kept.push(b),
         }
@@ -967,7 +1008,7 @@ pub fn install_signal_handlers(attended: bool, quiesce: fn(), teardown: fn()) {
     let Ok(mut signals) = signal_hook::iterator::Signals::new([SIGINT, SIGTERM, SIGHUP]) else {
         return;
     };
-    let _ = std::thread::Builder::new()
+    let spawned = std::thread::Builder::new()
         .name("preflight-signals".into())
         .spawn(move || {
             if let Some(sig) = signals.forever().next() {
@@ -982,6 +1023,7 @@ pub fn install_signal_handlers(attended: bool, quiesce: fn(), teardown: fn()) {
                 std::process::exit(128 + sig);
             }
         });
+    SIGNAL_THREAD.store(spawned.is_ok(), Ordering::Release);
 }
 
 #[cfg(test)]

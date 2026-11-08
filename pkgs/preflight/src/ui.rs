@@ -967,6 +967,15 @@ fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
                         _ => None,
                     }
                 }
+                // GNU Screen and the Linux console send Home and End as these.
+                (Some(b'['), Some(&n @ (b'1' | b'4')), Some(b'~')) => {
+                    i += 3;
+                    Some(if n == b'1' {
+                        KeyCode::Home
+                    } else {
+                        KeyCode::End
+                    })
+                }
                 (Some(b'['), Some(&n @ (b'5' | b'6')), Some(b'~')) => {
                     i += 3;
                     Some(if n == b'5' {
@@ -982,6 +991,14 @@ fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
                         i += 1;
                     }
                     i += 1;
+                    None
+                }
+                // Alt+key in a terminal that sends it as ESC + key: one key
+                // with ALT, as crossterm reports it live, never Esc (abort)
+                // followed by the key.
+                (Some(&c @ 0x20..=0x7e), ..) => {
+                    i += 1;
+                    keys.push((KeyCode::Char(char::from(c)), KeyModifiers::ALT));
                     None
                 }
                 _ => Some(KeyCode::Esc),
@@ -1364,7 +1381,7 @@ mod tests {
 
     #[test]
     fn legacy_keys_decode_typeahead() {
-        let k = legacy_keys(b"q\x1b[A\x1b[6~\x03\x1b\t\x1b[1;5C");
+        let k = legacy_keys(b"q\x1b[A\x1b[6~\x03\x1b\t\x1b[1;5C\x1b[1~\x1b[4~\x1bj\x1b");
         assert_eq!(
             k,
             vec![
@@ -1374,6 +1391,10 @@ mod tests {
                 (KeyCode::Char('c'), KeyModifiers::CONTROL),
                 (KeyCode::Esc, KeyModifiers::NONE),
                 (KeyCode::Tab, KeyModifiers::NONE),
+                (KeyCode::Home, KeyModifiers::NONE),
+                (KeyCode::End, KeyModifiers::NONE),
+                (KeyCode::Char('j'), KeyModifiers::ALT),
+                (KeyCode::Esc, KeyModifiers::NONE),
             ]
         );
     }
