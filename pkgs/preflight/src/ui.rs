@@ -281,11 +281,16 @@ fn install_panic_hook() {
 
 /// Raw mode, then the alternate screen, then the kitty keyboard flags -- the
 /// flags last because each screen keeps its own stack (keyboard rule 1).
+///
+/// Under [`term::raw_entry`], so a signal's teardown either sees `TUI_ON`
+/// and leaves all of it, or runs first and raw mode is never turned on.
 fn enter_terminal() {
-    let _ = enable_raw_mode();
-    let _ = std::io::stderr().execute(EnterAlternateScreen);
-    term::keyboard_push();
-    TUI_ON.store(true, Ordering::Release);
+    term::raw_entry(|| {
+        let _ = enable_raw_mode();
+        let _ = std::io::stderr().execute(EnterAlternateScreen);
+        term::keyboard_push();
+        TUI_ON.store(true, Ordering::Release);
+    });
 }
 
 /// The reverse of [`enter_terminal`]: pop the flags while still on the

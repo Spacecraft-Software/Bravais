@@ -523,10 +523,11 @@ impl Drop for RawGuard<'_> {
     }
 }
 
-/// Put back the termios a probe in flight saved, and stop any later probe
-/// from switching to raw. Run by the signal thread just before the process
-/// exits.
-fn restore_probe_termios() {
+/// Put back the termios a probe in flight saved, and stop any later switch
+/// to raw. Run by the signal thread, which keeps the returned guard until
+/// the process exits: a probe or [`raw_entry`] waiting on the lock then never
+/// turns raw mode on after the restore.
+fn begin_exit() -> std::sync::MutexGuard<'static, ProbeTty> {
     let mut slot = PROBE_TTY
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -535,6 +536,27 @@ fn restore_probe_termios() {
             let _ = rustix::termios::tcsetattr(&tty, rustix::termios::OptionalActions::Now, &saved);
         }
     }
+    slot
+}
+
+/// Run `enter`, the caller's switch into raw mode (and whatever it marks as
+/// on for the signal teardown), unless the signal thread has begun its
+/// restore. Then the process is about to exit, and this waits for that
+/// rather than leave the terminal raw behind the teardown. `enter` must not
+/// call back into this module's probe.
+pub fn raw_entry<T>(enter: impl FnOnce() -> T) -> T {
+    let slot = PROBE_TTY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if matches!(*slot, ProbeTty::Exiting) {
+        drop(slot);
+        loop {
+            std::thread::park();
+        }
+    }
+    let out = enter();
+    drop(slot);
+    out
 }
 
 /// `None` when the probe could not run at all (no `/dev/tty`, no termios,
@@ -1012,8 +1034,9 @@ pub fn install_signal_handlers(attended: bool, quiesce: fn(), teardown: fn()) {
         .name("preflight-signals".into())
         .spawn(move || {
             if let Some(sig) = signals.forever().next() {
-                // Mid-probe the terminal is raw; put it back before anything.
-                restore_probe_termios();
+                // Mid-probe the terminal is raw; put it back before anything,
+                // and hold the lock to exit so nothing turns raw mode back on.
+                let _exiting = begin_exit();
                 quiesce();
                 FROZEN.store(true, Ordering::Release);
                 restore();
