@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Programs that do not ask for it still receive ordinary keys.
 - **`bravais-cli rewrite --copy` and `suggest --copy`** put the result on the
   clipboard with OSC 52, which works over SSH and through tmux.
-
 - **The GNOME Shell browser extension works in Chrome, Brave, Edge, Opera and
   BrowserOS.** Upstream `gnome-browser-connector` only writes `/etc/opt/chrome`
   and `/etc/chromium` on the host, which the Flatpak browsers and BrowserOS do
@@ -37,6 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the host, matching the KDE Plasma Browser Integration path.
 
 ### Fixed
+
+- **Preflight's startup probe no longer leaves the terminal raw or eats
+  keys.** A SIGTERM or SIGHUP in its first 200 ms used to kill it with the
+  terminal still in raw mode; Ctrl-C there did nothing, and a key typed then
+  vanished. Now the terminal is restored first, Ctrl-C works, and `--tui`
+  acts on the keys. The probe also skips background jobs and stops draining
+  after 100 ms.
+- **Preflight's `--tui` footer keeps `Copy: y` and `Abort: q` on screen** at
+  80 columns, by switching to a shorter key list on narrow terminals.
+- **`bravais-cli suggest` and `reference` exit 3 for an unknown tool with
+  `--json`**, as without it; they exited 0. An unsupported `mcp --transport`
+  is now a structured usage error (exit 2) with a hint.
 
 - **`bravais-cli` no longer writes colour codes into pipes or agent output.**
   Human output is plain unless stdout is a terminal with no agent variable,

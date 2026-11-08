@@ -22,8 +22,11 @@
 //    `linux` (the kernel console prints unknown OSC payloads as text).
 // 2. Probe once -- `probe()`: one write of `CSI ? u` (only when the TUI will
 //    read keys), XTVERSION and a trailing DA1, read from `/dev/tty` in raw mode
-//    with `poll(2)` under a 200 ms deadline, then a 20 ms drain so a late reply
-//    never lands in the shell as typed text. Never blocks.
+//    with `poll(2)` under a 200 ms deadline, then a drain (quiet for 20 ms,
+//    100 ms at most) so a late reply never lands in the shell as typed text.
+//    Never blocks, and only runs in the terminal's foreground process group.
+//    Keys typed meanwhile are kept for the TUI (`take_typeahead`), and the
+//    interrupt, quit and suspend keys still raise their signals.
 // 3. Restore -- `restore()` pops the keyboard flags and clears the progress
 //    indicator; `ui` calls it before leaving the alternate screen, the panic
 //    hook calls it, and `install_signal_handlers` runs it on SIGINT, SIGTERM
@@ -452,6 +455,33 @@ struct Reply {
     da1: bool,
 }
 
+/// After the fence, never drain for longer than this in all, however
+/// steadily a terminal (or a held-down key) keeps the line busy.
+const DRAIN_MAX: Duration = Duration::from_millis(100);
+
+/// Most the probe reads. Every reply together is under 200 bytes; past this
+/// the line is not answering a probe, and reading stops.
+const PROBE_MAX_BYTES: usize = 4096;
+
+/// The termios the probe saved, held while the probe has the terminal raw.
+/// SIGTERM or SIGHUP mid-probe kills the process before `RawGuard` drops, so
+/// the signal thread puts this back first ([`install_signal_handlers`]).
+static PROBE_SAVED: Mutex<Option<rustix::termios::Termios>> = Mutex::new(None);
+
+/// What the user typed while the probe owned the terminal: every byte read
+/// that was not a reply (skill §2.2 hands these to the input path).
+static TYPEAHEAD: Mutex<Vec<u8>> = Mutex::new(Vec::new());
+
+/// Take the keys typed during the probe, for the TUI to replay as input. In
+/// any other mode nothing reads keys, and they are dropped: a raw read cannot
+/// be pushed back (`TIOCSTI` is disabled by default since Linux 6.2).
+pub fn take_typeahead() -> Vec<u8> {
+    TYPEAHEAD
+        .lock()
+        .map(|mut t| std::mem::take(&mut *t))
+        .unwrap_or_default()
+}
+
 /// Restores the saved termios on drop, so an early return (or a panic in the
 /// read loop) never leaves the user's terminal raw.
 struct RawGuard<'a> {
@@ -466,23 +496,48 @@ impl Drop for RawGuard<'_> {
             rustix::termios::OptionalActions::Now,
             &self.saved,
         );
+        if let Ok(mut slot) = PROBE_SAVED.lock() {
+            *slot = None;
+        }
     }
 }
 
-/// `None` when the probe could not run at all (no `/dev/tty`, no termios).
-/// Any failure inside it is "nothing supported", never an error: a failed
-/// probe must not stop a rebuild (references/detection.md).
+/// Put back the termios a probe in flight saved. Run by the signal thread.
+fn restore_probe_termios() {
+    let saved = PROBE_SAVED.lock().ok().and_then(|mut s| s.take());
+    if let (Some(saved), Ok(tty)) = (saved, OpenOptions::new().write(true).open("/dev/tty")) {
+        let _ = rustix::termios::tcsetattr(&tty, rustix::termios::OptionalActions::Now, &saved);
+    }
+}
+
+/// `None` when the probe could not run at all (no `/dev/tty`, no termios,
+/// or a background job). Any failure inside it is "nothing supported", never
+/// an error: a failed probe must not stop the program (references/detection.md).
 fn probe(want_keyboard: bool, deadline: Duration) -> Option<Reply> {
+    use rustix::termios::{tcgetattr, tcgetpgrp, tcsetattr, OptionalActions};
     let tty = OpenOptions::new()
         .read(true)
         .write(true)
         .open("/dev/tty")
         .ok()?;
-    let saved = rustix::termios::tcgetattr(&tty).ok()?;
+    // A background job that changes termios is stopped by SIGTTOU, and one
+    // that reads the terminal by SIGTTIN; replies would go to the foreground
+    // program anyway. Probe only from the foreground process group.
+    if tcgetpgrp(&tty).ok()? != rustix::process::getpgrp() {
+        return None;
+    }
+    let saved = tcgetattr(&tty).ok()?;
     let mut raw = saved.clone();
     raw.make_raw();
-    rustix::termios::tcsetattr(&tty, rustix::termios::OptionalActions::Now, &raw).ok()?;
-    let guard = RawGuard { tty: &tty, saved };
+    if let Ok(mut slot) = PROBE_SAVED.lock() {
+        *slot = Some(saved.clone());
+    }
+    // The guard first, so a failed switch still clears `PROBE_SAVED`.
+    let guard = RawGuard {
+        tty: &tty,
+        saved: saved.clone(),
+    };
+    tcsetattr(&tty, OptionalActions::Now, &raw).ok()?;
 
     let mut query: Vec<u8> = Vec::with_capacity(24);
     if want_keyboard {
@@ -498,29 +553,64 @@ fn probe(want_keyboard: bool, deadline: Duration) -> Option<Reply> {
 
     let mut buf = Vec::with_capacity(256);
     let mut chunk = [0u8; 512];
-    let end = Instant::now() + deadline;
-    let mut reply = Reply::default();
-    while let Some(left) = end.checked_duration_since(Instant::now()) {
-        if !readable(guard.tty, left) {
-            break;
+    let mut read_some = |buf: &mut Vec<u8>, wait: Duration| -> bool {
+        if buf.len() >= PROBE_MAX_BYTES || !readable(guard.tty, wait) {
+            return false;
         }
         match io.read(&mut chunk) {
-            Ok(0) | Err(_) => break,
-            Ok(n) => buf.extend_from_slice(&chunk[..n]),
+            Ok(0) | Err(_) => false,
+            Ok(n) => {
+                buf.extend_from_slice(&chunk[..n]);
+                true
+            }
         }
-        reply = parse_replies(&buf);
-        if reply.da1 {
+    };
+    let end = Instant::now() + deadline;
+    while let Some(left) = end.checked_duration_since(Instant::now()) {
+        if !read_some(&mut buf, left) || parse_replies(&buf).da1 {
             break;
         }
     }
-    // Swallow anything still in flight (skill §2.2 step 3).
-    while readable(guard.tty, DRAIN_QUIET) {
-        if matches!(io.read(&mut chunk), Ok(0) | Err(_)) {
+    let reply = parse_replies(&buf);
+    // Swallow anything still in flight (skill §2.2 step 3), until the line
+    // has been quiet for `DRAIN_QUIET` or `DRAIN_MAX` has passed.
+    let drain_end = Instant::now() + DRAIN_MAX;
+    while let Some(left) = drain_end.checked_duration_since(Instant::now()) {
+        if !read_some(&mut buf, left.min(DRAIN_QUIET)) {
             break;
         }
     }
     drop(guard);
+    deliver_typeahead(&split_replies(&buf).1, &saved);
     Some(reply)
+}
+
+/// Act on what the user typed during the probe, now that the terminal is
+/// cooked again. Raw mode turned the interrupt, quit and suspend keys into
+/// bytes; they become the signals the user asked for. The rest is kept for
+/// [`take_typeahead`].
+fn deliver_typeahead(typed: &[u8], saved: &rustix::termios::Termios) {
+    use rustix::termios::{LocalModes, SpecialCodeIndex};
+    use signal_hook::consts::{SIGINT, SIGQUIT, SIGTSTP};
+    let isig = saved.local_modes.contains(LocalModes::ISIG);
+    let key = |idx: SpecialCodeIndex| Some(saved.special_codes[idx]).filter(|&c| c != 0);
+    let signals = [
+        (key(SpecialCodeIndex::VINTR), SIGINT),
+        (key(SpecialCodeIndex::VQUIT), SIGQUIT),
+        (key(SpecialCodeIndex::VSUSP), SIGTSTP),
+    ];
+    let mut kept = Vec::new();
+    for &b in typed {
+        match signals.iter().find(|(c, _)| isig && *c == Some(b)) {
+            Some(&(_, sig)) => {
+                let _ = signal_hook::low_level::raise(sig);
+            }
+            None => kept.push(b),
+        }
+    }
+    if let Ok(mut t) = TYPEAHEAD.lock() {
+        t.extend_from_slice(&kept);
+    }
 }
 
 fn readable(tty: &File, wait: Duration) -> bool {
@@ -532,18 +622,27 @@ fn readable(tty: &File, wait: Duration) -> bool {
     matches!(poll(&mut fds, Some(&timeout)), Ok(n) if n > 0)
 }
 
-/// Scan everything read so far. Replies may arrive split across reads, so
-/// this re-reads the whole (tiny) buffer each time rather than keep state.
 fn parse_replies(buf: &[u8]) -> Reply {
+    split_replies(buf).0
+}
+
+/// Scan everything read so far into the replies found and the bytes that
+/// are not replies (keys typed meanwhile). Replies may arrive split across
+/// reads, so this re-reads the whole (tiny) buffer each time rather than keep
+/// state; a reply cut off by the end of the buffer counts as neither.
+fn split_replies(buf: &[u8]) -> (Reply, Vec<u8>) {
     let mut r = Reply::default();
+    let mut typed = Vec::new();
     let mut i = 0;
     while i < buf.len() {
         if buf[i] != 0x1b {
+            typed.push(buf[i]);
             i += 1;
             continue;
         }
+        let rest = &buf[i + 1..];
         // CSI ? <digits;…> u  (kitty keyboard flags)  /  … c  (DA1)
-        if buf[i + 1..].starts_with(b"[?") {
+        if rest.starts_with(b"[?") {
             let mut j = i + 3;
             while j < buf.len() && (buf[j].is_ascii_digit() || buf[j] == b';') {
                 j += 1;
@@ -551,34 +650,48 @@ fn parse_replies(buf: &[u8]) -> Reply {
             match buf.get(j) {
                 Some(b'u') => r.kitty_keyboard = true,
                 Some(b'c') => r.da1 = true,
-                _ => {}
+                // Cut off: the rest of it is still on the wire.
+                None => return (r, typed),
+                Some(_) => {}
             }
-            i = j;
+            i = j + 1;
             continue;
         }
         // DCS > | <text> ST  (XTVERSION), ST = ESC \ or BEL
-        if buf[i + 1..].starts_with(b"P>|") {
+        if rest.starts_with(b"P>|") {
             let body = &buf[i + 4..];
             let end = body
                 .iter()
                 .position(|&b| b == 0x1b || b == 0x07)
                 .filter(|&e| body[e] == 0x07 || body.get(e + 1) == Some(&b'\\'));
-            if let Some(e) = end {
-                let text: String = String::from_utf8_lossy(&body[..e])
-                    .chars()
-                    .filter(|c| !c.is_control())
-                    .take(64)
-                    .collect();
-                if !text.is_empty() {
-                    r.xtversion = Some(text);
-                }
-                i += 4 + e;
-                continue;
+            let Some(e) = end else {
+                return (r, typed);
+            };
+            let text: String = String::from_utf8_lossy(&body[..e])
+                .chars()
+                .filter(|c| !c.is_control())
+                .take(64)
+                .collect();
+            if !text.is_empty() {
+                r.xtversion = Some(text);
             }
+            i += 4 + e + usize::from(body[e] == 0x1b) + 1;
+            continue;
         }
+        // A lone trailing ESC is the Esc key once the line has gone quiet;
+        // while reading, it only matters that it is no reply yet.
+        if rest.is_empty() {
+            typed.push(0x1b);
+            return (r, typed);
+        }
+        // A prefix of either reply, cut off by the end of the buffer.
+        if rest == b"[" || rest == b"P" || rest == b"P>" {
+            return (r, typed);
+        }
+        typed.push(0x1b);
         i += 1;
     }
-    r
+    (r, typed)
 }
 
 // --- OSC 9;4 allow-list ---------------------------------------------------------
@@ -840,9 +953,14 @@ fn base64_into(input: &[u8], out: &mut String) {
 /// `quiesce` stops whatever draws (the caller's drawer thread) so nothing is
 /// written after the restore; `teardown` is the caller's own restore (the
 /// alternate screen, raw mode), run after this module's, in skill §2.3 order.
-pub fn install_signal_handlers(quiesce: fn(), teardown: fn()) {
+///
+/// Call before [`init`]: the probe it runs puts the terminal in raw mode,
+/// and a signal arriving then must find the handler in place. `attended` is
+/// the same value `init` gets; the handler is installed exactly when the
+/// gate lets `init` probe.
+pub fn install_signal_handlers(attended: bool, quiesce: fn(), teardown: fn()) {
     use signal_hook::consts::{SIGHUP, SIGINT, SIGTERM};
-    if !caps().gated {
+    if gate(attended, env("TERM").as_deref()).is_err() {
         // Nothing of ours to undo, and default signal behaviour is unchanged.
         return;
     }
@@ -853,6 +971,8 @@ pub fn install_signal_handlers(quiesce: fn(), teardown: fn()) {
         .name("preflight-signals".into())
         .spawn(move || {
             if let Some(sig) = signals.forever().next() {
+                // Mid-probe the terminal is raw; put it back before anything.
+                restore_probe_termios();
                 quiesce();
                 FROZEN.store(true, Ordering::Release);
                 restore();
@@ -919,6 +1039,18 @@ mod tests {
         assert_eq!(r.xtversion.as_deref(), Some("kitty(0.39.0)"));
         // A truncated buffer ending in ESC must not index out of bounds.
         assert_eq!(parse_replies(b"\x1b"), Reply::default());
+    }
+
+    #[test]
+    fn typed_bytes_are_kept_apart_from_replies() {
+        let (r, typed) = split_replies(b"q\x1b[?1uj\x1bP>|WezTerm 1\x1b\\\x1b[A\x1b[?62;4c\x03");
+        assert!(r.da1 && r.kitty_keyboard);
+        assert_eq!(r.xtversion.as_deref(), Some("WezTerm 1"));
+        assert_eq!(typed, b"qj\x1b[A\x03");
+        // A trailing lone ESC is the Esc key; a cut-off reply is neither.
+        assert_eq!(split_replies(b"\x1b").1, b"\x1b");
+        assert_eq!(split_replies(b"x\x1b[?6").1, b"x");
+        assert_eq!(split_replies(b"x\x1bP>|kit").1, b"x");
     }
 
     #[test]

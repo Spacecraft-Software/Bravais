@@ -907,6 +907,7 @@ fn tui_loop() {
         return;
     };
     let _ = terminal.clear();
+    replay_typeahead();
 
     while !STOP_DRAWER.load(Ordering::Acquire) {
         let is_suspended = state_lock()
@@ -935,6 +936,73 @@ fn tui_loop() {
             }
         }
     }
+}
+
+/// Feed the keys typed while the startup probe owned the terminal to
+/// [`handle_key`], so a `q` pressed in the first instant is not lost. The
+/// probe ran before raw mode and the kitty flags, so these are legacy
+/// encodings: plain bytes, control codes and the common `CSI` / `SS3` keys.
+fn replay_typeahead() {
+    for (code, mods) in legacy_keys(&term::take_typeahead()) {
+        handle_key(code, mods);
+    }
+}
+
+/// Decode legacy key bytes. Anything not recognised is skipped.
+fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
+    let mut keys = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        let b = bytes[i];
+        i += 1;
+        let key = match b {
+            0x1b => match (bytes.get(i), bytes.get(i + 1), bytes.get(i + 2)) {
+                (Some(b'[' | b'O'), Some(&f), _) if f.is_ascii_uppercase() => {
+                    i += 2;
+                    match f {
+                        b'A' => Some(KeyCode::Up),
+                        b'B' => Some(KeyCode::Down),
+                        b'H' => Some(KeyCode::Home),
+                        b'F' => Some(KeyCode::End),
+                        _ => None,
+                    }
+                }
+                (Some(b'['), Some(&n @ (b'5' | b'6')), Some(b'~')) => {
+                    i += 3;
+                    Some(if n == b'5' {
+                        KeyCode::PageUp
+                    } else {
+                        KeyCode::PageDown
+                    })
+                }
+                (Some(b'['), ..) => {
+                    // Some other CSI key: skip through its final byte.
+                    i += 1;
+                    while bytes.get(i).is_some_and(|c| !(0x40..=0x7e).contains(c)) {
+                        i += 1;
+                    }
+                    i += 1;
+                    None
+                }
+                _ => Some(KeyCode::Esc),
+            },
+            b'\t' => Some(KeyCode::Tab),
+            b'\r' | b'\n' => Some(KeyCode::Enter),
+            0x01..=0x1a => {
+                keys.push((
+                    KeyCode::Char(char::from(b'a' + b - 1)),
+                    KeyModifiers::CONTROL,
+                ));
+                None
+            }
+            0x20..=0x7e => Some(KeyCode::Char(char::from(b))),
+            _ => None,
+        };
+        if let Some(code) = key {
+            keys.push((code, KeyModifiers::NONE));
+        }
+    }
+    keys
 }
 
 fn handle_key(code: KeyCode, mods: KeyModifiers) {
@@ -1270,9 +1338,22 @@ fn draw_logs(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) 
 
 fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) {
     let focus = if st.focus_tasks { "Tasks" } else { "Output" };
-    let text = format!(
-        " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Abort: q / Esc / Ctrl+C"
-    );
+    // Longest first; the first that fits is shown, so `Copy: y` and
+    // `Abort: q` survive an 80-column terminal instead of being cut off.
+    let variants = [
+        format!(
+            " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Abort: q / Esc / Ctrl+C"
+        ),
+        format!(" Focus: {focus} (Tab) | Scroll: ↑/↓ j/k PgUp/PgDn g/G | Copy: y | Abort: q / Esc"),
+        format!(" {focus} (Tab) | ↑/↓ scroll | y copy | q abort"),
+        " y copy | q abort".to_owned(),
+    ];
+    let width = usize::from(area.width);
+    let text = variants
+        .iter()
+        .find(|v| v.chars().count() <= width)
+        .unwrap_or(&variants[variants.len() - 1])
+        .clone();
     let p = Paragraph::new(Span::styled(text, Style::default().fg(pal.structure)));
     f.render_widget(p, area);
 }
@@ -1280,6 +1361,22 @@ fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn legacy_keys_decode_typeahead() {
+        let k = legacy_keys(b"q\x1b[A\x1b[6~\x03\x1b\t\x1b[1;5C");
+        assert_eq!(
+            k,
+            vec![
+                (KeyCode::Char('q'), KeyModifiers::NONE),
+                (KeyCode::Up, KeyModifiers::NONE),
+                (KeyCode::PageDown, KeyModifiers::NONE),
+                (KeyCode::Char('c'), KeyModifiers::CONTROL),
+                (KeyCode::Esc, KeyModifiers::NONE),
+                (KeyCode::Tab, KeyModifiers::NONE),
+            ]
+        );
+    }
 
     #[test]
     fn fraction_percent_extracts_nix_and_vendored_counters() {

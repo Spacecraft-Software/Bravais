@@ -331,11 +331,16 @@ fn main() -> std::process::ExitCode {
     // Only the rebuild run draws the TUI, so only it probes for the keyboard
     // protocol. `schema` is static and never probes.
     if !matches!(cli.command, Some(Cmd::Schema)) {
+        // Handlers first: the probe in `init` has the terminal raw.
+        term::install_signal_handlers(
+            out.attended,
+            ui::quiesce_for_signal,
+            ui::restore_after_signal,
+        );
         let caps = term::init(out.attended, out.tui && cli.command.is_none(), overrides);
         if cli.verbose {
             out.say(Level::Info, &caps.summary());
         }
-        term::install_signal_handlers(ui::quiesce_for_signal, ui::restore_after_signal);
     }
 
     let code = match &cli.command {
