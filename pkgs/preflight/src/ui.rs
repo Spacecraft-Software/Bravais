@@ -972,6 +972,13 @@ fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
                         _ => None,
                     }
                 }
+                // Any other SS3 key (the keypad in application mode sends
+                // ESC O p..y), or one cut off by the end: skip it, never read
+                // its final byte as a key of its own.
+                (Some(b'O'), ..) => {
+                    i = (i + 2).min(bytes.len());
+                    None
+                }
                 // GNU Screen and the Linux console send Home and End as these.
                 (Some(b'['), Some(&n @ (b'1' | b'4')), Some(b'~')) => {
                     i += 3;
@@ -1386,7 +1393,9 @@ mod tests {
 
     #[test]
     fn legacy_keys_decode_typeahead() {
-        let k = legacy_keys(b"q\x1b[A\x1b[6~\x03\x1b\t\x1b[1;5C\x1b[1~\x1b[4~\x1bj\x1b");
+        let k = legacy_keys(
+            b"q\x1b[A\x1b[6~\x03\x1b\t\x1b[1;5C\x1b[1~\x1b[4~\x1bOq\x1bOy\x1bj\x1b\x1bO",
+        );
         assert_eq!(
             k,
             vec![
