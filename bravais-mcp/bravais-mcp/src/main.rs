@@ -132,7 +132,6 @@ fn main() {
     // CI truthy. `is_ok()` alone also matched an empty AI_AGENT.
     let is_json = args.json || args.format == "json" || term::agent_env();
     let color = !is_json && term::color_for(std::io::stdout().is_terminal(), args.no_color);
-    let ecolor = !is_json && term::color_for(std::io::stderr().is_terminal(), args.no_color);
 
     // Agentic CLI §7: a control character in an argument is either a mistake
     // or an injection attempt; echoing it back would put it on the terminal.
@@ -268,16 +267,14 @@ fn main() {
                     );
                 }
             } else {
-                let err_msg = format!("No mapping found for '{}'", tool);
-                if is_json {
-                    print_json_error("NOT_FOUND", &err_msg, 3);
-                } else {
-                    eprintln!(
-                        "{}",
-                        paint(ecolor, &format!("{}: {err_msg}", "error".red().bold()))
-                    );
-                    std::process::exit(3);
-                }
+                // Exit 3 in both modes; JSON mode used to exit 0 here.
+                fail(
+                    is_json,
+                    "NOT_FOUND",
+                    &format!("No mapping found for '{tool}'"),
+                    "bravais-cli list --json",
+                    3,
+                );
             }
         }
         Commands::List { category } => {
@@ -352,16 +349,14 @@ fn main() {
                     say!(color, "For more syntax details, check Loran (https://Loran.SpacecraftSoftware.org/).");
                 }
             } else {
-                let err_msg = format!("No reference manual found for '{}'", tool);
-                if is_json {
-                    print_json_error("NOT_FOUND", &err_msg, 3);
-                } else {
-                    eprintln!(
-                        "{}",
-                        paint(ecolor, &format!("{}: {err_msg}", "error".red().bold()))
-                    );
-                    std::process::exit(3);
-                }
+                // Exit 3 in both modes; JSON mode used to exit 0 here.
+                fail(
+                    is_json,
+                    "NOT_FOUND",
+                    &format!("No reference manual found for '{tool}'"),
+                    "bravais-cli list --json",
+                    3,
+                );
             }
         }
         Commands::Mcp { transport } => {
@@ -371,8 +366,13 @@ fn main() {
                     std::process::exit(1);
                 }
             } else {
-                eprintln!("Unsupported transport: {}", transport);
-                std::process::exit(2);
+                fail(
+                    is_json,
+                    "INVALID_ARGUMENT",
+                    &format!("unsupported transport '{transport}'; only 'stdio' exists"),
+                    "bravais-cli mcp --transport stdio",
+                    2,
+                );
             }
         }
         Commands::Schema => {
@@ -410,7 +410,7 @@ fn main() {
                 "exit_codes": {
                     "0": "success",
                     "1": "general failure",
-                    "2": "usage error (INVALID_ARGUMENT: unknown terminal protocol, or a control character in an argument)",
+                    "2": "usage error (INVALID_ARGUMENT: unknown terminal protocol; an escape or control character other than tab, LF or CR in the tool, command_line, --shell or --file-hint argument; or an unsupported mcp --transport)",
                     "3": "not found (NOT_FOUND: no mapping for the tool)"
                 }
             });
@@ -425,15 +425,6 @@ fn now_utc() -> String {
     jiff::Timestamp::now()
         .strftime("%Y-%m-%dT%H:%M:%SZ")
         .to_string()
-}
-
-/// `text` as is when `color`, else with every escape sequence removed.
-fn paint(color: bool, text: &str) -> String {
-    if color {
-        text.to_owned()
-    } else {
-        term::strip_escapes(text)
-    }
 }
 
 /// Exit with a structured error (JSON on stderr in machine mode, a tagged
@@ -507,17 +498,4 @@ fn print_json<T: Serialize>(data: T) {
         data,
     };
     println!("{}", serde_json::to_string(&envelope).unwrap());
-}
-
-fn print_json_error(code: &str, message: &str, exit_code: i32) {
-    let now = now_utc();
-    let err = serde_json::json!({
-        "error": {
-            "code": code,
-            "exit_code": exit_code,
-            "message": message,
-            "timestamp": now
-        }
-    });
-    eprintln!("{}", serde_json::to_string(&err).unwrap());
 }
