@@ -30,4 +30,3 @@ jobs:
         run: >-
           nix build --no-link -L
           '.#checks.x86_64-linux.mouse-workspace-nav'
-          '.#checks.x86_64-linux.plasma-super-tap'

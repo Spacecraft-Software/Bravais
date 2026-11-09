@@ -224,7 +224,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 53. **`preflight` commits its bumps only after a successful switch and the `/etc/nixos` mirror, only on origin's default branch, on a new `chore/deps-bump-<date>` branch it never pushes** — a broken pin is never recorded as good, the mirror copies the built tree, and a PR branch's commits never ride into the deps PR; `main` is left without the bumps until that branch merges.
 54. **Keep `dontStrip = true` on opencode-desktop** — stripping removes the Bun executable's application trailer, so its server becomes bare Bun and fails with `Script not found "serve"`; Desktop also reuses its versioned cached CLI, which needs repair after a broken build.
 
-55. **Plasma X11's lone Super tap uses Escape Pod's X11 backend and F19** — guard the user unit with `XDG_SESSION_TYPE=x11`, tie it to `plasma-core.target`, and keep Super chords untouched. Do not use F13: XKB maps it to `XF86Tools` (the settings key), and do not start xcape alongside it.
+55. **Plasma opens Kickoff on a lone Super tap natively, on X11 as on Wayland** — keep `Meta` in the launcher binding and run no tap remapper (Escape Pod, xcape) that sends another launcher key: one tap would then toggle the menu open and shut. Never bind F13 to anything: XKB maps it to `XF86Tools` (the settings key).
 
 ## Delegating to OpenCode Go
 

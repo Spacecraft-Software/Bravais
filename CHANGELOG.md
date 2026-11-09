@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A quick Super tap opens Kickoff again on Plasma X11.** Each tap fired the
+  launcher twice, once through KWin's own Meta key and once through the F19
+  that the Escape Pod tap service sent, so the menu closed as it opened.
+  KWin handles the tap natively on X11 as well, so the service and the F19
+  binding are gone.
+
 - **Preflight's startup probe no longer leaves the terminal raw or eats
   keys.** A SIGTERM or SIGHUP in its first 200 ms used to kill it with the
   terminal still in raw mode; Ctrl-C there did nothing, and a key typed then

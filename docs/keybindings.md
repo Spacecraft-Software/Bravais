@@ -55,14 +55,10 @@ The F9 gear key (`XF86Tools`) opens the desktop's settings app: GNOME and
 Plasma bind it by default, and COSMIC gets it from the custom-shortcut RON in
 `users/mj/desktop-theme.nix`. The WMs leave it unbound.
 
-On Plasma X11, `escapepod-plasma-super-tap.service` observes X11 keyboard
-events and turns a quick, lone left or right Super release into F19, reserved
-for Kickoff. Super combinations, mouse chords and holds longer than 500 ms
-do not open the menu. The unit belongs to `plasma-core.target`, runs only
-with `XDG_SESSION_TYPE=x11`, and stops with the session. It opens no evdev
-keyboard and runs beside the separate mouse daemon. Plasma Wayland keeps
-KWin's native modifier-only shortcut. F13 is deliberately avoided: the
-default XKB map makes it `XF86Tools`, the ThinkPad settings key.
+On Plasma, a lone tap of either Super key opens Kickoff in both the X11 and
+the Wayland session; KWin handles it natively. No tap remapper runs beside
+it, because a second launcher key would close the menu as it opens
+(constraint #55). Alt+F1 and Meta+Shift+D open it too.
 
 ## Per-session extras
 
