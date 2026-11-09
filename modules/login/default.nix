@@ -146,8 +146,8 @@ let
   # Pre-create the per-PID xauth file so xauth doesn't print
   # "file ... does not exist" before startx generates it. bash's $$ is
   # preserved across exec, so the touched file matches startx's PID.
-  # Escape Pod's Plasma-only user unit handles a lone Super tap; the session
-  # client no longer starts xcape beside it (modules/desktops/plasma.nix).
+  # KWin handles a lone Super tap natively; nothing in the session starts
+  # xcape or another tap remapper (constraint #55).
   start-plasma-x11 = pkgs.writeShellScriptBin "start-plasma-x11" ''
     export PATH="${startxPath}:$PATH"
     touch "$HOME/.serverauth.$$"

@@ -321,22 +321,20 @@ does not repair an already cached stripped copy. With Desktop closed, back up
 that executable and replace it with the rebuilt `resources/opencode-cli`, then
 restart Desktop. Leave settings, sessions, credentials and databases in place.
 
-### 55. Plasma X11 needs a modifier-tap observer, and F13 is the settings key under XKB
+### 55. Plasma's lone Super tap is native on X11 too; a second launcher key closes the menu
 
-KWin X11 has no native modifier-only menu shortcut. Escape Pod's X11 backend
-observes X RECORD and injects a single tap through XTEST without grabbing a
-keyboard, so it can coexist with the mouse daemon's evdev backend. The
-Plasma-only user unit uses explicit `--backend x11`, is part of
-`plasma-core.target`, and requires `XDG_SESSION_TYPE=x11` to avoid a second
-menu toggle under Wayland. xcape must not be started in the session wrapper
-alongside it.
+KWin 6.6 opens Kickoff on a lone Meta tap in the X11 session as well as on
+Wayland. Measured on 2026-11-09 with KWin 6.6.6: taps of 55 to 800 ms each
+produced exactly one `activate application launcher` signal from
+kglobalaccel. Bravais once ran an Escape Pod X11 tap observer that sent F19,
+also bound to the launcher, on a lone Super release. Every tap then fired the
+launcher twice, once for Meta and once for F19, and the second toggle closed
+the menu the first had opened. Only presses held past the observer's 500 ms
+timeout opened it, so the menu seemed to need a longer press.
 
-Both Super keys retain their modifier role; only a lone release within
-500 ms emits `KEY_F19`, reserved for the application-launcher action beside
-Meta, Alt+F1 and Meta+Shift+D. Do not substitute F13: the default XKB evdev
-map resolves kernel KEY_F13 (X keycode 191) to XF86Tools, which is the
-ThinkPad's settings key. KEY_F19 (keycode 197) resolves to plain F19. The
-private-Xvfb check verifies both taps, Super combinations, mouse cancellation
-and the hold timeout using the generated config, with a nonexistent uinput
-path so it cannot touch host input. A real Plasma session check remains a
-manual activation check.
+Keep `Meta` in the launcher binding and run no tap remapper (Escape Pod,
+xcape or another) that sends a launcher key alongside it. If a future KWin
+drops native modifier-only shortcuts on X11, the remapper must replace the
+`Meta` binding, never sit beside it. F13 stays unusable as a spare key: the
+default XKB evdev map resolves kernel KEY_F13 (X keycode 191) to
+XF86Tools, the ThinkPad's settings key.

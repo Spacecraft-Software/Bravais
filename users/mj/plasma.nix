@@ -212,8 +212,8 @@ in
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
   # action is left with no key (Meta+Tab still cycles activities).
-  # F19 is Escape Pod's lone-Super trigger on X11. Meta alone is native on
-  # Wayland; Alt+F1 and Meta+Shift+D remain available in both sessions.
+  # Meta alone is KWin's native launcher key in both sessions, and Alt+F1
+  # and Meta+Shift+D remain available in both.
   # Meta+Shift+D opens Kickoff beside Meta alone and Alt+F1, the app-menu
   # key in every session. Meta+F, Meta+Shift+D and Meta+Shift+N are unbound
   # in stock Plasma.
@@ -240,7 +240,7 @@ in
         --group plasmashell --key "manage activities" "none,Meta+Q,Show Activity Switcher"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group plasmashell --key "activate application launcher" \
-        "$(printf 'Meta\tAlt+F1\tMeta+Shift+D\tF19,Meta\tAlt+F1,Activate Application Launcher')"
+        "$(printf 'Meta\tAlt+F1\tMeta+Shift+D,Meta\tAlt+F1,Activate Application Launcher')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group ksmserver --key "Lock Session" \
         "$(printf 'Meta+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"

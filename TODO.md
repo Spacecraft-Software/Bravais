@@ -68,7 +68,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
-- [✓] Plasma X11 lone Super menu tap via Escape Pod's X11 backend, with F19 reserved for Kickoff and a private-Xvfb check for taps/chords/timeouts
+- ~~Plasma X11 lone Super menu tap via Escape Pod's X11 backend, with F19 reserved for Kickoff and a private-Xvfb check for taps/chords/timeouts~~ (dropped: KWin handles the tap natively, and the F19 tap closed the menu again; constraint #55)
 - [✓] Adopt Fairing's refreshed vector emblem and full wordmark from the Branding SVGs; retain compact layouts and palette-role colouring
 - [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot animation from `assets/boot/shutdown.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
 - [✓] **`boot-splash.nix`**: Fairing (`fairing` flake input) as the default provider, Plymouth selectable by `steelbore.boot.splash.provider`; systemd initrd on for Fairing
