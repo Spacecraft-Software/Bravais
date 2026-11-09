@@ -321,6 +321,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Flake inputs and vendored upstream pins bumped.** `flake.lock` moved
+  (Gitway, Vacuum, Home Manager unstable and others), and the claude-desktop,
+  codex-desktop, ollama, opencode-desktop and Artcraft pins were refreshed.
+  `coderabbit-cli` could not be checked ("Input type not supported") and is
+  unchanged.
 - **WezTerm is the default terminal across every Bravais desktop.** Super+Enter
   opens it in GNOME, COSMIC, Plasma, Niri, LeftWM and Margo; terminal-backed
   status-bar actions and shell sessions use it too.
