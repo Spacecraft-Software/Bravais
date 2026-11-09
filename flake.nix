@@ -748,6 +748,7 @@
             service = machine.systemd.user.services.escapepod-mouse-workspace-nav;
             rendered = machine.environment.etc."escapepod/mouse-workspace-nav.toml".source;
             theme = machine.home-manager.users.${primaryUser}.xdg.configFile."leftwm/themes/current".source;
+            shortcuts = machine.home-manager.users.${primaryUser}.home.activation.plasmaSharedShortcuts.data;
           in
           assert
             service.wantedBy == [
@@ -758,6 +759,10 @@
           assert service.serviceConfig.RestartPreventExitStatus == "6";
           assert !(machine.systemd.user.services ? steelbore-mouse-workspace-nav);
           assert !(builtins.any (p: (p.pname or "") == "xremap") machine.environment.systemPackages);
+          # Plasma opens Kickoff on a lone Meta tap itself; a tap remapper sending a
+          # second launcher key beside it closes the menu again (constraint #55).
+          assert !(machine.systemd.user.services ? escapepod-plasma-super-tap);
+          assert nixpkgs.lib.hasInfix "Meta\\tAlt+F1\\tMeta+Shift+D,Meta" shortcuts;
           checkPkgs.runCommand "mouse-workspace-nav-validate" { } ''
             ${
               escapepod.packages.${system}.default
