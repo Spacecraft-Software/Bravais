@@ -115,6 +115,11 @@ fn watch_loop(done: &AtomicBool, step: &str, detail: &str) -> AlertState {
     if done.load(Ordering::Acquire) {
         return AlertState::default();
     }
+    // A warm credential cache means nothing is waiting on the user: stay
+    // silent rather than flash an alert for every privileged step.
+    if is_privilege_helper(step) && (privilege_cached(step) || helper_running_command(step)) {
+        return AlertState::default();
+    }
     let state = fire_alert(step, detail);
 
     // `sudo nixos-rebuild …` remains alive for the whole rebuild.  Its
@@ -129,17 +134,12 @@ fn watch_loop(done: &AtomicBool, step: &str, detail: &str) -> AlertState {
         return state;
     }
 
-    if privilege_cached(step) {
-        clear_alert(&state);
-        return AlertState::default();
-    }
-
     loop {
         std::thread::park_timeout(Duration::from_millis(150));
         if done.load(Ordering::Acquire) {
             return state;
         }
-        if privilege_cached(step) {
+        if privilege_cached(step) || helper_running_command(step) {
             clear_alert(&state);
             return AlertState::default();
         }
@@ -154,10 +154,43 @@ fn is_privilege_helper(step: &str) -> bool {
     matches!(step, "sudo" | "doas" | "run0")
 }
 
+/// Return whether a privilege helper that this process spawned has itself
+/// spawned a child. The helper only starts the real command after PAM accepts
+/// the password or fingerprint, so a child proves authorization even when the
+/// credential cache is off (`timestamp_timeout=0`) and `privilege_cached`
+/// can never succeed -- the case that left the alert up for a whole build.
+fn helper_running_command(step: &str) -> bool {
+    let me = std::process::id();
+    let Ok(dir) = std::fs::read_dir("/proc") else {
+        return false;
+    };
+    let procs: Vec<(u32, u32, String)> = dir
+        .flatten()
+        .filter_map(|e| {
+            let pid: u32 = e.file_name().to_str()?.parse().ok()?;
+            let stat = std::fs::read_to_string(e.path().join("stat")).ok()?;
+            // `pid (comm) S ppid ...`; comm may contain spaces and parens.
+            let open = stat.find('(')?;
+            let close = stat.rfind(')')?;
+            let comm = stat.get(open + 1..close)?.to_owned();
+            let parent: u32 = stat
+                .get(close + 1..)?
+                .split_whitespace()
+                .nth(1)?
+                .parse()
+                .ok()?;
+            Some((pid, parent, comm))
+        })
+        .collect();
+    procs
+        .iter()
+        .filter(|(_, ppid, comm)| *ppid == me && comm == step)
+        .any(|(pid, _, _)| procs.iter().any(|(_, ppid, _)| ppid == pid))
+}
+
 fn privilege_cached(step: &str) -> bool {
     let args: &[&str] = match step {
-        "sudo" => &["-n", "true"],
-        "doas" => &["-n", "true"],
+        "sudo" | "doas" => &["-n", "true"],
         "run0" => &["--no-ask-password", "true"],
         _ => return false,
     };
@@ -172,9 +205,8 @@ fn privilege_cached(step: &str) -> bool {
 
 fn fire_alert(step: &str, detail: &str) -> AlertState {
     let summary = format!("Preflight waiting for authorization ({step})");
-    let body = format!(
-        "{detail} — scan fingerprint or enter password in the terminal running preflight."
-    );
+    let body =
+        format!("{detail} — scan fingerprint or enter password in the terminal running preflight.");
 
     // 1. Desktop notification (D-Bus org.freedesktop.Notifications, or dunstify).
     let (dbus_id, used_dunstify) = send_desktop(&summary, &body);
@@ -184,7 +216,7 @@ fn fire_alert(step: &str, detail: &str) -> AlertState {
     // (step diagnostics / TUI) is disturbed. Wait for real TTY vs emulator:
     // on `TERM=linux` (the kernel virtual console), skip OSC sequences and emit
     // only the BEL (`\x07`) so the console driver never prints stray escape text.
-    send_tty_alert(&summary, &body);
+    send_tty_alert(&summary, &body, dbus_id.is_some() || used_dunstify);
 
     // 5. Zellij pane + tab badge, which works identically in a graphical
     // terminal and inside a real TTY multiplexing panes via Zellij.
@@ -338,7 +370,12 @@ fn is_linux_vt() -> bool {
     matches!(std::env::var("TERM").as_deref(), Ok("linux" | "dumb"))
 }
 
-fn send_tty_alert(summary: &str, body: &str) {
+///
+/// `desktop_sent` means a retractable desktop notification already went out.
+/// The terminal's own OSC 9/777 popup cannot be closed once authorization
+/// succeeds (`WezTerm` leaves it up for minutes), so it is only the fallback
+/// for sessions with no notification daemon; the title badge is always set.
+fn send_tty_alert(summary: &str, body: &str, desktop_sent: bool) {
     let Ok(mut tty) = OpenOptions::new().write(true).open("/dev/tty") else {
         return;
     };
@@ -354,10 +391,14 @@ fn send_tty_alert(summary: &str, body: &str) {
     let clean_body: String = body.chars().filter(|c| !c.is_control()).collect();
     // BEL + OSC 9 (ConEmu/Ghostty/iTerm2/Zellij) + OSC 777 (rxvt/Foot/WezTerm)
     // + OSC 2 window title.
-    let _ = write!(
-        tty,
-        "\x07\x1b]9;{clean_summary}: {clean_body}\x07\x1b]777;notify;{clean_summary};{clean_body}\x07\x1b]2;[AUTH] {clean_summary}\x07"
-    );
+    if desktop_sent {
+        let _ = write!(tty, "\x07\x1b]2;[AUTH] {clean_summary}\x07");
+    } else {
+        let _ = write!(
+            tty,
+            "\x07\x1b]9;{clean_summary}: {clean_body}\x07\x1b]777;notify;{clean_summary};{clean_body}\x07\x1b]2;[AUTH] {clean_summary}\x07"
+        );
+    }
     let _ = tty.flush();
 }
 
