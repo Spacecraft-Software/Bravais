@@ -30,6 +30,12 @@ rustPlatform.buildRustPackage {
   # `rustix` talks to the kernel through linux-raw-sys rather than libc here, so
   # there is nothing for pkg-config to find.
 
+  # `rebuild` is the name every shell alias already uses. mjsh (the login
+  # shell, out-of-band) has no alias file, so ship it as a real command.
+  postInstall = ''
+    ln -s preflight $out/bin/rebuild
+  '';
+
   # The tools preflight drives -- nixos-rebuild, nix, sudo, rsync, vacuum,
   # gitway-add, mcpctl, flatpak, and the AI tools' own updaters
   # (src/ai_tools.rs) -- are deliberately NOT wrapped onto PATH.

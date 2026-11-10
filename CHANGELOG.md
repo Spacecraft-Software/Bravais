@@ -37,6 +37,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`rebuild` works from `mjsh`, and Preflight's authorization alert no
+  longer repeats.** `rebuild` was only a shell alias, so the login shell
+  answered `command not found`; the package now ships it as a command. The
+  alert used to fire for every privileged step that outlasted 400 ms, even
+  with `sudo` already cached, and stayed up for the whole build whenever the
+  credential cache was off. It now stays silent on a warm cache and clears
+  as soon as `sudo` starts the real command. The terminal's own popup
+  (OSC 9/777), which cannot be dismissed, is now sent only when no desktop
+  notification daemon took the alert.
+- **The rebuild no longer fails linking Engram (`cannot find -lsqlite3`).**
+  nixpkgs' `cargo-setup-hook` now exports `LIBSQLITE3_SYS_USE_PKG_CONFIG=1`,
+  which overrides rusqlite's bundled SQLite, so the Engram package in
+  `users/mj/home.nix` is given nixpkgs' SQLite until upstream stops relying
+  on the bundled copy.
 - **A quick Super tap opens Kickoff again on Plasma X11.** Each tap fired the
   launcher twice, once through KWin's own Meta key and once through the F19
   that the Escape Pod tap service sent, so the menu closed as it opened.

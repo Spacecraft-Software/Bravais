@@ -221,11 +221,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794238647,
-        "narHash": "sha256-UURYv1UUSN0LrHNjAHJD5eI3L72aw2n8FHaorMEwWvQ=",
+        "lastModified": 1794244839,
+        "narHash": "sha256-PllBR8DmiwyjbMgcnCLzvqc6w4ajete+HGmwvfWjltQ=",
         "owner": "Spacecraft-Software",
         "repo": "Gitway",
-        "rev": "e896b8ab4d0b2f57ae02cf8807f339ef5dced069",
+        "rev": "5eab7f04d262ae7b8c14d64487803c0cf0bec50e",
         "type": "github"
       },
       "original": {

@@ -248,7 +248,14 @@
       # no nixosModule, deliberately.
       #
       # Remove the imperative copy:  cargo uninstall engram
-      engram.packages.${pkgs.stdenv.hostPlatform.system}.default
+      #
+      # nixpkgs' cargo-setup-hook now exports LIBSQLITE3_SYS_USE_PKG_CONFIG=1,
+      # which overrides rusqlite's `bundled` feature and links system SQLite
+      # (`cannot find -lsqlite3` when the build has none). Give it nixpkgs'
+      # SQLite until upstream Engram stops relying on the bundled copy.
+      (engram.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+        buildInputs = (old.buildInputs or [ ]) ++ [ unstablePkgs.sqlite ];
+      }))
 
       # `pathfinder-jq` — Pathfinder 0.2.0, a jq 1.8.1-compatible jq in safe
       # Rust with its own engine, run in process (one binary, no wrapper),
