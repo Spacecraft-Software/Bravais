@@ -91,7 +91,7 @@ docs/                      # Long form of AGENTS.md sections: rebuild, skill-poi
 `implementation_plan.md`, `PackagesMissing.md`, `v0.zip`. Nothing imports them;
 the *active* equivalents are `users/mj/home.nix` and `modules/packages/system.nix`.
 Root `README.md`, `PRD.md`, `TODO.md`, `Packages.md`, `CHANGELOG.md`,
-`NOTICE.md`, `CONTRIBUTING.md`, `CONSTRAINTS.md` are current and tracked per "Documentation
+`NOTICE.md`, `CONTRIBUTING.md`, `CONSTRAINTS.md`, `TRADEMARKS.md` are current and tracked per "Documentation
 maintenance" below — don't confuse the two sets.
 
 ## First-time bootstrap
@@ -261,6 +261,7 @@ it. Both are tracked; `PRD.md` and `TODO.md` are tracked as well.
 - **License:** GPL-3.0-or-later
 - **Project posture:** personal hobby project. No warranty, no liability. PR acceptance is at the maintainer's sole discretion.
 - **Before opening a PR:** open an issue first for non-trivial changes. Test with a real `toplevel` build (see Build and test commands) — not `nix flake check`, which times out — plus `nixos-rebuild dry-build --flake .#steelbore-thinkpad-unstable --show-trace`.
+- **Names and logos** are covered by `TRADEMARKS.md`; the logo art in `assets/brand/` and `assets/boot/` is CC-BY-SA-4.0 through `REUSE.toml`. Do not use the Steelbore marks for a new product or package name without the maintainer's say-so.
 - **Commits:** Conventional Commits prefix (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`), subject ≤ 72 chars, imperative mood, body wrapped at 72 columns. **Signed & Verified — mandatory** (Standard §6.3): Ed25519 SSH commit signing (`commit.gpgsign=true`, `gpg.format=ssh`, signing key registered as a *Signing* key on GitHub). Do **not** use `git commit -s` (DCO sign-off) — that is a different mechanism and does not satisfy this requirement.
 - **Forking:** encouraged under GPL-3.0-or-later when goals diverge.
 
