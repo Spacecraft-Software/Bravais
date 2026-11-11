@@ -132,9 +132,50 @@ let
         "none,Meta+${i},Activate Task Manager Entry ${i}"
     ''
   ) (lib.range 1 9);
+
+  # KWin ships 3- and 4-finger left/right swipes for desktops and a 4-finger
+  # up/down swipe for Overview / Grid View (virtualdesktops.cpp,
+  # plugins/overview), but no 3-finger Overview. This declarative script
+  # adds that one gesture -- GNOME's, Margo's -- through KWin's own
+  # SwipeGestureHandler; DBusCall fires the same "Overview" action Meta+W does.
+  gestureScript = {
+    "kwin/scripts/steelbore-gestures/metadata.json".text = builtins.toJSON {
+      KPackageStructure = "KWin/Script";
+      KPlugin = {
+        Id = "steelbore-gestures";
+        Name = "Steelbore touchpad gestures";
+        Description = "3-finger swipe up opens Overview, like GNOME and Margo";
+        License = "GPL-3.0-or-later";
+        Version = "1.0";
+      };
+      X-Plasma-API = "declarativescript";
+      X-Plasma-MainScript = "ui/main.qml";
+    };
+    "kwin/scripts/steelbore-gestures/contents/ui/main.qml".text = ''
+      import QtQuick
+      import org.kde.kwin
+
+      Item {
+          DBusCall {
+              id: overview
+              service: "org.kde.kglobalaccel"
+              path: "/component/kwin"
+              dbusInterface: "org.kde.kglobalaccel.Component"
+              method: "invokeShortcut"
+              arguments: ["Overview"]
+          }
+          SwipeGestureHandler {
+              direction: SwipeGestureHandler.Direction.Up
+              fingerCount: 3
+              deviceType: SwipeGestureHandler.Device.Touchpad
+              onActivated: overview.call()
+          }
+      }
+    '';
+  };
 in
 {
-  xdg.dataFile = schemeFiles // {
+  xdg.dataFile = schemeFiles // gestureScript // {
     "applications/steelbore-caffeine.desktop".text = caffeineShortcut;
     "applications/steelbore-terminal.desktop".text = terminalShortcut;
     "plasma/look-and-feel/${ksplash.packageId}".source =

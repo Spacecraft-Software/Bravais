@@ -48,6 +48,21 @@ WezTerm).
 | Cheat-sheet | Super+Shift+/ | WMs |
 | Screenshot | Print = region or the screenshot UI · Super+Print = focused window · Shift+Print = whole screen | Margo has no window capture yet (no `mscreenshot` in the package) |
 
+## Touchpad gestures
+
+One scheme where the compositor lets it be one. Fingers follow the content,
+so a left swipe goes to the next workspace on the right.
+
+| Gesture | Action | Where it comes from |
+|---|---|---|
+| 3-finger left/right | Next / previous workspace | GNOME, Niri (scrolls the column strip instead), Margo (`gesturebind`, `users/mj/margo.nix`) and Plasma (KWin) natively. COSMIC has none |
+| 3-finger up | Overview | GNOME natively (Activities); Margo `gesturebind`; Plasma through the `steelbore-gestures` KWin script (`users/mj/plasma.nix`). Niri has none (3-finger vertical switches workspaces) |
+| 4-finger up/down | Overview (Plasma: down is Grid View) | Niri, Plasma (KWin) and Margo. COSMIC and GNOME have none |
+| 4-finger left/right | Next / previous workspace | COSMIC (`cosmic-comp` 1.2.0 handles only 4 fingers); Plasma (KWin) as well |
+
+Niri's gestures are fixed in the compositor, and COSMIC's 3-finger swipes are an
+upstream `TODO`; those gaps stay until either changes.
+
 Hardware keys (volume, mute, mic mute, brightness, media, keyboard backlight,
 Bluetooth, airplane) work in all five: `swayosd` under Niri and Margo,
 `steelbore-osd` under LeftWM, the desktops' own OSDs in GNOME and Plasma.

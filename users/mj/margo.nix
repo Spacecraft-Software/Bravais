@@ -223,6 +223,11 @@ in
       bind = super+ctrl,Page_Down,tagtoright
       gesturebind = NONE,left,3,viewtoright
       gesturebind = NONE,right,3,viewtoleft
+      # Overview gestures, the cross-session scheme in docs/keybindings.md:
+      # 3-finger up (GNOME) and 4-finger up/down (Niri, Plasma).
+      gesturebind = NONE,up,3,toggleoverview
+      gesturebind = NONE,up,4,toggleoverview
+      gesturebind = NONE,down,4,toggleoverview
       # Thumb buttons switch tags like workspaces elsewhere: back (BTN_SIDE,
       # mouse:275) goes RIGHT and forward (BTN_EXTRA, mouse:276) goes LEFT, the
       # direction modules/desktops/mouse-workspace-nav.nix uses; keep them in
