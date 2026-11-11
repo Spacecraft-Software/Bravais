@@ -351,6 +351,39 @@ in
   '';
 
   # ═══════════════════════════════════════════════════════════════════════════
+  # Panel geometry — the Niri/Margo bar's shape
+  # ═══════════════════════════════════════════════════════════════════════════
+  # The Niri and Margo eww bar is 32 px, flush to the top edge, opaque on the
+  # canvas. The Plasma panel (already on the top edge) is made the same shape:
+  # 32 px thick, not floating, opaque. Its colours already follow the active
+  # palette through the colour scheme above, so only the geometry is set here.
+  # The panel that holds the clock is the main one; the id is discovered from
+  # appletsrc like the clock's own applet index above, and the keys go to
+  # plasmashellrc (PlasmaViews), which plasmashell reads at start, so they
+  # apply after `systemctl --user restart plasma-plasmashell.service` or at
+  # the next login. Like the clock format, a rebuild re-forces them: change
+  # the numbers here, not in Plasma's panel editor.
+  home.activation.plasmaPanelShape = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rc="${config.xdg.configHome}/plasma-org.kde.plasma.desktop-appletsrc"
+    shellrc="${config.xdg.configHome}/plasmashellrc"
+    if [ -f "$rc" ]; then
+      ${pkgs.gawk}/bin/awk '
+        /^\[Containments\]\[[0-9]+\]$/ { id = $0; gsub(/[^0-9]/, "", id) }
+        /^\[Containments\]\[[0-9]+\]\[Applets\]/ { next }
+        /^plugin=org\.kde\.plasma\.digitalclock$/ { print id }
+      ' "$rc" | sort -u | while IFS= read -r panel; do
+        [ -n "$panel" ] || continue
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --key floating 0
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --key panelOpacity 1
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --group Defaults --key thickness 32
+      done
+    fi
+  '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
   # Pinned panel launchers — by app id, never by store path
   # ═══════════════════════════════════════════════════════════════════════════
   # The task manager sometimes saves a pin as the file it resolved, e.g.
