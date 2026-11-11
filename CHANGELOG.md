@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Caffeine on Plasma and COSMIC notifies on every toggle.** The script
+  always replaced notification 9913, which dunst honours but Plasma's server
+  does not re-show once the first popup has expired, so only the first toggle
+  was ever visible. On those desktops it now closes the last notification and
+  posts a new one.
 - **`rebuild` works from `mjsh`, and Preflight's authorization alert no
   longer repeats.** `rebuild` was only a shell alias, so the login shell
   answered `command not found`; the package now ships it as a command. The
@@ -335,6 +340,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The Plasma panel has the Niri/Margo bar's shape.** 32 px thick (was 46),
+  not floating, opaque; it already sat on the top edge and takes its colours
+  from the active palette's colour scheme. Applied from `users/mj/plasma.nix`
+  at activation; restart `plasma-plasmashell.service` or log in again to see it.
 - **Flake inputs and vendored upstream pins bumped.** `flake.lock` moved
   (Gitway, Vacuum, Home Manager unstable and others), and the claude-desktop,
   codex-desktop, ollama, opencode-desktop and Artcraft pins were refreshed.
