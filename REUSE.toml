@@ -137,3 +137,11 @@ path = ["assets/brand/*"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+# The trademark policy is prose about the project, not software, and carries
+# the same licence as the logo art it governs.
+[[annotations]]
+path = ["TRADEMARKS.md"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
+SPDX-License-Identifier = "CC-BY-SA-4.0"

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A trademark policy (`TRADEMARKS.md`), as Gantry has.** It says how the
+  Steelbore, Steelbore OS, Bravais and Spacecraft Software names and the
+  Steelbore logo may be used. The logo art stays CC-BY-SA-4.0 and the policy
+  carries the same licence.
 - **Preflight shows its progress in the terminal tab and copies with `y`.**
   On terminals known to handle it (Windows Terminal, Ghostty, foot, Rio,
   VS Code, iTerm2 3.6+, kitty 0.39+, WezTerm builds from 2025-02-10), the
@@ -340,6 +344,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The Plasma splash looks like the Fairing boot splash.** The Steelbore logo
+  in the accent colour, a rounded progress bar with its percentage, and a line
+  under it naming what is loading (Plasma services, system settings, session
+  manager, desktop and panels), all from the active palette. The bar follows
+  the stages Plasma reports and never moves backwards. It replaces the replay
+  of the Plymouth animation.
 - **The Plasma panel has the Niri/Margo bar's shape.** 32 px thick (was 46),
   not floating, opaque; it already sat on the top edge and takes its colours
   from the active palette's colour scheme. Applied from `users/mj/plasma.nix`
