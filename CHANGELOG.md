@@ -335,19 +335,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-<<<<<<< Updated upstream
-=======
 - **The Plasma splash looks like the Fairing boot splash.** The Steelbore logo
   in the accent colour, a rounded progress bar with its percentage, and a line
   under it naming what is loading (Plasma services, system settings, session
   manager, desktop and panels), all from the active palette. The bar follows
   the stages Plasma reports and never moves backwards. It replaces the replay
   of the Plymouth animation.
-- **The Plasma panel has the Niri/Margo bar's shape.** 32 px thick (was 46),
-  not floating, opaque; it already sat on the top edge and takes its colours
-  from the active palette's colour scheme. Applied from `users/mj/plasma.nix`
-  at activation; restart `plasma-plasmashell.service` or log in again to see it.
->>>>>>> Stashed changes
 - **Flake inputs and vendored upstream pins bumped.** `flake.lock` moved
   (Gitway, Vacuum, Home Manager unstable and others), and the claude-desktop,
   codex-desktop, ollama, opencode-desktop and Artcraft pins were refreshed.
