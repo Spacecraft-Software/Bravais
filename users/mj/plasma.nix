@@ -13,10 +13,16 @@
 let
   kwriteconfig = lib.getExe' pkgs.kdePackages.kconfig "kwriteconfig6";
 
-  # The Plasma splash: the boot animation again, from the Plymouth theme's
-  # own frames (pkgs/steelbore-ksplash), on the active palette's canvas.
+  # The Plasma splash, drawn like Fairing's boot splash (pkgs/steelbore-ksplash)
+  # from the same role tokens as the rest of the desktop.
   ksplash = (import ../../pkgs { inherit pkgs; }).steelbore-ksplash.override {
-    inherit (steelborePalette) background;
+    inherit (steelborePalette)
+      background
+      accent
+      surface
+      border
+      foreground
+      ;
   };
 
   # The panel clock's own keys, from plasma-workspace v6.6.5
@@ -136,7 +142,7 @@ in
   };
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # Splash screen — the boot animation (pkgs/steelbore-ksplash)
+  # Splash screen — Fairing's look (pkgs/steelbore-ksplash)
   # ═══════════════════════════════════════════════════════════════════════════
   # ksplashrc names a Look-and-Feel package by id; ours carries only the
   # splash, so choosing it here leaves the Global Theme alone. kwriteconfig6
