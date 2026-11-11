@@ -210,6 +210,7 @@ in
     "kwinrc".text = ''
       [Plugins]
       krohnkiteEnabled=true
+      steelbore-gesturesEnabled=true
     '';
 
     # ═══════════════════════════════════════════════════════════════════════════

@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Touchpad gestures line up across Plasma and Margo.** Plasma gets
+  GNOME's 3-finger swipe up for Overview through a small KWin script, and
+  Margo gets Overview on 3-finger up and 4-finger up/down. Plasma already
+  switches workspaces on 3- and 4-finger left/right swipes. The scheme, and
+  where Niri and COSMIC differ, is tabled in `docs/keybindings.md`.
 - **A trademark policy (`TRADEMARKS.md`), as Gantry has.** It says how the
   Steelbore, Steelbore OS, Bravais and Spacecraft Software names and the
   Steelbore logo may be used. The logo art stays CC-BY-SA-4.0 and the policy
