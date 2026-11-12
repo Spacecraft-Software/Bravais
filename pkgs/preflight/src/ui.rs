@@ -405,6 +405,16 @@ pub fn restore_after_signal() {
         // The drawer's `Terminal` may not have been dropped (and so not have
         // shown the cursor) before the process dies of the signal.
         let _ = std::io::stderr().execute(crossterm::cursor::Show);
+        // An interrupted run needs its summary and log path most. `try_lock`:
+        // the signal can land while the runner holds the state, and the
+        // summary is not worth hanging the exit for.
+        let summary = state_lock()
+            .try_lock()
+            .ok()
+            .and_then(|g| g.as_ref().map(exit_summary));
+        if let Some(text) = summary {
+            let _ = std::io::stderr().lock().write_all(text.as_bytes());
+        }
     } else if active() {
         progress::clear();
     }
@@ -1015,8 +1025,8 @@ fn tui_loop() {
 
         if event::poll(UI_TICK).unwrap_or(false) {
             if let Ok(Event::Key(key)) = event::read() {
-                if key.kind == KeyEventKind::Press {
-                    handle_key(key.code, key.modifiers);
+                if key.kind == KeyEventKind::Press && handle_key(key.code, key.modifiers) {
+                    interrupt_run();
                 }
             }
         }
@@ -1031,13 +1041,47 @@ fn tui_loop() {
     }
 }
 
+/// Abort the run the way Ctrl-C does at a plain terminal.
+///
+/// Raw mode turns Ctrl-C into a key, so the terminal no longer interrupts
+/// anything, and most steps block in `wait()` on a child that never sees the
+/// abort flag. So deliver what the terminal would have: SIGINT to our process
+/// group. The running child (nix, nixos-rebuild, sudo relaying to its command)
+/// stops as it would at a plain prompt; the detached Flatpak update has its own
+/// session and keeps going. Preflight itself dies of the signal through
+/// `term`'s handler, which restores the terminal and prints the exit summary.
+fn interrupt_run() {
+    use rustix::process::{kill_current_process_group, Signal};
+    let handled = term::signal_thread_installed();
+    if !handled {
+        // No handler (the kernel console): SIGINT's default action ends the
+        // process at once, so put the terminal back first.
+        restore_terminal();
+    }
+    if kill_current_process_group(Signal::INT).is_ok() {
+        // The handler ends the process on its own schedule; a frame drawn
+        // after its restore would leave the terminal raw, so wait for it.
+        loop {
+            std::thread::park();
+        }
+    }
+    if !handled {
+        // Nothing was delivered and the TUI is already gone.
+        std::process::exit(130);
+    }
+    // Delivery failed with the TUI still up: the abort flag alone remains,
+    // which still stops a step that runs under a time limit.
+}
+
 /// Feed the keys typed while the startup probe owned the terminal to
 /// [`handle_key`], so a `q` pressed in the first instant is not lost. The
 /// probe ran before raw mode and the kitty flags, so these are legacy
 /// encodings: plain bytes, control codes and the common `CSI` / `SS3` keys.
 fn replay_typeahead() {
     for (code, mods) in legacy_keys(&term::take_typeahead()) {
-        handle_key(code, mods);
+        if handle_key(code, mods) {
+            interrupt_run();
+        }
     }
 }
 
@@ -1115,19 +1159,23 @@ fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
     keys
 }
 
-fn handle_key(code: KeyCode, mods: KeyModifiers) {
+/// Apply one key to the TUI state. Returns `true` for an abort key, which
+/// the caller turns into [`interrupt_run`] once the state lock is released.
+fn handle_key(code: KeyCode, mods: KeyModifiers) -> bool {
     let Ok(mut guard) = state_lock().lock() else {
-        return;
+        return false;
     };
     let Some(st) = guard.as_mut() else {
-        return;
+        return false;
     };
     match code {
         KeyCode::Char('c') if mods.contains(KeyModifiers::CONTROL) => {
             st.abort_requested = true;
+            return true;
         }
         KeyCode::Char('q') | KeyCode::Esc => {
             st.abort_requested = true;
+            return true;
         }
         KeyCode::Tab => {
             st.focus_tasks = !st.focus_tasks;
@@ -1190,6 +1238,7 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) {
         }
         _ => {}
     }
+    false
 }
 
 /// `y`: copy the selected task (Tasks focus) or the retained log (Output

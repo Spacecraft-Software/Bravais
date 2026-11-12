@@ -295,6 +295,8 @@ impl Out {
         let want_tui = asked_tui || (ui.default_tui && !ui.cli && format.is_none());
 
         let format = match format {
+            // `--cli` is `--format human`, off a terminal too.
+            _ if ui.cli => Format::Human,
             Some(Format::Explore) | None => {
                 if agent || !tty {
                     Format::Json

@@ -60,6 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Ctrl-C stops a rebuild in Preflight's TUI.** The TUI puts the terminal
+  in raw mode, so Ctrl-C, `q` and `Esc` only set a flag that the
+  time-limited steps checked: a running `nix flake update`, garbage
+  collection or `nixos-rebuild` carried on regardless. The keys now
+  interrupt the run as Ctrl-C does at a plain prompt, leave the detached
+  Flatpak update running, and print the run's summary on the way out.
 - **Caffeine on Plasma and COSMIC notifies on every toggle.** The script
   always replaced notification 9913, which dunst honours but Plasma's server
   does not re-show once the first popup has expired, so only the first toggle
