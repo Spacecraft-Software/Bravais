@@ -405,16 +405,7 @@ pub fn restore_after_signal() {
         // The drawer's `Terminal` may not have been dropped (and so not have
         // shown the cursor) before the process dies of the signal.
         let _ = std::io::stderr().execute(crossterm::cursor::Show);
-        // An interrupted run needs its summary and log path most. `try_lock`:
-        // the signal can land while the runner holds the state, and the
-        // summary is not worth hanging the exit for.
-        let summary = state_lock()
-            .try_lock()
-            .ok()
-            .and_then(|g| g.as_ref().map(exit_summary));
-        if let Some(text) = summary {
-            let _ = std::io::stderr().lock().write_all(text.as_bytes());
-        }
+        print_summary_now();
     } else if active() {
         progress::clear();
     }
@@ -1041,6 +1032,19 @@ fn tui_loop() {
     }
 }
 
+/// Print the exit summary on the way out of an interrupted run, which needs
+/// its summary and log path most. `try_lock`: the signal can land while the
+/// runner holds the state, and the summary is not worth hanging the exit for.
+fn print_summary_now() {
+    let summary = state_lock()
+        .try_lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(exit_summary));
+    if let Some(text) = summary {
+        let _ = std::io::stderr().lock().write_all(text.as_bytes());
+    }
+}
+
 /// Abort the run the way Ctrl-C does at a plain terminal.
 ///
 /// Raw mode turns Ctrl-C into a key, so the terminal no longer interrupts
@@ -1055,8 +1059,10 @@ fn interrupt_run() {
     let handled = term::signal_thread_installed();
     if !handled {
         // No handler (the kernel console): SIGINT's default action ends the
-        // process at once, so put the terminal back first.
+        // process at once, so put the terminal back, and leave the summary
+        // the handler would have printed, first.
         restore_terminal();
+        print_summary_now();
     }
     if kill_current_process_group(Signal::INT).is_ok() {
         // The handler ends the process on its own schedule; a frame drawn
