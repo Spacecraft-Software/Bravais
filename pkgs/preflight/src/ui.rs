@@ -37,6 +37,8 @@
 
 use std::collections::VecDeque;
 use std::io::{BufReader, IsTerminal, Read, Write};
+use std::fs::File;
+use std::path::PathBuf;
 use std::process::{Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
@@ -105,6 +107,9 @@ struct State {
     focus_tasks: bool,
     suspended: bool,
     abort_requested: bool,
+    /// Every log line of a TUI run, unbuffered so a crash or a signal
+    /// loses nothing; `None` outside the TUI or when it cannot be opened.
+    log_file: Option<(PathBuf, File)>,
 }
 
 static ACTIVE: AtomicBool = AtomicBool::new(false);
@@ -148,15 +153,94 @@ impl Drop for Session {
             std::thread::sleep(Duration::from_millis(800));
         }
         term::taskbar_clear();
+        let summary = state_lock()
+            .lock()
+            .ok()
+            .and_then(|g| g.as_ref().filter(|_| self.tui).map(exit_summary));
         if self.tui {
             restore_terminal();
         } else {
             progress::clear();
         }
+        // The alternate screen takes every line of the run with it, so
+        // leave the outcome (and, on a failure, its tail) in the scrollback.
+        if let Some(text) = summary {
+            let _ = std::io::stderr().lock().write_all(text.as_bytes());
+        }
         if let Ok(mut guard) = state_lock().lock() {
             *guard = None;
         }
     }
+}
+
+/// Truncate the run log and say when it started, so a stale file from an
+/// earlier run is never mistaken for this one. Best effort: a run is never
+/// stopped because its log could not be written.
+fn open_run_log() -> Option<(PathBuf, File)> {
+    let path = crate::steps::run_log();
+    if let Some(dir) = path.parent() {
+        let _ = std::fs::create_dir_all(dir);
+    }
+    let mut f = File::create(&path).ok()?;
+    let _ = writeln!(f, "preflight run started {}", crate::output::now_utc());
+    Some((path, f))
+}
+
+/// Log lines replayed after the TUI closes on a failed step: enough for a
+/// nix build error and its trace header, short of flooding the scrollback.
+const FAILURE_TAIL_LINES: usize = 40;
+
+/// What the TUI leaves on the normal screen when it closes: one line per
+/// task, tagged in text rather than glyph or colour (Standard §18.2.1), and,
+/// when a step failed, the end of the log, where the failure is.
+fn exit_summary(st: &State) -> String {
+    use std::fmt::Write as _;
+    let mut text = String::new();
+    let done = st
+        .tasks
+        .iter()
+        .filter(|t| matches!(t.status, TaskStatus::Done(_)))
+        .count();
+    let _ = writeln!(
+        text,
+        "preflight: {done}/{} steps in {}",
+        st.tasks.len(),
+        progress::elapsed(st.started.elapsed())
+    );
+    for t in &st.tasks {
+        let tag = match t.status {
+            TaskStatus::Pending => "[----]",
+            TaskStatus::Running => "[STOP]",
+            TaskStatus::Done(Outcome::Ok) => "[OK]  ",
+            TaskStatus::Done(Outcome::Skipped) => "[SKIP]",
+            TaskStatus::Done(Outcome::Failed) => "[FAIL]",
+        };
+        let dur = t
+            .elapsed
+            .map(|d| format!(" ({})", progress::elapsed(d)))
+            .unwrap_or_default();
+        let detail = t
+            .detail
+            .as_deref()
+            .map(|d| format!(" -- {d}"))
+            .unwrap_or_default();
+        let _ = writeln!(text, "  {tag} {}{dur}{detail}", t.name);
+    }
+    let failed = st
+        .tasks
+        .iter()
+        .any(|t| t.status == TaskStatus::Done(Outcome::Failed));
+    if failed && !st.logs.is_empty() {
+        let skip = st.logs.len().saturating_sub(FAILURE_TAIL_LINES);
+        let _ = writeln!(text, "last {} log lines:", st.logs.len() - skip);
+        for l in st.logs.iter().skip(skip) {
+            let _ = writeln!(text, "  {l}");
+        }
+    }
+    if let Some((path, _)) = &st.log_file {
+        let _ = writeln!(text, "full log: {}", path.display());
+    }
+    text
 }
 
 /// Whether the persistent live bar or full-screen TUI is currently active.
@@ -233,6 +317,7 @@ pub fn start(out: Out, opts: Options<'_>) -> Option<Session> {
         focus_tasks: true,
         suspended: false,
         abort_requested: false,
+        log_file: out.tui.then(open_run_log).flatten(),
     };
 
     if let Ok(mut guard) = state_lock().lock() {
@@ -320,6 +405,7 @@ pub fn restore_after_signal() {
         // The drawer's `Terminal` may not have been dropped (and so not have
         // shown the cursor) before the process dies of the signal.
         let _ = std::io::stderr().execute(crossterm::cursor::Show);
+        print_summary_now();
     } else if active() {
         progress::clear();
     }
@@ -510,6 +596,9 @@ fn push_log(st: &mut State, line: &str) {
     let clean = strip_osc_and_csi(line);
     if clean.trim().is_empty() && st.logs.back().is_some_and(String::is_empty) {
         return;
+    }
+    if let Some((_, f)) = st.log_file.as_mut() {
+        let _ = writeln!(f, "{clean}");
     }
     if st.logs.len() >= MAX_LOG_LINES {
         st.logs.pop_front();
@@ -927,8 +1016,8 @@ fn tui_loop() {
 
         if event::poll(UI_TICK).unwrap_or(false) {
             if let Ok(Event::Key(key)) = event::read() {
-                if key.kind == KeyEventKind::Press {
-                    handle_key(key.code, key.modifiers);
+                if key.kind == KeyEventKind::Press && handle_key(key.code, key.modifiers) {
+                    interrupt_run();
                 }
             }
         }
@@ -943,13 +1032,62 @@ fn tui_loop() {
     }
 }
 
+/// Print the exit summary on the way out of an interrupted run, which needs
+/// its summary and log path most. `try_lock`: the signal can land while the
+/// runner holds the state, and the summary is not worth hanging the exit for.
+fn print_summary_now() {
+    let summary = state_lock()
+        .try_lock()
+        .ok()
+        .and_then(|g| g.as_ref().map(exit_summary));
+    if let Some(text) = summary {
+        let _ = std::io::stderr().lock().write_all(text.as_bytes());
+    }
+}
+
+/// Abort the run the way Ctrl-C does at a plain terminal.
+///
+/// Raw mode turns Ctrl-C into a key, so the terminal no longer interrupts
+/// anything, and most steps block in `wait()` on a child that never sees the
+/// abort flag. So deliver what the terminal would have: SIGINT to our process
+/// group. The running child (nix, nixos-rebuild, sudo relaying to its command)
+/// stops as it would at a plain prompt; the detached Flatpak update has its own
+/// session and keeps going. Preflight itself dies of the signal through
+/// `term`'s handler, which restores the terminal and prints the exit summary.
+fn interrupt_run() {
+    use rustix::process::{kill_current_process_group, Signal};
+    let handled = term::signal_thread_installed();
+    if !handled {
+        // No handler (the kernel console): SIGINT's default action ends the
+        // process at once, so put the terminal back, and leave the summary
+        // the handler would have printed, first.
+        restore_terminal();
+        print_summary_now();
+    }
+    if kill_current_process_group(Signal::INT).is_ok() {
+        // The handler ends the process on its own schedule; a frame drawn
+        // after its restore would leave the terminal raw, so wait for it.
+        loop {
+            std::thread::park();
+        }
+    }
+    if !handled {
+        // Nothing was delivered and the TUI is already gone.
+        std::process::exit(130);
+    }
+    // Delivery failed with the TUI still up: the abort flag alone remains,
+    // which still stops a step that runs under a time limit.
+}
+
 /// Feed the keys typed while the startup probe owned the terminal to
 /// [`handle_key`], so a `q` pressed in the first instant is not lost. The
 /// probe ran before raw mode and the kitty flags, so these are legacy
 /// encodings: plain bytes, control codes and the common `CSI` / `SS3` keys.
 fn replay_typeahead() {
     for (code, mods) in legacy_keys(&term::take_typeahead()) {
-        handle_key(code, mods);
+        if handle_key(code, mods) {
+            interrupt_run();
+        }
     }
 }
 
@@ -1027,19 +1165,23 @@ fn legacy_keys(bytes: &[u8]) -> Vec<(KeyCode, KeyModifiers)> {
     keys
 }
 
-fn handle_key(code: KeyCode, mods: KeyModifiers) {
+/// Apply one key to the TUI state. Returns `true` for an abort key, which
+/// the caller turns into [`interrupt_run`] once the state lock is released.
+fn handle_key(code: KeyCode, mods: KeyModifiers) -> bool {
     let Ok(mut guard) = state_lock().lock() else {
-        return;
+        return false;
     };
     let Some(st) = guard.as_mut() else {
-        return;
+        return false;
     };
     match code {
         KeyCode::Char('c') if mods.contains(KeyModifiers::CONTROL) => {
             st.abort_requested = true;
+            return true;
         }
         KeyCode::Char('q') | KeyCode::Esc => {
             st.abort_requested = true;
+            return true;
         }
         KeyCode::Tab => {
             st.focus_tasks = !st.focus_tasks;
@@ -1102,6 +1244,7 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) {
         }
         _ => {}
     }
+    false
 }
 
 /// `y`: copy the selected task (Tasks focus) or the retained log (Output
@@ -1383,6 +1526,87 @@ fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn state_with(tasks: Vec<TaskEntry>, logs: &[&str]) -> State {
+        State {
+            out: Out::for_tests(true),
+            started: Instant::now(),
+            tick: 0,
+            tasks,
+            current_step: None,
+            activity: None,
+            sub_progress: None,
+            auth_waiting: None,
+            logs: logs.iter().map(|l| (*l).to_owned()).collect(),
+            scroll: 0,
+            follow_tail: true,
+            selected_task: 0,
+            focus_tasks: true,
+            suspended: false,
+            abort_requested: false,
+            log_file: None,
+        }
+    }
+
+    fn task(name: &'static str, status: TaskStatus) -> TaskEntry {
+        TaskEntry {
+            name,
+            status,
+            detail: None,
+            started: None,
+            elapsed: Some(Duration::from_secs(61)),
+        }
+    }
+
+    #[test]
+    fn exit_summary_lists_tasks_without_log_on_success() {
+        let st = state_with(
+            vec![
+                task("sync", TaskStatus::Done(Outcome::Ok)),
+                task("gc", TaskStatus::Done(Outcome::Skipped)),
+            ],
+            &["building foo"],
+        );
+        let text = exit_summary(&st);
+        assert!(text.starts_with("preflight: 2/2 steps in "));
+        assert!(text.contains("[OK]   sync (1m01s)"));
+        assert!(text.contains("[SKIP] gc"));
+        assert!(!text.contains("building foo"));
+    }
+
+    #[test]
+    fn exit_summary_names_the_full_log() {
+        let path = std::env::temp_dir().join(format!("preflight-test-{}.log", std::process::id()));
+        let file = File::create(&path).expect("temp dir is writable");
+        let mut st = state_with(vec![task("sync", TaskStatus::Done(Outcome::Ok))], &[]);
+        st.log_file = Some((path.clone(), file));
+        push_log(&mut st, "\x1b[38;5;154m[OK]\x1b[0m built");
+        let text = exit_summary(&st);
+        assert!(text.ends_with(&format!("full log: {}\n", path.display())));
+        let logged = std::fs::read_to_string(&path).expect("log was written");
+        let _ = std::fs::remove_file(&path);
+        assert_eq!(logged, "[OK] built\n");
+    }
+
+    #[test]
+    fn exit_summary_replays_log_tail_on_failure() {
+        let lines: Vec<String> = (0..50).map(|i| format!("line {i}")).collect();
+        let refs: Vec<&str> = lines.iter().map(String::as_str).collect();
+        let st = state_with(
+            vec![
+                task("switch", TaskStatus::Done(Outcome::Failed)),
+                task("mirror", TaskStatus::Pending),
+            ],
+            &refs,
+        );
+        let text = exit_summary(&st);
+        assert!(text.contains("[FAIL] switch"));
+        assert!(text.contains("[----] mirror"));
+        assert!(text.contains("last 40 log lines:"));
+        assert!(text.contains("  line 49"));
+        assert!(!text.contains("line 9\n"));
+        assert!(!text.contains("full log:"));
+    }
 
     #[test]
     fn legacy_keys_decode_typeahead() {

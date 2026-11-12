@@ -254,15 +254,19 @@ pub fn a11y_env() -> Option<bool> {
 /// Only unambiguous signals. Never inferred from `$LANG`, terminal size or
 /// the mere absence of a TTY.
 pub fn a11y_hint() -> bool {
-    std::env::var_os("NO_COLOR").is_some()
-        || std::env::var("TERM").as_deref() == Ok("dumb")
+    std::env::var_os("NO_COLOR").is_some() || std::env::var("TERM").as_deref() == Ok("dumb")
 }
 
 /// What the caller asked of the display, beyond the output format.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UiRequest {
-    /// `--tui`: the full-screen task view.
+    /// `--tui`: the full-screen task view, asked for explicitly.
     pub tui: bool,
+    /// `--cli`: line output with the bottom status bar, never the TUI.
+    pub cli: bool,
+    /// This command opens the TUI by default at an attended terminal (the
+    /// rebuild run does; the subcommands are one-shot reports and do not).
+    pub default_tui: bool,
     /// `--accessible` (`Some(true)`) / `--no-accessible` (`Some(false)`).
     pub accessible: Option<bool>,
 }
@@ -283,9 +287,16 @@ impl Out {
     ) -> Self {
         let agent = is_agent_env();
         let tty = std::io::stdout().is_terminal();
-        let want_tui = ui.tui || format == Some(Format::Explore);
+        // `--cli` beats `--format explore` (clap already refuses `--tui`
+        // beside it); `--format` alone cannot conflict, as `human` is fine.
+        let asked_tui = !ui.cli && (ui.tui || format == Some(Format::Explore));
+        // No format and no `--cli` is the default; `--format human` is the
+        // long spelling of `--cli`.
+        let want_tui = asked_tui || (ui.default_tui && !ui.cli && format.is_none());
 
         let format = match format {
+            // `--cli` is `--format human`, off a terminal too.
+            _ if ui.cli => Format::Human,
             Some(Format::Explore) | None => {
                 if agent || !tty {
                     Format::Json
@@ -317,8 +328,7 @@ impl Out {
         };
 
         let (attended, ascii) = crate::progress::detect(format == Format::Human, agent);
-        let (accessible, a11y_source) =
-            resolve_a11y(ui.accessible, a11y_env(), a11y_hint());
+        let (accessible, a11y_source) = resolve_a11y(ui.accessible, a11y_env(), a11y_hint());
         // The full-screen view also needs a keyboard to read, and is never
         // offered to accessible mode: a screen reader reads the character
         // grid, so a redrawn grid is a speech loop (Standard §18.2.3).
@@ -335,7 +345,9 @@ impl Out {
             tui,
             accessible,
         };
-        if want_tui && !tui {
+        // Only a request the user made is worth a warning: the default falls
+        // back to line output silently, as it always has off a terminal.
+        if asked_tui && !tui {
             out.say(
                 Level::Warn,
                 "interactive TUI mode unavailable in this environment; falling back to standard output (try: preflight --json)",

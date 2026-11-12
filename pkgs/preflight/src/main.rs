@@ -81,7 +81,7 @@ const ABOUT: &str = concat!(
         "  preflight --reclaim           Reclaim safe caches before the switch\n",
         "  preflight --gc-all            Collect every old generation (no rollback)\n",
         "  preflight --mcp-deploy        Also deploy MCP host configs after the switch\n",
-        "  preflight --tui               Full-screen TUI with task checklist, progress gauge and live output\n",
+        "  preflight --cli               Line output with a status bar instead of the full-screen TUI\n",
         "  preflight --detach-flatpak    Start the Flatpak update and return instead of following it\n",
         "  preflight flatpak watch       Follow a running Flatpak update with a progress bar\n",
         "  preflight appimage status     Which AppImages have updates (asks Gear Lever)\n",
@@ -210,11 +210,15 @@ struct Cli {
     #[arg(long)]
     mcp_deploy: bool,
 
-    /// Full-screen TUI mode with task checklist, completion ticks, progress bar and live output
+    /// Full-screen TUI (the default for a rebuild at a terminal); warns when it cannot open
     ///
     /// doas/run0 suspend the TUI for each entire privileged command, including the rebuild.
-    #[arg(long, short = 'E', conflicts_with_all = ["json", "accessible"])]
+    #[arg(long, short = 'E', conflicts_with_all = ["json", "accessible", "cli"])]
     tui: bool,
+
+    /// Line output with a status bar at the bottom instead of the full-screen TUI
+    #[arg(long, conflicts_with = "json")]
+    cli: bool,
 
     /// Accessible mode (Standard §18): linear append-only output, no spinners, no TUI redraws
     #[arg(long, global = true, conflicts_with = "no_accessible")]
@@ -231,7 +235,7 @@ struct Cli {
     /// Force terminal protocols on (+name) or off (-name), comma-separated; beats `SPACECRAFT_TERM_PROTOCOLS`
     ///
     /// Names: keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all.
-    /// preflight uses keyboard (--tui), clipboard (`y` in --tui) and progress (OSC 9;4).
+    /// preflight uses keyboard (the TUI), clipboard (`y` in the TUI) and progress (OSC 9;4).
     /// Never sends anything to an agent, CI or a pipe, whatever this says.
     #[arg(long, global = true, value_name = "LIST", allow_hyphen_values = true)]
     term_protocols: Option<String>,
@@ -313,6 +317,8 @@ fn main() -> std::process::ExitCode {
         cli.quiet,
         UiRequest {
             tui: cli.tui,
+            cli: cli.cli,
+            default_tui: cli.command.is_none(),
             accessible,
         },
     );
@@ -625,11 +631,12 @@ fn cmd_schema(out: Out) -> i32 {
                     "--gc-all": "nix-collect-garbage -d; deletes every old generation",
                     "--journal-days": "journalctl --vacuum-time, in days (default 7)",
                     "--mcp-deploy": "run mcpctl deploy --yes after the switch; blocked hosts are warned about individually",
-                    "--tui": "full-screen TUI mode (alias -E / --format explore): task checklist with completion ticks, overall progress bar, and scrollable live output; suspends for interactive sudo/SSH prompts and for the full duration of doas/run0 privileged commands, including the rebuild",
+                    "--tui": "full-screen TUI, the default for a rebuild run by a human at an interactive terminal; the flag (alias -E / --format explore) only adds a warning when it cannot open; task checklist with completion ticks, overall progress bar, and scrollable live output; suspends for interactive sudo/SSH prompts and for the full duration of doas/run0 privileged commands, including the rebuild; on exit it prints a task summary, and the last log lines when a step failed",
+                    "--cli": "line output with a persistent bottom status bar instead of the TUI (alias --format human); conflicts with --tui and --json",
                     "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
                     "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
                     "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization",
-                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe. In --tui, `y` copies the selected task (Tasks focus) or the log (Output focus) with OSC 52"
+                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe. In the TUI, `y` copies the selected task (Tasks focus) or the log (Output focus) with OSC 52"
                 }
             },
             "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },
@@ -862,6 +869,9 @@ mod tests {
         assert!(short.is_ok_and(|c| c.tui));
         assert!(Cli::try_parse_from(["preflight", "--tui", "--json"]).is_err());
         assert!(Cli::try_parse_from(["preflight", "--tui", "--accessible"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--cli"]).is_ok_and(|c| c.cli));
+        assert!(Cli::try_parse_from(["preflight", "--tui", "--cli"]).is_err());
+        assert!(Cli::try_parse_from(["preflight", "--cli", "--json"]).is_err());
         assert!(Cli::try_parse_from(["preflight", "--accessible", "--no-accessible"]).is_err());
         let nn = Cli::try_parse_from(["preflight", "--no-notify"]);
         assert!(nn.is_ok_and(|c| !options(&c).notify));

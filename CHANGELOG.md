@@ -44,8 +44,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new D-Bus-activated `org.gnome.BrowserConnector.FlatpakIntegrator` service on
   the host, matching the KDE Plasma Browser Integration path.
 
+### Changed
+
+- **Preflight opens its full-screen TUI by default at a terminal.** A
+  rebuild run by a person at an interactive terminal now shows the task
+  checklist, gauge and live output without `--tui`; `--cli` (or
+  `--format human`) keeps the line output with the bottom status bar.
+  Agents, CI, pipes and accessible mode get exactly the output they got
+  before, and the subcommands never open the TUI. When the TUI closes it
+  leaves a one-line-per-step summary in the scrollback, plus the last 40
+  log lines when a step failed, which used to vanish with the alternate
+  screen. The whole output of a TUI run is written as it happens to
+  `~/.local/state/preflight-last-run.log`, and the summary ends with its
+  path.
+
 ### Fixed
 
+- **Ctrl-C stops a rebuild in Preflight's TUI.** The TUI puts the terminal
+  in raw mode, so Ctrl-C, `q` and `Esc` only set a flag that the
+  time-limited steps checked: a running `nix flake update`, garbage
+  collection or `nixos-rebuild` carried on regardless. The keys now
+  interrupt the run as Ctrl-C does at a plain prompt, leave the detached
+  Flatpak update running, and print the run's summary on the way out.
 - **Caffeine on Plasma and COSMIC notifies on every toggle.** The script
   always replaced notification 9913, which dunst honours but Plasma's server
   does not re-show once the first popup has expired, so only the first toggle

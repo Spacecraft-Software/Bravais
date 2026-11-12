@@ -775,6 +775,12 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       D-Bus `org.freedesktop.Notifications` with auto-dismiss, terminal bell and
       OSC 9/777/2, Zellij pane and tab badges; `--no-notify`)
 - [ ] First live run on the ThinkPad against a real Flatpak update
+- [✓] TUI is the default for a rebuild at an interactive terminal; `--cli`
+      (`--format human`) for line output; per-step summary and failing log
+      tail left in the scrollback when the TUI closes; full output in
+      `~/.local/state/preflight-last-run.log`
+- [ ] `--agent` mode beyond `--json`: non-interactive auth that fails fast,
+      per-step JSON events, a bounded failure log (separate PR)
 
 ## Rebuild builds origin's latest code (2026-10-19)
 
