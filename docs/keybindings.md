@@ -18,7 +18,8 @@ they disagreed with each other. "Super", "Meta" and "Mod" are the same key.
 
 COSMIC is installed too but keeps its own defaults, which already share most of
 these keys; `users/mj/desktop-theme.nix` adds the few it lacks (Super+D,
-Super+Space, Super+Shift+C, Super+Shift+D, Super+L (lock), Super+F (fullscreen), Super+Shift+F (maximize), F9, and Super+Return for
+Super+Space, Super+Shift+C, Super+Shift+D, Super+L (lock), Super+F (fullscreen), Super+Shift+F (maximize), F9, Super+Shift+E
+(log out), Super+Shift+U (keyring), Super+Shift+/ (Keyboard settings), and Super+Return for
 WezTerm).
 
 ## The shared keys
@@ -31,21 +32,21 @@ WezTerm).
 | Close window | Super+Q | Alt+F4 still works in GNOME and Plasma |
 | Fullscreen | Super+F | |
 | Maximize | Super+Shift+F | Niri: maximize column. Margo: monocle layout (Super+T returns to tile). GNOME, Plasma keep Super+Up / Meta+PgUp too. LeftWM has none |
-| Toggle floating | Super+V | Niri, LeftWM, Margo. GNOME and Plasma do not tile; there Super+V is notifications / clipboard |
-| Focus | Super+arrows, Super+Alt+H/J/K/L | WMs. LeftWM has up/down only (lefthk limit). Plain Super+H/J/K/L no longer focus: Super+L locks |
-| Move / swap window | Super+Shift+arrows, Super+Shift+H/J/K/L | WMs. LeftWM has up/down only |
+| Toggle floating | Super+V | Niri, LeftWM, Margo, and Plasma (Krohnkite; Klipper's clipboard popup moved to Meta+Ctrl+V). GNOME does not tile; there Super+V is notifications |
+| Focus | Super+arrows, Super+Alt+H/J/K/L | WMs. Plasma: Super+Alt+H/J/K/L (Krohnkite, beside its Meta+H/J/K); Super+arrows stay quick tile. LeftWM has up/down only (lefthk limit). Plain Super+H/J/K/L no longer focus: Super+L locks |
+| Move / swap window | Super+Shift+arrows, Super+Shift+H/J/K/L | WMs, and Plasma (Krohnkite). LeftWM has up/down only |
 | Workspace 1–9 | Super+1…9 | GNOME and Plasma give up "open the Nth dock / task-bar app" for this |
 | Send window to 1–9 | Super+Shift+1…9 | |
 | Previous / next workspace | Super+Ctrl+←/→ | Niri's workspaces are vertical: Mod+PgUp/PgDn there |
 | Workspace overview | Top-left hot corner | GNOME: Activities. Plasma: Overview. Niri: overview (Mod+O too). Margo: `toggle_overview`. LeftWM: skippy-xd paging |
 | Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
-| Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo |
+| Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo, Plasma (Krohnkite, beside `Meta+\`) |
 | Lock | Super+L | LeftWM keeps Ctrl+Alt+L too; COSMIC keeps Super+Escape |
-| Exit session | Super+Shift+E | WMs. GNOME and Plasma: Ctrl+Alt+Del |
+| Exit session | Super+Shift+E | WMs. GNOME, Plasma and COSMIC open their logout screen (GNOME and Plasma keep Ctrl+Alt+Del, COSMIC Super+Shift+Escape) |
 | Caffeine | Super+Shift+C | |
-| Keyring unlock (rescue) | Super+Shift+U | WMs |
-| Cheat-sheet | Super+Shift+/ | WMs |
+| Keyring unlock (rescue) | Super+Shift+U | Every session |
+| Cheat-sheet | Super+Shift+/ | WMs. GNOME, Plasma and COSMIC open their keyboard-shortcut settings instead |
 | Screenshot | Print = region or the screenshot UI · Super+Print = focused window · Shift+Print = whole screen | Margo has no window capture yet (no `mscreenshot` in the package) |
 
 ## Touchpad gestures
@@ -94,15 +95,18 @@ These are kept as they are; they do not collide with the shared keys.
   (Super+Return, Super+KP_Enter) and *toggle floating* (Super+F) have no key.
 - **Plasma:** Meta+W overview, Meta+G desktop grid, Meta+PgDown minimize,
   Meta+arrows quick tile, Meta+Alt+arrows focus, Meta+Ctrl+Shift+←/→ window to
-  desktop, Meta+F1–F4 and Ctrl+F1–F4 desktops 1–4, Meta+V clipboard,
+  desktop, Meta+F1–F4 and Ctrl+F1–F4 desktops 1–4, Meta+Ctrl+V clipboard,
   Meta+Shift+S region capture, Alt+Space / Alt+F2 KRunner. *Peek at Desktop*
   gave Meta+D to KRunner and the *Activity Switcher* gave Meta+Q to Close
   Window; both have no key now (Meta+Tab still cycles activities). The
   Krohnkite tiling script keeps its own keys (Meta+H/J/K focus,
-  Meta+Shift+H/J/K/L move, Meta+T / Meta+M layouts, …) except the four it
-  shipped on shared keys: *Set master* (Meta+Return), *Decrease* (Meta+D),
-  *Toggle Float* (Meta+F) and *Focus Right* (Meta+L, the lock key) have no
-  key.
+  Meta+Shift+H/J/K/L move, Meta+T / Meta+M layouts, …) except the five it
+  shipped on shared keys: *Set master* (Meta+Return), *Decrease* (Meta+D)
+  and *Toggle Float All* (Meta+Shift+F, the maximize key) have no key, and
+  *Toggle Float* and *Focus Right* moved from Meta+F and Meta+L to the
+  shared Meta+V and Meta+Alt+L. KWin's *window to next/previous screen*
+  gave Meta+Shift+←/→ to Krohnkite's move, and *Switch to Last-Used
+  Keyboard Layout* gave up Meta+Alt+L (Meta+Space switches layouts).
 - **Niri:** Mod+O overview, Mod+R / Mod+Minus / Mod+Equal column widths,
   Mod+[ / Mod+] consume / expel, Mod+Tab previous workspace, Mod+wheel
   workspaces, Mod+B / Mod+Shift+B Bluetooth, Mod+A / Mod+Shift+A audio,

@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **More of the tiling WMs' keys work on GNOME, Plasma and COSMIC.**
+  Super+Shift+E opens the logout screen (Ctrl+Alt+Del and COSMIC's
+  Super+Shift+Escape still work), Super+Shift+U runs the keyring rescue,
+  and Super+Shift+/ opens the desktop's keyboard-shortcut settings where
+  the WMs show their cheat-sheet. On Plasma, Krohnkite also takes Super+V
+  (toggle floating; Klipper's clipboard popup moves to Meta+Ctrl+V),
+  Super+Alt+H/J/K/L (focus), Super+Shift+arrows (move) and
+  Super+Ctrl+Space (next layout). `docs/keybindings.md` has the table.
 - **Preflight opens its full-screen TUI by default at a terminal.** A
   rebuild run by a person at an interactive terminal now shows the task
   checklist, gauge and live output without `--tui`; `--cli` (or
@@ -60,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Super+Shift+F maximizes on Plasma again.** Krohnkite's "Toggle Float
+  All" shipped on the same key and won it, so the key floated every window.
+- **The mouse side buttons switch desktops again on Plasma X11.** At login
+  the X server could read Escape Pod's virtual keyboard before udev had
+  finished with it and refuse it for good, so the buttons were grabbed but
+  their keys never arrived. The service now checks that X has the keyboard
+  and recreates it if not.
 - **Ctrl-C stops a rebuild in Preflight's TUI.** The TUI puts the terminal
   in raw mode, so Ctrl-C, `q` and `Esc` only set a flag that the
   time-limited steps checked: a running `nix flake update`, garbage

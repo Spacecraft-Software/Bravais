@@ -338,3 +338,27 @@ drops native modifier-only shortcuts on X11, the remapper must replace the
 `Meta` binding, never sit beside it. F13 stays unusable as a spare key: the
 default XKB evdev map resolves kernel KEY_F13 (X keycode 191) to
 XF86Tools, the ThinkPad's settings key.
+
+### 56. On X11, the X server can skip Escape Pod's virtual keyboard at login
+
+On 2026-11-12 the mouse side buttons did nothing in a Plasma X11 session
+although `escapepod-mouse-workspace-nav` was running and had grabbed the
+mouse. `xinput list` showed Escape Pod's virtual pointer but not its virtual
+keyboard, and `Xorg.0.log` said why: `event20 - not using input device
+'/dev/input/event20'` and `Failed to create a device`, logged 14 ms after
+`config/udev` offered the device. That is libinput finding no udev input
+tags on the node; `udevadm info` afterwards showed `ID_INPUT_KEYBOARD=1`, so
+X read the device before udev had finished with it. The daemon kept turning
+button presses into Meta+Ctrl+arrow on a keyboard X never opened, so KWin
+never saw them, and nothing failed anywhere else. Restarting the service
+once the session was up made a new device that X added at once, and the
+buttons worked. Wayland compositors read the device themselves and are
+unaffected.
+
+The unit's `ExecStartPost` waits up to 10 s for X to list
+`Escape Pod virtual keyboard <MainPID>` and otherwise fails the start, so
+`Restart=on-failure` makes the device again (five tries a minute). Keep the
+check while any X11 session (Plasma X11) can start the unit, and look in
+`Xorg.0.log`, not the unit's journal, when the buttons go dead on X11.
+LeftWM starts the same command from its theme hook without systemd and has
+no such retry.

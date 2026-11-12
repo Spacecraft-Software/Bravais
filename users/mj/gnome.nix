@@ -23,7 +23,13 @@ let
   # custom shortcut lives at its own dconf path, which GNOME finds only
   # through the `custom-keybindings` list — appended below, like the
   # extension, so shortcuts made in Settings survive.
-  terminalPath = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/steelbore-terminal/";
+  customPath = name: "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/${name}/";
+  terminalPath = customPath "steelbore-terminal";
+  # Super+Shift+U → keyring rescue and Super+Shift+/ → Settings' keyboard
+  # page (where Shortcuts are), matching Mod+Shift+U and the cheat-sheet key
+  # under Niri, LeftWM and Margo. GNOME binds neither by default.
+  keyringPath = customPath "steelbore-keyring";
+  shortcutsPath = customPath "steelbore-shortcuts";
 
   dconf = lib.getExe pkgs.dconf;
 
@@ -54,12 +60,30 @@ in
       search = [ "<Super>d" ];
       # Lock: Super+L (stock), the key every session shares.
       screensaver = [ "<Super>l" ];
+      # The logout dialog: Ctrl+Alt+Del (stock) and Super+Shift+E, the key
+      # that exits the session everywhere else.
+      logout = [
+        "<Control><Alt>Delete"
+        "<Super><Shift>e"
+      ];
     };
 
     ${lib.removePrefix "/" (lib.removeSuffix "/" terminalPath)} = {
       name = "Terminal (WezTerm)";
       command = "wezterm start";
       binding = "<Super>Return";
+    };
+
+    ${lib.removePrefix "/" (lib.removeSuffix "/" keyringPath)} = {
+      name = "Unlock the Keyring (rescue)";
+      command = "steelbore-keyring-unlock";
+      binding = "<Super><Shift>u";
+    };
+
+    ${lib.removePrefix "/" (lib.removeSuffix "/" shortcutsPath)} = {
+      name = "Keyboard Shortcuts";
+      command = "gnome-control-center keyboard";
+      binding = "<Super><Shift>slash";
     };
 
     # The Forge tiling extension (installed by modules/desktops/gnome.nix)
@@ -184,7 +208,8 @@ in
   };
 
   # The app-grid extension has to be listed in `enabled-extensions` to load,
-  # and the terminal shortcut in `custom-keybindings`. Both lists also hold
+  # and the custom shortcuts (terminal, keyring, shortcuts page) in
+  # `custom-keybindings`. Both lists also hold
   # what was added by hand (Extension Manager, Settings › Keyboard), so
   # neither can be a dconf.settings value (which would replace the whole
   # list): this appends the one entry each when it is missing and leaves the
@@ -200,6 +225,8 @@ in
     fi
     ${appendToList "/org/gnome/shell/enabled-extensions" appGridUuid}
     ${appendToList "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings" terminalPath}
+    ${appendToList "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings" keyringPath}
+    ${appendToList "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings" shortcutsPath}
     unset stbDbus stbList
   '';
 }
