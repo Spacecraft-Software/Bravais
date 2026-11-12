@@ -235,7 +235,7 @@ struct Cli {
     /// Force terminal protocols on (+name) or off (-name), comma-separated; beats `SPACECRAFT_TERM_PROTOCOLS`
     ///
     /// Names: keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all.
-    /// preflight uses keyboard (--tui), clipboard (`y` in --tui) and progress (OSC 9;4).
+    /// preflight uses keyboard (the TUI), clipboard (`y` in the TUI) and progress (OSC 9;4).
     /// Never sends anything to an agent, CI or a pipe, whatever this says.
     #[arg(long, global = true, value_name = "LIST", allow_hyphen_values = true)]
     term_protocols: Option<String>,
@@ -636,7 +636,7 @@ fn cmd_schema(out: Out) -> i32 {
                     "--accessible": "Standard §18 accessible mode: append-only linear output, no spinners, no TUI redraws (also SPACECRAFT_A11Y=1)",
                     "--no-accessible": "explicitly disable accessible mode, overriding SPACECRAFT_A11Y and environment hints",
                     "--no-notify": "disable out-of-band notifications (D-Bus, terminal bell/OSC, Zellij tab/pane badge) when waiting on sudo or SSH authorization",
-                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe. In --tui, `y` copies the selected task (Tasks focus) or the log (Output focus) with OSC 52"
+                    "--term-protocols": "comma-separated +name / -name terminal protocol overrides (keyboard, graphics, animation, clipboard, clipboard-rich, progress, pointer, all); beats SPACECRAFT_TERM_PROTOCOLS; never enables output to an agent, CI or a pipe. In the TUI, `y` copies the selected task (Tasks focus) or the log (Output focus) with OSC 52"
                 }
             },
             "preflight flatpak status": { "description": "Whether a Flatpak update is running, and its progress parsed from ~/.local/state/flatpak-update.log: op/ops, op_percent, percent (each operation an equal share), rate, line" },

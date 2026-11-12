@@ -287,7 +287,9 @@ impl Out {
     ) -> Self {
         let agent = is_agent_env();
         let tty = std::io::stdout().is_terminal();
-        let asked_tui = ui.tui || format == Some(Format::Explore);
+        // `--cli` beats `--format explore` (clap already refuses `--tui`
+        // beside it); `--format` alone cannot conflict, as `human` is fine.
+        let asked_tui = !ui.cli && (ui.tui || format == Some(Format::Explore));
         // No format and no `--cli` is the default; `--format human` is the
         // long spelling of `--cli`.
         let want_tui = asked_tui || (ui.default_tui && !ui.cli && format.is_none());
