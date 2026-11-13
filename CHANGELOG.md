@@ -68,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Git's output no longer scribbles over Preflight's TUI.** The git sync
+  and the dependency commit let git write its fetch progress and merge
+  diffstat straight to the terminal, over the full-screen view; a mid-run
+  cache reclaim did the same with `vacuum`. Their output now goes into the
+  TUI's log pane, and into the saved log, like every other step's.
 - **Super+Shift+F maximizes on Plasma again.** Krohnkite's "Toggle Float
   All" shipped on the same key and won it, so the key floated every window.
 - **The mouse side buttons switch desktops again on Plasma X11.** At login

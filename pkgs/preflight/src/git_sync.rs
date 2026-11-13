@@ -202,14 +202,19 @@ pub(crate) fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
 
 /// Run git with its output shown. Its stdout goes to OUR stderr, as with
 /// every other child here, so `--json` keeps exactly one payload on stdout.
+///
+/// Through [`crate::ui::run_logged`], like every step's child: while the TUI
+/// or the live bar is up, git's output (the fetch progress, the merge
+/// diffstat) is piped into the log instead of written over the display --
+/// the TUI's alternate screen took it as raw text. With no display it is a
+/// plain `status()`, exactly as before.
 pub(crate) fn git_shown(dir: &str, args: &[&str]) -> bool {
-    Command::new("git")
-        .arg("-C")
+    let mut cmd = Command::new("git");
+    cmd.arg("-C")
         .arg(dir)
         .args(args)
-        .stdout(std::io::stderr())
-        .status()
-        .is_ok_and(|s| s.success())
+        .stdout(std::io::stderr());
+    crate::ui::run_logged(&mut cmd, None, false, None).is_ok_and(|s| s.success())
 }
 
 /// Whether `rev` names an existing object (`git rev-parse --verify`).
