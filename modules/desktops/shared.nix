@@ -596,6 +596,14 @@ in
     (lib.mkIf (config.steelbore.desktops.plasma.enable || config.steelbore.desktops.cosmic.enable) {
       environment.systemPackages = [ caffeineToggle ];
     })
+    # The keyring rescue is shared the same way: GNOME, Plasma and COSMIC
+    # bind Super+Shift+U to it (users/mj/gnome.nix, users/mj/plasma.nix,
+    # users/mj/desktop-theme.nix), as the WMs do.
+    (lib.mkIf (
+      config.steelbore.desktops.gnome.enable
+      || config.steelbore.desktops.plasma.enable
+      || config.steelbore.desktops.cosmic.enable
+    ) { environment.systemPackages = [ keyringUnlock ]; })
     (lib.mkIf bareWm {
       # Dunst notification configuration
       environment.etc."dunst/dunstrc".text = ''

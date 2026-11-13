@@ -122,6 +122,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable X server for XWayland support
 - [✓] Configure SSH askpass override (`ksshaskpass`)
 - [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+L, desktops 1–9)
+- [✓] Meta+Shift+E logout screen, Meta+Shift+U keyring, Meta+Shift+/ Shortcuts page; Krohnkite on Meta+V, Meta+Alt+H/J/K/L, Meta+Shift+arrows, Meta+Ctrl+Space; Meta+Shift+F maximize back from Krohnkite's Float All
 - [✓] KRunner on `Meta+D` beside its stock keys (matches `Mod+D` under Niri, COSMIC and GNOME); KWin's Peek at Desktop gives up its default `Meta+D`
 - [✓] Caffeine on `Meta+Shift+C` — default shortcut via a hidden `applications/` desktop file with `X-KDE-Shortcuts`; `steelbore-caffeine` holds the PowerManagement + ScreenSaver inhibits via `kde-inhibit` (no global action exists for the battery applet's manual-block checkbox)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)
@@ -142,7 +143,8 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
 - [✓] Use exact pointer names in `deviceNames` with `grab = "listed"`; leave keyboards and the TrackPoint ungrabbed (CONSTRAINTS.md #29)
 - [✓] Prevent restart on emergency exit 6; keep LeftWM's daemon PID across theme reloads
-- [ ] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build
+- [✓] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build (override moved aside 2026-11-12 to `~/.config/systemd/user/escapepod-migration.bak-2026-11-12/`)
+- [✓] Plasma X11: retry the daemon when X skipped its virtual keyboard at login (`ExecStartPost` readiness check; constraint #56)
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 

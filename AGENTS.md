@@ -225,6 +225,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 54. **Keep `dontStrip = true` on opencode-desktop** — stripping removes the Bun executable's application trailer, so its server becomes bare Bun and fails with `Script not found "serve"`; Desktop also reuses its versioned cached CLI, which needs repair after a broken build.
 
 55. **Plasma opens Kickoff on a lone Super tap natively, on X11 as on Wayland** — keep `Meta` in the launcher binding and run no tap remapper (Escape Pod, xcape) that sends another launcher key: one tap would then toggle the menu open and shut. Never bind F13 to anything: XKB maps it to `XF86Tools` (the settings key).
+56. **On X11 the X server can skip Escape Pod's virtual keyboard at login** — libinput reads it before udev tags it and refuses it for good, so the side buttons go dead while the service runs; the unit's `ExecStartPost` waits for `xinput` to list the keyboard and fails the start otherwise. Check `Xorg.0.log`, not the journal.
 
 ## Delegating to OpenCode Go
 

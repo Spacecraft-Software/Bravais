@@ -113,6 +113,11 @@ in
     # XF86Tools is the ThinkPad's F9 gear key (thinkpad_acpi KEY_CONFIG). It
     # opens COSMIC Settings, as it opens System Settings on Plasma and GNOME
     # Settings on GNOME by their own defaults; COSMIC binds nothing to it.
+    # Super+Shift+E opens the log-out dialog (System(LogOut), COSMIC's
+    # Super+Shift+Escape kept), Super+Shift+U runs the keyring rescue and
+    # Super+Shift+/ opens Settings on the Keyboard page, as the exit,
+    # keyring and cheat-sheet keys do under Niri, LeftWM and Margo. COSMIC
+    # binds none of the three by default.
     # Note: home-manager makes the file read-only, so future tweaks via the
     # Settings UI silently fail until the binding is also added/removed here.
     # force = true: before the first activation COSMIC may have written a real
@@ -201,6 +206,27 @@ in
               modifiers: [],
               key: "XF86Tools",
           ): Spawn("cosmic-settings"),
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "e",
+          ): System(LogOut),
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "u",
+          ): Spawn("steelbore-keyring-unlock"),
+          (
+              modifiers: [
+                  Super,
+                  Shift,
+              ],
+              key: "slash",
+          ): Spawn("cosmic-settings keyboard"),
       }
     '';
 

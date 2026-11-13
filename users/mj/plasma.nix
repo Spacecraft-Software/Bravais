@@ -95,6 +95,34 @@ let
     X-KDE-Shortcuts=Meta+Return
   '';
 
+  # Keyring rescue: Meta+Shift+U, as Mod+Shift+U under Niri, LeftWM and
+  # Margo (modules/desktops/shared.nix). Shipped like Caffeine above: a
+  # default a rebind in System Settings keeps. Unbound in stock Plasma.
+  keyringShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Unlock the Keyring (rescue)
+    Exec=steelbore-keyring-unlock
+    Icon=dialog-password
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+Shift+U
+  '';
+
+  # Where the WMs show their key cheat-sheet (Mod+Shift+/), open System
+  # Settings on its Shortcuts page. Shipped like Caffeine and also pinned in
+  # plasmaSharedShortcuts, as both spellings of a shifted key: Meta+? (what
+  # System Settings records) and Meta+Shift+/ -- the digits below do the
+  # same. Unbound in stock Plasma.
+  shortcutsPageShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Keyboard Shortcuts
+    Exec=systemsettings kcm_keys
+    Icon=preferences-desktop-keyboard-shortcut
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+?
+  '';
+
   # Meta+N / Meta+Shift+N for desktops 1-9, as under Niri, LeftWM and Margo.
   # KWin ships keys for desktops 1-4 only (Meta+F1-F4 and Ctrl+F1-F4, kept
   # here); entries for desktops that do not exist are inert. A shifted digit
@@ -178,6 +206,8 @@ in
   xdg.dataFile = schemeFiles // gestureScript // {
     "applications/steelbore-caffeine.desktop".text = caffeineShortcut;
     "applications/steelbore-terminal.desktop".text = terminalShortcut;
+    "applications/steelbore-keyring.desktop".text = keyringShortcut;
+    "applications/steelbore-shortcuts.desktop".text = shortcutsPageShortcut;
     "plasma/look-and-feel/${ksplash.packageId}".source =
       "${ksplash}/share/plasma/look-and-feel/${ksplash.packageId}";
   };
@@ -255,7 +285,8 @@ in
   # The keys every Bravais session shares (docs/keybindings.md)
   # ═══════════════════════════════════════════════════════════════════════════
   # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+Shift+F maximize (Meta+PgUp kept), Meta+L lock (Meta+Shift+L
-  # dropped), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
+  # dropped), Meta+Shift+E the logout screen (Ctrl+Alt+Del kept; the WMs'
+  # exit-session key), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
   # action is left with no key (Meta+Tab still cycles activities).
@@ -271,6 +302,14 @@ in
   # Krohnkite's other keys (Meta+H/J/K, Meta+Shift+H/J/K/L, Meta+I, ...) stay.
   # Meta+Shift+L (move right) was pinned to none while it was the lock key;
   # it is written back to Krohnkite's default here.
+  # Krohnkite also takes the WMs' tiling keys: Meta+V toggle float (Klipper's
+  # clipboard popup moves from Meta+V to Meta+Ctrl+V), Meta+Alt+H/J/K/L focus
+  # beside its Meta+H/J/K (Meta+Alt+L was "Switch to Last-Used Keyboard
+  # Layout", now keyless; Meta+Space switches layouts), Meta+Shift+arrows
+  # move beside Meta+Shift+H/J/K/L (taken from KWin's window to
+  # next/previous screen), and Meta+Ctrl+Space next layout beside Meta+\.
+  # Its "Toggle Float All" shipped on Meta+Shift+F, the shared maximize key,
+  # and won it, so Meta+Shift+F floated every window; it has no key now.
   # Its shortcuts live under [kwin], keyed by the script's action name.
   # Pinned like the keys above, with the same trade-off; read at the next
   # Plasma login. printf turns the \t separators into tabs.
@@ -292,17 +331,51 @@ in
         --group ksmserver --key "Lock Session" \
         "$(printf 'Meta+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group ksmserver --key "Log Out" \
+        "$(printf 'Ctrl+Alt+Del\tMeta+Shift+E,Ctrl+Alt+Del,Show Logout Screen')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group services --group steelbore-terminal.desktop --key _launch "Meta+Return"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group kwin --key KrohnkiteSetMaster "none,Meta+Return,Krohnkite: Set master"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group kwin --key KrohnkiteDecrease "none,Meta+D,Krohnkite: Decrease"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteToggleFloat "none,Meta+F,Krohnkite: Toggle Float"
+        --group kwin --key KrohnkiteToggleFloat "Meta+V,Meta+F,Krohnkite: Toggle Float"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteShiftRight "Meta+Shift+L,Meta+Shift+L,Krohnkite: Move Right"
+        --group kwin --key KrohnkiteFloatAll "none,Meta+Shift+F,Krohnkite: Toggle Float All"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteFocusRight "none,Meta+L,Krohnkite: Focus Right"
+        --group plasmashell --key show-on-mouse-pos \
+        "Meta+Ctrl+V,Meta+V,Show Clipboard Items at Mouse Position"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group "KDE Keyboard Layout Switcher" --key "Switch to Last-Used Keyboard Layout" \
+        "none,Meta+Alt+L,Switch to Last-Used Keyboard Layout"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusLeft "$(printf 'Meta+H\tMeta+Alt+H,none,Krohnkite: Focus Left')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusDown "$(printf 'Meta+J\tMeta+Alt+J,none,Krohnkite: Focus Down')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusUp "$(printf 'Meta+K\tMeta+Alt+K,none,Krohnkite: Focus Up')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftLeft "$(printf 'Meta+Shift+H\tMeta+Shift+Left,none,Krohnkite: Move Left')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftDown "$(printf 'Meta+Shift+J\tMeta+Shift+Down,none,Krohnkite: Move Down/Next')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftUp "$(printf 'Meta+Shift+K\tMeta+Shift+Up,none,Krohnkite: Move Up/Prev')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window to Next Screen" "none,Meta+Shift+Right,Move Window to Next Screen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window to Previous Screen" "none,Meta+Shift+Left,Move Window to Previous Screen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteNextLayout \
+        "$(printf '%s\t%s' 'Meta+\\' 'Meta+Ctrl+Space,none,Krohnkite: Next Layout')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group services --group steelbore-shortcuts.desktop --key _launch \
+        "$(printf 'Meta+?\tMeta+Shift+/')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftRight \
+        "$(printf 'Meta+Shift+L\tMeta+Shift+Right,Meta+Shift+L,Krohnkite: Move Right')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusRight "Meta+Alt+L,Meta+L,Krohnkite: Focus Right"
     ''
     + desktopKeys
   );

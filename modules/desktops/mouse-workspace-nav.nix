@@ -43,6 +43,29 @@ let
       button = buttonRules;
     }) cfg.deviceNames;
   };
+  # Plasma X11: the X server can read the daemon's new virtual keyboard
+  # before udev has tagged it, and libinput then refuses it for good ("not
+  # using input device"). The buttons are still grabbed, so they go dead
+  # with no error anywhere but Xorg.0.log. Wait for X to list this
+  # instance's keyboard (its name ends in the daemon's PID) and fail the
+  # start otherwise, so Restart= creates the device again; a restart after
+  # login was enough every time it was tried. No-op outside X11, where the
+  # compositor reads the device itself (CONSTRAINTS.md #56).
+  xinput = pkgs.xinput or pkgs.xorg.xinput;
+  xKeyboardReady = pkgs.writeShellScript "escapepod-x11-keyboard-ready" ''
+    [ "''${XDG_SESSION_TYPE:-}" = x11 ] && [ -n "''${DISPLAY:-}" ] || exit 0
+    want="Escape Pod virtual keyboard $MAINPID"
+    i=0
+    while [ "$i" -lt 40 ]; do
+      if ${lib.getExe xinput} list --name-only 2>/dev/null | ${pkgs.gnugrep}/bin/grep -qxF "$want"; then
+        exit 0
+      fi
+      i=$((i + 1))
+      ${pkgs.coreutils}/bin/sleep 0.25
+    done
+    echo "X did not add '$want'; restarting so the device is created again" >&2
+    exit 1
+  '';
   command = lib.escapeShellArgs [
     (lib.getExe package)
     "daemon"
@@ -131,9 +154,14 @@ in
         "cosmic-session.target"
         "plasma-core.target"
       ];
+      # Five tries a minute: the readiness check above fails a start that X
+      # skipped, and each retry makes a fresh device.
+      startLimitBurst = 5;
+      startLimitIntervalSec = 60;
       serviceConfig = {
         ExecStartPre = "${lib.getExe package} config check --config ${mouseConfig} --json";
         ExecStart = command;
+        ExecStartPost = xKeyboardReady;
         Restart = "on-failure";
         RestartSec = 2;
         RestartPreventExitStatus = "6";
