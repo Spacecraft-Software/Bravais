@@ -380,8 +380,11 @@ daemon's unit itself, references the package by store path only, and starts
 the client in exactly two places: a user unit wanted by
 `plasma-workspace-x11.target` (a target only the X11 session has) and
 LeftWM's theme hook. Each client gets its configuration through
-`XDG_CONFIG_HOME` pointing at a store directory, so `~/.config/touchegg` is
-not read. The daemon serves clients on the abstract socket `touchegg`, which
+`XDG_CONFIG_HOME`, so `~/.config/touchegg` is not read; that directory must
+be writable, because the client creates its instance lock
+(`touchegg/.touchegg<display>.lock`) there and exits with "Another instance
+of Touchégg is already running" when it cannot. A wrapper stages a private
+directory in the runtime dir that links the store file, then execs. The daemon serves clients on the abstract socket `touchegg`, which
 lives in the network namespace: keep `PrivateNetwork` off its unit. Any
 local process can reach that socket, so the daemon runs as a `DynamicUser`
 in the `input` group, not as root as upstream ships it; libinput opens the

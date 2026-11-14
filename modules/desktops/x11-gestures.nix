@@ -107,7 +107,21 @@ let
     grid = kwinShortcut "Grid View";
   };
 
-  client = configDir: "XDG_CONFIG_HOME=${configDir} ${lib.getExe' package "touchegg"}";
+  # The client keeps its instance lock beside its configuration
+  # ($XDG_CONFIG_HOME/touchegg/.touchegg<display>.lock, opened O_CREAT) and
+  # exits at once when it cannot create it, so XDG_CONFIG_HOME cannot be the
+  # read-only store directory itself. Stage a private, writable directory
+  # that links the generated file, then exec, so the PID stays touchegg's
+  # (LeftWM's pidfile check reads /proc/<pid>/comm).
+  client =
+    configDir:
+    "${pkgs.writeShellScript "steelbore-touchegg-client" ''
+      dir="''${XDG_RUNTIME_DIR:-$HOME/.cache}/steelbore-touchegg"
+      ${pkgs.coreutils}/bin/mkdir -p -m 700 "$dir/touchegg"
+      ${pkgs.coreutils}/bin/ln -sfn ${configDir}/touchegg/touchegg.conf "$dir/touchegg/touchegg.conf"
+      export XDG_CONFIG_HOME="$dir"
+      exec ${lib.getExe' package "touchegg"}
+    ''}";
 in
 {
   options.steelbore.desktops.x11Gestures = {
@@ -188,9 +202,8 @@ in
       partOf = [ "plasma-workspace-x11.target" ];
       after = [ "plasma-workspace-x11.target" ];
       wantedBy = [ "plasma-workspace-x11.target" ];
-      environment.XDG_CONFIG_HOME = "${plasmaConfig}";
       serviceConfig = {
-        ExecStart = lib.getExe' package "touchegg";
+        ExecStart = client plasmaConfig;
         Restart = "on-failure";
         RestartSec = 2;
       };
