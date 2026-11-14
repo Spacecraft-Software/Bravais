@@ -382,4 +382,7 @@ the client in exactly two places: a user unit wanted by
 LeftWM's theme hook. Each client gets its configuration through
 `XDG_CONFIG_HOME` pointing at a store directory, so `~/.config/touchegg` is
 not read. The daemon serves clients on the abstract socket `touchegg`, which
-lives in the network namespace: keep `PrivateNetwork` off its unit.
+lives in the network namespace: keep `PrivateNetwork` off its unit. Any
+local process can reach that socket, so the daemon runs as a `DynamicUser`
+in the `input` group, not as root as upstream ships it; libinput opens the
+event nodes read-write, so `DeviceAllow` must keep `char-input rw`.

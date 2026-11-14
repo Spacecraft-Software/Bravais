@@ -172,6 +172,12 @@
         {
           name = "up";
           path = pkgs.writeShellScript "leftwm-steelbore-up" ''
+            # Pidfiles live in the session's private runtime directory. Never
+            # /tmp: a fixed name there is another user's symlink to plant, and
+            # `echo $! >` would follow it. Without XDG_RUNTIME_DIR, fall back
+            # to a directory only this user owns.
+            state_dir="''${XDG_RUNTIME_DIR:-$HOME/.cache/steelbore-leftwm}"
+            mkdir -p -m 700 "$state_dir"
             ${pkgs.picom}/bin/picom &
             ${pkgs.dunst}/bin/dunst &
             # Start eww daemon first, then open the bar. `eww daemon` forks
@@ -184,7 +190,7 @@
             # GNOME, Plasma, Niri and Margo; see docs/keybindings.md. `up`
             # re-runs on every LoadTheme, so stop a previous pair first rather
             # than stacking a second daemon and corner watcher.
-            hotcorner_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+            hotcorner_pidfile="$state_dir/steelbore-leftwm-hotcorner.pid"
             if [ -r "$hotcorner_pidfile" ]; then
               while IFS= read -r pid; do
                 kill "$pid" 2>/dev/null || true
@@ -204,7 +210,7 @@
             # without that, a leftwm session that ends leaves Escape Pod holding an
             # EVIOCGRAB on the mouse.
             ${lib.optionalString config.steelbore.desktops.mouseWorkspaceNav.enable ''
-              mouse_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-escapepod.pid"
+              mouse_pidfile="$state_dir/steelbore-leftwm-escapepod.pid"
               # LoadTheme re-runs `up`. Keep the original PID: a second
               # Escape Pod exits on its instance lock and must not replace it.
               if [ -r "$mouse_pidfile" ] &&
@@ -224,7 +230,7 @@
             # systemd graphical session here. Kept across LoadTheme like it.
             # Swipe up opens the same skippy-xd paging as the hot corner.
             ${lib.optionalString config.steelbore.desktops.x11Gestures.enable ''
-              gestures_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-touchegg.pid"
+              gestures_pidfile="$state_dir/steelbore-leftwm-touchegg.pid"
               if [ -r "$gestures_pidfile" ] &&
                 IFS= read -r gestures_pid < "$gestures_pidfile" &&
                 IFS= read -r gestures_process < "/proc/$gestures_pid/comm" &&
@@ -241,18 +247,24 @@
         {
           name = "down";
           path = pkgs.writeShellScript "leftwm-steelbore-down" ''
+            # Pidfiles live in the session's private runtime directory. Never
+            # /tmp: a fixed name there is another user's symlink to plant, and
+            # `echo $! >` would follow it. Without XDG_RUNTIME_DIR, fall back
+            # to a directory only this user owns.
+            state_dir="''${XDG_RUNTIME_DIR:-$HOME/.cache/steelbore-leftwm}"
+            mkdir -p -m 700 "$state_dir"
             # Ask the daemon to stop before killing it, under a timeout: the
             # client opens the daemon's FIFO with a blocking write, which never
             # returns if a stale FIFO outlived a dead daemon.
             ${pkgs.coreutils}/bin/timeout 2 ${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --stop-daemon 2>/dev/null || true
-            hotcorner_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-hotcorner.pid"
+            hotcorner_pidfile="$state_dir/steelbore-leftwm-hotcorner.pid"
             if [ -r "$hotcorner_pidfile" ]; then
               while IFS= read -r pid; do
                 kill "$pid" 2>/dev/null || true
               done < "$hotcorner_pidfile"
               rm -f "$hotcorner_pidfile"
             fi
-            pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-escapepod.pid"
+            pidfile="$state_dir/steelbore-leftwm-escapepod.pid"
             # A stale PID can have been reused since the last session.
             if [ -r "$pidfile" ] &&
               IFS= read -r mouse_pid < "$pidfile" &&
@@ -261,7 +273,7 @@
               kill "$mouse_pid" 2>/dev/null || true
             fi
             rm -f "$pidfile"
-            gestures_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-touchegg.pid"
+            gestures_pidfile="$state_dir/steelbore-leftwm-touchegg.pid"
             if [ -r "$gestures_pidfile" ] &&
               IFS= read -r gestures_pid < "$gestures_pidfile" &&
               IFS= read -r gestures_process < "/proc/$gestures_pid/comm" &&

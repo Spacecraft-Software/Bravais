@@ -18,13 +18,19 @@ fixture_pid=
 trap 'if [ -n "$fixture_pid" ]; then kill "$fixture_pid" 2>/dev/null || :; fi' 0
 
 # Use the actual generated lifecycle code, replacing only the daemon command.
+# The pidfile directory each hook sets up first goes in too; the Escape Pod
+# block ends where the touchpad-gesture block begins.
 awk -v stub="$fixture_dir/escapepod" '
+  /^[[:space:]]*(state_dir=|mkdir -p -m 700 )/ { print; next }
   /^[[:space:]]*mouse_pidfile=/ { take=1 }
+  /Touchpad gestures/ { take=0 }
   take && /\/bin\/escapepod.*daemon/ { print "  \"" stub "\" 60 &"; next }
   take { print }
 ' "$theme/up" > "$fixture_dir/up"
 awk '
+  /^[[:space:]]*(state_dir=|mkdir -p -m 700 )/ { print; next }
   /^[[:space:]]*pidfile=.*steelbore-leftwm-escapepod/ { take=1 }
+  /steelbore-leftwm-touchegg/ { take=0 }
   take { print }
 ' "$theme/down" > "$fixture_dir/down"
 test -s "$fixture_dir/up"

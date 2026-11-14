@@ -143,15 +143,20 @@ in
 
     # The daemon: libinput on every touchpad, gestures to clients over the
     # abstract socket `touchegg`, which lives in the network namespace (so no
-    # PrivateNetwork). Upstream runs it as root with group input; the device
-    # access libinput needs is /dev/input and udev's /run/udev, both left
-    # readable by the sandbox below.
+    # PrivateNetwork). Upstream runs it as root; it needs only what the input
+    # group grants (/dev/input/event* are root:input 0660) and udev's
+    # world-readable /run/udev, so it runs as a throwaway user in that group.
+    # Any local process can reach the socket and feed this C++ parser, which
+    # is the reason not to leave it root.
     systemd.services.touchegg = {
       description = "Touchégg touchpad gesture daemon (X11 sessions)";
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         ExecStart = "${lib.getExe' package "touchegg"} --daemon";
-        Group = "input";
+        DynamicUser = true;
+        SupplementaryGroups = [ "input" ];
+        DeviceAllow = [ "char-input rw" ];
+        DevicePolicy = "closed";
         Restart = "on-failure";
         RestartSec = 5;
         NoNewPrivileges = true;
