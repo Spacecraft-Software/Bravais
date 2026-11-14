@@ -71,6 +71,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Touchpad swipes work on Plasma X11, and LeftWM gets them too.** KWin's
+  gestures exist only in its Wayland session, so on Plasma X11 the
+  3- and 4-finger swipes never did anything. Touchégg now provides them in
+  both X11 sessions: left/right switch workspaces with a sliding animation,
+  up opens the overview (KWin's Overview, or skippy-xd under LeftWM), and a
+  4-finger swipe down opens Plasma's Grid View.
 - **Git's output no longer scribbles over Preflight's TUI.** The git sync
   and the dependency commit let git write its fetch progress and merge
   diffstat straight to the terminal, over the full-screen view; a mid-run

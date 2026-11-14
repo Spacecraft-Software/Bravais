@@ -56,13 +56,22 @@ so a left swipe goes to the next workspace on the right.
 
 | Gesture | Action | Where it comes from |
 |---|---|---|
-| 3-finger left/right | Next / previous workspace | GNOME, Niri (scrolls the column strip instead), Margo (`gesturebind`, `users/mj/margo.nix`) and Plasma (KWin) natively. COSMIC has none |
-| 3-finger up | Overview | GNOME natively (Activities); Margo `gesturebind`; Plasma through the `steelbore-gestures` KWin script (`users/mj/plasma.nix`). Niri has none (3-finger vertical switches workspaces) |
-| 4-finger up/down | Overview (Plasma: down is Grid View) | Niri, Plasma (KWin) and Margo. COSMIC and GNOME have none |
-| 4-finger left/right | Next / previous workspace | COSMIC (`cosmic-comp` 1.2.0 handles only 4 fingers); Plasma (KWin) as well |
+| 3-finger left/right | Next / previous workspace | GNOME, Niri (scrolls the column strip instead), Margo (`gesturebind`, `users/mj/margo.nix`) and Plasma Wayland (KWin) natively; Plasma X11 and LeftWM through Touchégg. COSMIC has none |
+| 3-finger up | Overview | GNOME natively (Activities); Margo `gesturebind`; Plasma Wayland through the `steelbore-gestures` KWin script (`users/mj/plasma.nix`); Plasma X11 and LeftWM (skippy-xd paging) through Touchégg. Niri has none (3-finger vertical switches workspaces) |
+| 4-finger up/down | Overview (Plasma: down is Grid View) | Niri, Plasma (KWin on Wayland, Touchégg on X11) and Margo; LeftWM up only. COSMIC and GNOME have none |
+| 4-finger left/right | Next / previous workspace | COSMIC (`cosmic-comp` 1.2.0 handles only 4 fingers); Plasma (KWin on Wayland, Touchégg on X11) and LeftWM as well |
 
 Niri's gestures are fixed in the compositor, and COSMIC's 3-finger swipes are an
 upstream `TODO`; those gaps stay until either changes.
+
+KWin's touchpad gestures, its own and the KWin script's alike, exist only in
+its Wayland compositor. The two X11 sessions get theirs from Touchégg
+(`modules/desktops/x11-gestures.nix`): a system daemon reads the touchpad and
+a client in the session acts, sending the shared workspace keys
+(Super+Ctrl+arrows, with Touchégg's sliding animation) and invoking KWin's
+*Overview* / *Grid View* by name, or skippy-xd's paging under LeftWM. The
+client is started by Plasma X11's `plasma-workspace-x11.target` and by
+LeftWM's theme hook only, never by XDG autostart (constraint #57).
 
 Hardware keys (volume, mute, mic mute, brightness, media, keyboard backlight,
 Bluetooth, airplane) work in all five: `swayosd` under Niri and Margo,

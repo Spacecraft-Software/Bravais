@@ -362,3 +362,24 @@ check while any X11 session (Plasma X11) can start the unit, and look in
 `Xorg.0.log`, not the unit's journal, when the buttons go dead on X11.
 LeftWM starts the same command from its theme hook without systemd and has
 no such retry.
+
+### 57. Touchégg's client must never be autostarted: never `services.touchegg`, never the package in a profile
+
+KWin's touchpad gestures (its built-in swipes and any KWin script's
+`SwipeGestureHandler`) work only in the Wayland session; on Plasma X11 they
+never fire, which went unnoticed until 2026-11-14 because the gestures were
+tested on Wayland. Bravais gives the X11 sessions Touchégg instead
+(`modules/desktops/x11-gestures.nix`).
+
+The Touchégg package ships `etc/xdg/autostart/touchegg.desktop` for its
+client, and the NixOS `services.touchegg` module puts the package in
+`environment.systemPackages`, which links that entry into every session's
+autostart path. Plasma Wayland, GNOME and COSMIC would then each start a
+client beside their compositor's own gestures. So the module writes the
+daemon's unit itself, references the package by store path only, and starts
+the client in exactly two places: a user unit wanted by
+`plasma-workspace-x11.target` (a target only the X11 session has) and
+LeftWM's theme hook. Each client gets its configuration through
+`XDG_CONFIG_HOME` pointing at a store directory, so `~/.config/touchegg` is
+not read. The daemon serves clients on the abstract socket `touchegg`, which
+lives in the network namespace: keep `PrivateNetwork` off its unit.

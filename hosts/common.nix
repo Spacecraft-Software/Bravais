@@ -73,6 +73,7 @@
     desktops.niriUnmax.enable = true; # revert Chrome-style post-open self-maximize
     desktops.margo.enable = true; # mango-style tags + fluid animations, Rust/Smithay (pkgs/margo)
     desktops.leftwm.enable = true;
+    desktops.x11Gestures.enable = true; # touchpad swipes on Plasma X11 and LeftWM (see modules/desktops/x11-gestures.nix)
     desktops.mouseWorkspaceNav.enable = true; # side buttons to workspace left/right (see modules/desktops/mouse-workspace-nav.nix)
 
     # Package bundles

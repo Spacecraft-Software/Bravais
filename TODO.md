@@ -123,6 +123,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Configure SSH askpass override (`ksshaskpass`)
 - [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+L, desktops 1–9)
 - [✓] Meta+Shift+E logout screen, Meta+Shift+U keyring, Meta+Shift+/ Shortcuts page; Krohnkite on Meta+V, Meta+Alt+H/J/K/L, Meta+Shift+arrows, Meta+Ctrl+Space; Meta+Shift+F maximize back from Krohnkite's Float All
+- [✓] Touchpad swipes on Plasma X11 (and LeftWM) through Touchégg — KWin's gestures are Wayland-only; client started only by `plasma-workspace-x11.target` and LeftWM's theme hook, never autostart (constraint #57)
 - [✓] KRunner on `Meta+D` beside its stock keys (matches `Mod+D` under Niri, COSMIC and GNOME); KWin's Peek at Desktop gives up its default `Meta+D`
 - [✓] Caffeine on `Meta+Shift+C` — default shortcut via a hidden `applications/` desktop file with `X-KDE-Shortcuts`; `steelbore-caffeine` holds the PowerManagement + ScreenSaver inhibits via `kde-inhibit` (no global action exists for the battery applet's manual-block checkbox)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)

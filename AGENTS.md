@@ -226,6 +226,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 
 55. **Plasma opens Kickoff on a lone Super tap natively, on X11 as on Wayland** — keep `Meta` in the launcher binding and run no tap remapper (Escape Pod, xcape) that sends another launcher key: one tap would then toggle the menu open and shut. Never bind F13 to anything: XKB maps it to `XF86Tools` (the settings key).
 56. **On X11 the X server can skip Escape Pod's virtual keyboard at login** — libinput reads it before udev tags it and refuses it for good, so the side buttons go dead while the service runs; the unit's `ExecStartPost` waits for `xinput` to list the keyboard and fails the start otherwise. Check `Xorg.0.log`, not the journal.
+57. **Touchégg's client is never autostarted** — never `services.touchegg` or the package in a profile: its XDG autostart entry would start a client in Plasma Wayland, GNOME and COSMIC on top of their own gestures; `modules/desktops/x11-gestures.nix` starts it only from `plasma-workspace-x11.target` and LeftWM's theme hook. KWin's gestures are Wayland-only.
 
 ## Delegating to OpenCode Go
 

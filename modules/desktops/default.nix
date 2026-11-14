@@ -11,6 +11,7 @@
     ./niri-unmax.nix
     ./margo.nix
     ./mouse-workspace-nav.nix
+    ./x11-gestures.nix
     ./leftwm.nix
     ./assertions.nix
   ];

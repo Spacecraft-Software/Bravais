@@ -218,6 +218,24 @@
                 echo $! > "$mouse_pidfile"
               fi
             ''}
+
+            # Touchpad gestures (modules/desktops/x11-gestures.nix): the
+            # Touchégg client, for the same reason as Escape Pod above -- no
+            # systemd graphical session here. Kept across LoadTheme like it.
+            # Swipe up opens the same skippy-xd paging as the hot corner.
+            ${lib.optionalString config.steelbore.desktops.x11Gestures.enable ''
+              gestures_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-touchegg.pid"
+              if [ -r "$gestures_pidfile" ] &&
+                IFS= read -r gestures_pid < "$gestures_pidfile" &&
+                IFS= read -r gestures_process < "/proc/$gestures_pid/comm" &&
+                [ "$gestures_process" = touchegg ] &&
+                kill -0 "$gestures_pid" 2>/dev/null; then
+                :
+              else
+                ${config.steelbore.desktops.x11Gestures.mkClient "${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --paging"} &
+                echo $! > "$gestures_pidfile"
+              fi
+            ''}
           '';
         }
         {
@@ -243,6 +261,14 @@
               kill "$mouse_pid" 2>/dev/null || true
             fi
             rm -f "$pidfile"
+            gestures_pidfile="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-leftwm-touchegg.pid"
+            if [ -r "$gestures_pidfile" ] &&
+              IFS= read -r gestures_pid < "$gestures_pidfile" &&
+              IFS= read -r gestures_process < "/proc/$gestures_pid/comm" &&
+              [ "$gestures_process" = touchegg ]; then
+              kill "$gestures_pid" 2>/dev/null || true
+            fi
+            rm -f "$gestures_pidfile"
             exit 0
           '';
         }
