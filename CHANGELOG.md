@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
+  `home-manager-unstable` and `gantry` in `flake.lock`, and the vendored
+  Claude Desktop pin (`pkgs/claude-desktop/package.nix`).
 - **More of the tiling WMs' keys work on GNOME, Plasma and COSMIC.**
   Super+Shift+E opens the logout screen (Ctrl+Alt+Del and COSMIC's
   Super+Shift+Escape still work), Super+Shift+U runs the keyring rescue,
