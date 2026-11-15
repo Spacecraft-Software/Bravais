@@ -775,8 +775,29 @@ fn abort_requested() -> bool {
 /// upgrader uses, redraws with `ESC[999D` + `ESC[J`; with only `\r` and `\n`
 /// as boundaries every frame was appended to one line that filled the TUI.
 /// Erase codes alone (`K`, `J`) are not boundaries: `text ESC[K` + newline
-/// is an ordinary line.
+/// is an ordinary line. Whether one of these really goes back depends on its
+/// parameters; see [`returns_over_text`].
 const REDRAW_FINALS: &[u8] = b"GHfDAF";
+
+/// Whether the cursor sequence `ESC [ params final` moves back over the
+/// `written` columns of text before it (a redraw), rather than forward,
+/// which is padding: `package ESC[20G failed` lays the two words out in
+/// columns and overwrites nothing. Column and position moves go back only
+/// to column 1; a cursor-back count must reach the start of the text; a
+/// move up is always a redraw of an earlier line.
+fn returns_over_text(params: &[u8], fin: u8, written: usize) -> bool {
+    let nums: Vec<usize> = params
+        .split(|&c| c == b';')
+        .map(|p| std::str::from_utf8(p).ok().and_then(|s| s.parse().ok()).unwrap_or(0))
+        .collect();
+    let arg = |i: usize| nums.get(i).copied().filter(|&n| n > 0).unwrap_or(1);
+    match fin {
+        b'G' => arg(0) <= 1,
+        b'H' | b'f' => arg(1) <= 1,
+        b'D' => arg(0) >= written,
+        _ => true,
+    }
+}
 
 /// One segment of a child's output: the bytes up to a newline, a carriage
 /// return or a cursor-repositioning CSI sequence, and whether it ended in one
@@ -802,12 +823,21 @@ fn next_segment(reader: &mut impl Read, buf: &mut Vec<u8>) -> Option<bool> {
                         if (0x40..=0x7e).contains(&b) {
                             esc = 0;
                             if REDRAW_FINALS.contains(&b) {
-                                // Drop the sequence itself; the text before
-                                // it is the frame being overwritten.
-                                if let Some(at) = buf.iter().rposition(|&c| c == 0x1b) {
-                                    buf.truncate(at);
+                                // Drop the sequence itself. If it goes back
+                                // over the text, that text is the frame
+                                // being overwritten; if it goes forward, it
+                                // was padding, kept as one space.
+                                let at = buf.iter().rposition(|&c| c == 0x1b).unwrap_or(0);
+                                let params = buf.get(at + 2..).unwrap_or_default().to_vec();
+                                buf.truncate(at);
+                                let written = strip_osc_and_csi(&String::from_utf8_lossy(buf))
+                                    .chars()
+                                    .count();
+                                if returns_over_text(&params, b, written) {
+                                    return Some(true);
                                 }
-                                return Some(true);
+                                buf.push(b' ');
+                                continue;
                             }
                         }
                         buf.push(b);
@@ -1672,6 +1702,27 @@ mod tests {
             got,
             vec![("ok done".to_owned(), false), ("next".to_owned(), false)]
         );
+    }
+
+    #[test]
+    fn forward_cursor_moves_are_padding_not_redraws() {
+        // Column 20, and position row 1 column 20: both move forward.
+        assert_eq!(
+            segments(b"package\x1b[20Gfailed\n"),
+            vec![("package failed".to_owned(), false)]
+        );
+        assert_eq!(
+            segments(b"package\x1b[1;20Hfailed\n"),
+            vec![("package failed".to_owned(), false)]
+        );
+        // Back two columns of seven is an edit, not a redraw of the line.
+        assert_eq!(
+            segments(b"package\x1b[2Dxx\n"),
+            vec![("package xx".to_owned(), false)]
+        );
+        // Column 1 and an up move are redraws.
+        assert_eq!(segments(b"a\x1b[Gb\n")[0], ("a".to_owned(), true));
+        assert_eq!(segments(b"a\x1b[1Ab\n")[0], ("a".to_owned(), true));
     }
 
     #[test]
