@@ -116,6 +116,12 @@ static ACTIVE: AtomicBool = AtomicBool::new(false);
 /// The alternate screen and raw mode are on (the `--tui` view, not suspended).
 static TUI_ON: AtomicBool = AtomicBool::new(false);
 static STOP_DRAWER: AtomicBool = AtomicBool::new(false);
+/// Ctrl+L asked for a full repaint (read and reset by the drawer).
+static REDRAW: AtomicBool = AtomicBool::new(false);
+
+/// A wall-clock gap between two frames this long means the process was
+/// stopped -- a suspend to RAM, or SIGSTOP. Frames come every [`UI_TICK`].
+const STALL_REDRAW: Duration = Duration::from_secs(3);
 static STATE: OnceLock<Mutex<Option<State>>> = OnceLock::new();
 
 fn state_lock() -> &'static Mutex<Option<State>> {
@@ -761,33 +767,104 @@ fn abort_requested() -> bool {
 /// Read lines (split on `\n` or `\r`) from a child stream, updating the live
 /// activity indicator and printing non-ephemeral lines above the status bar
 /// (or into the TUI log pane).
+/// Final bytes of the CSI sequences that move the cursor back over what was
+/// just written -- column (`G`), position (`H`, `f`), back (`D`), up (`A`),
+/// previous line (`F`). A program that redraws a spinner or progress line
+/// with them, instead of with `\r`, is overwriting the same line: the text
+/// before one is a frame, not a line of output. Clack, which opencode's
+/// upgrader uses, redraws with `ESC[999D` + `ESC[J`; with only `\r` and `\n`
+/// as boundaries every frame was appended to one line that filled the TUI.
+/// Erase codes alone (`K`, `J`) are not boundaries: `text ESC[K` + newline
+/// is an ordinary line. Whether one of these really goes back depends on its
+/// parameters; see [`returns_over_text`].
+const REDRAW_FINALS: &[u8] = b"GHfDAF";
+
+/// Whether the cursor sequence `ESC [ params final` moves back over the
+/// `written` columns of text before it (a redraw), rather than forward,
+/// which is padding: `package ESC[20G failed` lays the two words out in
+/// columns and overwrites nothing. Column and position moves go back only
+/// to column 1; a cursor-back count must reach the start of the text; a
+/// move up is always a redraw of an earlier line.
+fn returns_over_text(params: &[u8], fin: u8, written: usize) -> bool {
+    let nums: Vec<usize> = params
+        .split(|&c| c == b';')
+        .map(|p| std::str::from_utf8(p).ok().and_then(|s| s.parse().ok()).unwrap_or(0))
+        .collect();
+    let arg = |i: usize| nums.get(i).copied().filter(|&n| n > 0).unwrap_or(1);
+    match fin {
+        b'G' => arg(0) <= 1,
+        b'H' | b'f' => arg(1) <= 1,
+        b'D' => arg(0) >= written,
+        _ => true,
+    }
+}
+
+/// One segment of a child's output: the bytes up to a newline, a carriage
+/// return or a cursor-repositioning CSI sequence, and whether it ended in one
+/// of the last two (a redraw frame, shown as activity but never logged).
+/// `None` at end of stream with nothing pending.
+fn next_segment(reader: &mut impl Read, buf: &mut Vec<u8>) -> Option<bool> {
+    buf.clear();
+    let mut byte = [0u8; 1];
+    // 0: plain text, 1: after ESC, 2: inside a CSI sequence.
+    let mut esc = 0u8;
+    loop {
+        match reader.read(&mut byte) {
+            Ok(0) => return (!buf.is_empty()).then_some(false),
+            Ok(_) => {
+                let b = byte[0];
+                match esc {
+                    1 => {
+                        esc = if b == b'[' { 2 } else { 0 };
+                        buf.push(b);
+                        continue;
+                    }
+                    2 => {
+                        if (0x40..=0x7e).contains(&b) {
+                            esc = 0;
+                            if REDRAW_FINALS.contains(&b) {
+                                // Drop the sequence itself. If it goes back
+                                // over the text, that text is the frame
+                                // being overwritten; if it goes forward, it
+                                // was padding, kept as one space.
+                                let at = buf.iter().rposition(|&c| c == 0x1b).unwrap_or(0);
+                                let params = buf.get(at + 2..).unwrap_or_default().to_vec();
+                                buf.truncate(at);
+                                let written = strip_osc_and_csi(&String::from_utf8_lossy(buf))
+                                    .chars()
+                                    .count();
+                                if returns_over_text(&params, b, written) {
+                                    return Some(true);
+                                }
+                                buf.push(b' ');
+                                continue;
+                            }
+                        }
+                        buf.push(b);
+                        continue;
+                    }
+                    _ => {}
+                }
+                match b {
+                    0x1b => {
+                        esc = 1;
+                        buf.push(b);
+                    }
+                    b'\n' => return Some(false),
+                    b'\r' => return Some(true),
+                    _ => buf.push(b),
+                }
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(_) => return (!buf.is_empty()).then_some(false),
+        }
+    }
+}
+
 fn forward_stream(pipe: impl Read) {
     let mut reader = BufReader::new(pipe);
     let mut buf = Vec::with_capacity(256);
-    loop {
-        buf.clear();
-        let mut byte = [0u8; 1];
-        let mut ended_with_cr = false;
-        loop {
-            match reader.read(&mut byte) {
-                Ok(0) => break,
-                Ok(_) => {
-                    if byte[0] == b'\n' {
-                        break;
-                    }
-                    if byte[0] == b'\r' {
-                        ended_with_cr = true;
-                        break;
-                    }
-                    buf.push(byte[0]);
-                }
-                Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => {}
-                Err(_) => break,
-            }
-        }
-        if buf.is_empty() && !ended_with_cr {
-            break;
-        }
+    while let Some(ended_with_cr) = next_segment(&mut reader, &mut buf) {
         let raw = String::from_utf8_lossy(&buf);
         let clean = strip_osc_and_csi(&raw);
         let trimmed = clean.trim();
@@ -1002,6 +1079,7 @@ fn tui_loop() {
     };
     let _ = terminal.clear();
     replay_typeahead();
+    let mut last_frame = std::time::SystemTime::now();
 
     while !STOP_DRAWER.load(Ordering::Acquire) {
         let is_suspended = state_lock()
@@ -1014,12 +1092,32 @@ fn tui_loop() {
             continue;
         }
 
+        // ratatui redraws only the cells it believes changed. When the
+        // screen is repainted behind its back -- a terminal or Zellij
+        // redrawing after the laptop resumed, a resize -- the rest stays
+        // blank or stale until it changes, so repaint everything then, and
+        // on Ctrl+L. SystemTime, not Instant: the monotonic clock stops
+        // while the machine sleeps, so only the wall clock shows the gap.
+        let now = std::time::SystemTime::now();
+        let mut full = now.duration_since(last_frame).unwrap_or_default() > STALL_REDRAW;
+        last_frame = now;
+
         if event::poll(UI_TICK).unwrap_or(false) {
-            if let Ok(Event::Key(key)) = event::read() {
-                if key.kind == KeyEventKind::Press && handle_key(key.code, key.modifiers) {
-                    interrupt_run();
+            match event::read() {
+                Ok(Event::Key(key)) => {
+                    if key.kind == KeyEventKind::Press && handle_key(key.code, key.modifiers) {
+                        interrupt_run();
+                    }
                 }
+                Ok(Event::Resize(..)) => full = true,
+                _ => {}
             }
+        }
+        if REDRAW.swap(false, Ordering::AcqRel) {
+            full = true;
+        }
+        if full {
+            let _ = terminal.clear();
         }
 
         if let Ok(mut guard) = state_lock().lock() {
@@ -1175,6 +1273,9 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) -> bool {
         return false;
     };
     match code {
+        KeyCode::Char('l') if mods.contains(KeyModifiers::CONTROL) => {
+            REDRAW.store(true, Ordering::Release);
+        }
         KeyCode::Char('c') if mods.contains(KeyModifiers::CONTROL) => {
             st.abort_requested = true;
             return true;
@@ -1507,7 +1608,7 @@ fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette
     // `Abort: q` survive an 80-column terminal instead of being cut off.
     let variants = [
         format!(
-            " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Abort: q / Esc / Ctrl+C"
+            " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Redraw: Ctrl+L | Abort: q / Esc / Ctrl+C"
         ),
         format!(" Focus: {focus} (Tab) | Scroll: ↑/↓ j/k PgUp/PgDn g/G | Copy: y | Abort: q / Esc"),
         format!(" {focus} (Tab) | ↑/↓ scroll | y copy | q abort"),
@@ -1572,6 +1673,69 @@ mod tests {
         assert!(text.contains("[OK]   sync (1m01s)"));
         assert!(text.contains("[SKIP] gc"));
         assert!(!text.contains("building foo"));
+    }
+
+    fn segments(input: &[u8]) -> Vec<(String, bool)> {
+        let mut reader = std::io::Cursor::new(input.to_vec());
+        let mut buf = Vec::new();
+        let mut out = Vec::new();
+        while let Some(redraw) = next_segment(&mut reader, &mut buf) {
+            out.push((strip_osc_and_csi(&String::from_utf8_lossy(&buf)), redraw));
+        }
+        out
+    }
+
+    #[test]
+    fn cursor_moves_end_a_redraw_frame_like_cr() {
+        // Clack's spinner: back to column 1, erase down, next frame.
+        let got = segments(b"\x1b[999D\x1b[JUpgrading.\x1b[999D\x1b[JUpgrading..\x1b[999D\x1b[J\xe2\x97\x87 Upgraded\n");
+        let logged: Vec<_> = got.iter().filter(|(t, r)| !r && !t.trim().is_empty()).collect();
+        assert_eq!(logged.len(), 1);
+        assert_eq!(logged[0].0, "\u{25c7} Upgraded");
+        assert!(got.iter().any(|(t, r)| *r && t == "Upgrading."));
+    }
+
+    #[test]
+    fn erase_and_colour_codes_do_not_split_a_line() {
+        let got = segments(b"\x1b[32mok\x1b[0m done\x1b[K\nnext\n");
+        assert_eq!(
+            got,
+            vec![("ok done".to_owned(), false), ("next".to_owned(), false)]
+        );
+    }
+
+    #[test]
+    fn forward_cursor_moves_are_padding_not_redraws() {
+        // Column 20, and position row 1 column 20: both move forward.
+        assert_eq!(
+            segments(b"package\x1b[20Gfailed\n"),
+            vec![("package failed".to_owned(), false)]
+        );
+        assert_eq!(
+            segments(b"package\x1b[1;20Hfailed\n"),
+            vec![("package failed".to_owned(), false)]
+        );
+        // Back two columns of seven is an edit, not a redraw of the line.
+        assert_eq!(
+            segments(b"package\x1b[2Dxx\n"),
+            vec![("package xx".to_owned(), false)]
+        );
+        // Column 1 and an up move are redraws.
+        assert_eq!(segments(b"a\x1b[Gb\n")[0], ("a".to_owned(), true));
+        assert_eq!(segments(b"a\x1b[1Ab\n")[0], ("a".to_owned(), true));
+    }
+
+    #[test]
+    fn carriage_return_and_trailing_text_still_work() {
+        let got = segments(b"50%\r100%\rdone");
+        assert_eq!(
+            got,
+            vec![
+                ("50%".to_owned(), true),
+                ("100%".to_owned(), true),
+                ("done".to_owned(), false)
+            ]
+        );
     }
 
     #[test]

@@ -71,6 +71,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Preflight's TUI repaints itself after the laptop sleeps, and on Ctrl+L.**
+  After a resume (or a resize) the terminal could repaint the screen behind
+  the TUI, which then redrew only what it thought had changed, leaving
+  borders, task rows and the gauge blank. It now repaints everything when
+  the wall clock jumps, on a resize, and on Ctrl+L.
+- **Spinners no longer flood Preflight's log.** A child that redraws its
+  spinner by moving the cursor instead of with a carriage return (Clack's,
+  in `opencode upgrade`) had every frame appended to one line that filled
+  the output pane; those frames now update the activity line only.
+- **Preflight keeps reading a step's output past its first blank line.** The
+  reader took an empty line for the end of the stream and stopped draining
+  the pipe, so a chatty step could fill it and block.
 - **Git's output no longer scribbles over Preflight's TUI.** The git sync
   and the dependency commit let git write its fetch progress and merge
   diffstat straight to the terminal, over the full-screen view; a mid-run
