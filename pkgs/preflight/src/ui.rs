@@ -18,7 +18,7 @@
 //      - Top banner: Steelbore OS host, overall gauge, step counter, elapsed
 //        timer, and an unmistakable alert banner whenever an authorization step
 //        is waiting on a sudo password or fingerprint scan.
-//      - Left / top task list (responsive to terminal width): every scheduled
+//      - Right / top task list (responsive to terminal width): every scheduled
 //        step with its status icon (`✓` / `[OK]` done, `⠹` / `*` running,
 //        `·` pending, `–` skipped, `✗` / `[!]` failed), duration, and detail.
 //      - Main log & activity pane: live scrollable output from the running
@@ -1420,22 +1420,25 @@ fn draw_tui(f: &mut ratatui::Frame<'_>, st: &State) {
 
     draw_header(f, root[0], st, &pal);
 
-    // Side-by-side task list + log pane on wide terminals (>= 90 cols), stacked
-    // top-and-bottom on narrower terminals so both remain legible everywhere.
-    let body = if root[1].width >= 90 {
-        Layout::default()
+    // Side-by-side log pane + task list on wide terminals (>= 90 cols), the
+    // task list on the right; stacked top-and-bottom on narrower terminals,
+    // the task list on top, so both remain legible everywhere.
+    let (tasks_area, logs_area) = if root[1].width >= 90 {
+        let cols = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Length(38), Constraint::Min(40)])
-            .split(root[1])
+            .constraints([Constraint::Min(40), Constraint::Length(38)])
+            .split(root[1]);
+        (cols[1], cols[0])
     } else {
-        Layout::default()
+        let rows = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
-            .split(root[1])
+            .split(root[1]);
+        (rows[0], rows[1])
     };
 
-    draw_tasks(f, body[0], st, &pal);
-    draw_logs(f, body[1], st, &pal);
+    draw_tasks(f, tasks_area, st, &pal);
+    draw_logs(f, logs_area, st, &pal);
     draw_footer(f, root[2], st, &pal);
 }
 

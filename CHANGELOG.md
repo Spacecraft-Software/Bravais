@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Preflight's TUI shows its task list on the right** of the output pane on
+  wide terminals (90 columns or more); narrower ones still stack it above.
 - **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
   `home-manager-unstable` and `gantry` in `flake.lock`, and the vendored
   Claude Desktop pin (`pkgs/claude-desktop/package.nix`).
