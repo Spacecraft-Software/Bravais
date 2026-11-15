@@ -38,7 +38,7 @@ WezTerm).
 | Workspace 1–9 | Super+1…9 | GNOME and Plasma give up "open the Nth dock / task-bar app" for this |
 | Send window to 1–9 | Super+Shift+1…9 | |
 | Previous / next workspace | Super+Ctrl+←/→ | Niri's workspaces are vertical: Mod+PgUp/PgDn there |
-| Workspace overview | Top-left hot corner | GNOME: Activities. Plasma: Overview. Niri: overview (Mod+O too). Margo: `toggle_overview`. LeftWM: skippy-xd paging |
+| Workspace overview | Top-left hot corner | GNOME: Activities. Plasma: Overview (Meta+W too). Niri: overview (Mod+O too). Margo: `toggle_overview`. LeftWM: skippy-xd paging (Mod+W too) |
 | Mouse thumb buttons | workspace ←/→ | Niri: column ←/→. Niri and Margo bind them natively, so apps lose back/forward there |
 | Keyboard layout (us/ara) | Super+Space | Ctrl+Space too in Plasma, LeftWM and Margo |
 | Next tiling layout | Super+Ctrl+Space | LeftWM (Super+Ctrl+Shift+Space: previous), Margo, Plasma (Krohnkite, beside `Meta+\`) |
@@ -56,13 +56,22 @@ so a left swipe goes to the next workspace on the right.
 
 | Gesture | Action | Where it comes from |
 |---|---|---|
-| 3-finger left/right | Next / previous workspace | GNOME, Niri (scrolls the column strip instead), Margo (`gesturebind`, `users/mj/margo.nix`) and Plasma (KWin) natively. COSMIC has none |
-| 3-finger up | Overview | GNOME natively (Activities); Margo `gesturebind`; Plasma through the `steelbore-gestures` KWin script (`users/mj/plasma.nix`). Niri has none (3-finger vertical switches workspaces) |
-| 4-finger up/down | Overview (Plasma: down is Grid View) | Niri, Plasma (KWin) and Margo. COSMIC and GNOME have none |
-| 4-finger left/right | Next / previous workspace | COSMIC (`cosmic-comp` 1.2.0 handles only 4 fingers); Plasma (KWin) as well |
+| 3-finger left/right | Next / previous workspace | GNOME, Niri (scrolls the column strip instead), Margo (`gesturebind`, `users/mj/margo.nix`) and Plasma Wayland (KWin) natively; Escape Pod on Plasma X11, LeftWM and COSMIC |
+| 3-finger up | Overview | GNOME natively (Activities); Margo `gesturebind`; Plasma Wayland through the `steelbore-gestures` KWin script (`users/mj/plasma.nix`); Escape Pod (Super+W) on Plasma X11 and LeftWM. Niri has none (3-finger vertical switches workspaces) |
+| 4-finger up/down | Overview (Plasma: down is Grid View) | Niri, Plasma Wayland (KWin) and Margo natively; Escape Pod on Plasma X11 (Super+W / Super+G) and LeftWM (up only). COSMIC and GNOME have none |
+| 4-finger left/right | Next / previous workspace | COSMIC (`cosmic-comp` handles only 4 fingers) and Plasma Wayland (KWin) natively; Escape Pod on Plasma X11 and LeftWM |
 
-Niri's gestures are fixed in the compositor, and COSMIC's 3-finger swipes are an
-upstream `TODO`; those gaps stay until either changes.
+Niri's gestures are fixed in the compositor; that gap stays until it changes.
+
+KWin's touchpad gestures, built-in and scripted alike, exist only in its
+Wayland session, and LeftWM has none. There, and for COSMIC's missing
+three-finger swipe, **Escape Pod** supplies them: the same session service
+that maps the side buttons reads the touchpad (read-only, never grabbed) and
+sends the shared keys (`modules/desktops/mouse-workspace-nav.nix`). Because
+the desktop still sees every swipe, the service picks a configuration per
+session — all swipes on Plasma X11 and LeftWM, three-finger left/right only
+on COSMIC, none on GNOME or Plasma Wayland — so no swipe acts twice
+(constraint #57).
 
 Hardware keys (volume, mute, mic mute, brightness, media, keyboard backlight,
 Bluetooth, airplane) work in all five: `swayosd` under Niri and Margo,
@@ -111,7 +120,8 @@ These are kept as they are; they do not collide with the shared keys.
   Mod+[ / Mod+] consume / expel, Mod+Tab previous workspace, Mod+wheel
   workspaces, Mod+B / Mod+Shift+B Bluetooth, Mod+A / Mod+Shift+A audio,
   Mod+Shift+Minus / Equal output scale.
-- **LeftWM:** Mod+` scratchpad terminal, Mod+Minus / Mod+Equal main width.
+- **LeftWM:** Mod+` scratchpad terminal, Mod+Minus / Mod+Equal main width,
+  Mod+W overview (skippy-xd paging, as the hot corner).
 - **Margo:** Super+Ctrl+Return scratchpad, Super+T / S / M / Ctrl+G layouts,
   Super+R proportion presets, Super+W / E / Ctrl+E groups, Super+Ctrl+H/J/K/L
   move, Super+Ctrl+Shift+H/J/K/L resize, Super+Ctrl+R reload, Super+F10

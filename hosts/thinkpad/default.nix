@@ -30,6 +30,9 @@
     "UGREEN Receiver  Mouse"
     "UGREEN BLE Mouse"
   ];
+  # The touchpad, read (never grabbed) for swipes on Plasma X11, LeftWM and
+  # COSMIC; `escapepod device list` shows it with the status `swipes`.
+  steelbore.desktops.mouseWorkspaceNav.touchpadNames = [ "Elan Touchpad" ];
 
   # Remote access into this machine (headless X11 virtual session via LeftWM).
   # One-time Google authorization is manual — see modules/services/chrome-remote-desktop.nix.
