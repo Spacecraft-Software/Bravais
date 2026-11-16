@@ -210,10 +210,7 @@ pub(crate) fn git_raw(dir: &str, args: &[&str]) -> Option<String> {
 /// plain `status()`, exactly as before.
 pub(crate) fn git_shown(dir: &str, args: &[&str]) -> bool {
     let mut cmd = Command::new("git");
-    cmd.arg("-C")
-        .arg(dir)
-        .args(args)
-        .stdout(std::io::stderr());
+    cmd.arg("-C").arg(dir).args(args).stdout(std::io::stderr());
     crate::ui::run_logged(&mut cmd, None, false, None).is_ok_and(|s| s.success())
 }
 
@@ -294,6 +291,43 @@ fn check_tree(dir: &str) -> Result<(bool, Vec<String>), Refusal> {
     Ok((lock_dirty, carried_changes(&porcelain)))
 }
 
+/// The carried paths the move would also change: those in the incoming
+/// commits, and, when switching onto an existing local branch, in it too.
+fn clashing(dir: &str, plan: &Plan, carried: &[String]) -> Vec<String> {
+    let mut incoming = git(dir, &["diff", "--name-only", "HEAD", &plan.target]).unwrap_or_default();
+    if let Some(local) = git(
+        dir,
+        &[
+            "diff",
+            "--name-only",
+            "HEAD",
+            &format!("refs/heads/{}", plan.branch),
+        ],
+    ) {
+        incoming = format!("{incoming}\n{local}");
+    }
+    carried
+        .iter()
+        .filter(|p| incoming.lines().any(|l| l == p.as_str()))
+        .cloned()
+        .collect()
+}
+
+/// Another worktree of this repository that has `branch` checked out. Git
+/// refuses to check one branch out twice, so the switch cannot succeed until
+/// that worktree lets go of it -- whatever the working tree here holds.
+fn checked_out_elsewhere(dir: &str, branch: &str) -> Option<String> {
+    let here = git(dir, &["rev-parse", "--show-toplevel"])?;
+    let here = std::fs::canonicalize(&here).unwrap_or_else(|_| std::path::PathBuf::from(&here));
+    let list = git_raw(dir, &["worktree", "list", "--porcelain"])?;
+    let want = format!("branch refs/heads/{branch}");
+    list.split("\n\n").find_map(|block| {
+        let path = block.lines().find_map(|l| l.strip_prefix("worktree "))?;
+        let same = std::fs::canonicalize(path).is_ok_and(|p| p == here);
+        (!same && block.lines().any(|l| l == want)).then(|| path.to_owned())
+    })
+}
+
 /// Moving was blocked by uncommitted changes the incoming commits also touch.
 fn dirty_refusal(dir: &str, carried: &[String]) -> Refusal {
     Refusal::conflict(
@@ -325,26 +359,8 @@ struct Clash {
 
 impl Clash {
     fn resolve(dir: &str, plan: &Plan, carried: &[String]) -> Self {
-        let mut incoming =
-            git(dir, &["diff", "--name-only", "HEAD", &plan.target]).unwrap_or_default();
-        // Switching onto an existing local branch is judged against it too.
-        if let Some(local) = git(
-            dir,
-            &[
-                "diff",
-                "--name-only",
-                "HEAD",
-                &format!("refs/heads/{}", plan.branch),
-            ],
-        ) {
-            incoming = format!("{incoming}\n{local}");
-        }
         let mut c = Self {
-            stashed: carried
-                .iter()
-                .filter(|p| incoming.lines().any(|l| l == p.as_str()))
-                .cloned()
-                .collect(),
+            stashed: clashing(dir, plan, carried),
         };
         if !c.stashed.is_empty() {
             let mut args = vec![
@@ -536,19 +552,30 @@ fn drop_lock_bump(req: Request) -> Result<(), Refusal> {
 fn apply(dir: &str, plan: &Plan, carried: &[String]) -> Result<String, Refusal> {
     let (branch, target) = (&plan.branch, &plan.target);
     if plan.switching {
-        let ok = if exists(dir, &format!("refs/heads/{branch}")) {
+        let local = exists(dir, &format!("refs/heads/{branch}"));
+        if let Some(path) = local.then(|| checked_out_elsewhere(dir, branch)).flatten() {
+            return Err(Refusal::conflict(
+                "BRANCH_IN_WORKTREE",
+                format!("'{branch}' is checked out in another worktree: {path}"),
+                format!("git -C {path} switch --detach   # free the branch, then re-run"),
+            ));
+        }
+        let ok = if local {
             git_shown(dir, &["switch", branch])
         } else {
             git_shown(dir, &["switch", "--create", branch, "--track", target])
         };
-        if !ok && !carried.is_empty() {
-            return Err(dirty_refusal(dir, carried));
-        }
         if !ok {
+            // Blame the edits only when the move would really touch them;
+            // otherwise git's own reason is in the log.
+            let clash = clashing(dir, plan, carried);
+            if !clash.is_empty() {
+                return Err(dirty_refusal(dir, &clash));
+            }
             return Err(Refusal::new(
                 "SWITCH_FAILED",
-                format!("could not switch to '{branch}'"),
-                format!("git -C {dir} status"),
+                format!("could not switch to '{branch}' (git's reason is in the log)"),
+                format!("git -C {dir} switch {branch}   # shows why"),
             ));
         }
     }
@@ -558,8 +585,9 @@ fn apply(dir: &str, plan: &Plan, carried: &[String]) -> Result<String, Refusal> 
         // A fast-forward that is possible in history can only have been
         // stopped by the working tree.
         let ancestor = git(dir, &["merge-base", "--is-ancestor", "HEAD", target]).is_some();
-        if ancestor && !carried.is_empty() {
-            return Err(dirty_refusal(dir, carried));
+        let clash = clashing(dir, plan, carried);
+        if ancestor && !clash.is_empty() {
+            return Err(dirty_refusal(dir, &clash));
         }
         return Err(Refusal::conflict(
             "NOT_FAST_FORWARD",
@@ -841,6 +869,37 @@ mod tests {
                 "{got:?}"
             );
             assert_eq!(lab.head(), "pr");
+        }
+
+        #[test]
+        fn a_branch_held_by_another_worktree_is_named_not_blamed_on_edits() {
+            let Some(lab) = Lab::new("wt") else { return };
+            lab.git("seed", &["switch", "--quiet", "-c", "pr"]);
+            lab.commit("seed", "other.nix", "pr");
+            lab.git("seed", &["push", "--quiet", "origin", "pr"]);
+            lab.git("work", &["fetch", "--quiet"]);
+            lab.git("work", &["branch", "--quiet", "pr", "origin/pr"]);
+            let held = lab.path("held").display().to_string();
+            lab.git("work", &["worktree", "add", "--quiet", &held, "pr"]);
+            // An edit the incoming commits do not touch.
+            lab.write("work", "flake.nix", "local edit");
+            let got = sync(Request {
+                branch: Some("pr"),
+                ..lab.request()
+            });
+            assert!(
+                got.as_ref().is_err_and(|r| r.code == "BRANCH_IN_WORKTREE"
+                    && r.exit == Exit::Conflict
+                    && r.message.contains("held")),
+                "{got:?}"
+            );
+            assert_eq!(lab.head(), "main");
+            assert_eq!(
+                std::fs::read_to_string(lab.path("work").join("flake.nix"))
+                    .ok()
+                    .as_deref(),
+                Some("local edit")
+            );
         }
 
         #[test]
