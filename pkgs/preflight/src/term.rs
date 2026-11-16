@@ -1006,6 +1006,12 @@ fn base64_into(input: &[u8], out: &mut String) {
     }
 }
 
+/// Whether [`install_signal_handlers`] started the thread that restores the
+/// terminal on SIGINT / SIGTERM / SIGHUP.
+pub fn signal_thread_installed() -> bool {
+    SIGNAL_THREAD.load(Ordering::Acquire)
+}
+
 /// Restore the terminal on SIGINT, SIGTERM and SIGHUP, then die of the same
 /// signal so the exit status is the one the shell expects (128 + N).
 ///

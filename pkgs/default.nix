@@ -6,8 +6,7 @@
 { pkgs }:
 let
   # Bound once so steelbore-plymouth builds with the same derivation the
-  # flake exports, rather than a second callPackage of it; steelbore-plymouth
-  # likewise for steelbore-ksplash, which copies its frames.
+  # flake exports, rather than a second callPackage of it.
   steelbore-quantize = pkgs.callPackage ./steelbore-quantize/package.nix { };
   steelbore-plymouth = pkgs.callPackage ./steelbore-plymouth/package.nix { inherit steelbore-quantize; };
 in
@@ -18,7 +17,7 @@ in
   steelbore-reticle = pkgs.callPackage ./steelbore-reticle/package.nix { };
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
   steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
-  steelbore-ksplash = pkgs.callPackage ./steelbore-ksplash/package.nix { inherit steelbore-plymouth; };
+  steelbore-ksplash = pkgs.callPackage ./steelbore-ksplash/package.nix { };
   steelbore-branding = pkgs.callPackage ./steelbore-branding/package.nix { };
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };

@@ -168,18 +168,34 @@ let
         rm -f "$holder"
       fi
     }
+    # dunst replaces by a fixed ID. Plasma's and COSMIC's servers do not: a
+    # replace of an ID whose popup already expired updates the history entry
+    # silently, so only the first toggle was ever shown. There, close the last
+    # one and post a fresh one, remembering the ID the server handed back.
+    notify() {
+      case "''${XDG_CURRENT_DESKTOP:-}" in
+        *KDE*|*COSMIC*)
+          last="''${XDG_RUNTIME_DIR:-/tmp}/steelbore-caffeine.notification"
+          if [ -s "$last" ]; then
+            ${pkgs.dunst}/bin/dunstify -C "$(cat "$last")" || true
+          fi
+          ${pkgs.dunst}/bin/dunstify -p -a Caffeine -i "$1" "$2" > "$last" || true
+          ;;
+        *) ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i "$1" "$2" ;;
+      esac
+    }
     if [ -e "$state" ]; then
       ${pkgs.procps}/bin/pkill -CONT -x swayidle || true
       hold_stop
       rm -f "$state"
       apply_x
-      ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
+      notify caffeine-cup-empty "Caffeine off — idle lock/blank resumed"
     else
       ${pkgs.procps}/bin/pkill -STOP -x swayidle || true
       hold_start
       : > "$state"
       apply_x
-      ${pkgs.dunst}/bin/dunstify -a Caffeine -r 9913 -i caffeine-cup-full "Caffeine on — staying awake"
+      notify caffeine-cup-full "Caffeine on — staying awake"
     fi
   '';
 
@@ -580,6 +596,14 @@ in
     (lib.mkIf (config.steelbore.desktops.plasma.enable || config.steelbore.desktops.cosmic.enable) {
       environment.systemPackages = [ caffeineToggle ];
     })
+    # The keyring rescue is shared the same way: GNOME, Plasma and COSMIC
+    # bind Super+Shift+U to it (users/mj/gnome.nix, users/mj/plasma.nix,
+    # users/mj/desktop-theme.nix), as the WMs do.
+    (lib.mkIf (
+      config.steelbore.desktops.gnome.enable
+      || config.steelbore.desktops.plasma.enable
+      || config.steelbore.desktops.cosmic.enable
+    ) { environment.systemPackages = [ keyringUnlock ]; })
     (lib.mkIf bareWm {
       # Dunst notification configuration
       environment.etc."dunst/dunstrc".text = ''

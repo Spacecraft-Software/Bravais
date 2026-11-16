@@ -237,7 +237,9 @@ pub fn reclaim() -> anyhow::Result<Reclaimed> {
         cmd.args(["--category", c]);
     }
     cmd.args(["--apply", "--yes", "--purge"]);
-    let status = cmd.status()?;
+    // Through the display when one is up (a mid-run reclaim), so vacuum's
+    // output lands in the log, not over the TUI; a plain status() otherwise.
+    let status = crate::ui::run_logged(&mut cmd, None, false, None)?;
     if !status.success() {
         anyhow::bail!("vacuum clean exited with {status}");
     }

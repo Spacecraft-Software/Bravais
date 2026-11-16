@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Touchpad swipes on Plasma X11, LeftWM and COSMIC, from Escape Pod.**
+  KWin's gestures exist only in its Wayland session and LeftWM has none, so
+  three- and four-finger swipes did nothing there; COSMIC lacked the
+  three-finger one. The Escape Pod service that maps the side buttons now
+  reads the touchpad (read-only, never grabbed) and sends the workspace
+  keys, Super+W (overview) for a swipe up and Super+G (Plasma's Grid View)
+  for a four-finger swipe down. It picks a configuration per session, so a
+  desktop with gestures of its own never acts on a swipe twice. LeftWM's
+  Mod+W opens the skippy-xd overview.
+- **Touchpad gestures line up across Plasma and Margo.** Plasma gets
+  GNOME's 3-finger swipe up for Overview through a small KWin script, and
+  Margo gets Overview on 3-finger up and 4-finger up/down. Plasma already
+  switches workspaces on 3- and 4-finger left/right swipes. The scheme, and
+  where Niri and COSMIC differ, is tabled in `docs/keybindings.md`.
+- **A trademark policy (`TRADEMARKS.md`), as Gantry has.** It says how the
+  Steelbore, Steelbore OS, Bravais and Spacecraft Software names and the
+  Steelbore logo may be used. The logo art stays CC-BY-SA-4.0 and the policy
+  carries the same licence.
 - **Preflight shows its progress in the terminal tab and copies with `y`.**
   On terminals known to handle it (Windows Terminal, Ghostty, foot, Rio,
   VS Code, iTerm2 3.6+, kitty 0.39+, WezTerm builds from 2025-02-10), the
@@ -35,7 +53,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new D-Bus-activated `org.gnome.BrowserConnector.FlatpakIntegrator` service on
   the host, matching the KDE Plasma Browser Integration path.
 
+### Changed
+
+- **Preflight's TUI shows its task list on the right** of the output pane on
+  wide terminals (90 columns or more); narrower ones still stack it above.
+- **cosmic-comp is no longer patched**, so it comes from the binary cache
+  again instead of a 22-minute source build; Escape Pod supplies COSMIC's
+  three-finger workspace swipe. The `escapepod` input moves to the release
+  with touchpad gestures.
+- **Dependencies bumped again (2026-11-16):** `nixpkgs`, `nixpkgs-unstable`
+  and `home-manager-unstable` in `flake.lock`, and the vendored pins for
+  AdGuard VPN CLI, Claude Desktop, Codex Desktop, Goose Desktop, Obscura,
+  Ollama and OpenCode Desktop (each in its `pkgs/<name>/package.nix`).
+- **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
+  `home-manager-unstable` and `gantry` in `flake.lock`, and the vendored
+  Claude Desktop pin (`pkgs/claude-desktop/package.nix`).
+- **More of the tiling WMs' keys work on GNOME, Plasma and COSMIC.**
+  Super+Shift+E opens the logout screen (Ctrl+Alt+Del and COSMIC's
+  Super+Shift+Escape still work), Super+Shift+U runs the keyring rescue,
+  and Super+Shift+/ opens the desktop's keyboard-shortcut settings where
+  the WMs show their cheat-sheet. On Plasma, Krohnkite also takes Super+V
+  (toggle floating; Klipper's clipboard popup moves to Meta+Ctrl+V),
+  Super+Alt+H/J/K/L (focus), Super+Shift+arrows (move) and
+  Super+Ctrl+Space (next layout). `docs/keybindings.md` has the table.
+- **Preflight opens its full-screen TUI by default at a terminal.** A
+  rebuild run by a person at an interactive terminal now shows the task
+  checklist, gauge and live output without `--tui`; `--cli` (or
+  `--format human`) keeps the line output with the bottom status bar.
+  Agents, CI, pipes and accessible mode get exactly the output they got
+  before, and the subcommands never open the TUI. When the TUI closes it
+  leaves a one-line-per-step summary in the scrollback, plus the last 40
+  log lines when a step failed, which used to vanish with the alternate
+  screen. The whole output of a TUI run is written as it happens to
+  `~/.local/state/preflight-last-run.log`, and the summary ends with its
+  path.
+
 ### Fixed
+
+- `preflight --branch` no longer blames uncommitted edits when the switch fails for another reason. A branch held by another git worktree is now named (`BRANCH_IN_WORKTREE`, exit 5, with the command that frees it), and a `DIRTY_TREE` refusal lists only the edits the move would really touch.
+- **Preflight's TUI repaints itself after the laptop sleeps, and on Ctrl+L.**
+  After a resume (or a resize) the terminal could repaint the screen behind
+  the TUI, which then redrew only what it thought had changed, leaving
+  borders, task rows and the gauge blank. It now repaints everything when
+  the wall clock jumps, on a resize, and on Ctrl+L.
+- **Spinners no longer flood Preflight's log.** A child that redraws its
+  spinner by moving the cursor instead of with a carriage return (Clack's,
+  in `opencode upgrade`) had every frame appended to one line that filled
+  the output pane; those frames now update the activity line only.
+- **Preflight keeps reading a step's output past its first blank line.** The
+  reader took an empty line for the end of the stream and stopped draining
+  the pipe, so a chatty step could fill it and block.
+- **Git's output no longer scribbles over Preflight's TUI.** The git sync
+  and the dependency commit let git write its fetch progress and merge
+  diffstat straight to the terminal, over the full-screen view; a mid-run
+  cache reclaim did the same with `vacuum`. Their output now goes into the
+  TUI's log pane, and into the saved log, like every other step's.
+- **Super+Shift+F maximizes on Plasma again.** Krohnkite's "Toggle Float
+  All" shipped on the same key and won it, so the key floated every window.
+- **The mouse side buttons switch desktops again on Plasma X11.** At login
+  the X server could read Escape Pod's virtual keyboard before udev had
+  finished with it and refuse it for good, so the buttons were grabbed but
+  their keys never arrived. The service now checks that X has the keyboard
+  and recreates it if not.
+- **Ctrl-C stops a rebuild in Preflight's TUI.** The TUI puts the terminal
+  in raw mode, so Ctrl-C, `q` and `Esc` only set a flag that the
+  time-limited steps checked: a running `nix flake update`, garbage
+  collection or `nixos-rebuild` carried on regardless. The keys now
+  interrupt the run as Ctrl-C does at a plain prompt, leave the detached
+  Flatpak update running, and print the run's summary on the way out.
+- **Caffeine on Plasma and COSMIC notifies on every toggle.** The script
+  always replaced notification 9913, which dunst honours but Plasma's server
+  does not re-show once the first popup has expired, so only the first toggle
+  was ever visible. On those desktops it now closes the last notification and
+  posts a new one.
+- **`rebuild` works from `mjsh`, and Preflight's authorization alert no
+  longer repeats.** `rebuild` was only a shell alias, so the login shell
+  answered `command not found`; the package now ships it as a command. The
+  alert used to fire for every privileged step that outlasted 400 ms, even
+  with `sudo` already cached, and stayed up for the whole build whenever the
+  credential cache was off. It now stays silent on a warm cache and clears
+  as soon as `sudo` starts the real command. The terminal's own popup
+  (OSC 9/777), which cannot be dismissed, is now sent only when no desktop
+  notification daemon took the alert.
+- **The rebuild no longer fails linking Engram (`cannot find -lsqlite3`).**
+  nixpkgs' `cargo-setup-hook` now exports `LIBSQLITE3_SYS_USE_PKG_CONFIG=1`,
+  which overrides rusqlite's bundled SQLite, so the Engram package in
+  `users/mj/home.nix` is given nixpkgs' SQLite until upstream stops relying
+  on the bundled copy.
+- **A quick Super tap opens Kickoff again on Plasma X11.** Each tap fired the
+  launcher twice, once through KWin's own Meta key and once through the F19
+  that the Escape Pod tap service sent, so the menu closed as it opened.
+  KWin handles the tap natively on X11 as well, so the service and the F19
+  binding are gone.
 
 - **Preflight's startup probe no longer leaves the terminal raw or eats
   keys.** A SIGTERM or SIGHUP in its first 200 ms used to kill it with the
@@ -315,6 +424,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The Plasma splash looks like the Fairing boot splash.** The Steelbore logo
+  in the accent colour, a rounded progress bar with its percentage, and a line
+  under it naming what is loading (Plasma services, system settings, session
+  manager, desktop and panels), all from the active palette. The bar follows
+  the stages Plasma reports and never moves backwards. It replaces the replay
+  of the Plymouth animation.
+- **The Plasma panel has the Niri/Margo bar's shape.** 32 px thick (was 46),
+  not floating, opaque; it already sat on the top edge and takes its colours
+  from the active palette's colour scheme. Applied from `users/mj/plasma.nix`
+  at activation; restart `plasma-plasmashell.service` or log in again to see it.
+- **Flake inputs and vendored upstream pins bumped.** `flake.lock` moved
+  (Gitway, Vacuum, Home Manager unstable and others), and the claude-desktop,
+  codex-desktop, ollama, opencode-desktop and Artcraft pins were refreshed.
+  `coderabbit-cli` could not be checked ("Input type not supported") and is
+  unchanged.
 - **WezTerm is the default terminal across every Bravais desktop.** Super+Enter
   opens it in GNOME, COSMIC, Plasma, Niri, LeftWM and Margo; terminal-backed
   status-bar actions and shell sessions use it too.

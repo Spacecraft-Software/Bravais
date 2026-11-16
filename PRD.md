@@ -422,7 +422,7 @@ location — the former `overlays/` reference copy was removed as dead code).
 
 **sequoia-wot:** Disables failing tests (`doCheck = false`).
 
-**cosmic-comp:** A `substituteInPlace` with two single-line `--replace-fail` substitutions on cosmic-comp's own `src/input/mod.rs` (upstream source, not a Bravais file) makes a 3-finger touchpad swipe switch workspaces under COSMIC (sharing the 4-finger arm rather than replacing it: the `3 => None` TODO arm is deleted first, then `4 => {` becomes `3 | 4 => {`), matching niri. Neither compositor exposes a finger count in configuration, so parity needs a source patch; patching cosmic-comp's unused 3-finger TODO arm loses nothing, whereas moving niri to 4 fingers would collide with its Overview gesture. `--replace-fail` is deliberate — if upstream fills in the TODO the build fails loudly instead of silently reverting. It costs a from-source build of a large Rust package and requires `doCheck = false` because `checkPhase` exhausts memory — rather than capping build parallelism (CONSTRAINTS.md #35).
+**cosmic-comp:** no longer patched (2026-11-16). COSMIC's three-finger workspace swipe comes from Escape Pod (§9.1a), so cosmic-comp builds from the binary cache again; the old source patch and its `doCheck = false` are retired (CONSTRAINTS.md #35).
 
 **nixfmt-rfc-style:** Aliased to `prev.nixfmt` so the nixpkgs deprecation warning never fires when a flake input (gitway) still references the old name; Bravais itself uses `nixfmt` everywhere.
 
@@ -1011,7 +1011,7 @@ mjsh is out-of-band (`~/.local/bin/mjsh`, not a Nix package), so its entry reads
 greetd doesn't start an X server (SDDM, GDM and LightDM do), so X11 sessions bring up Xorg themselves through `startx`. A `mkXSession` helper writes `share/xsessions/<name>.desktop` entries. `startx` calls `xinit`, `xauth`, `xrdb` and `mcookie` by bare name, so the launchers prepend them to `PATH`, using the `pkgs.xinit or pkgs.xorg.xinit` style of fallback that works on both channels (CONSTRAINTS.md #5). Each launcher pre-creates `~/.serverauth.$$` so xauth doesn't complain before startx creates it.
 
 - **LeftWM** (`leftwm`): `start-leftwm` → `startx leftwm-xinitrc`. `leftwm-xinitrc` exports `GDK_BACKEND=x11`, `XDG_SESSION_TYPE=x11`, `ELECTRON_OZONE_PLATFORM_HINT=x11` (without these, Chromium and Electron apps probe Wayland and crash), `NO_AT_BRIDGE=1`, the gitway `SSH_AUTH_SOCK`, and `XDG_CURRENT_DESKTOP=leftwm` (which routes xdg-desktop-portal to the GTK appearance backend). It then runs `dbus-run-session`, because eww (GTK) fails to initialize without a session bus. The inner script starts `numlockx`, `gitway-add`, the polkit-gnome authentication agent (started here rather than in the theme's `up` script, which re-runs on every `LoadTheme`), and `steelbore-keyring-check` after a 5 s delay. One second after starting leftwm it issues `LoadTheme` and `xsetroot -solid` with the `background` role token. Both must run after leftwm starts, because leftwm neither auto-loads its theme nor keeps the root background.
-- **Plasma X11** (`plasma-x11-startx`): `start-plasma-x11` → `startx startplasma-x11`. A Plasma-only Escape Pod user unit observes lone Super taps through X11 and emits F19 for Kickoff; it never grabs keyboards, runs beside the mouse daemon, and is disabled on Wayland (constraint #55).
+- **Plasma X11** (`plasma-x11-startx`): `start-plasma-x11` → `startx startplasma-x11`. KWin opens Kickoff on a lone Super tap natively, as on Wayland; no tap remapper runs beside it (constraint #55).
 
 LeftWM is registered through this xsession, **not** through `services.xserver.windowManager.leftwm.enable`. That module's xsession runs leftwm without an X server and crash-loops under greetd.
 
@@ -1074,7 +1074,7 @@ All desktop modules are imported by `modules/desktops/default.nix` and toggled u
 
 **Composition guards** (`modules/desktops/assertions.nix`) deliberately do **not** enforce mutual exclusivity — they assert only the genuine invariants, so a future edit cannot silently produce a broken session: LeftWM requires `services.xserver.enable` (X11-only, via startx); Niri and COSMIC require greetd (their only route in); GNOME requires greetd **or** GDM and Plasma greetd **or** SDDM (their native DMs are only `mkDefault`-disabled). Each helper module asserts the desktop(s) it serves.
 
-**Keybindings:** one scheme across GNOME, Plasma, Niri, LeftWM and Margo (Super+D launcher, Super+Return terminal, Super+Q close, Super+F fullscreen, Super+V float, Super+1…9 workspaces, Super+Space keyboard layout, Super+L lock, Super+Shift+E exit, Super+Shift+C Caffeine), added to GNOME and Plasma next to their stock keys. The full table, where each session writes its keys and the per-session extras are in **[`docs/keybindings.md`](docs/keybindings.md)**; change one session, change all five.
+**Keybindings:** one scheme across GNOME, Plasma, Niri, LeftWM and Margo (Super+D launcher, Super+Return terminal, Super+Q close, Super+F fullscreen, Super+V float, Super+1…9 workspaces, Super+Space keyboard layout, Super+L lock, Super+Shift+E exit (the logout screen on GNOME, Plasma and COSMIC), Super+Shift+U keyring rescue, Super+Shift+/ cheat-sheet (the shortcut settings on GNOME, Plasma and COSMIC), Super+Shift+C Caffeine), added to GNOME and Plasma next to their stock keys. The full table, where each session writes its keys and the per-session extras are in **[`docs/keybindings.md`](docs/keybindings.md)**; change one session, change all five.
 
 Margo's top-left hot corner opens the overview (`hot_corner_top_left = toggle_overview`).
 
@@ -1110,11 +1110,13 @@ sessions while avoiding a competing daemon in GNOME.
 
 ### 9.1a Mouse side-button workspace nav (`modules/desktops/mouse-workspace-nav.nix`)
 
-**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…deviceNames` and the read-only `…command`)
+**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…deviceNames`, `…touchpadNames` and the read-only `…command`)
+
+**Touchpad swipes (2026-11-16):** the same Escape Pod service reads the touchpads named in `…touchpadNames` (read-only, never grabbed) and sends the shared workspace keys for three- and four-finger swipes, plus Super+W (overview) for a swipe up and Super+G (Plasma's Grid View) for a four-finger swipe down. The desktop still sees every swipe, so the unit picks one of three rendered configurations per session: all swipes on Plasma X11 and LeftWM (KWin's gestures are Wayland-only; LeftWM has none), three-finger left/right only on COSMIC (it swipes on four itself), none on GNOME and Plasma Wayland (constraint #57).
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces under **GNOME, Plasma, COSMIC and LeftWM**. Direction is deliberate: **back goes right, forward goes left** — do not "fix" it; `users/mj/niri.nix` is swapped to match and the two must move together.
 
-Niri and Margo bind the mouse buttons natively. Mutter, KWin and cosmic accept keyboard accelerators only, so the other sessions use **Escape Pod** (Rust) below the compositor, emitting **Super+Ctrl+Right/Left**. These shortcuts already exist in Plasma and COSMIC; GNOME adds them beside its stock list in `users/mj/gnome.nix`. LeftWM binds them to `FocusPreviousTag`/`FocusNextTag`. Escape Pod handles device hotplug and Bluetooth reconnection itself.
+Niri and Margo bind the mouse buttons natively. Mutter, KWin and cosmic accept keyboard accelerators only, so the other sessions use **Escape Pod** (Rust) below the compositor, emitting **Super+Ctrl+Right/Left**. These shortcuts already exist in Plasma and COSMIC; GNOME adds them beside its stock list in `users/mj/gnome.nix`. LeftWM binds them to `FocusPreviousTag`/`FocusNextTag`. Escape Pod handles device hotplug and Bluetooth reconnection itself. On X11 the unit's `ExecStartPost` waits for the X server to list the daemon's virtual keyboard and fails the start otherwise, so a keyboard X skipped at login is recreated (constraint #56).
 
 **Native-button sessions are excluded:** the remapper consumes mapped buttons before they reach the compositor. `escapepod-mouse-workspace-nav.service` is wanted only by the GNOME, COSMIC and Plasma session targets, never `graphical-session.target` (CONSTRAINTS.md #29).
 
@@ -1159,7 +1161,7 @@ Fully Rust-based desktop from System76. The upstream module wires portals, dconf
 
 **KRunner:** `Meta+D` opens it, beside the stock `Alt+Space`, `Alt+F2` and `Search`, matching `Mod+D` under Niri, COSMIC and GNOME. KWin's *Peek at Desktop* gives up `Meta+D`, its default, and is left with no key. Both are pinned in `kglobalshortcutsrc` with `kwriteconfig6` on activation (`users/mj/plasma.nix`), so a change made in System Settings is reverted at the next rebuild.
 
-**Shared keys** ([`docs/keybindings.md`](docs/keybindings.md)): `Meta+Return` terminal (a default shortcut, shipped like Caffeine's below), and pinned in `kglobalshortcutsrc`: `Meta+Q` close (Alt+F4 kept; the Activity Switcher gives up Meta+Q), `Meta+F` fullscreen, `Meta+L` lock, `Meta+1…9` / `Meta+Shift+1…9` desktops (the task-manager entry keys give way; a shifted digit is written both as `Meta+!` and `Meta+Shift+1`).
+**Shared keys** ([`docs/keybindings.md`](docs/keybindings.md)): `Meta+Return` terminal (a default shortcut, shipped like Caffeine's below), and pinned in `kglobalshortcutsrc`: `Meta+Q` close (Alt+F4 kept; the Activity Switcher gives up Meta+Q), `Meta+F` fullscreen, `Meta+L` lock, `Meta+Shift+E` logout screen (Ctrl+Alt+Del kept), the Krohnkite tiling keys (`Meta+V` float, `Meta+Alt+H/J/K/L` focus, `Meta+Shift+arrows` move, `Meta+Ctrl+Space` next layout), `Meta+1…9` / `Meta+Shift+1…9` desktops (the task-manager entry keys give way; a shifted digit is written both as `Meta+!` and `Meta+Shift+1`).
 
 **Caffeine:** the Power and Battery applet's built-in *Manually Block Sleep and Screen Locking* toggle, plus `Meta+Shift+C` → `steelbore-caffeine`. Plasma has no global action for that checkbox, so the key holds the same two inhibits (PowerManagement + ScreenSaver) through `kde-inhibit`, and the applet lists it among the applications blocking sleep; the checkbox does not move. The key ships as a *default* shortcut — a hidden (`NoDisplay`) `applications/` desktop file with `X-KDE-Shortcuts`, `users/mj/plasma.nix` — so a rebind in System Settings sticks.
 
@@ -2162,7 +2164,7 @@ PATH, so they are never frozen in its closure (same reasoning as
 CONSTRAINTS.md #23).
 
 The older `users/mj/rebuild-classic.nu` and `scripts/rebuild-classic.sh` sit behind a deprecation
-prompt; **change one and change all three**, except the `preflight`-only flags and steps (`--update-vendored`, `--update-ai-tools`, the AppImage check, `--tui` / `-E`, `--accessible` / `--no-accessible`, `--no-notify`), which the deprecated shells deliberately lack. Flags: `preflight --help`; the rest:
+prompt; **change one and change all three**, except the `preflight`-only flags and steps (`--update-vendored`, `--update-ai-tools`, the AppImage check, `--tui` / `-E`, `--cli`, `--accessible` / `--no-accessible`, `--no-notify`), which the deprecated shells deliberately lack. Flags: `preflight --help`; the rest:
 **`docs/rebuild.md`**.
 
 ### 16.2 Skills Delivery

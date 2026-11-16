@@ -68,7 +68,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] **`fonts.nix`**: Install JetBrains Mono Nerd Font (terminal / code font — monospace)
 - [✓] **`fonts.nix`**: Install CaskaydiaMono Nerd Font (icon fallback) + Symbols-only Nerd Font (Rio glyph fallback)
 - [✓] **`fonts.nix`**: Configure fontconfig defaults (monospace → JetBrainsMono, sans-serif/serif → Hack)
-- [✓] Plasma X11 lone Super menu tap via Escape Pod's X11 backend, with F19 reserved for Kickoff and a private-Xvfb check for taps/chords/timeouts
+- ~~Plasma X11 lone Super menu tap via Escape Pod's X11 backend, with F19 reserved for Kickoff and a private-Xvfb check for taps/chords/timeouts~~ (dropped: KWin handles the tap natively, and the F19 tap closed the menu again; constraint #55)
 - [✓] Adopt Fairing's refreshed vector emblem and full wordmark from the Branding SVGs; retain compact layouts and palette-role colouring
 - [✓] **`boot-splash.nix`**: Plymouth boot animation from `assets/boot/splash.mp4` and shutdown/reboot animation from `assets/boot/shutdown.mp4` (`pkgs/steelbore-plymouth`, ESP budget: constraint #43)
 - [✓] **`boot-splash.nix`**: Fairing (`fairing` flake input) as the default provider, Plymouth selectable by `steelbore.boot.splash.provider`; systemd initrd on for Fairing
@@ -122,6 +122,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable X server for XWayland support
 - [✓] Configure SSH askpass override (`ksshaskpass`)
 - [✓] Shared keys from `docs/keybindings.md` beside Plasma's own (Meta+Return terminal, Meta+Q, Meta+F, Meta+L, desktops 1–9)
+- [✓] Meta+Shift+E logout screen, Meta+Shift+U keyring, Meta+Shift+/ Shortcuts page; Krohnkite on Meta+V, Meta+Alt+H/J/K/L, Meta+Shift+arrows, Meta+Ctrl+Space; Meta+Shift+F maximize back from Krohnkite's Float All
 - [✓] KRunner on `Meta+D` beside its stock keys (matches `Mod+D` under Niri, COSMIC and GNOME); KWin's Peek at Desktop gives up its default `Meta+D`
 - [✓] Caffeine on `Meta+Shift+C` — default shortcut via a hidden `applications/` desktop file with `X-KDE-Shortcuts`; `steelbore-caffeine` holds the PowerManagement + ScreenSaver inhibits via `kde-inhibit` (no global action exists for the battery applet's manual-block checkbox)
 - [✓] Install KDE packages (8: browser-integration, kdeconnect, systemmonitor, etc.)
@@ -142,7 +143,9 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Enable `hardware.uinput` + add `uinput` to the primary user's groups
 - [✓] Use exact pointer names in `deviceNames` with `grab = "listed"`; leave keyboards and the TrackPoint ungrabbed (CONSTRAINTS.md #29)
 - [✓] Prevent restart on emergency exit 6; keep LeftWM's daemon PID across theme reloads
-- [ ] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build
+- [✓] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build (override moved aside 2026-11-12 to `~/.config/systemd/user/escapepod-migration.bak-2026-11-12/`)
+- [✓] Plasma X11: retry the daemon when X skipped its virtual keyboard at login (`ExecStartPost` readiness check; constraint #56)
+- [✓] Touchpad swipes through the same unit (`touchpadNames`), one configuration per session: all swipes on Plasma X11 and LeftWM, 3-finger left/right on COSMIC, none on GNOME or Plasma Wayland (constraint #57); LeftWM Mod+W opens skippy-xd paging
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
@@ -659,11 +662,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Overlay patching cosmic-comp so 3 fingers switch workspaces (4 still works)
 - [✓] `doCheck = false` — checkPhase, not the compile, is what exhausts memory
 - [✓] Patched cosmic-comp BUILDS: 22 min, exit 0, `--replace-fail` matched
-- [ ] Rebuild + **log out and back in** — cosmic-comp is the compositor, so a
-      running session keeps the old binary until the session restarts
-- [ ] Confirm 3-finger left/right actually switches workspaces
-- [ ] Re-check the substitution after any cosmic-comp bump (`--replace-fail`
-      fails the build loudly if upstream fills in the TODO)
+- ~~Rebuild + log out and back in; confirm 3-finger left/right; re-check the
+  substitution after any cosmic-comp bump~~ (dropped 2026-11-16: the patch is
+  retired; Escape Pod supplies the three-finger swipe, constraint #57)
+- [✓] Escape Pod touchpad swipes replace the patch: three-finger left/right on
+      COSMIC through `mouseWorkspaceNav.touchpadNames` (2026-11-16)
 
 ## AdGuard VPN: SCRIPT routing + teardown helper (2026-09-09)
 
@@ -775,6 +778,12 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       D-Bus `org.freedesktop.Notifications` with auto-dismiss, terminal bell and
       OSC 9/777/2, Zellij pane and tab badges; `--no-notify`)
 - [ ] First live run on the ThinkPad against a real Flatpak update
+- [✓] TUI is the default for a rebuild at an interactive terminal; `--cli`
+      (`--format human`) for line output; per-step summary and failing log
+      tail left in the scrollback when the TUI closes; full output in
+      `~/.local/state/preflight-last-run.log`
+- [ ] `--agent` mode beyond `--json`: non-interactive auth that fails fast,
+      per-step JSON events, a bounded failure log (separate PR)
 
 ## Rebuild builds origin's latest code (2026-10-19)
 

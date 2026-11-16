@@ -1146,6 +1146,13 @@ pub fn flatpak_log() -> PathBuf {
     home().join(".local/state/flatpak-update.log")
 }
 
+/// The full output of the last TUI run, rewritten by each one. The TUI's
+/// alternate screen takes the output with it and its buffer holds only the
+/// newest lines, so this file is where a failure's whole trace survives.
+pub fn run_log() -> PathBuf {
+    home().join(".local/state/preflight-last-run.log")
+}
+
 /// Start the Flatpak update, detached, and keep its handle.
 ///
 /// DETACHED, not inline, and not `services.flatpak.update.onActivation`. The

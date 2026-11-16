@@ -13,10 +13,16 @@
 let
   kwriteconfig = lib.getExe' pkgs.kdePackages.kconfig "kwriteconfig6";
 
-  # The Plasma splash: the boot animation again, from the Plymouth theme's
-  # own frames (pkgs/steelbore-ksplash), on the active palette's canvas.
+  # The Plasma splash, drawn like Fairing's boot splash (pkgs/steelbore-ksplash)
+  # from the same role tokens as the rest of the desktop.
   ksplash = (import ../../pkgs { inherit pkgs; }).steelbore-ksplash.override {
-    inherit (steelborePalette) background;
+    inherit (steelborePalette)
+      background
+      accent
+      surface
+      border
+      foreground
+      ;
   };
 
   # The panel clock's own keys, from plasma-workspace v6.6.5
@@ -89,6 +95,34 @@ let
     X-KDE-Shortcuts=Meta+Return
   '';
 
+  # Keyring rescue: Meta+Shift+U, as Mod+Shift+U under Niri, LeftWM and
+  # Margo (modules/desktops/shared.nix). Shipped like Caffeine above: a
+  # default a rebind in System Settings keeps. Unbound in stock Plasma.
+  keyringShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Unlock the Keyring (rescue)
+    Exec=steelbore-keyring-unlock
+    Icon=dialog-password
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+Shift+U
+  '';
+
+  # Where the WMs show their key cheat-sheet (Mod+Shift+/), open System
+  # Settings on its Shortcuts page. Shipped like Caffeine and also pinned in
+  # plasmaSharedShortcuts, as both spellings of a shifted key: Meta+? (what
+  # System Settings records) and Meta+Shift+/ -- the digits below do the
+  # same. Unbound in stock Plasma.
+  shortcutsPageShortcut = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Keyboard Shortcuts
+    Exec=systemsettings kcm_keys
+    Icon=preferences-desktop-keyboard-shortcut
+    NoDisplay=true
+    X-KDE-Shortcuts=Meta+?
+  '';
+
   # Meta+N / Meta+Shift+N for desktops 1-9, as under Niri, LeftWM and Margo.
   # KWin ships keys for desktops 1-4 only (Meta+F1-F4 and Ctrl+F1-F4, kept
   # here); entries for desktops that do not exist are inert. A shifted digit
@@ -126,17 +160,60 @@ let
         "none,Meta+${i},Activate Task Manager Entry ${i}"
     ''
   ) (lib.range 1 9);
+
+  # KWin ships 3- and 4-finger left/right swipes for desktops and a 4-finger
+  # up/down swipe for Overview / Grid View (virtualdesktops.cpp,
+  # plugins/overview), but no 3-finger Overview. This declarative script
+  # adds that one gesture -- GNOME's, Margo's -- through KWin's own
+  # SwipeGestureHandler; DBusCall fires the same "Overview" action Meta+W does.
+  gestureScript = {
+    "kwin/scripts/steelbore-gestures/metadata.json".text = builtins.toJSON {
+      KPackageStructure = "KWin/Script";
+      KPlugin = {
+        Id = "steelbore-gestures";
+        Name = "Steelbore touchpad gestures";
+        Description = "3-finger swipe up opens Overview, like GNOME and Margo";
+        License = "GPL-3.0-or-later";
+        Version = "1.0";
+      };
+      X-Plasma-API = "declarativescript";
+      X-Plasma-MainScript = "ui/main.qml";
+    };
+    "kwin/scripts/steelbore-gestures/contents/ui/main.qml".text = ''
+      import QtQuick
+      import org.kde.kwin
+
+      Item {
+          DBusCall {
+              id: overview
+              service: "org.kde.kglobalaccel"
+              path: "/component/kwin"
+              dbusInterface: "org.kde.kglobalaccel.Component"
+              method: "invokeShortcut"
+              arguments: ["Overview"]
+          }
+          SwipeGestureHandler {
+              direction: SwipeGestureHandler.Direction.Up
+              fingerCount: 3
+              deviceType: SwipeGestureHandler.Device.Touchpad
+              onActivated: overview.call()
+          }
+      }
+    '';
+  };
 in
 {
-  xdg.dataFile = schemeFiles // {
+  xdg.dataFile = schemeFiles // gestureScript // {
     "applications/steelbore-caffeine.desktop".text = caffeineShortcut;
     "applications/steelbore-terminal.desktop".text = terminalShortcut;
+    "applications/steelbore-keyring.desktop".text = keyringShortcut;
+    "applications/steelbore-shortcuts.desktop".text = shortcutsPageShortcut;
     "plasma/look-and-feel/${ksplash.packageId}".source =
       "${ksplash}/share/plasma/look-and-feel/${ksplash.packageId}";
   };
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # Splash screen — the boot animation (pkgs/steelbore-ksplash)
+  # Splash screen — Fairing's look (pkgs/steelbore-ksplash)
   # ═══════════════════════════════════════════════════════════════════════════
   # ksplashrc names a Look-and-Feel package by id; ours carries only the
   # splash, so choosing it here leaves the Global Theme alone. kwriteconfig6
@@ -208,12 +285,13 @@ in
   # The keys every Bravais session shares (docs/keybindings.md)
   # ═══════════════════════════════════════════════════════════════════════════
   # Meta+Q close (Alt+F4 kept), Meta+F fullscreen, Meta+Shift+F maximize (Meta+PgUp kept), Meta+L lock (Meta+Shift+L
-  # dropped), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
+  # dropped), Meta+Shift+E the logout screen (Ctrl+Alt+Del kept; the WMs'
+  # exit-session key), and Meta+N / Meta+Shift+N for desktops 1-9 in place of the task
   # manager entries (Meta+1-9 by default; those are left with no key).
   # Meta+Q is plasmashell's "Show Activity Switcher" by default, so that
   # action is left with no key (Meta+Tab still cycles activities).
-  # F19 is Escape Pod's lone-Super trigger on X11. Meta alone is native on
-  # Wayland; Alt+F1 and Meta+Shift+D remain available in both sessions.
+  # Meta alone is KWin's native launcher key in both sessions, and Alt+F1
+  # and Meta+Shift+D remain available in both.
   # Meta+Shift+D opens Kickoff beside Meta alone and Alt+F1, the app-menu
   # key in every session. Meta+F, Meta+Shift+D and Meta+Shift+N are unbound
   # in stock Plasma.
@@ -224,6 +302,14 @@ in
   # Krohnkite's other keys (Meta+H/J/K, Meta+Shift+H/J/K/L, Meta+I, ...) stay.
   # Meta+Shift+L (move right) was pinned to none while it was the lock key;
   # it is written back to Krohnkite's default here.
+  # Krohnkite also takes the WMs' tiling keys: Meta+V toggle float (Klipper's
+  # clipboard popup moves from Meta+V to Meta+Ctrl+V), Meta+Alt+H/J/K/L focus
+  # beside its Meta+H/J/K (Meta+Alt+L was "Switch to Last-Used Keyboard
+  # Layout", now keyless; Meta+Space switches layouts), Meta+Shift+arrows
+  # move beside Meta+Shift+H/J/K/L (taken from KWin's window to
+  # next/previous screen), and Meta+Ctrl+Space next layout beside Meta+\.
+  # Its "Toggle Float All" shipped on Meta+Shift+F, the shared maximize key,
+  # and won it, so Meta+Shift+F floated every window; it has no key now.
   # Its shortcuts live under [kwin], keyed by the script's action name.
   # Pinned like the keys above, with the same trade-off; read at the next
   # Plasma login. printf turns the \t separators into tabs.
@@ -240,10 +326,13 @@ in
         --group plasmashell --key "manage activities" "none,Meta+Q,Show Activity Switcher"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group plasmashell --key "activate application launcher" \
-        "$(printf 'Meta\tAlt+F1\tMeta+Shift+D\tF19,Meta\tAlt+F1,Activate Application Launcher')"
+        "$(printf 'Meta\tAlt+F1\tMeta+Shift+D,Meta\tAlt+F1,Activate Application Launcher')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group ksmserver --key "Lock Session" \
         "$(printf 'Meta+L\tScreensaver,Meta+L\tScreensaver,Lock Session')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group ksmserver --key "Log Out" \
+        "$(printf 'Ctrl+Alt+Del\tMeta+Shift+E,Ctrl+Alt+Del,Show Logout Screen')"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group services --group steelbore-terminal.desktop --key _launch "Meta+Return"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
@@ -251,11 +340,42 @@ in
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
         --group kwin --key KrohnkiteDecrease "none,Meta+D,Krohnkite: Decrease"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteToggleFloat "none,Meta+F,Krohnkite: Toggle Float"
+        --group kwin --key KrohnkiteToggleFloat "Meta+V,Meta+F,Krohnkite: Toggle Float"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteShiftRight "Meta+Shift+L,Meta+Shift+L,Krohnkite: Move Right"
+        --group kwin --key KrohnkiteFloatAll "none,Meta+Shift+F,Krohnkite: Toggle Float All"
       $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
-        --group kwin --key KrohnkiteFocusRight "none,Meta+L,Krohnkite: Focus Right"
+        --group plasmashell --key show-on-mouse-pos \
+        "Meta+Ctrl+V,Meta+V,Show Clipboard Items at Mouse Position"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group "KDE Keyboard Layout Switcher" --key "Switch to Last-Used Keyboard Layout" \
+        "none,Meta+Alt+L,Switch to Last-Used Keyboard Layout"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusLeft "$(printf 'Meta+H\tMeta+Alt+H,none,Krohnkite: Focus Left')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusDown "$(printf 'Meta+J\tMeta+Alt+J,none,Krohnkite: Focus Down')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusUp "$(printf 'Meta+K\tMeta+Alt+K,none,Krohnkite: Focus Up')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftLeft "$(printf 'Meta+Shift+H\tMeta+Shift+Left,none,Krohnkite: Move Left')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftDown "$(printf 'Meta+Shift+J\tMeta+Shift+Down,none,Krohnkite: Move Down/Next')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftUp "$(printf 'Meta+Shift+K\tMeta+Shift+Up,none,Krohnkite: Move Up/Prev')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window to Next Screen" "none,Meta+Shift+Right,Move Window to Next Screen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key "Window to Previous Screen" "none,Meta+Shift+Left,Move Window to Previous Screen"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteNextLayout \
+        "$(printf '%s\t%s' 'Meta+\\' 'Meta+Ctrl+Space,none,Krohnkite: Next Layout')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group services --group steelbore-shortcuts.desktop --key _launch \
+        "$(printf 'Meta+?\tMeta+Shift+/')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteShiftRight \
+        "$(printf 'Meta+Shift+L\tMeta+Shift+Right,Meta+Shift+L,Krohnkite: Move Right')"
+      $DRY_RUN_CMD ${kwriteconfig} --file "${config.xdg.configHome}/kglobalshortcutsrc" \
+        --group kwin --key KrohnkiteFocusRight "Meta+Alt+L,Meta+L,Krohnkite: Focus Right"
     ''
     + desktopKeys
   );
@@ -340,6 +460,39 @@ in
         $DRY_RUN_CMD ${kwriteconfig} --file "$rc" $groupArgs \
           --group Configuration --group Appearance \
           --key showDate true
+      done
+    fi
+  '';
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Panel geometry — the Niri/Margo bar's shape
+  # ═══════════════════════════════════════════════════════════════════════════
+  # The Niri and Margo eww bar is 32 px, flush to the top edge, opaque on the
+  # canvas. The Plasma panel (already on the top edge) is made the same shape:
+  # 32 px thick, not floating, opaque. Its colours already follow the active
+  # palette through the colour scheme above, so only the geometry is set here.
+  # The panel that holds the clock is the main one; the id is discovered from
+  # appletsrc like the clock's own applet index above, and the keys go to
+  # plasmashellrc (PlasmaViews), which plasmashell reads at start, so they
+  # apply after `systemctl --user restart plasma-plasmashell.service` or at
+  # the next login. Like the clock format, a rebuild re-forces them: change
+  # the numbers here, not in Plasma's panel editor.
+  home.activation.plasmaPanelShape = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rc="${config.xdg.configHome}/plasma-org.kde.plasma.desktop-appletsrc"
+    shellrc="${config.xdg.configHome}/plasmashellrc"
+    if [ -f "$rc" ]; then
+      ${pkgs.gawk}/bin/awk '
+        /^\[Containments\]\[[0-9]+\]$/ { id = $0; gsub(/[^0-9]/, "", id) }
+        /^\[Containments\]\[[0-9]+\]\[Applets\]/ { next }
+        /^plugin=org\.kde\.plasma\.digitalclock$/ { print id }
+      ' "$rc" | sort -u | while IFS= read -r panel; do
+        [ -n "$panel" ] || continue
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --key floating 0
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --key panelOpacity 1
+        $DRY_RUN_CMD ${kwriteconfig} --file "$shellrc" \
+          --group PlasmaViews --group "Panel $panel" --group Defaults --key thickness 32
       done
     fi
   '';

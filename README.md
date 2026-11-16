@@ -315,7 +315,8 @@ Hosts toggle modules declaratively via the `steelbore.*` namespace:
 
 Bravais is a **personal hobby project** — see [`NOTICE.md`](./NOTICE.md) for the full
 no-warranty / no-liability statement. Contributions are welcome but acceptance is at the
-maintainer's discretion; see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+maintainer's discretion; see [`CONTRIBUTING.md`](./CONTRIBUTING.md). The Steelbore logo art is
+CC BY-SA 4.0; the names and logo are covered by [`TRADEMARKS.md`](./TRADEMARKS.md).
 
 ## Quick Start
 

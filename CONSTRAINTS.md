@@ -191,6 +191,9 @@ the session PATH measured on this host begins `/run/wrappers/bin`, then the Flat
 
 ### 35. Patching cosmic-comp costs a 22-minute source build, and `doCheck = false` is required rather than optional
 
+**Retired 2026-11-16.** The patch is gone: COSMIC's three-finger workspace swipe now comes from Escape Pod, which reads the touchpad and sends the workspace keys (constraint #57), so cosmic-comp builds from the binary cache again. Kept for the record, and for anyone who brings the patch back:
+
+
 `modules/core/nix.nix` patches cosmic-comp so a 3-finger swipe switches workspaces (its 3-finger arm is an unused upstream `// TODO`). That loses the binary cache for a large Rust package, which is the known price. The non-obvious part is the failure mode: **`buildPhase` is not what exhausts the machine -- `checkPhase` is.** Measured twice on 2026-09-09: the release build finishes in ~21m30s, then `cargoCheckHook` starts recompiling the whole crate at `-j 8` to run upstream's test suite and the box runs out of memory. The first attempt let the kernel OOM-kill both running browsers; the second, with browsers closed and 28 GiB free, still had to be stopped. With `doCheck = false` the same build completes in **22 minutes, exit 0**. Do not "fix" this by capping `NIX_BUILD_CORES` -- that slows the phase that works and leaves the phase that does not. Same remedy as `nil` (constraint #13). Two further notes: `--replace-fail` (not `--replace`) is deliberate, so a cosmic-comp bump that moves those source lines fails the build loudly instead of silently reverting to 4-finger-only; and cosmic-comp is the **compositor**, so a rebuild alone changes nothing in a running session -- log out and back in.
 
 ### 36. `adguardvpn-cli disconnect` hangs forever under sudo-rs, and the obvious fix strands a root process
@@ -321,22 +324,48 @@ does not repair an already cached stripped copy. With Desktop closed, back up
 that executable and replace it with the rebuilt `resources/opencode-cli`, then
 restart Desktop. Leave settings, sessions, credentials and databases in place.
 
-### 55. Plasma X11 needs a modifier-tap observer, and F13 is the settings key under XKB
+### 55. Plasma's lone Super tap is native on X11 too; a second launcher key closes the menu
 
-KWin X11 has no native modifier-only menu shortcut. Escape Pod's X11 backend
-observes X RECORD and injects a single tap through XTEST without grabbing a
-keyboard, so it can coexist with the mouse daemon's evdev backend. The
-Plasma-only user unit uses explicit `--backend x11`, is part of
-`plasma-core.target`, and requires `XDG_SESSION_TYPE=x11` to avoid a second
-menu toggle under Wayland. xcape must not be started in the session wrapper
-alongside it.
+KWin 6.6 opens Kickoff on a lone Meta tap in the X11 session as well as on
+Wayland. Measured on 2026-11-09 with KWin 6.6.6: taps of 55 to 800 ms each
+produced exactly one `activate application launcher` signal from
+kglobalaccel. Bravais once ran an Escape Pod X11 tap observer that sent F19,
+also bound to the launcher, on a lone Super release. Every tap then fired the
+launcher twice, once for Meta and once for F19, and the second toggle closed
+the menu the first had opened. Only presses held past the observer's 500 ms
+timeout opened it, so the menu seemed to need a longer press.
 
-Both Super keys retain their modifier role; only a lone release within
-500 ms emits `KEY_F19`, reserved for the application-launcher action beside
-Meta, Alt+F1 and Meta+Shift+D. Do not substitute F13: the default XKB evdev
-map resolves kernel KEY_F13 (X keycode 191) to XF86Tools, which is the
-ThinkPad's settings key. KEY_F19 (keycode 197) resolves to plain F19. The
-private-Xvfb check verifies both taps, Super combinations, mouse cancellation
-and the hold timeout using the generated config, with a nonexistent uinput
-path so it cannot touch host input. A real Plasma session check remains a
-manual activation check.
+Keep `Meta` in the launcher binding and run no tap remapper (Escape Pod,
+xcape or another) that sends a launcher key alongside it. If a future KWin
+drops native modifier-only shortcuts on X11, the remapper must replace the
+`Meta` binding, never sit beside it. F13 stays unusable as a spare key: the
+default XKB evdev map resolves kernel KEY_F13 (X keycode 191) to
+XF86Tools, the ThinkPad's settings key.
+
+### 56. On X11, the X server can skip Escape Pod's virtual keyboard at login
+
+On 2026-11-12 the mouse side buttons did nothing in a Plasma X11 session
+although `escapepod-mouse-workspace-nav` was running and had grabbed the
+mouse. `xinput list` showed Escape Pod's virtual pointer but not its virtual
+keyboard, and `Xorg.0.log` said why: `event20 - not using input device
+'/dev/input/event20'` and `Failed to create a device`, logged 14 ms after
+`config/udev` offered the device. That is libinput finding no udev input
+tags on the node; `udevadm info` afterwards showed `ID_INPUT_KEYBOARD=1`, so
+X read the device before udev had finished with it. The daemon kept turning
+button presses into Meta+Ctrl+arrow on a keyboard X never opened, so KWin
+never saw them, and nothing failed anywhere else. Restarting the service
+once the session was up made a new device that X added at once, and the
+buttons worked. Wayland compositors read the device themselves and are
+unaffected.
+
+The unit's `ExecStartPost` waits up to 10 s for X to list
+`Escape Pod virtual keyboard <MainPID>` and otherwise fails the start, so
+`Restart=on-failure` makes the device again (five tries a minute). Keep the
+check while any X11 session (Plasma X11) can start the unit, and look in
+`Xorg.0.log`, not the unit's journal, when the buttons go dead on X11.
+LeftWM starts the same command from its theme hook without systemd and has
+no such retry.
+
+### 57. Escape Pod's swipes go only to sessions whose desktop has none: a desktop sees every swipe
+
+Escape Pod reads the touchpad read-only and never grabs it (it must not: the touchpad has to go on moving the pointer, and the virtual pointer could not carry its multi-touch motion anyway). So the compositor receives every swipe as well. Where the desktop acts on a swipe itself -- GNOME (3 fingers), Plasma Wayland (3 and 4), COSMIC (4) -- a rule for the same swipe would act twice: two workspaces at once, or the overview opening and closing. `modules/desktops/mouse-workspace-nav.nix` therefore renders three configurations and the session unit picks one from `XDG_CURRENT_DESKTOP` and `XDG_SESSION_TYPE`: all swipes on Plasma X11 (KWin's gestures are Wayland-only), three-finger left/right only on COSMIC, none on GNOME and Plasma Wayland; LeftWM's theme hook uses the X11 one. A session the selector cannot place gets the side buttons alone. The `mouse-workspace-nav` flake check fails if the base configuration gains a gesture, or COSMIC's gains a four-finger or vertical one. Adding a desktop means deciding which swipes it lacks, not reusing a configuration.

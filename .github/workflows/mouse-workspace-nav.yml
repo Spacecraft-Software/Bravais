@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   mouse-workspace-nav:
-    name: Mouse and Super-tap configuration and session scope
+    name: Mouse configuration and session scope
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,4 +30,3 @@ jobs:
         run: >-
           nix build --no-link -L
           '.#checks.x86_64-linux.mouse-workspace-nav'
-          '.#checks.x86_64-linux.plasma-super-tap'
