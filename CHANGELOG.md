@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Preflight's TUI shows its task list on the right** of the output pane on
+  wide terminals (90 columns or more); narrower ones still stack it above.
 - **cosmic-comp is no longer patched**, so it comes from the binary cache
   again instead of a 22-minute source build; Escape Pod supplies COSMIC's
   three-finger workspace swipe. The `escapepod` input moves to the release
