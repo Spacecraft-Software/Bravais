@@ -653,7 +653,7 @@ fn cmd_schema(out: Out) -> i32 {
             "2": "usage error",
             "3": "resource not found (no watched mount exists; NO_SUCH_BRANCH for --branch; NO_PRIVILEGE_TOOL when no selected helper is installed)",
             "4": "permission denied (AUTHENTICATION_FAILED at startup)",
-            "5": "conflict: the git sync refused to move the checkout (DIRTY_TREE, NO_UPSTREAM, LOCK_CONFLICT, NOT_FAST_FORWARD); nothing was built"
+            "5": "conflict: the git sync refused to move the checkout (DIRTY_TREE, BRANCH_IN_WORKTREE, NO_UPSTREAM, LOCK_CONFLICT, NOT_FAST_FORWARD); nothing was built"
         },
         "safe_categories": disk::SAFE_CATEGORIES,
         "privilege_authentication": {

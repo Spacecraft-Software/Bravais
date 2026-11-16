@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `preflight --branch` no longer blames uncommitted edits when the switch fails for another reason. A branch held by another git worktree is now named (`BRANCH_IN_WORKTREE`, exit 5, with the command that frees it), and a `DIRTY_TREE` refusal lists only the edits the move would really touch.
 - **Preflight's TUI repaints itself after the laptop sleeps, and on Ctrl+L.**
   After a resume (or a resize) the terminal could repaint the screen behind
   the TUI, which then redrew only what it thought had changed, leaving
