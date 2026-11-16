@@ -69,11 +69,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794160798,
-        "narHash": "sha256-mo7D4fJP+gMGvY5aYQhBfda5D+Qz2ZMR540Go63XIVE=",
+        "lastModified": 1794739866,
+        "narHash": "sha256-ue4M0zR21mwhCSIBMNfZaDA+/fEC76tQYRNjc+FACVo=",
         "owner": "Spacecraft-Software",
         "repo": "Escapepod",
-        "rev": "4a42a19c8267f814d844f6724e7aa9663243eae8",
+        "rev": "29904cf6566b90f33d26cff9f5253e4fe5b5d91e",
         "type": "github"
       },
       "original": {

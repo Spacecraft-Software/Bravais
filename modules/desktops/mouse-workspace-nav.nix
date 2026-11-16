@@ -31,18 +31,76 @@ let
       ];
     }
   ];
-  mouseConfig = toml.generate "escapepod-mouse-workspace-nav.toml" {
-    # A receiver can expose keyboards with the same vendor/product pair.
-    # Exact pointer names keep keyboards and pointing sticks ungrabbed.
-    # With no grabbed keyboard the exit-6 chord is unavailable. Recovery in
-    # GNOME/Plasma/COSMIC: systemctl --user stop escapepod-mouse-workspace-nav.
-    # LeftWM: run its theme's `down` hook, which signals the recorded daemon PID.
-    grab = "listed";
-    device = map (name: {
-      inherit name;
-      button = buttonRules;
-    }) cfg.deviceNames;
-  };
+  # Touchpad swipes (Escape Pod reads the touchpad read-only and never
+  # grabs it, so the desktop sees every swipe too). Fingers follow the
+  # content: a swipe left goes to the workspace on the right, as the side
+  # buttons do (docs/keybindings.md). Up opens the overview: Super+W is
+  # KWin's Overview and LeftWM's skippy-xd paging; 4-finger down is KWin's
+  # Grid View (Super+G), unbound under LeftWM.
+  swipe = fingers: direction: keys: { inherit fingers direction keys; };
+  workspaceSwipes = fingers: [
+    (swipe fingers "left" [
+      "KEY_LEFTMETA"
+      "KEY_LEFTCTRL"
+      "KEY_RIGHT"
+    ])
+    (swipe fingers "right" [
+      "KEY_LEFTMETA"
+      "KEY_LEFTCTRL"
+      "KEY_LEFT"
+    ])
+  ];
+  x11Swipes =
+    workspaceSwipes 3
+    ++ workspaceSwipes 4
+    ++ [
+      (swipe 3 "up" [
+        "KEY_LEFTMETA"
+        "KEY_W"
+      ])
+      (swipe 4 "up" [
+        "KEY_LEFTMETA"
+        "KEY_W"
+      ])
+      (swipe 4 "down" [
+        "KEY_LEFTMETA"
+        "KEY_G"
+      ])
+    ];
+
+  # One configuration per kind of session, because a desktop that handles a
+  # swipe itself would see it twice -- once natively, once as the shortcut:
+  #   - Plasma X11, LeftWM: KWin's gestures are Wayland-only and LeftWM has
+  #     none, so every swipe comes from here.
+  #   - COSMIC: cosmic-comp switches workspaces on four fingers only, so
+  #     only three-finger left/right comes from here (this replaced a
+  #     cosmic-comp source patch, CONSTRAINTS.md #35).
+  #   - GNOME, Plasma Wayland: gestures of their own; side buttons only.
+  # The mouse-workspace-nav flake check guards this split (CONSTRAINTS.md #57).
+  mkConfig =
+    name: swipes:
+    toml.generate name {
+      # A receiver can expose keyboards with the same vendor/product pair.
+      # Exact pointer names keep keyboards and pointing sticks ungrabbed.
+      # With no grabbed keyboard the exit-6 chord is unavailable. Recovery in
+      # GNOME/Plasma/COSMIC: systemctl --user stop escapepod-mouse-workspace-nav.
+      # LeftWM: run its theme's `down` hook, which signals the recorded daemon PID.
+      grab = "listed";
+      device =
+        map (name: {
+          inherit name;
+          button = buttonRules;
+        }) cfg.deviceNames
+        ++ lib.optionals (swipes != [ ]) (
+          map (name: {
+            inherit name;
+            gesture = swipes;
+          }) cfg.touchpadNames
+        );
+    };
+  mouseConfig = mkConfig "escapepod-mouse-workspace-nav.toml" [ ];
+  x11Config = mkConfig "escapepod-mouse-workspace-nav-x11.toml" x11Swipes;
+  cosmicConfig = mkConfig "escapepod-mouse-workspace-nav-cosmic.toml" (workspaceSwipes 3);
   # Plasma X11: the X server can read the daemon's new virtual keyboard
   # before udev has tagged it, and libinput then refuses it for good ("not
   # using input device"). The buttons are still grabbed, so they go dead
@@ -66,21 +124,57 @@ let
     echo "X did not add '$want'; restarting so the device is created again" >&2
     exit 1
   '';
-  command = lib.escapeShellArgs [
-    (lib.getExe package)
-    "daemon"
-    "run"
-    "--backend"
-    "evdev"
-    "--config"
-    (toString mouseConfig)
-    "--yes"
-    "--json"
-  ];
+  commandFor =
+    config:
+    lib.escapeShellArgs [
+      (lib.getExe package)
+      "daemon"
+      "run"
+      "--backend"
+      "evdev"
+      "--config"
+      (toString config)
+      "--yes"
+      "--json"
+    ];
+  # LeftWM is an X11 session with no gestures of its own.
+  command = commandFor x11Config;
+
+  # The session unit picks its configuration from the session it runs in;
+  # anything it cannot place gets the side buttons alone, so no desktop ever
+  # acts on a swipe twice.
+  sessionCommand = pkgs.writeShellScript "escapepod-mouse-workspace-nav" ''
+    case "''${XDG_CURRENT_DESKTOP:-}" in
+      *COSMIC*) config=${cosmicConfig} ;;
+      *KDE*)
+        if [ "''${XDG_SESSION_TYPE:-}" = x11 ]; then
+          config=${x11Config}
+        else
+          config=${mouseConfig}
+        fi
+        ;;
+      *) config=${mouseConfig} ;;
+    esac
+    exec ${lib.getExe package} daemon run --backend evdev --config "$config" --yes --json
+  '';
 in
 {
   options.steelbore.desktops.mouseWorkspaceNav = {
     enable = lib.mkEnableOption "mouse side-button workspace navigation via Escape Pod";
+
+    touchpadNames = lib.mkOption {
+      type = lib.types.listOf lib.types.nonEmptyStr;
+      default = [ ];
+      example = [ "Elan Touchpad" ];
+      description = ''
+        Exact touchpad names from `escapepod device list` (status `swipes`
+        once matched). Escape Pod reads them read-only, never grabbing
+        them, and sends workspace and overview shortcuts for three- and
+        four-finger swipes in the sessions whose desktop has no such
+        gestures: Plasma X11 and LeftWM (all), COSMIC (three-finger
+        left/right only). Empty: no swipes anywhere.
+      '';
+    };
 
     deviceNames = lib.mkOption {
       type = lib.types.listOf lib.types.nonEmptyStr;
@@ -105,8 +199,9 @@ in
       readOnly = true;
       default = command;
       description = ''
-        The Escape Pod invocation shared by the session unit and LeftWM's
-        startx theme hook, which has no systemd graphical session.
+        The Escape Pod invocation for LeftWM's startx theme hook, which has
+        no systemd graphical session: the X11 configuration (side buttons and
+        every swipe). The session unit picks its configuration per session.
       '';
     };
   };
@@ -128,6 +223,10 @@ in
         assertion = cfg.deviceNames != [ ] && lib.unique cfg.deviceNames == cfg.deviceNames;
         message = "mouseWorkspaceNav.deviceNames must name at least one mouse, without duplicates.";
       }
+      {
+        assertion = lib.unique cfg.touchpadNames == cfg.touchpadNames;
+        message = "mouseWorkspaceNav.touchpadNames must not repeat a name.";
+      }
     ];
 
     # Session daemon: retain the existing uinput access arrangement. Do not
@@ -135,6 +234,8 @@ in
     hardware.uinput.enable = true;
     environment.systemPackages = [ package ];
     environment.etc."escapepod/mouse-workspace-nav.toml".source = mouseConfig;
+    environment.etc."escapepod/mouse-workspace-nav-x11.toml".source = x11Config;
+    environment.etc."escapepod/mouse-workspace-nav-cosmic.toml".source = cosmicConfig;
 
     # Never graphical-session.target: that would consume Niri's native buttons.
     systemd.user.services.escapepod-mouse-workspace-nav = {
@@ -159,8 +260,12 @@ in
       startLimitBurst = 5;
       startLimitIntervalSec = 60;
       serviceConfig = {
-        ExecStartPre = "${lib.getExe package} config check --config ${mouseConfig} --json";
-        ExecStart = command;
+        ExecStartPre = map (c: "${lib.getExe package} config check --config ${c} --json") [
+          mouseConfig
+          x11Config
+          cosmicConfig
+        ];
+        ExecStart = sessionCommand;
         ExecStartPost = xKeyboardReady;
         Restart = "on-failure";
         RestartSec = 2;

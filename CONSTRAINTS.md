@@ -191,6 +191,9 @@ the session PATH measured on this host begins `/run/wrappers/bin`, then the Flat
 
 ### 35. Patching cosmic-comp costs a 22-minute source build, and `doCheck = false` is required rather than optional
 
+**Retired 2026-11-16.** The patch is gone: COSMIC's three-finger workspace swipe now comes from Escape Pod, which reads the touchpad and sends the workspace keys (constraint #57), so cosmic-comp builds from the binary cache again. Kept for the record, and for anyone who brings the patch back:
+
+
 `modules/core/nix.nix` patches cosmic-comp so a 3-finger swipe switches workspaces (its 3-finger arm is an unused upstream `// TODO`). That loses the binary cache for a large Rust package, which is the known price. The non-obvious part is the failure mode: **`buildPhase` is not what exhausts the machine -- `checkPhase` is.** Measured twice on 2026-09-09: the release build finishes in ~21m30s, then `cargoCheckHook` starts recompiling the whole crate at `-j 8` to run upstream's test suite and the box runs out of memory. The first attempt let the kernel OOM-kill both running browsers; the second, with browsers closed and 28 GiB free, still had to be stopped. With `doCheck = false` the same build completes in **22 minutes, exit 0**. Do not "fix" this by capping `NIX_BUILD_CORES` -- that slows the phase that works and leaves the phase that does not. Same remedy as `nil` (constraint #13). Two further notes: `--replace-fail` (not `--replace`) is deliberate, so a cosmic-comp bump that moves those source lines fails the build loudly instead of silently reverting to 4-finger-only; and cosmic-comp is the **compositor**, so a rebuild alone changes nothing in a running session -- log out and back in.
 
 ### 36. `adguardvpn-cli disconnect` hangs forever under sudo-rs, and the obvious fix strands a root process
@@ -362,3 +365,7 @@ check while any X11 session (Plasma X11) can start the unit, and look in
 `Xorg.0.log`, not the unit's journal, when the buttons go dead on X11.
 LeftWM starts the same command from its theme hook without systemd and has
 no such retry.
+
+### 57. Escape Pod's swipes go only to sessions whose desktop has none: a desktop sees every swipe
+
+Escape Pod reads the touchpad read-only and never grabs it (it must not: the touchpad has to go on moving the pointer, and the virtual pointer could not carry its multi-touch motion anyway). So the compositor receives every swipe as well. Where the desktop acts on a swipe itself -- GNOME (3 fingers), Plasma Wayland (3 and 4), COSMIC (4) -- a rule for the same swipe would act twice: two workspaces at once, or the overview opening and closing. `modules/desktops/mouse-workspace-nav.nix` therefore renders three configurations and the session unit picks one from `XDG_CURRENT_DESKTOP` and `XDG_SESSION_TYPE`: all swipes on Plasma X11 (KWin's gestures are Wayland-only), three-finger left/right only on COSMIC, none on GNOME and Plasma Wayland; LeftWM's theme hook uses the X11 one. A session the selector cannot place gets the side buttons alone. The `mouse-workspace-nav` flake check fails if the base configuration gains a gesture, or COSMIC's gains a four-finger or vertical one. Adding a desktop means deciding which swipes it lacks, not reusing a configuration.
