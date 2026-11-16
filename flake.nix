@@ -775,10 +775,10 @@
             # Swipes only where the desktop has none of its own: none in the
             # base (GNOME, Plasma Wayland) configuration, three-finger
             # left/right only for COSMIC, which swipes on four itself.
-            ! grep -q gesture ${rendered}
+            if grep -q gesture ${rendered}; then echo 'base config must carry no gesture' >&2; exit 1; fi
             grep -q gesture ${renderedX11}
-            ! grep -q 'fingers = 4' ${renderedCosmic}
-            ! grep -qE 'direction = "(up|down)"' ${renderedCosmic}
+            if grep -q 'fingers = 4' ${renderedCosmic}; then echo 'COSMIC config must carry no 4-finger gesture' >&2; exit 1; fi
+            if grep -qE 'direction = "(up|down)"' ${renderedCosmic}; then echo 'COSMIC config must carry no vertical gesture' >&2; exit 1; fi
             grep -q 'fingers = 3' ${renderedCosmic}
             ${checkPkgs.runtimeShell} ${./tests/mouse-workspace-nav.sh} ${theme} ${checkPkgs.runtimeShell}
             touch $out
