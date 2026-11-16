@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   again instead of a 22-minute source build; Escape Pod supplies COSMIC's
   three-finger workspace swipe. The `escapepod` input moves to the release
   with touchpad gestures.
+- **Dependencies bumped again (2026-11-16):** `nixpkgs`, `nixpkgs-unstable`
+  and `home-manager-unstable` in `flake.lock`, and the vendored pins for
+  AdGuard VPN CLI, Claude Desktop, Codex Desktop, Goose Desktop, Obscura,
+  Ollama and OpenCode Desktop (each in its `pkgs/<name>/package.nix`).
 - **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
   `home-manager-unstable` and `gantry` in `flake.lock`, and the vendored
   Claude Desktop pin (`pkgs/claude-desktop/package.nix`).
