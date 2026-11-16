@@ -506,6 +506,10 @@
                   (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -s $f && xclip -selection clipboard -t image/png $f", modifier: [], key: "Print"),
                   (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim -i $(xdotool getactivewindow) $f && xclip -selection clipboard -t image/png $f", modifier: ["modkey"], key: "Print"),
                   (command: Execute, value: "f=$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png; mkdir -p $HOME/Pictures/Screenshots && maim $f && xclip -selection clipboard -t image/png $f", modifier: ["Shift"], key: "Print"),
+                  // Overview: skippy-xd paging, as the top-left corner opens it;
+                  // Super+W is KWin's Overview too, and a three- or
+                  // four-finger swipe up sends it (mouse-workspace-nav.nix).
+                  (command: Execute, value: "${pkgs.skippy-xd}/bin/skippy-xd --config ${skippyConfig} --paging", modifier: ["modkey"], key: "w"),
                   // Keybinding help — mirrors Niri's `show-hotkey-overlay`.
                   // Pipes a HM-rendered keybind summary through rofi -dmenu.
                   (command: Execute, value: "rofi -dmenu -i -markup-rows -theme ~/.config/rofi/keybinds.rasi < ~/.config/leftwm/keybinds.txt", modifier: ["modkey", "Shift"], key: "slash"),
@@ -550,7 +554,8 @@
           Mod+Ctrl+Shift+Space  Previous layout
 
           <b>Workspaces</b>
-          Top-left corner       Overview of all workspaces (skippy-xd)
+          Mod+W / top-left      Overview of all workspaces (skippy-xd)
+          3/4-finger swipe      Workspaces (left/right), overview (up)
           Mod+1..9              Switch to workspace 1-9
           Mod+Shift+1..9        Move window to workspace 1-9
           Mod+Ctrl+Left/Right   Previous / next workspace

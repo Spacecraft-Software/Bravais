@@ -201,7 +201,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 32. **gcr-prompter exists only in gcr 3** — keep `pkgs.gcr_3 or pkgs.gcr` in that order; a Secret Service `Prompt` dies with its D-Bus connection, so unlocking needs one long-lived client.
 33. **`programs.adb` is removed and fails evaluation** — install `pkgs.android-tools` only, no `adbusers` group; set `android_sdk.accept_license` in every nixpkgs instance that needs it.
 34. **`/run/wrappers/bin` is first in PATH** — intercept `su` per shell (`suGuard`), never with a package, and exec `/run/wrappers/bin/su`.
-35. **The cosmic-comp patch needs `doCheck = false`** — `checkPhase` exhausts memory; don't cap build cores; `--replace-fail` is deliberate.
+35. **(Retired 2026-11-16)** The cosmic-comp three-finger patch is gone; Escape Pod supplies COSMIC's three-finger swipe (#57). If it ever comes back it needs `doCheck = false` — `checkPhase` exhausts memory.
 36. **Never SIGKILL the sudo shim behind a hung `adguardvpn-cli disconnect`** — it strands a root tunnel; use `sudo steelbore-vpn tunnel stop --yes`.
 37. **AdGuard TUN routing mode `none` carries no traffic** — use `script` mode with the root-owned `0700` `setup_routes.sh`; keep the split `/1` routes.
 38. **Headless Xorg needs the `dummy` and `void` drivers**, which `xorg-server` lacks — the CRD package unions them; `switch-to-configuration` exit 4 means check `systemctl --failed`.
@@ -226,6 +226,7 @@ One rule per trap. The full entry — the evidence, how it fails, how it was dia
 
 55. **Plasma opens Kickoff on a lone Super tap natively, on X11 as on Wayland** — keep `Meta` in the launcher binding and run no tap remapper (Escape Pod, xcape) that sends another launcher key: one tap would then toggle the menu open and shut. Never bind F13 to anything: XKB maps it to `XF86Tools` (the settings key).
 56. **On X11 the X server can skip Escape Pod's virtual keyboard at login** — libinput reads it before udev tags it and refuses it for good, so the side buttons go dead while the service runs; the unit's `ExecStartPost` waits for `xinput` to list the keyboard and fails the start otherwise. Check `Xorg.0.log`, not the journal.
+57. **Escape Pod's swipes go only to sessions whose desktop has none** — the touchpad is never grabbed, so the desktop sees every swipe; the session unit picks a configuration (all swipes on Plasma X11 and LeftWM, 3-finger left/right on COSMIC, none on GNOME or Plasma Wayland), and the flake check guards it.
 
 ## Delegating to OpenCode Go
 

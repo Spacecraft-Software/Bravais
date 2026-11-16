@@ -422,7 +422,7 @@ location — the former `overlays/` reference copy was removed as dead code).
 
 **sequoia-wot:** Disables failing tests (`doCheck = false`).
 
-**cosmic-comp:** A `substituteInPlace` with two single-line `--replace-fail` substitutions on cosmic-comp's own `src/input/mod.rs` (upstream source, not a Bravais file) makes a 3-finger touchpad swipe switch workspaces under COSMIC (sharing the 4-finger arm rather than replacing it: the `3 => None` TODO arm is deleted first, then `4 => {` becomes `3 | 4 => {`), matching niri. Neither compositor exposes a finger count in configuration, so parity needs a source patch; patching cosmic-comp's unused 3-finger TODO arm loses nothing, whereas moving niri to 4 fingers would collide with its Overview gesture. `--replace-fail` is deliberate — if upstream fills in the TODO the build fails loudly instead of silently reverting. It costs a from-source build of a large Rust package and requires `doCheck = false` because `checkPhase` exhausts memory — rather than capping build parallelism (CONSTRAINTS.md #35).
+**cosmic-comp:** no longer patched (2026-11-16). COSMIC's three-finger workspace swipe comes from Escape Pod (§9.1a), so cosmic-comp builds from the binary cache again; the old source patch and its `doCheck = false` are retired (CONSTRAINTS.md #35).
 
 **nixfmt-rfc-style:** Aliased to `prev.nixfmt` so the nixpkgs deprecation warning never fires when a flake input (gitway) still references the old name; Bravais itself uses `nixfmt` everywhere.
 
@@ -1110,7 +1110,9 @@ sessions while avoiding a competing daemon in GNOME.
 
 ### 9.1a Mouse side-button workspace nav (`modules/desktops/mouse-workspace-nav.nix`)
 
-**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…deviceNames` and the read-only `…command`)
+**Option:** `steelbore.desktops.mouseWorkspaceNav.enable` (plus `…deviceNames`, `…touchpadNames` and the read-only `…command`)
+
+**Touchpad swipes (2026-11-16):** the same Escape Pod service reads the touchpads named in `…touchpadNames` (read-only, never grabbed) and sends the shared workspace keys for three- and four-finger swipes, plus Super+W (overview) for a swipe up and Super+G (Plasma's Grid View) for a four-finger swipe down. The desktop still sees every swipe, so the unit picks one of three rendered configurations per session: all swipes on Plasma X11 and LeftWM (KWin's gestures are Wayland-only; LeftWM has none), three-finger left/right only on COSMIC (it swipes on four itself), none on GNOME and Plasma Wayland (constraint #57).
 
 Makes the two thumb buttons (`BTN_SIDE`/`BTN_EXTRA`) switch workspaces under **GNOME, Plasma, COSMIC and LeftWM**. Direction is deliberate: **back goes right, forward goes left** — do not "fix" it; `users/mj/niri.nix` is swapped to match and the two must move together.
 

@@ -145,6 +145,7 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Prevent restart on emergency exit 6; keep LeftWM's daemon PID across theme reloads
 - [✓] Activate the declarative Escape Pod unit and retire the local trial override after a successful system build (override moved aside 2026-11-12 to `~/.config/systemd/user/escapepod-migration.bak-2026-11-12/`)
 - [✓] Plasma X11: retry the daemon when X skipped its virtual keyboard at login (`ExecStartPost` readiness check; constraint #56)
+- [✓] Touchpad swipes through the same unit (`touchpadNames`), one configuration per session: all swipes on Plasma X11 and LeftWM, 3-finger left/right on COSMIC, none on GNOME or Plasma Wayland (constraint #57); LeftWM Mod+W opens skippy-xd paging
 
 ### Niri (`niri.nix`) -- The Spacecraft Software Standard
 
@@ -661,11 +662,11 @@ This document tracks the implementation status of the Bravais NixOS distribution
 - [✓] Overlay patching cosmic-comp so 3 fingers switch workspaces (4 still works)
 - [✓] `doCheck = false` — checkPhase, not the compile, is what exhausts memory
 - [✓] Patched cosmic-comp BUILDS: 22 min, exit 0, `--replace-fail` matched
-- [ ] Rebuild + **log out and back in** — cosmic-comp is the compositor, so a
-      running session keeps the old binary until the session restarts
-- [ ] Confirm 3-finger left/right actually switches workspaces
-- [ ] Re-check the substitution after any cosmic-comp bump (`--replace-fail`
-      fails the build loudly if upstream fills in the TODO)
+- ~~Rebuild + log out and back in; confirm 3-finger left/right; re-check the
+  substitution after any cosmic-comp bump~~ (dropped 2026-11-16: the patch is
+  retired; Escape Pod supplies the three-finger swipe, constraint #57)
+- [✓] Escape Pod touchpad swipes replace the patch: three-finger left/right on
+      COSMIC through `mouseWorkspaceNav.touchpadNames` (2026-11-16)
 
 ## AdGuard VPN: SCRIPT routing + teardown helper (2026-09-09)
 

@@ -747,6 +747,8 @@
             machine = self.nixosConfigurations.steelbore-thinkpad.config;
             service = machine.systemd.user.services.escapepod-mouse-workspace-nav;
             rendered = machine.environment.etc."escapepod/mouse-workspace-nav.toml".source;
+            renderedX11 = machine.environment.etc."escapepod/mouse-workspace-nav-x11.toml".source;
+            renderedCosmic = machine.environment.etc."escapepod/mouse-workspace-nav-cosmic.toml".source;
             theme = machine.home-manager.users.${primaryUser}.xdg.configFile."leftwm/themes/current".source;
             shortcuts = machine.home-manager.users.${primaryUser}.home.activation.plasmaSharedShortcuts.data;
           in
@@ -767,6 +769,17 @@
             ${
               escapepod.packages.${system}.default
             }/bin/escapepod config check --config ${rendered} --json > /dev/null
+            for c in ${renderedX11} ${renderedCosmic}; do
+              ${escapepod.packages.${system}.default}/bin/escapepod config check --config "$c" --json > /dev/null
+            done
+            # Swipes only where the desktop has none of its own: none in the
+            # base (GNOME, Plasma Wayland) configuration, three-finger
+            # left/right only for COSMIC, which swipes on four itself.
+            if grep -q gesture ${rendered}; then echo 'base config must carry no gesture' >&2; exit 1; fi
+            grep -q gesture ${renderedX11}
+            if grep -q 'fingers = 4' ${renderedCosmic}; then echo 'COSMIC config must carry no 4-finger gesture' >&2; exit 1; fi
+            if grep -qE 'direction = "(up|down)"' ${renderedCosmic}; then echo 'COSMIC config must carry no vertical gesture' >&2; exit 1; fi
+            grep -q 'fingers = 3' ${renderedCosmic}
             ${checkPkgs.runtimeShell} ${./tests/mouse-workspace-nav.sh} ${theme} ${checkPkgs.runtimeShell}
             touch $out
           '';

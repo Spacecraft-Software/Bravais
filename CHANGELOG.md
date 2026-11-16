@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Touchpad swipes on Plasma X11, LeftWM and COSMIC, from Escape Pod.**
+  KWin's gestures exist only in its Wayland session and LeftWM has none, so
+  three- and four-finger swipes did nothing there; COSMIC lacked the
+  three-finger one. The Escape Pod service that maps the side buttons now
+  reads the touchpad (read-only, never grabbed) and sends the workspace
+  keys, Super+W (overview) for a swipe up and Super+G (Plasma's Grid View)
+  for a four-finger swipe down. It picks a configuration per session, so a
+  desktop with gestures of its own never acts on a swipe twice. LeftWM's
+  Mod+W opens the skippy-xd overview.
 - **Touchpad gestures line up across Plasma and Margo.** Plasma gets
   GNOME's 3-finger swipe up for Overview through a small KWin script, and
   Margo gets Overview on 3-finger up and 4-finger up/down. Plasma already
@@ -48,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Preflight's TUI shows its task list on the right** of the output pane on
   wide terminals (90 columns or more); narrower ones still stack it above.
+- **cosmic-comp is no longer patched**, so it comes from the binary cache
+  again instead of a 22-minute source build; Escape Pod supplies COSMIC's
+  three-finger workspace swipe. The `escapepod` input moves to the release
+  with touchpad gestures.
 - **Dependencies bumped:** `nixpkgs`, `nixpkgs-unstable`, `home-manager`,
   `home-manager-unstable` and `gantry` in `flake.lock`, and the vendored
   Claude Desktop pin (`pkgs/claude-desktop/package.nix`).
@@ -73,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `preflight --branch` no longer blames uncommitted edits when the switch fails for another reason. A branch held by another git worktree is now named (`BRANCH_IN_WORKTREE`, exit 5, with the command that frees it), and a `DIRTY_TREE` refusal lists only the edits the move would really touch.
 - **Preflight's TUI repaints itself after the laptop sleeps, and on Ctrl+L.**
   After a resume (or a resize) the terminal could repaint the screen behind
   the TUI, which then redrew only what it thought had changed, leaving
