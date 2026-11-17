@@ -55,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Gantry bumped for the login-screen logo fix.** The greeter now draws any
+  block glyph the console font lacks, so the Steelbore logo no longer shows
+  `#` stand-ins, and the logo is rebuilt from the plain emblem.
 - **Preflight's TUI shows its task list on the right** of the output pane on
   wide terminals (90 columns or more); narrower ones still stack it above.
 - **cosmic-comp is no longer patched**, so it comes from the binary cache
