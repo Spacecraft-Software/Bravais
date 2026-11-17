@@ -837,6 +837,27 @@ Plan: `PLAN.md` (M0–M3). Long form: PRD §4.6.
       A previously cached stripped CLI needs replacement even after a same-version rebuild
 - [✓] Removed the broken `kimi-cli` uv tool (superseded by Kimi Code from npm)
 
+## Full-disk encryption (2026-10-21)
+
+Planned in PRD §16.8; analysis in `docs/luks.md`. Not started; the conversion
+path (disko reinstall or in-place) is still undecided.
+
+- [ ] L-001 Choose the conversion path: disko reinstall (recommended) or
+      in-place reencrypt
+- [ ] L-002 Back up `/home` (155G) and `/var/lib` state before any disk change
+- [ ] L-003 Add a default-off `steelbore.boot.luks` option:
+      `boot.initrd.luks.devices.cryptroot` with `allowDiscards` and
+      `bypassWorkqueues`, and `fileSystems."/"` pointed at `/dev/mapper/cryptroot`
+- [ ] L-004 Re-measure the initrd with the option on against constraint #43
+      (2026-11-17: 39.1 MiB, about 10 MiB of headroom; the TPM2 stack stays)
+- [ ] L-005 Convert or reinstall the root, then enable the option on conversion day
+- [ ] L-006 Verify unlock through the Fairing splash, and that greetd starts
+      after unlock
+- [ ] L-007 Later: TPM2 enrolment (`systemd-cryptenroll --tpm2-pcrs=7`) together
+      with lanzaboote Secure Boot, with a recovery key kept
+- [ ] L-008 Turn `systemd.shutdownRamfs` back on when the option is on, so
+      systemd-shutdown can detach the dm-crypt device (constraint #51)
+
 ## Known Issues & Notes
 
 1. **COSMIC packages**: Uses native nixpkgs module (no third-party flake). `useFetchCargoVendor` deprecation warnings come from upstream nixpkgs packages — harmless.
@@ -887,17 +908,3 @@ are not counted here.
 ---
 
 *Last updated: 2026-04-20*
-
----
-
-## Planned: Full-Disk Encryption (PRD §16.8)
-
-Not started; the conversion path (disko reinstall or in-place) is still undecided.
-
-- [ ] L-001 Choose the conversion path: disko reinstall (recommended) or in-place reencrypt
-- [ ] L-002 Back up `/home` (155G) and `/var/lib` state before any disk change
-- [ ] L-003 Add a default-off `steelbore.boot.luks` option: `boot.initrd.luks.devices.cryptroot` with `allowDiscards` and `bypassWorkqueues`, and `fileSystems."/"` pointed at `/dev/mapper/cryptroot`
-- [ ] L-004 Disable `boot.initrd.systemd.tpm2` for passphrase-only unlock, and re-measure the initrd against constraint #43
-- [ ] L-005 Convert or reinstall the root, then enable the option on conversion day
-- [ ] L-006 Verify unlock through the Fairing splash, and that greetd starts after unlock
-- [ ] L-007 Later: TPM2 enrolment (`systemd-cryptenroll --tpm2-pcrs=7`) together with lanzaboote Secure Boot, with a recovery key kept
