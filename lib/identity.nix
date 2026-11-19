@@ -53,7 +53,8 @@ let
 
     # ── Logo ─────────────────────────────────────────────────────────────
     # Freedesktop icon names, installed by pkgs/steelbore-branding into
-    # hicolor/scalable/apps from assets/brand/. `logo` is the emblem (os-release
+    # hicolor/scalable/apps: `logo` from the Spacecraft-Software/Branding repo
+    # (the `branding` flake input), `logoText` from assets/brand/. `logo` is the emblem (os-release
     # LOGO, GNOME/COSMIC About, fastfetch); `logoText` is the emblem plus the
     # STEELBORE wordmark (KDE Info Center).
     #

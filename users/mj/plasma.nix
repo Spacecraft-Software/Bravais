@@ -7,6 +7,8 @@
   pkgs,
   steelborePalette,
   themeAssets,
+  # The Spacecraft-Software/Branding source (flake input), via extraSpecialArgs.
+  brandingSrc,
   ...
 }:
 
@@ -14,16 +16,22 @@ let
   kwriteconfig = lib.getExe' pkgs.kdePackages.kconfig "kwriteconfig6";
 
   # The Plasma splash, drawn like Fairing's boot splash (pkgs/steelbore-ksplash)
-  # from the same role tokens as the rest of the desktop.
-  ksplash = (import ../../pkgs { inherit pkgs; }).steelbore-ksplash.override {
-    inherit (steelborePalette)
-      background
-      accent
-      surface
-      border
-      foreground
-      ;
-  };
+  # from the same role tokens as the rest of the desktop, with the logo from
+  # the Branding repository.
+  ksplash =
+    (import ../../pkgs {
+      inherit pkgs;
+      branding = brandingSrc;
+    }).steelbore-ksplash.override
+      {
+        inherit (steelborePalette)
+          background
+          accent
+          surface
+          border
+          foreground
+          ;
+      };
 
   # The panel clock's own keys, from plasma-workspace v6.6.5
   # `applets/digital-clock/main.xml`, group [Appearance]:

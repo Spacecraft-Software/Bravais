@@ -21,6 +21,22 @@
         "type": "github"
       }
     },
+    "branding": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795077147,
+        "narHash": "sha256-NBE8+Us0X5A6RCoDdXyV3obPzWGNZJWhcmCAYF+/lcg=",
+        "owner": "Spacecraft-Software",
+        "repo": "Branding",
+        "rev": "b0a3b9bb72d8e20a5b2c94dd541ab804b10da777",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Spacecraft-Software",
+        "repo": "Branding",
+        "type": "github"
+      }
+    },
     "construct": {
       "inputs": {
         "nixpkgs": [
@@ -402,6 +418,7 @@
     "root": {
       "inputs": {
         "antigravity-nix": "antigravity-nix",
+        "branding": "branding",
         "construct": "construct",
         "engram": "engram",
         "escapepod": "escapepod",

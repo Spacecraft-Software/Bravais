@@ -32,6 +32,13 @@
     gantry.url = "github:Spacecraft-Software/Gantry";
     gantry.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
+    # Branding — the current Steelbore OS marks, the umbrella's single source
+    # for them. Non-flake: pkgs/steelbore-branding (emblem) and
+    # pkgs/steelbore-ksplash (emblem + wordmark) read the SVGs, threaded to
+    # them as `brandingSrc`. A new logo arrives by `nix flake update branding`.
+    branding.url = "github:Spacecraft-Software/Branding";
+    branding.flake = false;
+
     # Escape Pod — side-button shortcuts below the compositor, replacing xremap.
     escapepod.url = "github:Spacecraft-Software/Escapepod";
     escapepod.inputs.nixpkgs.follows = "nixpkgs-unstable";
@@ -174,6 +181,7 @@
       nix-flatpak,
       gitway,
       gantry,
+      branding,
       escapepod,
       construct,
       theme,
@@ -531,6 +539,7 @@
               mcp-servers
               pathfinder
               ;
+            brandingSrc = branding;
           };
           modules = [
             # External modules
@@ -582,6 +591,7 @@
                   engram
                   pathfinder
                   ;
+                brandingSrc = branding;
               };
               home-manager.users.${primaryUser} = import ./users/mj/home.nix;
             }
@@ -641,6 +651,7 @@
             inherit system;
             config.allowUnfree = true;
           };
+          inherit branding;
         })
         // {
           # ── Theme registry ─────────────────────────────────────────────────

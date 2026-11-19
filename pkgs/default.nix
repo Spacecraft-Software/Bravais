@@ -3,7 +3,15 @@
 # Single callPackage surface for every vendored/first-party package; consumed
 # by the modules AND exposed as the flake's `packages.x86_64-linux` output so
 # each can be built/tested standalone via `nix build .#<name>`.
-{ pkgs }:
+#
+# `branding` is the Spacecraft-Software/Branding source (flake input). Only
+# steelbore-branding and steelbore-ksplash read it, so it is optional here:
+# the other call sites leave it out, and those two packages fail with a clear
+# message if they are built without it.
+{
+  pkgs,
+  branding ? null,
+}:
 let
   # Bound once so steelbore-plymouth builds with the same derivation the
   # flake exports, rather than a second callPackage of it.
@@ -17,8 +25,8 @@ in
   steelbore-reticle = pkgs.callPackage ./steelbore-reticle/package.nix { };
   steelbore-niri-unmax = pkgs.callPackage ./steelbore-niri-unmax/package.nix { };
   steelbore-cosmic-unmax = pkgs.callPackage ./steelbore-cosmic-unmax/package.nix { };
-  steelbore-ksplash = pkgs.callPackage ./steelbore-ksplash/package.nix { };
-  steelbore-branding = pkgs.callPackage ./steelbore-branding/package.nix { };
+  steelbore-ksplash = pkgs.callPackage ./steelbore-ksplash/package.nix { brandingSrc = branding; };
+  steelbore-branding = pkgs.callPackage ./steelbore-branding/package.nix { brandingSrc = branding; };
   claude-desktop = pkgs.callPackage ./claude-desktop/package.nix { };
   chrome-remote-desktop = pkgs.callPackage ./chrome-remote-desktop/package.nix { };
   ollama = pkgs.callPackage ./ollama/package.nix { };
