@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies bumped again (2026-11-19):** `nixpkgs`, `nixpkgs-unstable`,
+  `home-manager`, `home-manager-unstable` and `gantry` in `flake.lock`. The
+  Gantry move redraws the login-screen Steelbore logo from the current emblem,
+  which drops the thin inner ring around the screw.
 - **Gantry bumped for the login-screen logo fix.** The greeter now draws any
   block glyph the console font lacks, so the Steelbore logo no longer shows
   `#` stand-ins, and the logo is rebuilt from the plain emblem.
