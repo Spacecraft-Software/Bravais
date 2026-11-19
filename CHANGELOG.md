@@ -56,11 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **The Steelbore OS logo now comes from the Branding repository.** The
-  emblem (os-release logo, About pages, icons) and the Plasma splash logo are
-  read from Spacecraft-Software/Branding, a new non-flake `branding` input,
-  instead of copies in `assets/brand/`, which are gone. The emblem is the
-  current one, without the thin inner ring around the screw, so About pages
-  and fetch tools show the same logo as the login screen. A future logo change
+  emblem (os-release logo, About pages, icons), the emblem-and-wordmark
+  (KDE Info Center) and the Plasma splash logo are read from
+  Spacecraft-Software/Branding, a new non-flake `branding` input, instead of
+  copies in `assets/brand/`, which is gone. All of them are the current
+  emblem, without the thin inner ring around the screw, so every surface shows
+  the same logo as the login screen. A future logo change
   arrives with `nix flake update branding`.
 - **Dependencies bumped again (2026-11-19):** `nixpkgs`, `nixpkgs-unstable`,
   `home-manager`, `home-manager-unstable` and `gantry` in `flake.lock`. The
