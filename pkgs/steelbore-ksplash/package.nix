@@ -15,8 +15,10 @@
 # the bar's fill, surface for its track, border for its outline, foreground
 # for the text — passed in from the active palette, never retyped.
 #
-# THE LOGO is assets/brand/steelbore-logo.svg, recoloured to `accent` and
-# rasterised at twice its box so QtQuick needs no SVG plugin.
+# THE LOGO is logo/steelbore/steelbore_logo.svg from the
+# Spacecraft-Software/Branding repository (`brandingSrc`, the `branding` flake
+# input), recoloured to `accent` and rasterised at twice its box so QtQuick
+# needs no SVG plugin.
 #
 # WHAT IT SAYS. ksplashqml hands the QML a `stage` integer, and the Plasma
 # source (plasma-workspace ksplash/ksplashqml/splashapp.cpp) numbers it by the
@@ -40,6 +42,8 @@
   foreground ? "#ffffff",
   # See pkgs/steelbore-plymouth: never named plain `identity`.
   steelboreIdentity ? import ../../lib/identity.nix,
+  # The Branding repository's source tree; pkgs/default.nix passes it.
+  brandingSrc ? null,
 }:
 
 let
@@ -161,6 +165,9 @@ assert lib.assertMsg (lib.all (v: builtins.match hex v != null) (
   lib.attrValues roles
 )) "steelbore-ksplash: every colour must be \"#RRGGBB\", got ${builtins.toJSON roles}";
 
+assert lib.assertMsg (brandingSrc != null)
+  "steelbore-ksplash: brandingSrc is unset; import pkgs/default.nix with `branding` (the flake input).";
+
 stdenvNoCC.mkDerivation {
   pname = "steelbore-ksplash";
   version = "2.0.0";
@@ -186,7 +193,7 @@ stdenvNoCC.mkDerivation {
     cp "$splashQmlPath" "$pkg/contents/splash/Splash.qml"
 
     # The logo's own fill is a near-black navy; Fairing draws it in `accent`.
-    sed 's/fill="#000027"/fill="${accent}"/g' ${../../assets/brand/steelbore-logo.svg} > logo.svg
+    sed 's/fill="#000027"/fill="${accent}"/g' "${brandingSrc}/logo/steelbore/steelbore_logo.svg" > logo.svg
     resvg --width 1200 logo.svg "$pkg/contents/splash/images/logo.png"
 
     runHook postInstall

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Steelbore Bravais — the Steelbore OS logo as a freedesktop icon set.
 #
-# Installs the two marks from assets/brand/ under the icon names that
+# Installs the two marks under the icon names that
 # lib/identity.nix states (`logo`, `logoText`), so os-release's LOGO= and
 # every About page resolve them through the hicolor theme:
 #
@@ -20,6 +20,10 @@
 # Rendered with resvg (Rust, Standard rust-first) rather than librsvg's or
 # ImageMagick's C paths.
 #
+# The emblem comes from the Spacecraft-Software/Branding repository
+# (`brandingSrc`, the `branding` flake input), the umbrella's single source
+# for the marks. The wordmark is still kept here, in assets/brand/.
+#
 # Package files receive no specialArgs, so the names come from a direct
 # import of lib/identity.nix and the colour arrives as an argument:
 # modules/theme/branding.nix passes the active palette's `foreground` role.
@@ -27,6 +31,8 @@
   lib,
   stdenvNoCC,
   resvg,
+  # The Branding repository's source tree; pkgs/default.nix passes it.
+  brandingSrc ? null,
   # "#RRGGBB", or null to ship the artwork's own colour untouched (what a
   # bare `nix build .#steelbore-branding` produces).
   fill ? null,
@@ -45,11 +51,13 @@ assert lib.assertMsg (
   fill == null || builtins.match "#[0-9A-Fa-f]{6}" fill != null
 ) "steelbore-branding: fill must be \"#RRGGBB\" or null, got ${toString fill}";
 
+assert lib.assertMsg (brandingSrc != null)
+  "steelbore-branding: brandingSrc is unset; import pkgs/default.nix with `branding` (the flake input).";
+
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "steelbore-branding";
   version = "1.0.0";
 
-  src = ../../assets/brand;
   dontUnpack = true;
 
   nativeBuildInputs = [ resvg ];
@@ -61,23 +69,24 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    cp "$src/steelbore-os.svg" ${finalAttrs.passthru.logo}.svg
-    cp "$src/steelbore-os-wordmark.svg" ${finalAttrs.passthru.logoText}.svg
+    cp "${brandingSrc}/logo/steelbore/sb_logo.svg" ${finalAttrs.passthru.logo}.svg
+    cp ${../../assets/brand/steelbore-os-wordmark.svg} ${finalAttrs.passthru.logoText}.svg
     chmod u+w ./*.svg
   ''
-  # Each supplied SVG paints every path through ONE fill attribute on its
-  # <g>. It is matched by shape (any 6-digit hex fill), never by value, so no
-  # colour is named in Nix (§11.4) and a re-export in another colour still
-  # works. The count check fails the build if an asset ever carries zero or
-  # several fills, rather than silently recolouring half of it.
+  # Each supplied SVG is single-colour: every hex fill in it carries the same
+  # value, whether on one <g> (the wordmark) or on each path (the emblem). It
+  # is matched by shape (any 6-digit hex fill), never by value, so no colour
+  # is named in Nix (§11.4) and a re-export in another colour still works.
+  # The check fails the build if an asset ever carries no hex fill or two
+  # different ones, rather than silently recolouring part of it.
   + lib.optionalString (fill != null) ''
     for f in ./*.svg; do
-      n=$(grep -oE 'fill="#[0-9A-Fa-f]{6}"' "$f" | wc -l)
+      n=$(grep -oE 'fill="#[0-9A-Fa-f]{6}"' "$f" | sort -u | wc -l)
       if [ "$n" -ne 1 ]; then
-        echo "steelbore-branding: $f has $n hex fill attributes, expected exactly 1" >&2
+        echo "steelbore-branding: $f has $n distinct hex fill colours, expected exactly 1" >&2
         exit 1
       fi
-      sed -E -i 's/fill="#[0-9A-Fa-f]{6}"/fill="${fill}"/' "$f"
+      sed -E -i 's/fill="#[0-9A-Fa-f]{6}"/fill="${fill}"/g' "$f"
     done
   ''
   + ''

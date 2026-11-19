@@ -365,7 +365,8 @@ All four answered by the maintainer. Resolved:
   NixOS's name — accepted. A release with no entry fails evaluation
   (CONSTRAINTS.md #46).
 - **D4 = the maintainer's marks**: the emblem
-  (`assets/brand/steelbore-os.svg`) is the OS logo — os-release
+  (`logo/steelbore/sb_logo.svg` in the Spacecraft-Software/Branding repo,
+  the `branding` flake input; formerly `assets/brand/steelbore-os.svg`) is the OS logo — os-release
   `LOGO=steelbore-os`, GNOME About (COSMIC About shows no logo); the wordmark
   (`assets/brand/steelbore-os-wordmark.svg`, icon `steelbore-os-wordmark`) is KDE Info Center's `LogoPath`.
   Their single fill is replaced at build time with the active palette's

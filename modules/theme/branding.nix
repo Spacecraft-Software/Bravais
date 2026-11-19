@@ -21,13 +21,20 @@
   pkgs,
   steelborePalette,
   steelboreIdentity,
+  # The Spacecraft-Software/Branding source (flake input), via specialArgs.
+  brandingSrc,
   ...
 }:
 
 let
-  branding = (import ../../pkgs { inherit pkgs; }).steelbore-branding.override {
-    fill = steelborePalette.foreground;
-  };
+  branding =
+    (import ../../pkgs {
+      inherit pkgs;
+      branding = brandingSrc;
+    }).steelbore-branding.override
+      {
+        fill = steelborePalette.foreground;
+      };
 in
 {
   # Puts share/icons/hicolor/** and share/pixmaps/** into
