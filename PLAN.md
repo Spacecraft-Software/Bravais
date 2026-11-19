@@ -368,7 +368,8 @@ All four answered by the maintainer. Resolved:
   (`logo/steelbore/sb_logo.svg` in the Spacecraft-Software/Branding repo,
   the `branding` flake input; formerly `assets/brand/steelbore-os.svg`) is the OS logo — os-release
   `LOGO=steelbore-os`, GNOME About (COSMIC About shows no logo); the wordmark
-  (`assets/brand/steelbore-os-wordmark.svg`, icon `steelbore-os-wordmark`) is KDE Info Center's `LogoPath`.
+  (`logo/steelbore/steelbore_logo.svg` in Branding; formerly
+  `assets/brand/steelbore-os-wordmark.svg`; icon `steelbore-os-wordmark`) is KDE Info Center's `LogoPath`.
   Their single fill is replaced at build time with the active palette's
   `foreground` role (`pkgs/steelbore-branding`, `modules/theme/branding.nix`).
 

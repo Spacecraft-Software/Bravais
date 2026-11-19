@@ -14,7 +14,7 @@ These names and logos identify the projects and their maintainer. They are claim
 
 ## Copyright and trademark are separate
 
-The software is licensed under GPL-3.0-or-later. The Steelbore logo art (the SVGs in `assets/brand/` and in the [Branding](https://github.com/Spacecraft-Software/Branding) repository, and the boot media in `assets/boot/`) is licensed under CC BY-SA 4.0. Those licenses let you copy, change and share the work. They do not give you any right to use the marks as the name or brand of your own product. That is what this policy covers, and it applies on top of the licenses, never in place of them.
+The software is licensed under GPL-3.0-or-later. The Steelbore logo art (the SVGs in the [Branding](https://github.com/Spacecraft-Software/Branding) repository, and the boot media in `assets/boot/`) is licensed under CC BY-SA 4.0. Those licenses let you copy, change and share the work. They do not give you any right to use the marks as the name or brand of your own product. That is what this policy covers, and it applies on top of the licenses, never in place of them.
 
 ## What you may do without asking
 
@@ -48,7 +48,7 @@ An adapted version of the logo under CC BY-SA 4.0 is a new work. It may be share
 
 ## Bravais and the Steelbore logo
 
-Bravais draws the Steelbore logo in its own surfaces: the os-release icon, the About pages, the boot and Plasma splashes. They are recoloured from the active palette at build time, which is a change the CC BY-SA 4.0 licence allows. If you build a distribution from this configuration, change `lib/identity.nix`, point the `branding` input at your own marks and replace the art in `assets/brand/`, so that your users do not see another project's name and logo on your product.
+Bravais draws the Steelbore logo in its own surfaces: the os-release icon, the About pages, the boot and Plasma splashes. They are recoloured from the active palette at build time, which is a change the CC BY-SA 4.0 licence allows. If you build a distribution from this configuration, change `lib/identity.nix` and point the `branding` input at your own marks, so that your users do not see another project's name and logo on your product.
 
 ## Fair use and the law
 

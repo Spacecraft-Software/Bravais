@@ -129,16 +129,6 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
 
-# Brand marks: the Steelbore OS wordmark, consumed by pkgs/steelbore-branding
-# (KDE Info Center). The emblem and the splash logo come from the
-# Spacecraft-Software/Branding repository (the `branding` flake input). Media,
-# not software, so CC-BY-SA-4.0 like the boot media above.
-[[annotations]]
-path = ["assets/brand/*"]
-precedence = "override"
-SPDX-FileCopyrightText = "2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>"
-SPDX-License-Identifier = "CC-BY-SA-4.0"
-
 # The trademark policy is prose about the project, not software, and carries
 # the same licence as the logo art it governs.
 [[annotations]]

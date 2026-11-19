@@ -20,9 +20,10 @@
 # Rendered with resvg (Rust, Standard rust-first) rather than librsvg's or
 # ImageMagick's C paths.
 #
-# The emblem comes from the Spacecraft-Software/Branding repository
+# Both marks come from the Spacecraft-Software/Branding repository
 # (`brandingSrc`, the `branding` flake input), the umbrella's single source
-# for the marks. The wordmark is still kept here, in assets/brand/.
+# for the marks: `logo` is logo/steelbore/sb_logo.svg and `logoText` is
+# logo/steelbore/steelbore_logo.svg (the emblem over the stencil wordmark).
 #
 # Package files receive no specialArgs, so the names come from a direct
 # import of lib/identity.nix and the colour arrives as an argument:
@@ -70,11 +71,12 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook preBuild
 
     cp "${brandingSrc}/logo/steelbore/sb_logo.svg" ${finalAttrs.passthru.logo}.svg
-    cp ${../../assets/brand/steelbore-os-wordmark.svg} ${finalAttrs.passthru.logoText}.svg
+    cp "${brandingSrc}/logo/steelbore/steelbore_logo.svg" ${finalAttrs.passthru.logoText}.svg
     chmod u+w ./*.svg
   ''
   # Each supplied SVG is single-colour: every hex fill in it carries the same
-  # value, whether on one <g> (the wordmark) or on each path (the emblem). It
+  # value, set on each path in both marks (an older export set it once on the
+# <g>, which the check accepts too). It
   # is matched by shape (any 6-digit hex fill), never by value, so no colour
   # is named in Nix (§11.4) and a re-export in another colour still works.
   # The check fails the build if an asset ever carries no hex fill or two
