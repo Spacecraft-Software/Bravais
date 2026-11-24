@@ -339,7 +339,10 @@ def antigravity-status [] {
 #   --update-all accepted for compatibility; every run bumps every input
 #   --no-gc      skip garbage collection + journal vacuum
 #   --trace      add --show-trace --verbose (to diagnose eval failures)
-def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-gc, --trace, --skills-only, --no-flatpak, --detach-flatpak, --yes] {
+def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --no-update, --update-all, --no-upgrade, --upgrade-all, --no-gc, --trace, --skills-only, --no-flatpak, --detach-flatpak, --yes] {
+  # The `upgrade` spellings are aliases; fold them in once, here.
+  let no_update = $no_update or $no_upgrade
+  let update_all = $update_all or $upgrade_all
   # Explicit usage rather than `help rebuild`. That resolved to nothing when
   # this file is run as the `rebuild` BINARY (where the outer command is
   # `main`), printing an empty response instead of help — so spell it out and
@@ -351,8 +354,9 @@ def rebuild-classic [topic?: string, --dry, --no-sync, --branch (-b): string, --
     print "                 (the git sync fetches and reports, but does not move the checkout)"
     print "  --no-sync      build the checkout as it is; skip git fetch and fast-forward"
     print "  -b, --branch   switch to origin's <name> before building (testing a PR)"
-    print "  --no-update    skip `nix flake update`"
+    print "  --no-update    skip `nix flake update` (alias --no-upgrade)"
     print "  --update-all   accepted for compatibility; every run bumps every input"
+    print "                 (alias --upgrade-all)"
     print "  --no-gc        skip garbage collection + journal vacuum"
     print "  --trace        add --show-trace --verbose (to diagnose eval failures)"
     print "  --skills-only  bump only `construct`; skip GC, the /etc mirror and the mcpctl probe"

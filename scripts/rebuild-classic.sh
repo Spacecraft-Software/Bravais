@@ -164,8 +164,9 @@ Options:
   --no-sync       build the checkout as it is; skip git fetch and fast-forward
   -b, --branch NAME
                   switch to origin's NAME before building (testing a PR)
-  --no-update     skip `nix flake update`
+  --no-update     skip `nix flake update` (alias --no-upgrade)
   --update-all    accepted for compatibility; every run bumps every input
+                  (alias --upgrade-all)
   --no-gc         skip garbage collection and the journal vacuum
   --trace         add --show-trace --verbose (to diagnose eval failures)
   --skills-only   bump only `construct`; skip GC, the mirror and the probes
@@ -198,8 +199,8 @@ while [ $# -gt 0 ]; do
             [ $# -ge 2 ] || { say "$C_ERR" "$1 needs a branch name"; exit 2; }
             branch=$2; shift ;;
         --branch=*)    branch=${1#--branch=} ;;
-        --no-update)   no_update=1 ;;
-        --update-all)  update_all=1 ;;
+        --no-update|--no-upgrade)    no_update=1 ;;
+        --update-all|--upgrade-all)  update_all=1 ;;
         --no-gc)       no_gc=1 ;;
         --trace)       trace=1 ;;
         --skills-only) skills_only=1 ;;

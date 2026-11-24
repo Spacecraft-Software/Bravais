@@ -72,7 +72,7 @@ const ABOUT: &str = concat!(
         "  preflight --no-sync           Skip the fetch; build the checkout exactly as it is\n",
         "  preflight --dry               Dry-build only; no GC, no mirror, no deletion\n",
         "  preflight --skills-only       Bump `construct` and switch; skip GC and mirror\n",
-        "  preflight --update-all        Also update vendored pins, AI tools, AppImages and Flatpaks (alias: --full-update)\n",
+        "  preflight --update-all        Also update vendored pins, AI tools, AppImages and Flatpaks (alias: --full-update, --full-upgrade)\n",
         "  preflight --update-vendored   Also bump pinned upstream binaries (claude-desktop, …)\n",
         "  preflight --update-ai-tools   Also run the out-of-band AI tools' updaters (claude, codex, …)\n",
         "  preflight --update-appimages  Also apply the AppImage updates Gear Lever finds\n",
@@ -140,26 +140,35 @@ struct Cli {
     branch: Option<String>,
 
     /// Skip `nix flake update`
-    #[arg(long)]
+    #[arg(long, visible_alias = "no-upgrade")]
     no_update: bool,
 
     /// Update everything: every flake input (as always), vendored pins, out-of-band AI tools, AppImages and Flatpaks; implies --update-vendored, --update-ai-tools, --update-appimages and --update-flatpaks
     // `--full-update` is the spelling people reach for. Without the alias,
     // clap's did-you-mean answered it with `--no-update` -- the opposite
-    // request, which a user following the tip would have run.
-    #[arg(long, visible_alias = "full-update", conflicts_with_all = ["no_update", "skills_only"])]
+    // request, which a user following the tip would have run. Every update
+    // flag also takes `upgrade`, the word apt, dnf and pacman users type.
+    #[arg(long, visible_aliases = ["full-update", "full-upgrade", "upgrade-all"], conflicts_with_all = ["no_update", "skills_only"])]
     update_all: bool,
 
     /// Also bump the version+hash-pinned upstream binaries (pkgs/update-vendored.nu)
-    #[arg(long, conflicts_with = "skills_only")]
+    #[arg(
+        long,
+        visible_alias = "upgrade-vendored",
+        conflicts_with = "skills_only"
+    )]
     update_vendored: bool,
 
     /// Also run the self-updaters of the AI tools installed outside Nix (claude update, opencode upgrade, …)
-    #[arg(long, conflicts_with = "skills_only")]
+    #[arg(
+        long,
+        visible_alias = "upgrade-ai-tools",
+        conflicts_with = "skills_only"
+    )]
     update_ai_tools: bool,
 
     /// Check for and apply the AppImage updates Gear Lever finds
-    #[arg(long, conflicts_with_all = ["skills_only", "no_appimages"])]
+    #[arg(long, visible_alias = "upgrade-appimages", conflicts_with_all = ["skills_only", "no_appimages"])]
     update_appimages: bool,
 
     /// Skip AppImage updates requested by --full-update
@@ -187,7 +196,7 @@ struct Cli {
     no_flatpak: bool,
 
     /// Also update Flatpaks after a successful system switch
-    #[arg(long, conflicts_with_all = ["skills_only", "no_flatpak"])]
+    #[arg(long, visible_alias = "upgrade-flatpaks", conflicts_with_all = ["skills_only", "no_flatpak"])]
     update_flatpaks: bool,
 
     /// Start a requested Flatpak update and return instead of following its progress (always the case off a terminal)
@@ -614,17 +623,17 @@ fn cmd_schema(out: Out) -> i32 {
                     "--dry": "dry-build; make no changes (the git sync fetches and reports what it would do, but does not move the checkout)",
                     "--no-sync": "build the checkout as it is; skip git fetch and the fast-forward",
                     "--branch": "switch to origin's <NAME> before building (testing a PR); conflicts with --no-sync",
-                    "--no-update": "skip nix flake update",
-                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored, --update-ai-tools, --update-appimages and --update-flatpaks (the last two unless explicitly skipped); conflicts with --no-update and --skills-only; alias --full-update",
-                    "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only",
-                    "--update-appimages": "after the switch, whether or not it succeeded, query Gear Lever and apply AppImage updates (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages",
+                    "--no-update": "skip nix flake update; alias --no-upgrade",
+                    "--update-all": "update everything: every flake input (a full run always bumps them all) plus --update-vendored, --update-ai-tools, --update-appimages and --update-flatpaks (the last two unless explicitly skipped); conflicts with --no-update and --skills-only; aliases --full-update, --full-upgrade, --upgrade-all",
+                    "--update-vendored": "run pkgs/update-vendored.nu before the switch (--check under --dry); conflicts with --skills-only; alias --upgrade-vendored",
+                    "--update-appimages": "after the switch, whether or not it succeeded, query Gear Lever and apply AppImage updates (flatpak run it.mijorus.gearlever --update --all --yes; running apps are skipped); listed only under --dry; killed after 1800 s; implied by --update-all unless --no-appimages; conflicts with --skills-only and --no-appimages; alias --upgrade-appimages",
                     "--no-appimages": "skip AppImage work implied by --update-all",
-                    "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only",
+                    "--update-ai-tools": "after the switch, run each installed out-of-band AI tool's own updater (`preflight describe` lists them); skipped if not installed or Nix-managed, listed only under --dry, killed after 1800 s; conflicts with --skills-only; alias --upgrade-ai-tools",
                     "--no-commit": "leave the bumps uncommitted; by default, after a successful switch on origin's default branch, the paths this run bumped (flake.lock, the vendored pins, and .github/skills/ re-synced by pkgs/sync-skills.nu when construct moved) are committed with a plain `git commit` (the user's signing config) on a new local chore/deps-bump-<date> branch, never pushed, and the checkout switches back; on another branch, under --dry or after a failed switch they are left uncommitted",
                     "--no-gc": "skip garbage collection and journal vacuum",
                     "--trace": "pass --show-trace --verbose to nixos-rebuild",
                     "--skills-only": "bump construct only; skip GC, mirror, mcpctl probe",
-                    "--update-flatpaks": "after a successful switch, start the detached Flatpak update; implied by --update-all; without --detach-flatpak a live (terminal, non-agent) run follows it with a progress bar",
+                    "--update-flatpaks": "after a successful switch, start the detached Flatpak update; implied by --update-all; without --detach-flatpak a live (terminal, non-agent) run follows it with a progress bar; alias --upgrade-flatpaks",
                     "--no-flatpak": "skip Flatpak work implied by --update-all",
                     "--detach-flatpak": "start a requested Flatpak update and return; it implies --update-flatpaks; without it a live (terminal, non-agent) run follows the update to its end with a progress bar, and Ctrl-C stops following without stopping the update; conflicts with --no-flatpak",
                     "--reclaim": "reclaim safe caches before the switch",
@@ -752,6 +761,28 @@ mod tests {
     fn full_update_is_an_alias_for_update_all() {
         let cli = Cli::try_parse_from(["preflight", "--full-update"]);
         assert!(cli.is_ok_and(|c| c.update_all));
+    }
+
+    #[test]
+    fn upgrade_spellings_are_aliases_of_the_update_flags() {
+        for flag in ["--full-upgrade", "--upgrade-all"] {
+            let cli = Cli::try_parse_from(["preflight", flag]);
+            assert!(cli.is_ok_and(|c| c.update_all), "{flag}");
+        }
+        let cli = Cli::try_parse_from([
+            "preflight",
+            "--upgrade-vendored",
+            "--upgrade-ai-tools",
+            "--upgrade-appimages",
+            "--upgrade-flatpaks",
+        ]);
+        assert!(cli.is_ok_and(|c| c.update_vendored
+            && c.update_ai_tools
+            && c.update_appimages
+            && c.update_flatpaks));
+        let cli = Cli::try_parse_from(["preflight", "--no-upgrade"]);
+        assert!(cli.is_ok_and(|c| c.no_update));
+        assert!(Cli::try_parse_from(["preflight", "--full-upgrade", "--no-upgrade"]).is_err());
     }
 
     #[test]
