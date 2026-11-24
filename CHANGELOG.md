@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rebuild flags take `upgrade` as well as `update`.** `preflight --full-upgrade` (and `--upgrade-all`) works like `--full-update`, `--upgrade-vendored`, `--upgrade-ai-tools`, `--upgrade-appimages` and `--upgrade-flatpaks` like their `--update-*` flags, and `--no-upgrade` like `--no-update`. `rebuild-classic` (Nushell and POSIX) takes `--no-upgrade` and `--upgrade-all`.
 - **The Steelbore OS logo now comes from the Branding repository.** The
   emblem (os-release logo, About pages, icons), the emblem-and-wordmark
   (KDE Info Center) and the Plasma splash logo are read from
