@@ -1,0 +1,55 @@
+SPDX-License-Identifier: GPL-3.0-or-later
+
+margo 4.1.0 parses the `ignore_maximize` window rule but never reads it, and
+maximize_request turns every set_maximized into fullscreen. Chromium-based
+browsers restore a saved maximized state on every new window, so they open
+fullscreen. Honour the rule for maximize and unmaximize requests, matched on
+the toplevel's identity at request time (before the deferred initial map).
+
+--- a/margo/src/state/handlers/xdg_shell.rs
++++ b/margo/src/state/handlers/xdg_shell.rs
+@@ -547,6 +547,10 @@
+     }
+ 
+     fn maximize_request(&mut self, toplevel: ToplevelSurface) {
++        if self.toplevel_ignores_maximize(&toplevel) {
++            toplevel.send_configure();
++            return;
++        }
+         // margo doesn't have a separate maximized-vs-tiled state
+         // (we're a tiling compositor — the layout drives sizing).
+         // Treat maximize the same as fullscreen so apps like
+@@ -566,6 +570,12 @@
+     }
+ 
+     fn unmaximize_request(&mut self, toplevel: ToplevelSurface) {
++        // Ignored both ways: an unmaximize from a window whose maximize
++        // was dropped must not cancel a fullscreen the user asked for.
++        if self.toplevel_ignores_maximize(&toplevel) {
++            toplevel.send_configure();
++            return;
++        }
+         let wl_surf = toplevel.wl_surface().clone();
+         let Some(idx) = self
+             .clients
+@@ -580,6 +590,20 @@
+ }
+ 
+ impl MargoState {
++    /// Window rule `ignore_maximize:1` drops this toplevel's maximize and
++    /// unmaximize requests (margo maps maximize to fullscreen). Matched on
++    /// the identity the client holds now, not on `MargoClient`: Chromium
++    /// restores its saved maximized state before the deferred initial map
++    /// applies any rule. The last matching rule that sets it wins.
++    fn toplevel_ignores_maximize(&self, toplevel: &ToplevelSurface) -> bool {
++        let (app_id, title) = super::super::read_toplevel_identity(toplevel);
++        self.matching_window_rules(&app_id, &title)
++            .iter()
++            .filter_map(|(_, rule)| rule.ignore_maximize)
++            .last()
++            .unwrap_or(false)
++    }
++
+     /// Re-position an xdg popup so it stays inside the output its parent sits
+     /// on, applying the positioner's flip/slide/resize constraint adjustment.
+     /// Without this, GTK / Chromium menus (right-click menus, dropdowns, the
