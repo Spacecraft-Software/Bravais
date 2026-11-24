@@ -262,6 +262,10 @@ fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
         names.push("gitway-add");
     }
     names.push("git-sync");
+    if !opts.no_update {
+        // Fetched just before the update it authenticates.
+        names.push("github-token");
+    }
     names.push("flake-update");
     if !opts.no_update && !opts.skills_only {
         names.push("antigravity");
@@ -488,13 +492,24 @@ pub fn finish_step(name: &'static str, outcome: Outcome, detail: Option<&str>) {
                     t.detail = Some(d.to_owned());
                 }
             } else {
-                st.tasks.push(TaskEntry {
-                    name,
-                    status: TaskStatus::Done(outcome),
-                    detail: detail.map(ToOwned::to_owned),
-                    started: None,
-                    elapsed: None,
-                });
+                // An unscheduled step lands where it ran -- ahead of the first
+                // task still pending -- not at the bottom after work that has
+                // not started yet.
+                let pos = st
+                    .tasks
+                    .iter()
+                    .position(|t| t.status == TaskStatus::Pending)
+                    .unwrap_or(st.tasks.len());
+                st.tasks.insert(
+                    pos,
+                    TaskEntry {
+                        name,
+                        status: TaskStatus::Done(outcome),
+                        detail: detail.map(ToOwned::to_owned),
+                        started: None,
+                        elapsed: None,
+                    },
+                );
             }
             if st.current_step == Some(name) || st.current_step == Some(canonical) {
                 st.current_step = None;
