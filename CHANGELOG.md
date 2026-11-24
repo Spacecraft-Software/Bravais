@@ -105,6 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Preflight's TUI puts the output first and the progress gauge at the bottom**: output on the left with the task list on the right (on narrow terminals, output above the task list), then the key hints, then the gauge on the last rows, where `--cli`'s status bar also sits.
+- **Preflight's task list shows `github-token` where it runs**, just before `flake-update`, instead of last. It is now part of the planned schedule, and any step that is not scheduled is placed ahead of the first pending task rather than at the bottom.
 - `preflight --branch` no longer blames uncommitted edits when the switch fails for another reason. A branch held by another git worktree is now named (`BRANCH_IN_WORKTREE`, exit 5, with the command that frees it), and a `DIRTY_TREE` refusal lists only the edits the move would really touch.
 - **Preflight's TUI repaints itself after the laptop sleeps, and on Ctrl+L.**
   After a resume (or a resize) the terminal could repaint the screen behind

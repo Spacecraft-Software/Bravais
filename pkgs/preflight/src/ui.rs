@@ -15,16 +15,16 @@
 //    on the bottom line.
 // 2. Full-screen ratatui TUI (`--tui` or `--format explore`): enters the
 //    alternate screen buffer on stderr and renders:
-//      - Top banner: Steelbore OS host, overall gauge, step counter, elapsed
+//      - Bottom banner: Steelbore OS host, overall gauge, step counter, elapsed
 //        timer, and an unmistakable alert banner whenever an authorization step
 //        is waiting on a sudo password or fingerprint scan.
-//      - Right / top task list (responsive to terminal width): every scheduled
+//      - Right / lower task list (responsive to terminal width): every scheduled
 //        step with its status icon (`✓` / `[OK]` done, `⠹` / `*` running,
 //        `·` pending, `–` skipped, `✗` / `[!]` failed), duration, and detail.
 //      - Main log & activity pane: live scrollable output from the running
 //        step, sub-step progress (`building .#ollama …`, nix build phases,
 //        Flatpak download progress), and preflight/postflight disk reports.
-//      - Bottom keybinding bar: dual CUA + Vim navigation (`↑/↓` or `j/k`,
+//      - Keybinding bar, just above the gauge: dual CUA + Vim navigation (`↑/↓` or `j/k`,
 //        `PgUp/PgDn` or `Ctrl+B/Ctrl+F`, `Home/End` or `g/G`, `Tab` to switch
 //        focus, `q`/`Esc`/`Ctrl+C` to abort).
 //    When an authorization command (`sudo`, `gitway-add`) needs the real
@@ -262,6 +262,10 @@ fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
         names.push("gitway-add");
     }
     names.push("git-sync");
+    if !opts.no_update {
+        // Fetched just before the update it authenticates.
+        names.push("github-token");
+    }
     names.push("flake-update");
     if !opts.no_update && !opts.skills_only {
         names.push("antigravity");
@@ -417,6 +421,16 @@ pub fn restore_after_signal() {
     }
 }
 
+/// Insert a task row at `pos`, keeping the highlight on the task it was on:
+/// a row inserted at or above the selection pushes that task down one row,
+/// and `y` would otherwise copy its neighbour.
+fn insert_task(st: &mut State, pos: usize, entry: TaskEntry) {
+    if pos <= st.selected_task && st.selected_task < st.tasks.len() {
+        st.selected_task += 1;
+    }
+    st.tasks.insert(pos, entry);
+}
+
 /// Mark `name` as the currently running step. Inserts it into the task list if
 /// it was not part of the static schedule (e.g. a dynamic AI tool step or
 /// on-demand `disk-reclaim`).
@@ -443,7 +457,8 @@ pub fn begin_step(out: Out, name: &'static str, detail: Option<&str>) {
                     .current_step
                     .and_then(|cur| st.tasks.iter().position(|t| t.name == cur))
                     .map_or(st.tasks.len(), |i| i + 1);
-                st.tasks.insert(
+                insert_task(
+                    st,
                     pos,
                     TaskEntry {
                         name,
@@ -488,13 +503,25 @@ pub fn finish_step(name: &'static str, outcome: Outcome, detail: Option<&str>) {
                     t.detail = Some(d.to_owned());
                 }
             } else {
-                st.tasks.push(TaskEntry {
-                    name,
-                    status: TaskStatus::Done(outcome),
-                    detail: detail.map(ToOwned::to_owned),
-                    started: None,
-                    elapsed: None,
-                });
+                // An unscheduled step lands where it ran -- ahead of the first
+                // task still pending -- not at the bottom after work that has
+                // not started yet.
+                let pos = st
+                    .tasks
+                    .iter()
+                    .position(|t| t.status == TaskStatus::Pending)
+                    .unwrap_or(st.tasks.len());
+                insert_task(
+                    st,
+                    pos,
+                    TaskEntry {
+                        name,
+                        status: TaskStatus::Done(outcome),
+                        detail: detail.map(ToOwned::to_owned),
+                        started: None,
+                        elapsed: None,
+                    },
+                );
             }
             if st.current_step == Some(name) || st.current_step == Some(canonical) {
                 st.current_step = None;
@@ -1415,38 +1442,40 @@ fn draw_tui(f: &mut ratatui::Frame<'_>, st: &State) {
     let pal = Palette::for_out(st.out);
     let area = f.area();
 
-    let header_height = if st.auth_waiting.is_some() { 4 } else { 3 };
+    // Output on top (or left), the task list below it (or right), then the
+    // key hints, with the overall gauge on the bottom rows -- where the
+    // status-bar mode keeps it too.
+    let gauge_height = if st.auth_waiting.is_some() { 4 } else { 3 };
     let root = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(header_height),
             Constraint::Min(6),
             Constraint::Length(1),
+            Constraint::Length(gauge_height),
         ])
         .split(area);
 
-    draw_header(f, root[0], st, &pal);
-
     // Side-by-side log pane + task list on wide terminals (>= 90 cols), the
-    // task list on the right; stacked top-and-bottom on narrower terminals,
-    // the task list on top, so both remain legible everywhere.
-    let (tasks_area, logs_area) = if root[1].width >= 90 {
+    // task list on the right; stacked on narrower terminals, the task list
+    // under the output, so both remain legible everywhere.
+    let (tasks_area, logs_area) = if root[0].width >= 90 {
         let cols = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Min(40), Constraint::Length(38)])
-            .split(root[1]);
+            .split(root[0]);
         (cols[1], cols[0])
     } else {
         let rows = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
-            .split(root[1]);
-        (rows[0], rows[1])
+            .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
+            .split(root[0]);
+        (rows[1], rows[0])
     };
 
     draw_tasks(f, tasks_area, st, &pal);
     draw_logs(f, logs_area, st, &pal);
-    draw_footer(f, root[2], st, &pal);
+    draw_footer(f, root[1], st, &pal);
+    draw_header(f, root[2], st, &pal);
 }
 
 fn draw_header(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) {
@@ -1667,6 +1696,25 @@ mod tests {
             started: None,
             elapsed: Some(Duration::from_secs(61)),
         }
+    }
+
+    #[test]
+    fn inserting_a_task_keeps_the_selection_on_its_task() {
+        let mut st = state_with(
+            vec![
+                task("sync", TaskStatus::Done(Outcome::Ok)),
+                task("gc", TaskStatus::Pending),
+                task("rebuild", TaskStatus::Pending),
+            ],
+            &[],
+        );
+        st.selected_task = 1;
+        insert_task(&mut st, 1, task("token", TaskStatus::Done(Outcome::Ok)));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
+        insert_task(&mut st, 4, task("tail", TaskStatus::Pending));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
+        insert_task(&mut st, 0, task("head", TaskStatus::Pending));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
     }
 
     #[test]
