@@ -160,6 +160,11 @@ in
       # margo has no maximize action; Super+Shift+F is monocle (one window
       # fills the tag), and Super+T goes back to tile.
       bind = super+shift,f,setlayout,monocle
+      # Margo turns a client's maximize request into fullscreen, and browsers
+      # restore a saved maximized state on every new window, so they opened
+      # fullscreen. Ignore their maximize requests; F11 and Super+F still
+      # fullscreen them (pkgs/margo/ignore-maximize.patch).
+      windowrule = ignore_maximize:1, appid:(?i)^(google-chrome|com\.google\.chrome|chromium|chromium-browser|brave-browser|com\.brave\.browser|microsoft-edge|com\.microsoft\.edge|opera|com\.opera\.opera|browseros|firefox|org\.mozilla\.firefox)([-.].*)?$|^(chrome|brave|msedge)-
       bind = super,v,togglefloating
       # Vim focus keys sit on Super+Alt: plain Super+L locks.
       bind = super+alt,h,focusdir,left

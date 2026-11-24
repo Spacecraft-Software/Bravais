@@ -43,8 +43,13 @@ rustPlatform.buildRustPackage (finalAttrs: {
     hash = "sha256-5UKWJOuxU+wbSiWtfecZu5vsDtUNJXTEeLpMGSwhTfM=";
   };
 
-  # Ctrl+Alt+F<n> is bound upstream but never dispatched; see the patch header.
-  patches = [ ./chvt.patch ];
+  patches = [
+    # Ctrl+Alt+F<n> is bound upstream but never dispatched; see the patch header.
+    ./chvt.patch
+    # The `ignore_maximize` window rule is parsed but never applied, and every
+    # maximize request becomes fullscreen (users/mj/margo.nix uses the rule).
+    ./ignore-maximize.patch
+  ];
 
   cargoHash = "sha256-jIN9M5nV42SGpaM5VQhLYhryC5hXd6Rl2RHx0PyS2Wg=";
 
