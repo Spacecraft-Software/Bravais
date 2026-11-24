@@ -53,8 +53,9 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph, Wrap};
+use ratatui::widgets::{Block, Borders, Gauge, List, ListItem, Paragraph};
 use ratatui::Terminal;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::output::{Level, Out};
 use crate::progress;
@@ -102,6 +103,8 @@ struct State {
     auth_waiting: Option<String>,
     logs: VecDeque<String>,
     scroll: usize,
+    /// Display columns that table rows are panned right by (←/→, h/l).
+    hscroll: usize,
     follow_tail: bool,
     selected_task: usize,
     focus_tasks: bool,
@@ -256,7 +259,7 @@ pub fn active() -> bool {
 
 /// Build the initial task schedule from `opts` so the user sees all planned
 /// steps upfront with a real completion ratio.
-fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
+pub(crate) fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
     let mut names: Vec<&'static str> = Vec::with_capacity(14);
     if opts.sync || !opts.no_update {
         names.push("gitway-add");
@@ -276,6 +279,10 @@ fn planned_tasks(opts: Options<'_>) -> Vec<TaskEntry> {
     }
     if opts.update_vendored {
         names.push("update-vendored");
+        if !opts.dry {
+            // Which pin files the update changed; recorded right after it.
+            names.push("vendored-pins");
+        }
     }
     names.push("nixos-rebuild");
     if !opts.dry && !opts.skills_only {
@@ -322,6 +329,7 @@ pub fn start(out: Out, opts: Options<'_>) -> Option<Session> {
         auth_waiting: None,
         logs: VecDeque::with_capacity(256),
         scroll: 0,
+        hscroll: 0,
         follow_tail: true,
         selected_task: 0,
         focus_tasks: true,
@@ -1377,6 +1385,14 @@ fn handle_key(code: KeyCode, mods: KeyModifiers) -> bool {
                 st.scroll = st.logs.len();
             }
         }
+        KeyCode::Left | KeyCode::Char('h') => {
+            st.hscroll = st.hscroll.saturating_sub(PAN_STEP);
+        }
+        KeyCode::Right | KeyCode::Char('l') => {
+            // Stop where the widest table row's last column is in view, so
+            // ← answers at once rather than after the over-shoot is undone.
+            st.hscroll = (st.hscroll + PAN_STEP).min(widest_table_row(&st.logs));
+        }
         _ => {}
     }
     false
@@ -1592,52 +1608,122 @@ fn draw_tasks(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette)
     f.render_widget(list, area);
 }
 
+/// Columns ←/→ pan table rows by.
+const PAN_STEP: usize = 8;
+
+/// A row of a box-drawn table (Nushell's `table`, `update-vendored.nu`'s
+/// summary): its columns only line up unwrapped, so it is clipped and panned
+/// instead of wrapped.
+fn is_table_row(line: &str) -> bool {
+    line.chars().any(|c| ('\u{2500}'..='\u{257f}').contains(&c))
+}
+
+/// Display width of the widest table row in the log.
+fn widest_table_row(logs: &VecDeque<String>) -> usize {
+    logs.iter()
+        .filter(|l| is_table_row(l))
+        .map(|l| UnicodeWidthStr::width(l.as_str()))
+        .max()
+        .unwrap_or(0)
+}
+
+/// Lay one log line out as the screen rows it takes in a pane `width`
+/// columns wide: a table row is one row, starting `hscroll` columns in and
+/// clipped at the edge; any other line wraps at the edge. Wrapping here, not
+/// in ratatui, is what lets the pane count rows and keep the newest in view.
+fn screen_rows(line: &str, width: usize, hscroll: usize) -> Vec<String> {
+    let width = width.max(1);
+    if is_table_row(line) {
+        let mut row = String::new();
+        let (mut col, mut used) = (0, 0);
+        for c in line.chars() {
+            let w = UnicodeWidthChar::width(c).unwrap_or(0);
+            if col >= hscroll {
+                if used + w > width {
+                    break;
+                }
+                row.push(c);
+                used += w;
+            }
+            col += w;
+        }
+        return vec![row];
+    }
+    let mut rows = vec![String::new()];
+    let mut used = 0;
+    for c in line.chars() {
+        let w = UnicodeWidthChar::width(c).unwrap_or(0);
+        if used + w > width {
+            rows.push(String::new());
+            used = 0;
+        }
+        if let Some(row) = rows.last_mut() {
+            row.push(c);
+        }
+        used += w;
+    }
+    rows
+}
+
 fn draw_logs(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette) {
     let inner_height = usize::from(area.height.saturating_sub(2)).max(1);
+    let inner_width = usize::from(area.width.saturating_sub(2)).max(1);
     let total = st.logs.len();
     let end = if st.follow_tail {
         total
     } else {
         st.scroll.min(total)
     };
-    let start = end.saturating_sub(inner_height);
 
-    let lines: Vec<Line<'_>> = st
-        .logs
-        .iter()
-        .skip(start)
-        .take(inner_height)
-        .map(|l| {
-            let color = if l.starts_with("[ERROR]") {
-                pal.error
-            } else if l.starts_with("[WARN]") {
-                pal.warning
-            } else if l.starts_with("[OK]") {
-                pal.success
-            } else {
-                pal.fg
-            };
-            Line::from(Span::styled(l.as_str(), Style::default().fg(color)))
-        })
-        .collect();
+    // Fill the pane upwards from `end` with screen rows, so the newest line
+    // is always the bottom one however many rows the lines above it wrap to.
+    let mut lines: Vec<Line<'_>> = Vec::with_capacity(inner_height);
+    let mut clipped = false;
+    for l in st.logs.iter().take(end).rev() {
+        if lines.len() >= inner_height {
+            break;
+        }
+        let color = if l.starts_with("[ERROR]") {
+            pal.error
+        } else if l.starts_with("[WARN]") {
+            pal.warning
+        } else if l.starts_with("[OK]") {
+            pal.success
+        } else {
+            pal.fg
+        };
+        if is_table_row(l) && UnicodeWidthStr::width(l.as_str()) > inner_width {
+            clipped = true;
+        }
+        for row in screen_rows(l, inner_width, st.hscroll).into_iter().rev() {
+            if lines.len() >= inner_height {
+                break;
+            }
+            lines.push(Line::from(Span::styled(row, Style::default().fg(color))));
+        }
+    }
+    lines.reverse();
 
     let border = if st.focus_tasks {
         pal.structure
     } else {
         pal.focus
     };
-    let title = match st.activity.as_deref() {
-        Some(act) if !act.is_empty() => format!(" Output — {act} "),
-        _ => " Output ".to_owned(),
+    let pan = if clipped || st.hscroll > 0 {
+        " [←/→ pan]"
+    } else {
+        ""
     };
-    let p = Paragraph::new(lines)
-        .block(
-            Block::default()
-                .title(title)
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(border)),
-        )
-        .wrap(Wrap { trim: false });
+    let title = match st.activity.as_deref() {
+        Some(act) if !act.is_empty() => format!(" Output{pan} — {act} "),
+        _ => format!(" Output{pan} "),
+    };
+    let p = Paragraph::new(lines).block(
+        Block::default()
+            .title(title)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(border)),
+    );
     f.render_widget(p, area);
 }
 
@@ -1647,9 +1733,9 @@ fn draw_footer(f: &mut ratatui::Frame<'_>, area: Rect, st: &State, pal: &Palette
     // `Abort: q` survive an 80-column terminal instead of being cut off.
     let variants = [
         format!(
-            " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Copy: y | Redraw: Ctrl+L | Abort: q / Esc / Ctrl+C"
+            " Focus: {focus} (Tab) | Scroll: ↑/↓ or j/k, PgUp/PgDn or Ctrl+B/F, Home/End or g/G | Pan: ←/→ or h/l | Copy: y | Redraw: Ctrl+L | Abort: q / Esc / Ctrl+C"
         ),
-        format!(" Focus: {focus} (Tab) | Scroll: ↑/↓ j/k PgUp/PgDn g/G | Copy: y | Abort: q / Esc"),
+        format!(" Focus: {focus} (Tab) | Scroll: ↑/↓ j/k PgUp/PgDn g/G | Pan: ←/→ | Copy: y | Abort: q / Esc"),
         format!(" {focus} (Tab) | ↑/↓ scroll | y copy | q abort"),
         " y copy | q abort".to_owned(),
     ];
@@ -1679,6 +1765,7 @@ mod tests {
             auth_waiting: None,
             logs: logs.iter().map(|l| (*l).to_owned()).collect(),
             scroll: 0,
+            hscroll: 0,
             follow_tail: true,
             selected_task: 0,
             focus_tasks: true,
@@ -1696,6 +1783,48 @@ mod tests {
             started: None,
             elapsed: Some(Duration::from_secs(61)),
         }
+    }
+
+    #[test]
+    fn table_rows_are_clipped_and_panned_not_wrapped() {
+        let row = "│  0 │ claude-desktop        │ 5.11492.5     │";
+        assert!(is_table_row(row));
+        assert_eq!(screen_rows(row, 10, 0), vec!["│  0 │ cla".to_owned()]);
+        assert_eq!(screen_rows(row, 10, 5), vec!["│ claude-d".to_owned()]);
+        assert_eq!(screen_rows(row, 100, 0), vec![row.to_owned()]);
+    }
+
+    #[test]
+    fn output_pane_keeps_the_newest_line_at_the_bottom() {
+        let long = "x".repeat(200);
+        let st = state_with(
+            Vec::new(),
+            &[
+                long.as_str(),
+                "╭────┬───────────────────────┬───────────────╮",
+                "│  0 │ claude-desktop        │ 5.11492.5     │",
+                "[OK] update-vendored: ok",
+            ],
+        );
+        let mut term = Terminal::new(ratatui::backend::TestBackend::new(30, 8)).unwrap();
+        term.draw(|f| draw_logs(f, f.area(), &st, &Palette::for_out(st.out)))
+            .unwrap();
+        let buf = term.backend().buffer();
+        let row = |y: u16| -> String { (1..29).map(|x| buf[(x, y)].symbol().to_owned()).collect() };
+        assert!(row(6).starts_with("[OK] update-vendored: ok"));
+        assert!(row(5).starts_with("│  0 │ claude-desktop"));
+        assert!(row(4).starts_with("╭────┬"));
+        assert!(row(1).chars().all(|c| c == 'x'));
+    }
+
+    #[test]
+    fn plain_lines_wrap_at_the_pane_edge() {
+        assert_eq!(
+            screen_rows("abcdefghij", 4, 8),
+            vec!["abcd".to_owned(), "efgh".to_owned(), "ij".to_owned()]
+        );
+        assert_eq!(screen_rows("", 4, 0), vec![String::new()]);
+        assert!(!is_table_row("[OK] built .#ollama"));
     }
 
     #[test]

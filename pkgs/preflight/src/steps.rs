@@ -726,6 +726,15 @@ fn update_vendored(r: &mut Runner, dry: bool) {
         cmd.arg("--check");
     }
     if !r.run("update-vendored", &mut cmd) {
+        // Scheduled beside update-vendored, so say why it never ran rather
+        // than leave it pending in the task list.
+        if !dry {
+            r.record(
+                "vendored-pins",
+                Outcome::Skipped,
+                Some("update-vendored failed".into()),
+            );
+        }
         return;
     }
 
