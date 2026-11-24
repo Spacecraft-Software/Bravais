@@ -421,6 +421,16 @@ pub fn restore_after_signal() {
     }
 }
 
+/// Insert a task row at `pos`, keeping the highlight on the task it was on:
+/// a row inserted at or above the selection pushes that task down one row,
+/// and `y` would otherwise copy its neighbour.
+fn insert_task(st: &mut State, pos: usize, entry: TaskEntry) {
+    if pos <= st.selected_task && st.selected_task < st.tasks.len() {
+        st.selected_task += 1;
+    }
+    st.tasks.insert(pos, entry);
+}
+
 /// Mark `name` as the currently running step. Inserts it into the task list if
 /// it was not part of the static schedule (e.g. a dynamic AI tool step or
 /// on-demand `disk-reclaim`).
@@ -447,7 +457,8 @@ pub fn begin_step(out: Out, name: &'static str, detail: Option<&str>) {
                     .current_step
                     .and_then(|cur| st.tasks.iter().position(|t| t.name == cur))
                     .map_or(st.tasks.len(), |i| i + 1);
-                st.tasks.insert(
+                insert_task(
+                    st,
                     pos,
                     TaskEntry {
                         name,
@@ -500,7 +511,8 @@ pub fn finish_step(name: &'static str, outcome: Outcome, detail: Option<&str>) {
                     .iter()
                     .position(|t| t.status == TaskStatus::Pending)
                     .unwrap_or(st.tasks.len());
-                st.tasks.insert(
+                insert_task(
+                    st,
                     pos,
                     TaskEntry {
                         name,
@@ -1684,6 +1696,25 @@ mod tests {
             started: None,
             elapsed: Some(Duration::from_secs(61)),
         }
+    }
+
+    #[test]
+    fn inserting_a_task_keeps_the_selection_on_its_task() {
+        let mut st = state_with(
+            vec![
+                task("sync", TaskStatus::Done(Outcome::Ok)),
+                task("gc", TaskStatus::Pending),
+                task("rebuild", TaskStatus::Pending),
+            ],
+            &[],
+        );
+        st.selected_task = 1;
+        insert_task(&mut st, 1, task("token", TaskStatus::Done(Outcome::Ok)));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
+        insert_task(&mut st, 4, task("tail", TaskStatus::Pending));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
+        insert_task(&mut st, 0, task("head", TaskStatus::Pending));
+        assert_eq!(st.tasks[st.selected_task].name, "gc");
     }
 
     #[test]
