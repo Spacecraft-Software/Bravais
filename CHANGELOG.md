@@ -106,6 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Tables in Preflight's TUI output stay readable.** A box-drawn table wider than the Output pane (such as `update-vendored`'s summary) was word-wrapped into broken columns. Table rows are now clipped at the pane edge and panned with ←/→ (or h/l). The pane also keeps the newest line in view when long lines wrap; before, wrapped lines pushed the newest ones off the bottom.
+- **Preflight lists `vendored-pins` right after `update-vendored`**, not last. It is now part of the planned task list, and it is marked skipped if `update-vendored` fails.
 - **Preflight's TUI puts the output first and the progress gauge at the bottom**: output on the left with the task list on the right (on narrow terminals, output above the task list), then the key hints, then the gauge on the last rows, where `--cli`'s status bar also sits.
 - **Preflight's task list shows `github-token` where it runs**, just before `flake-update`, instead of last. It is now part of the planned schedule, and any step that is not scheduled is placed ahead of the first pending task rather than at the bottom.
 - **Browsers no longer open fullscreen under Margo.** Margo turns a window's maximize request into fullscreen, and Chrome and other browsers ask to maximize every new window when they last closed maximized. A patch makes Margo's `ignore_maximize` window rule work (the parser accepted it, but nothing used it), and a rule applies it to the installed browsers. F11 and Super+F still go fullscreen.

@@ -786,6 +786,25 @@ mod tests {
     }
 
     #[test]
+    fn planned_tasks_list_each_step_where_it_runs() {
+        let names = |args: &[&str]| -> Vec<&'static str> {
+            let cli = Cli::try_parse_from(args).expect("valid flags");
+            ui::planned_tasks(options(&cli))
+                .into_iter()
+                .map(|t| t.name)
+                .collect()
+        };
+        let full = names(&["preflight", "--full-update"]);
+        let at = |n: &str| full.iter().position(|t| *t == n);
+        assert_eq!(at("github-token").map(|i| i + 1), at("flake-update"));
+        assert_eq!(at("update-vendored").map(|i| i + 1), at("vendored-pins"));
+        // --dry runs the update as a report only; it changes no pin files.
+        let dry = names(&["preflight", "--full-update", "--dry"]);
+        assert!(!dry.contains(&"vendored-pins"));
+        assert!(!names(&["preflight", "--no-update"]).contains(&"github-token"));
+    }
+
+    #[test]
     fn full_update_implies_every_extra_update_step() {
         let cli = Cli::try_parse_from(["preflight", "--full-update"]);
         assert!(cli.is_ok_and(|c| {
